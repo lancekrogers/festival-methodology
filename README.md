@@ -5,6 +5,40 @@
 
 A goal-oriented, AI-native project management methodology that prioritizes concrete objectives over process overhead. Festival Methodology uses a three-level hierarchy (**Phases → Sequences → Tasks**) with interface-first planning to enable parallel development and systematic progress.
 
+## Highlights
+
+- **AI-native design** - Built specifically for AI agent orchestration, not adapted from human methodologies
+- **Outcome-focused** - Complete meaningful features instead of endless incremental progress  
+- **Three-level hierarchy** - Phases → Sequences → Tasks with systematic numbering for clear progress tracking
+- **Interface-first development** - Define all system contracts before implementation to enable parallel work
+- **Rapid iteration** - Test methodology changes in days, not months, with immediate feedback on results
+- **Framework, not prescription** - Adapt to your workflow and project needs
+
+**Intended for:** Developers building AI-orchestrated workflows and complex software projects with AI assistance. Not a generic PM tool.
+
+### Quick Example
+
+Festival tasks are concrete and actionable, not abstract:
+
+```markdown
+# Task: 01_create_user_table_and_model.md
+## Objective
+Create PostgreSQL user table and Sequelize model with email/password authentication
+
+## Requirements  
+- [ ] Create `users` table with id, email, password_hash, created_at, updated_at
+- [ ] Create `models/User.js` with Sequelize model definition
+- [ ] Add email validation and password hashing methods
+
+## Implementation Steps
+1. Run: `npx sequelize-cli migration:generate --name create-users-table`
+2. Edit migration file with SQL schema
+3. Create `models/User.js` with Sequelize model
+4. Test with: `npm test -- --grep "User model"`
+```
+
+This level of detail enables AI agents to execute tasks systematically with clear success criteria.
+
 ## Why Festival Methodology?
 
 Traditional agile methodologies were designed for human teams to deliver constant incremental progress through fixed 2-week sprints. This artificial timebox exists because projects can drift indefinitely without deadlines. But the real problem with agile isn't just that it's designed for humans - it's that **constant minor progress isn't the same as completing something meaningful**.
