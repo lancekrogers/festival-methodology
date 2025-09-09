@@ -1,0 +1,422 @@
+# Festival TODO Template - YAML Format
+# This format is better for:
+# - Programmatic parsing and automation
+# - CI/CD integration
+# - Status tracking tools
+# - Generating reports
+# - Converting to other formats
+
+festival:
+  name: "[FESTIVAL_NAME]"
+  goal: "[Primary objective in one sentence]"
+  status: "planning"  # planning | active | review | complete
+  started: "YYYY-MM-DD"
+  target: "YYYY-MM-DD"
+  
+  # Status codes for all items
+  # not_started | in_progress | completed | blocked | needs_review
+  
+  phases:
+    - id: "001_PLAN"
+      name: "Requirements and Planning"
+      status: "not_started"
+      purpose: "Define requirements, architecture, and draft initial interfaces"
+      sequences:
+        - id: "01_requirements_analysis"
+          status: "not_started"
+          tasks:
+            - id: "01_user_research"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_user_research.md"
+            - id: "01_security_requirements"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_security_requirements.md"
+            - id: "02_requirements_spec"
+              status: "not_started"
+              depends_on: ["01_user_research", "01_security_requirements"]
+              file: "02_requirements_spec.md"
+            - id: "03_testing_and_verify"
+              status: "not_started"
+              file: "03_testing_and_verify.md"
+            - id: "04_code_review"
+              status: "not_started"
+              file: "04_code_review.md"
+            - id: "05_review_results_iterate"
+              status: "not_started"
+              file: "05_review_results_iterate.md"
+              
+        - id: "02_architecture_design"
+          status: "not_started"
+          tasks:
+            - id: "01_system_architecture"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_system_architecture.md"
+            - id: "01_technology_selection"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_technology_selection.md"
+            - id: "02_security_architecture"
+              status: "not_started"
+              depends_on: ["01_system_architecture", "01_technology_selection"]
+              file: "02_security_architecture.md"
+            - id: "03_testing_and_verify"
+              status: "not_started"
+              file: "03_testing_and_verify.md"
+            - id: "04_code_review"
+              status: "not_started"
+              file: "04_code_review.md"
+            - id: "05_review_results_iterate"
+              status: "not_started"
+              file: "05_review_results_iterate.md"
+              
+        - id: "03_feasibility_study"
+          status: "not_started"
+          tasks:
+            - id: "01_technical_feasibility"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_technical_feasibility.md"
+            - id: "01_resource_assessment"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_resource_assessment.md"
+            - id: "02_risk_analysis"
+              status: "not_started"
+              depends_on: ["01_technical_feasibility", "01_resource_assessment"]
+              file: "02_risk_analysis.md"
+            - id: "03_testing_and_verify"
+              status: "not_started"
+              file: "03_testing_and_verify.md"
+            - id: "04_code_review"
+              status: "not_started"
+              file: "04_code_review.md"
+            - id: "05_review_results_iterate"
+              status: "not_started"
+              file: "05_review_results_iterate.md"
+    
+    - id: "002_DEFINE_INTERFACES"
+      name: "Interface Definition"
+      status: "not_started"
+      purpose: "Lock all system contracts, APIs, and data models before implementation"
+      depends_on: ["001_PLAN"]
+      sequences:
+        - id: "01_api_contracts"
+          status: "not_started"
+          tasks:
+            - id: "01_rest_api_spec"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_rest_api_spec.md"
+            - id: "01_graphql_schema"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_graphql_schema.md"
+            - id: "02_error_handling_spec"
+              status: "not_started"
+              depends_on: ["01_rest_api_spec", "01_graphql_schema"]
+              file: "02_error_handling_spec.md"
+            - id: "03_testing_and_verify"
+              status: "not_started"
+              file: "03_testing_and_verify.md"
+            - id: "04_code_review"
+              status: "not_started"
+              file: "04_code_review.md"
+            - id: "05_review_results_iterate"
+              status: "not_started"
+              file: "05_review_results_iterate.md"
+              
+        - id: "02_data_schemas"
+          status: "not_started"
+          tasks:
+            - id: "01_domain_models"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_domain_models.md"
+            - id: "01_database_schema"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_database_schema.md"
+            - id: "02_validation_rules"
+              status: "not_started"
+              depends_on: ["01_domain_models", "01_database_schema"]
+              file: "02_validation_rules.md"
+            - id: "03_testing_and_verify"
+              status: "not_started"
+              file: "03_testing_and_verify.md"
+            - id: "04_code_review"
+              status: "not_started"
+              file: "04_code_review.md"
+            - id: "05_review_results_iterate"
+              status: "not_started"
+              file: "05_review_results_iterate.md"
+              
+        - id: "03_integration_points"
+          status: "not_started"
+          tasks:
+            - id: "01_external_services"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_external_services.md"
+            - id: "01_event_contracts"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_event_contracts.md"
+            - id: "02_authentication_flow"
+              status: "not_started"
+              depends_on: ["01_external_services", "01_event_contracts"]
+              file: "02_authentication_flow.md"
+            - id: "03_testing_and_verify"
+              status: "not_started"
+              file: "03_testing_and_verify.md"
+            - id: "04_code_review"
+              status: "not_started"
+              file: "04_code_review.md"
+            - id: "05_review_results_iterate"
+              status: "not_started"
+              file: "05_review_results_iterate.md"
+    
+    - id: "003_IMPLEMENT"
+      name: "Implementation"
+      status: "not_started"
+      purpose: "Build the solution based on locked interfaces with parallel development"
+      depends_on: ["002_DEFINE_INTERFACES"]
+      sequences:
+        - id: "01_backend_foundation"
+          status: "not_started"
+          tasks:
+            - id: "01_database_setup"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_database_setup.md"
+            - id: "01_api_endpoints"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_api_endpoints.md"
+            - id: "01_business_logic"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_business_logic.md"
+            - id: "02_automated_testing"
+              status: "not_started"
+              depends_on: ["01_database_setup", "01_api_endpoints", "01_business_logic"]
+              file: "02_automated_testing.md"
+            - id: "03_code_review"
+              status: "not_started"
+              file: "03_code_review.md"
+            - id: "04_review_results_iterate"
+              status: "not_started"
+              file: "04_review_results_iterate.md"
+              
+        - id: "02_frontend_integration"
+          status: "not_started"
+          tasks:
+            - id: "01_ui_components"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_ui_components.md"
+            - id: "01_state_management"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_state_management.md"
+            - id: "02_api_integration"
+              status: "not_started"
+              depends_on: ["01_ui_components", "01_state_management"]
+              file: "02_api_integration.md"
+            - id: "03_automated_testing"
+              status: "not_started"
+              file: "03_automated_testing.md"
+            - id: "04_code_review"
+              status: "not_started"
+              file: "04_code_review.md"
+            - id: "05_review_results_iterate"
+              status: "not_started"
+              file: "05_review_results_iterate.md"
+              
+        - id: "03_service_integration"
+          status: "not_started"
+          tasks:
+            - id: "01_external_apis"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_external_apis.md"
+            - id: "01_message_queues"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_message_queues.md"
+            - id: "02_error_handling"
+              status: "not_started"
+              depends_on: ["01_external_apis", "01_message_queues"]
+              file: "02_error_handling.md"
+            - id: "03_automated_testing"
+              status: "not_started"
+              file: "03_automated_testing.md"
+            - id: "04_code_review"
+              status: "not_started"
+              file: "04_code_review.md"
+            - id: "05_review_results_iterate"
+              status: "not_started"
+              file: "05_review_results_iterate.md"
+              
+        - id: "04_performance_optimization"
+          status: "not_started"
+          tasks:
+            - id: "01_database_optimization"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_database_optimization.md"
+            - id: "01_caching_strategy"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_caching_strategy.md"
+            - id: "02_load_testing"
+              status: "not_started"
+              depends_on: ["01_database_optimization", "01_caching_strategy"]
+              file: "02_load_testing.md"
+            - id: "03_code_review"
+              status: "not_started"
+              file: "03_code_review.md"
+            - id: "04_review_results_iterate"
+              status: "not_started"
+              file: "04_review_results_iterate.md"
+    
+    - id: "004_REVIEW_AND_UAT"
+      name: "Review and UAT"
+      status: "not_started"
+      purpose: "Validate with users and stakeholders, ensure production readiness"
+      depends_on: ["003_IMPLEMENT"]
+      sequences:
+        - id: "01_user_acceptance_testing"
+          status: "not_started"
+          tasks:
+            - id: "01_uat_planning"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_uat_planning.md"
+            - id: "01_test_scenarios"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_test_scenarios.md"
+            - id: "02_user_testing_execution"
+              status: "not_started"
+              depends_on: ["01_uat_planning", "01_test_scenarios"]
+              file: "02_user_testing_execution.md"
+            - id: "03_feedback_analysis"
+              status: "not_started"
+              file: "03_feedback_analysis.md"
+            - id: "04_testing_and_verify"
+              status: "not_started"
+              file: "04_testing_and_verify.md"
+            - id: "05_code_review"
+              status: "not_started"
+              file: "05_code_review.md"
+            - id: "06_review_results_iterate"
+              status: "not_started"
+              file: "06_review_results_iterate.md"
+              
+        - id: "02_stakeholder_review"
+          status: "not_started"
+          tasks:
+            - id: "01_business_validation"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_business_validation.md"
+            - id: "01_stakeholder_demos"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_stakeholder_demos.md"
+            - id: "02_requirements_sign_off"
+              status: "not_started"
+              depends_on: ["01_business_validation", "01_stakeholder_demos"]
+              file: "02_requirements_sign_off.md"
+            - id: "03_testing_and_verify"
+              status: "not_started"
+              file: "03_testing_and_verify.md"
+            - id: "04_code_review"
+              status: "not_started"
+              file: "04_code_review.md"
+            - id: "05_review_results_iterate"
+              status: "not_started"
+              file: "05_review_results_iterate.md"
+              
+        - id: "03_production_readiness"
+          status: "not_started"
+          tasks:
+            - id: "01_deployment_checklist"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_deployment_checklist.md"
+            - id: "01_monitoring_setup"
+              status: "not_started"
+              parallel_group: 1
+              file: "01_monitoring_setup.md"
+            - id: "02_runbook_creation"
+              status: "not_started"
+              depends_on: ["01_deployment_checklist", "01_monitoring_setup"]
+              file: "02_runbook_creation.md"
+            - id: "03_final_review"
+              status: "not_started"
+              file: "03_final_review.md"
+            - id: "04_go_live_approval"
+              status: "not_started"
+              file: "04_go_live_approval.md"
+
+# Active work tracking
+active_work:
+  current_phase: null
+  active_sequence: null
+  active_tasks: []
+  blockers: []
+
+# Progress metrics
+metrics:
+  total_phases: 4
+  completed_phases: 0
+  total_sequences: 12
+  completed_sequences: 0
+  total_tasks: 68
+  completed_tasks: 0
+  overall_progress_percent: 0
+
+# Risk and blocker tracking
+risks:
+  - id: "RISK_001"
+    description: "[Risk description]"
+    probability: "low"  # low | medium | high
+    impact: "low"  # low | medium | high
+    mitigation: "[Mitigation strategy]"
+    owner: "[Owner name]"
+    status: "open"  # open | mitigated | closed
+
+blockers:
+  - id: "BLOCKER_001"
+    description: "[Blocker description]"
+    phase: "[Phase ID]"
+    impact: "[Impact description]"
+    mitigation: "[Mitigation approach]"
+    owner: "[Owner name]"
+    status: "active"  # active | resolved
+
+# Decision log
+decisions:
+  - date: "YYYY-MM-DD"
+    decision: "[What was decided]"
+    rationale: "[Why this decision was made]"
+    impact: "[How this affects the festival]"
+    made_by: "[Person/Agent]"
+
+# Update history
+history:
+  - date: "YYYY-MM-DD HH:MM:SS"
+    phase: "[Phase ID]"
+    update: "[What was updated]"
+    updated_by: "[Agent/User name]"
+
+# Configuration
+config:
+  auto_update_metrics: true
+  parallel_execution_enabled: true
+  require_review_approval: true
+  notification_webhook: null
