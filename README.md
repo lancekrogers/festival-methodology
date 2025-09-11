@@ -10,7 +10,6 @@ A goal-based methodology that helps you **collaboratively create actionable task
 Festival bridges the gap between what you want to build and what AI agents can actually execute:
 
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#2E86AB', 'primaryTextColor':'#fff', 'primaryBorderColor':'#1e5a7a', 'lineColor':'#5c946e', 'secondaryColor':'#a23b72', 'tertiaryColor':'#f8f9fa', 'background':'#ffffff', 'mainBkg':'#2E86AB', 'secondBkg':'#a23b72', 'tertiaryBkg':'#f8f9fa'}}}%%
 graph LR
     subgraph "Your Input"
         G[Goal: Build Auth System]
@@ -31,9 +30,9 @@ graph LR
         E3 --> D
     end
 
-    style G fill:#2E86AB,color:#fff
-    style D fill:#5c946e,color:#fff
-    style C fill:#f8f9fa,color:#2d3436
+    style G fill:#e1f5fe
+    style D fill:#c8e6c9
+    style C fill:#f5f5f5
 ```
 
 ## Core Benefits
@@ -72,7 +71,6 @@ AI agents execute tasks independently, maintaining context and building toward t
 ## The Three-Level Structure
 
 ```mermaid
-%%{init: {'theme':'neutral', 'themeVariables': { 'fontSize':'16px'}}}%%
 graph TD
     G[Goal: E-Commerce Platform]
     G --> P1[Phase 1: Planning]
@@ -86,15 +84,10 @@ graph TD
     S1 --> T2[Task: Build Auth Service]
     S1 --> T3[Task: Setup Database]
 
-    classDef goalClass fill:#2E86AB,stroke:#1e5a7a,stroke-width:3px,color:#fff
-    classDef phaseClass fill:#5c946e,stroke:#4a7a5a,stroke-width:2px,color:#fff
-    classDef seqClass fill:#a23b72,stroke:#8a2a5a,stroke-width:1px,color:#fff
-    classDef taskClass fill:#f8f9fa,stroke:#d0d0d0,stroke-width:1px,color:#2d3436
-
-    class G goalClass
-    class P1,P2,P3 phaseClass
-    class S1,S2 seqClass
-    class T1,T2,T3 taskClass
+    style G fill:#e3f2fd
+    style P1,P2,P3 fill:#fff3e0
+    style S1,S2 fill:#f3e5f5
+    style T1,T2,T3 fill:#f5f5f5
 ```
 
 - **Goal**: The outcome you want to achieve
@@ -102,7 +95,7 @@ graph TD
 - **Sequences**: Related tasks that must complete in order
 - **Tasks**: Concrete, executable work items with full specifications
 
-## Creating Actionable Tasks: The Key Innovation
+## Creating Actionable Tasks
 
 Festival tasks aren't vague descriptions - they're complete specifications AI can execute:
 
@@ -167,7 +160,6 @@ This level of detail enables AI agents to work autonomously without constant cla
 ## Long-Running Autonomous Execution
 
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#2E86AB', 'secondaryColor':'#5c946e', 'tertiaryColor':'#a23b72'}}}%%
 gantt
     title AI Agents Building Authentication System
     dateFormat HH:mm
@@ -199,7 +191,6 @@ AI agents work continuously, moving through phases autonomously while you review
 ## The Collaborative Process
 
 ```mermaid
-%%{init: {'theme':'neutral'}}%%
 sequenceDiagram
     participant You
     participant Festival
