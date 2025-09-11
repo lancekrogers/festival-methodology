@@ -10,6 +10,8 @@ modified: '2025-09-06'
 
 # Festival Overview: [Project Name]
 
+> 📋 **Important**: Create a separate `FESTIVAL_GOAL.md` file at the festival root using the FESTIVAL_GOAL_TEMPLATE.md for comprehensive goal tracking and evaluation throughout the festival lifecycle.
+
 ## Project Goal
 
 **Primary Objective**: [ONE clear sentence describing what this festival will accomplish]
