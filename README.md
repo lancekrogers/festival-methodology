@@ -1,7 +1,7 @@
 # Festival Methodology
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Methodology Version](https://img.shields.io/badge/version-0.3.0-blue)](CHANGELOG.md)
+[![Development Status](https://img.shields.io/badge/status-pre--release-orange)](CHANGELOG.md)
 
 A goal-based methodology that helps you **collaboratively create actionable tasks** for AI agents to execute in long-running autonomous sessions. Festival transforms high-level objectives into structured, executable work that AI can complete independently.
 
