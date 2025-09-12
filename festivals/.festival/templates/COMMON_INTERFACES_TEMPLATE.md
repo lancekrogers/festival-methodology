@@ -41,20 +41,21 @@ This document defines all system interfaces that must be established and finaliz
 
 ### System Boundaries and Data Flow
 
-```mermaid
-flowchart TD
-    A[Web Browser] --> B[CDN/Load Balancer]
-    B --> C[API Gateway]
-    C --> D[User Service]
-    C --> E[Product Service]
-    D --> F[PostgreSQL - Users]
-    E --> G[MongoDB - Products]
-    D --> H[Redis Cache]
-    D --> I[Email Service]
-    I --> J[SendGrid API]
-    
-    K[Mobile App] --> C
-    L[Admin Dashboard] --> C
+**Architecture Overview:**
+```
+Clients:
+  - Web Browser
+  - Mobile App
+  - Admin Dashboard
+        ↓
+  CDN/Load Balancer
+        ↓
+    API Gateway
+        ↓
+Services:
+  - User Service → PostgreSQL, Redis Cache, Email Service
+  - Product Service → MongoDB
+  - Email Service → SendGrid API
 ```
 
 ### External System Dependencies
@@ -213,19 +214,14 @@ flowchart TD
 
 ### Authentication Flow
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant F as Frontend
-    participant A as API Gateway
-    participant S as Auth Service
-    
-    U->>F: Login request
-    F->>A: POST /auth/login
-    A->>S: Validate credentials
-    S-->>A: User + JWT
-    A-->>F: JWT token
-    F-->>U: Login success
+**Login Sequence:**
+```
+1. User → Frontend: Login request
+2. Frontend → API Gateway: POST /auth/login
+3. API Gateway → Auth Service: Validate credentials
+4. Auth Service → API Gateway: User + JWT
+5. API Gateway → Frontend: JWT token
+6. Frontend → User: Login success
 ```
 
 ### Authorization Matrix

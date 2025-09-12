@@ -11,28 +11,10 @@ Festival bridges the gap between what you want to build and what AI agents can a
 
 ```mermaid
 graph LR
-    subgraph "Your Input"
-        G[Goal: Build Auth System]
-    end
-
-    subgraph "Festival Process"
-        G --> C[Collaborative Planning]
-        C --> S[Structured Tasks]
-        S --> V[Validated Plan]
-    end
-
-    subgraph "AI Execution"
-        V --> E1[Agent 1: Research]
-        V --> E2[Agent 2: Design]
-        V --> E3[Agent 3: Build]
-        E1 --> D[✓ Delivered System]
-        E2 --> D
-        E3 --> D
-    end
-
-    style G fill:#e1f5fe
-    style D fill:#c8e6c9
-    style C fill:#f5f5f5
+    G[Your Goal] --> P[Plan Together]
+    P --> T[Create Tasks]
+    T --> E[AI Executes]
+    E --> D[Delivered System]
 ```
 
 ## Core Benefits
@@ -70,24 +52,17 @@ AI agents execute tasks independently, maintaining context and building toward t
 
 ## The Three-Level Structure
 
-```mermaid
-graph TD
-    G[Goal: E-Commerce Platform]
-    G --> P1[Phase 1: Planning]
-    G --> P2[Phase 2: Design]
-    G --> P3[Phase 3: Implementation]
-
-    P3 --> S1[Sequence 3.1: Backend]
-    P3 --> S2[Sequence 3.2: Frontend]
-
-    S1 --> T1[Task: Create User API]
-    S1 --> T2[Task: Build Auth Service]
-    S1 --> T3[Task: Setup Database]
-
-    style G fill:#e3f2fd
-    style P1,P2,P3 fill:#fff3e0
-    style S1,S2 fill:#f3e5f5
-    style T1,T2,T3 fill:#f5f5f5
+```
+Goal: Build E-Commerce Platform
+├── Phase 1: Planning
+├── Phase 2: Design  
+├── Phase 3: Implementation
+│   ├── Sequence 1: Backend
+│   │   ├── Task: User API
+│   │   ├── Task: Auth Service
+│   │   └── Task: Database
+│   └── Sequence 2: Frontend
+└── Phase 4: Validation
 ```
 
 - **Goal**: The outcome you want to achieve
@@ -159,54 +134,23 @@ This level of detail enables AI agents to work autonomously without constant cla
 
 ## Long-Running Autonomous Execution
 
-```mermaid
-gantt
-    title AI Agents Building Authentication System
-    dateFormat HH:mm
-    axisFormat %H:%M
-
-    section Research Phase
-    Analyze requirements     :done, research1, 00:00, 2h
-    Research best practices  :done, research2, after research1, 1h
-    Document findings        :done, research3, after research2, 1h
-
-    section Design Phase
-    Design API contracts     :active, design1, after research3, 2h
-    Create data schemas      :active, design2, after design1, 1h
-    Plan architecture        :active, design3, after design2, 2h
-
-    section Build Phase
-    Implement backend        :build1, after design3, 8h
-    Create frontend          :build2, after design3, 6h
-    Write tests              :build3, after design3, 4h
-
-    section Validate
-    Integration testing      :validate1, after build1, 2h
-    Security audit           :validate2, after validate1, 1h
-    Final review             :validate3, after validate2, 1h
+```
+Hour 0-4:    Research Phase (Complete)
+Hour 4-10:   Design Phase (Active)  
+Hour 10-22:  Build Phase (8-12 hours of parallel work)
+Hour 22-25:  Validation Phase
 ```
 
 AI agents work continuously, moving through phases autonomously while you review at checkpoints.
 
 ## The Collaborative Process
 
-```mermaid
-sequenceDiagram
-    participant You
-    participant Festival
-    participant AI Agent
-    participant Filesystem
-
-    You->>Festival: Define goal
-    Festival->>You: Suggest structure
-    You->>Festival: Refine phases
-    Festival->>AI Agent: Generate tasks
-    AI Agent->>Filesystem: Create task files
-    You->>Filesystem: Review & adjust
-    You->>AI Agent: Execute tasks
-    AI Agent->>AI Agent: Work autonomously
-    AI Agent->>Filesystem: Deliver results
-    You->>Filesystem: Validate completion
+```
+1. You define goal → Festival suggests structure
+2. You refine plan → AI generates detailed tasks  
+3. Tasks saved to filesystem → You review and adjust
+4. AI executes autonomously → Delivers results
+5. You validate completion
 ```
 
 ## Getting Started

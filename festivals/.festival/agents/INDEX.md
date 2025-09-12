@@ -6,12 +6,15 @@ Specialized AI agents for Festival Methodology workflow management.
 
 Festival Methodology includes three specialized agents that work together to ensure successful project execution:
 
-```mermaid
-graph LR
-    A[festival_planning_agent] -->|Creates| B[Festival Structure]
-    B -->|Validated by| C[festival_review_agent]
-    C -->|Managed by| D[festival_methodology_manager]
-    D -->|Feedback to| A
+**Agent Workflow:**
+```
+Planning Agent → Creates Festival Structure
+     ↓
+Review Agent → Validates Structure
+     ↓
+Manager Agent → Enforces Methodology
+     ↓
+Feedback Loop → Back to Planning
 ```
 
 ## Agent Catalog
