@@ -1,57 +1,116 @@
 # Festival Methodology - AI Agent Build System
 
-Festival methodology is a goal-oriented project management system for AI agent development workflows. It uses a three-level hierarchy: **Phases → Sequences → Tasks**.
+## 🛑 MANDATORY FIRST STEPS - DO NOT SKIP
+
+### Step 1: Verify Methodology Resources Exist
+
+YOU MUST EXECUTE THIS COMMAND:
+
+```bash
+ls -la .festival/
+```
+
+### Step 2: Read the Implementation Guide
+
+YOU MUST READ NOW: `.festival/README.md`
+This contains the methodology overview and will guide you through the process.
+
+### Step 3: Understand Core Methodology
+
+READ THESE CORE DOCUMENTS NOW:
+
+- `.festival/FESTIVAL_SOFTWARE_PROJECT_MANAGEMENT.md` - Core methodology principles
+- `.festival/PROJECT_MANAGEMENT_SYSTEM.md` - How tracking works
+
+## ⚠️ IMPORTANT: Template Reading Strategy
+
+**DO NOT READ TEMPLATES UNTIL YOU NEED THEM**
+Templates are in `.festival/templates/` but should ONLY be read when you reach the specific step requiring them. This preserves context window.
+
+## Festival Workflow
+
+### Planning Phase
+
+1. **Understand the user's goal** through discussion
+2. **WHEN READY TO PLAN**: Read `.festival/agents/festival_planning_agent.md`
+3. The planning agent will guide you through creating the structure
+
+### Structure Creation Phase
+
+**ONLY when ready to create each document, read its template:**
+
+1. **When creating project overview**: Read `.festival/templates/FESTIVAL_OVERVIEW_TEMPLATE.md`
+2. **When creating festival goals**: Read `.festival/templates/FESTIVAL_GOAL_TEMPLATE.md`
+3. **When defining standards**: Read `.festival/templates/FESTIVAL_RULES_TEMPLATE.md`
+4. **When defining interfaces** (Phase 002): Read `.festival/templates/COMMON_INTERFACES_TEMPLATE.md`
+5. **When creating phase goals**: Read `.festival/templates/PHASE_GOAL_TEMPLATE.md`
+6. **When creating sequence goals**: Read `.festival/templates/SEQUENCE_GOAL_TEMPLATE.md`
+7. **When creating tasks**: Read `.festival/templates/TASK_TEMPLATE.md` or `TASK_TEMPLATE_SIMPLE.md`
+8. **When setting up tracking**: Read `.festival/templates/FESTIVAL_TODO_TEMPLATE.md`
+9. **When capturing decisions**: Read `.festival/templates/CONTEXT_TEMPLATE.md`
+
+### Execution Phase
+
+- **For quality review**: Read `.festival/agents/festival_review_agent.md` ONLY when review is needed
+- **For methodology enforcement**: Read `.festival/agents/festival_methodology_manager.md` ONLY during execution
+- **For examples**: Read files in `.festival/examples/` ONLY when you need concrete examples
+
+## ⚠️ Context Preservation Rules
+
+1. **Never read all templates at once** - Read each template only when creating that specific document
+2. **Don't re-read templates** - Once you understand a template's structure, don't read it again
+3. **Use examples sparingly** - Only read examples when stuck or need clarification
+4. **Preserve context for execution** - Save your context window for the actual work, not documentation
 
 ## Directory Structure
 
 ```
 festivals/                          # Your festival workspace
 ├── planned/                        # Festivals being planned
-├── active/                         # Currently executing festivals  
+├── active/                         # Currently executing festivals
 ├── completed/                      # Finished festivals
 ├── archived/                       # Deprioritized or cancelled work
-├── .festival/                      # Methodology resources (hidden)
+├── .festival/                      # Methodology resources (DO NOT READ ALL AT ONCE)
 └── README.md                       # This file - agent instructions
 ```
 
-## Agent Instructions
+## Verification Checkpoint
 
-### Step 1: Understand the Methodology
+Before proceeding with ANY festival work, confirm:
 
-**Read these files to understand Festival Methodology:**
+- [ ] I have executed `ls -la .festival/`
+- [ ] I have read `.festival/README.md`
+- [ ] I understand I should NOT read templates until needed
+- [ ] I will read each template ONLY when creating that specific document
 
-- `.festival/FESTIVAL_SOFTWARE_PROJECT_MANAGEMENT.md` - Core methodology documentation
-- `.festival/PROJECT_MANAGEMENT_SYSTEM.md` - Project tracking system explanation
+## Creating Your Festival - Step by Step
 
-### Step 2: Plan the Festival
+### Phase 1: Understanding (DO NOT READ TEMPLATES YET)
 
-**Read for festival planning:**
+- Discuss the project goals with the user
+- Understand scope and requirements
+- Identify complexity level
 
-- `.festival/README.md` - Implementation guide and agent usage
-- Use `.festival/agents/festival_planning_agent.md` for guided planning
+### Phase 2: Planning (READ PLANNING AGENT ONLY)
 
-### Step 3: Create Festival Structure
+- NOW read: `.festival/agents/festival_planning_agent.md`
+- Follow the agent's structured interview process
+- Create initial structure in `planned/[festival-name]/`
 
-**When ready to create documents, read templates:**
+### Phase 3: Document Creation (READ EACH TEMPLATE AS NEEDED)
 
-- `.festival/templates/FESTIVAL_OVERVIEW_TEMPLATE.md` - Project goals and success criteria
-- `.festival/templates/FESTIVAL_RULES_TEMPLATE.md` - Project standards
-- `.festival/templates/COMMON_INTERFACES_TEMPLATE.md` - Interface definition system
-- `.festival/templates/TASK_TEMPLATE.md` - Individual task structure
-- `.festival/templates/FESTIVAL_TODO_TEMPLATE.md` - Project tracking system
+For each document you need to create:
 
-**For reference during creation:**
+1. Identify which document you're creating
+2. READ the corresponding template ONLY NOW
+3. Create the document
+4. Move to next document
 
-- `.festival/examples/TASK_EXAMPLES.md` - Concrete task examples
-- `.festival/examples/FESTIVAL_TODO_EXAMPLE.md` - Project tracking example
+### Phase 4: Execution (READ AGENTS AS NEEDED)
 
-### Step 4: Execute and Manage
-
-**During festival execution:**
-
-- Use `.festival/agents/festival_review_agent.md` - Quality validation
-- Use `.festival/agents/festival_methodology_manager.md` - Process enforcement
-- Track progress using `TODO.md` based on `FESTIVAL_TODO_TEMPLATE.md`
+- Start work on tasks
+- READ review agent ONLY when quality check is needed
+- READ methodology manager ONLY if process questions arise
 
 ## Festival Organization
 
@@ -59,7 +118,7 @@ festivals/                          # Your festival workspace
 
 New festivals being designed. Create festival directories here during planning.
 
-### active/  
+### active/
 
 Festivals currently being executed. Move from `planned/` when execution begins.
 
@@ -71,22 +130,11 @@ Successfully finished festivals. Move from `active/` when all objectives achieve
 
 Cancelled, deprioritized, or paused work. Move here to keep workspace clean.
 
-## Quick Start for Agents
+## Remember: Preserve Context
 
-1. **Planning a Festival**: Read `.festival/FESTIVAL_SOFTWARE_PROJECT_MANAGEMENT.md` for methodology understanding
-2. **Creating Festival**: Use templates in `.festival/templates/` to create actual project documents  
-3. **Need Examples**: Reference files in `.festival/examples/` for concrete guidance
-4. **Quality Assurance**: Use agents in `.festival/agents/` for guidance and validation
-
-## Context Management
-
-**Read methodology files FIRST** to understand principles before reading templates. Only read templates when ready to create specific documents. This saves context and ensures proper understanding of the methodology before implementation.
-
-**Template Usage**: Copy template content as starting structure, then customize with actual project requirements. Do not re-read templates once you understand their structure.
-
-**Agent Workflow**: Use specialized agents (planning, review, manager) for guided assistance rather than reading all documentation every time.
+Your context window is precious. Reading all documentation upfront wastes context that should be used for actual work. Follow this README's instructions to read resources just-in-time.
 
 ---
 
-**For Agents**: This README.md provides the complete roadmap. Follow the step-by-step instructions and read only the referenced files needed for your current task. The `.festival/` directory contains all methodology resources organized for efficient context usage.
+**For Agents**: This README provides mandatory first steps and a just-in-time reading strategy. You MUST follow the verification steps at the top before any festival work. Read templates and examples ONLY when you need them, not before.
 

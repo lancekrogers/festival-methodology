@@ -2,6 +2,32 @@
 
 This directory contains all the resources needed to implement Festival Methodology in your projects. This guide helps you navigate and use these resources effectively.
 
+## 📚 Just-In-Time Reading Strategy
+
+**CRITICAL**: To preserve context window, follow these rules:
+
+### When to Read What
+
+| Resource | Read When |
+|----------|-----------|
+| This README | Immediately - provides navigation |
+| Core methodology docs | During initial understanding |
+| Templates | ONLY when creating that specific document |
+| Examples | ONLY when stuck or need clarification |
+| Agents | ONLY when using that specific agent |
+
+### Never Do This
+❌ Reading all templates upfront "to understand them"
+❌ Re-reading templates you've already used
+❌ Reading examples before trying yourself
+❌ Loading all agents at once
+
+### Always Do This
+✅ Read templates one at a time as needed
+✅ Read examples only when stuck
+✅ Keep templates closed after use
+✅ Focus context on actual work, not documentation
+
 ## Quick Navigation
 
 - **[Templates](#templates)** - Document templates for creating festivals

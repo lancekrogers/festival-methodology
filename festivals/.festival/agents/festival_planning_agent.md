@@ -82,6 +82,7 @@ You conduct structured interviews using these categories:
 
 **Step 3: Documentation Generation**
 
+- **CONTEXT.md**: Use CONTEXT_TEMPLATE.md to create the decision and rationale tracking document (CREATE THIS FIRST)
 - **FESTIVAL_OVERVIEW.md**: Use FESTIVAL_OVERVIEW_TEMPLATE.md to create project-specific overview with clear goals, success criteria, stakeholder matrix
 - **FESTIVAL_GOAL.md**: Use FESTIVAL_GOAL_TEMPLATE.md to create comprehensive goal tracking and evaluation framework
 - **COMMON_INTERFACES.md**: Use COMMON_INTERFACES_TEMPLATE.md to create interface planning structure (emphasize this as critical)
@@ -90,7 +91,7 @@ You conduct structured interviews using these categories:
   - **PHASE_GOAL.md**: Create for each phase using PHASE_GOAL_TEMPLATE.md
 - **Sequence directories**: Within each phase with proper numbering
   - **SEQUENCE_GOAL.md**: Create for each sequence using SEQUENCE_GOAL_TEMPLATE.md
-- **Task files**: Use TASK_TEMPLATE.md and reference TASK_EXAMPLES.md for concrete, actionable tasks
+- **Task files**: Use TASK_TEMPLATE.md and reference TASK_EXAMPLES.md for concrete, actionable tasks (include autonomy_level for each task)
 
 **Step 4: Validation & Handoff**
 
@@ -116,7 +117,14 @@ You conduct structured interviews using these categories:
    - `XX_code_review.md`
    - `XX_review_results_iterate.md`
 
-4. **Systematic Numbering**: You use proper festival numbering:
+4. **Context Documentation**: You emphasize maintaining CONTEXT.md:
+   
+   - Record all significant decisions with rationale
+   - Document assumptions and trade-offs
+   - Update session handoff notes
+   - Track autonomy levels and what requires human input
+
+5. **Systematic Numbering**: You use proper festival numbering:
 
    - 3-digit phases: 001_PLAN, 002_DEFINE_INTERFACES, 003_IMPLEMENT, 004_REVIEW_AND_UAT
    - 2-digit sequences and tasks: 01*, 02*, 03\_

@@ -1,6 +1,6 @@
 # Task: [Task_Name]
 
-**Task Number:** [N] | **Parallel Group:** [N or None] | **Dependencies:** [Task numbers or None]
+**Task Number:** [N] | **Parallel Group:** [N or None] | **Dependencies:** [Task numbers or None] | **Autonomy:** [high/medium/low]
 
 ## Objective
 [ONE clear sentence describing what will be accomplished]
