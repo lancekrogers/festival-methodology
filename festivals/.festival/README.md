@@ -2,27 +2,27 @@
 
 This directory contains all the resources needed to implement Festival Methodology in your projects. This guide helps you navigate and use these resources effectively.
 
-## 📚 Just-In-Time Reading Strategy
+## 📚 Step-Based Reading Strategy
 
-**CRITICAL**: To preserve context window, follow these rules:
+**CRITICAL**: To preserve context window and focus on goal progression, follow these rules:
 
 ### When to Read What
 
-| Resource | Read When |
-|----------|-----------|
-| This README | Immediately - provides navigation |
-| Core methodology docs | During initial understanding |
-| Templates | ONLY when creating that specific document |
-| Examples | ONLY when stuck or need clarification |
-| Agents | ONLY when using that specific agent |
+| Resource              | Read When                                 |
+| --------------------- | ----------------------------------------- |
+| This README           | Immediately - provides navigation         |
+| Core methodology docs | During initial understanding              |
+| Templates             | ONLY when creating that specific document |
+| Examples              | ONLY when stuck or need clarification     |
+| Agents                | ONLY when using that specific agent       |
 
 ### Never Do This
+
 ❌ Reading all templates upfront "to understand them"
-❌ Re-reading templates you've already used
-❌ Reading examples before trying yourself
 ❌ Loading all agents at once
 
 ### Always Do This
+
 ✅ Read templates one at a time as needed
 ✅ Read examples only when stuck
 ✅ Keep templates closed after use
@@ -30,12 +30,157 @@ This directory contains all the resources needed to implement Festival Methodolo
 
 ## Quick Navigation
 
+- **[Phase Adaptability](#phase-adaptability)** - How to customize phases for your project needs
 - **[Templates](#templates)** - Document templates for creating festivals
 - **[Agents](#ai-agents)** - Specialized AI agents for festival workflow
 - **[Examples](#examples)** - Concrete examples and patterns
 - **[Core Documentation](#core-documentation)** - Methodology principles and theory
 
-## Goal Files - New!
+## Phase Adaptability
+
+**CRITICAL**: Festival phases are guidelines, not rigid requirements. Adapt the structure to match your actual work needs.
+
+## Requirements-Driven Implementation
+
+**MOST CRITICAL**: Implementation sequences can ONLY be created after requirements are defined. This is the core principle of Festival Methodology.
+
+### When Implementation Sequences Can Be Created
+
+✅ **Create implementation sequences when:**
+
+- Human provides specific requirements or specifications
+- Planning phase has been completed with deliverables
+- External planning documents define what to build
+- Human explicitly requests implementation of specific functionality
+
+❌ **NEVER create implementation sequences when:**
+
+- No requirements have been provided
+- Planning phase hasn't been completed
+- Guessing what might need to be implemented
+- Making assumptions about functionality
+
+### The Human-AI Collaboration Model
+
+**Human provides:**
+
+- Project goals and vision
+- Requirements and specifications
+- Architectural decisions
+- Feedback and iteration guidance
+
+**AI agent creates:**
+
+- Structured sequences from requirements
+- Detailed task specifications
+- Implementation plans
+- Progress tracking and documentation
+
+### Standard 4-Phase Pattern (Use When Appropriate)
+
+```
+001_PLAN → 002_DEFINE_INTERFACES → 003_IMPLEMENT → 004_REVIEW_AND_UAT
+```
+
+**Use this when:** Starting from scratch with full planning needed.
+
+### Common Adaptations
+
+**Already Planned Projects:**
+
+```
+001_DEFINE_INTERFACES → 002_IMPLEMENT → 003_REVIEW_AND_UAT
+```
+
+Skip planning if requirements are already clear.
+
+**Iterative Development:**
+
+```
+001_IMPLEMENT_CORE → 002_IMPLEMENT_FEATURES → 003_IMPLEMENT_POLISH → 004_FINAL_REVIEW
+```
+
+Multiple implementation phases for complex builds.
+
+**Research-Heavy Projects:**
+
+```
+001_RESEARCH → 002_PROTOTYPE → 003_PLAN → 004_IMPLEMENT → 005_VALIDATE
+```
+
+Add phases for exploration and validation.
+
+**Bug Fix or Enhancement:**
+
+```
+001_ANALYZE → 002_IMPLEMENT → 003_TEST_AND_VERIFY
+```
+
+Minimal phases for focused work.
+
+### Phase Design Guidelines
+
+**Good Phase:**
+
+- Represents a distinct step toward goal achievement
+- Has clear entry/exit criteria (step completion requirements)
+- Contains 2-4 related sequences that build toward phase goal
+- Represents significant progress toward overall goal
+
+**Bad Phase:**
+
+- Single sequence with one task
+- Arbitrary grouping
+- No clear boundaries
+- Duplicates other phase work
+
+### Sequence vs Task Decision
+
+**Create a Sequence When:**
+
+- You have 3+ related tasks
+- Tasks must be done in order
+- Tasks share common setup/teardown
+- Work forms a logical unit
+
+**Make it a Single Task When:**
+
+- Work is atomic and self-contained
+- No clear subtasks
+- Can be completed in one session
+- Doesn't benefit from breakdown
+
+### Standard Quality Gates
+
+**EVERY implementation sequence should end with these tasks:**
+
+```
+XX_implementation_tasks.md
+XX_testing_and_verify.md
+XX_code_review.md
+XX_review_results_iterate.md
+```
+
+**Example Implementation Sequence:**
+
+```
+01_backend_api/
+├── 01_create_user_endpoints.md
+├── 02_add_authentication.md
+├── 03_implement_validation.md
+├── 04_testing_and_verify.md     ← Standard quality gate
+├── 05_code_review.md            ← Standard quality gate
+└── 06_review_results_iterate.md ← Standard quality gate
+```
+
+These quality gates ensure:
+
+- Functionality works as specified
+- Code meets project standards
+- Issues are identified and resolved
+- Knowledge is transferred through review
+
+## Goal Files - New
 
 Goal files provide clear objectives and evaluation criteria at every level of the festival hierarchy. They ensure each phase and sequence has a specific goal to work towards and can be evaluated upon completion.
 
@@ -56,12 +201,14 @@ festival/
 ### Goal Templates
 
 1. **FESTIVAL_GOAL_TEMPLATE.md**
+
    - Comprehensive festival-level goals
    - Success criteria across all dimensions
    - KPIs and stakeholder metrics
    - Post-festival evaluation framework
 
 2. **PHASE_GOAL_TEMPLATE.md**
+
    - Phase-specific objectives
    - Contribution to festival goal
    - Phase evaluation criteria
@@ -75,18 +222,21 @@ festival/
 
 ### Using Goal Files
 
-**At Planning Time:**
-1. Create FESTIVAL_GOAL.md from template
-2. Create PHASE_GOAL.md for each phase
-3. Create SEQUENCE_GOAL.md for each sequence
-4. Ensure alignment: Sequence goals → Phase goals → Festival goal
+**When Planning Goal Progression:**
+
+1. Create FESTIVAL_GOAL.md from template (overall goal achievement criteria)
+2. Create PHASE_GOAL.md for each phase (step toward festival goal)
+3. Create SEQUENCE_GOAL.md for each sequence (step toward phase goal)
+4. Ensure alignment: Sequence goals → Phase goals → Festival goal achievement
 
 **During Execution:**
+
 - Track progress against goal metrics
 - Update completion status
 - Identify risks to goal achievement
 
 **At Completion:**
+
 - Evaluate goal achievement
 - Document lessons learned
 - Capture recommendations
@@ -99,50 +249,57 @@ Templates provide standardized structures for festival documentation. Each templ
 ### Essential Templates
 
 1. **FESTIVAL_OVERVIEW_TEMPLATE.md**
+
    - Define project goals and success criteria
    - Create stakeholder matrix
    - Document problem statement
-   - *Use this first when starting a new festival*
+   - _Use this first when starting a new festival_
 
-2. **COMMON_INTERFACES_TEMPLATE.md** 
+2. **COMMON_INTERFACES_TEMPLATE.md**
+
    - Define all system interfaces before implementation
    - Protocol-agnostic interface definitions
    - Enables parallel development
-   - *Critical for Phase 002_DEFINE_INTERFACES*
+   - _Critical for Phase 002_DEFINE_INTERFACES_
 
 3. **FESTIVAL_RULES_TEMPLATE.md**
+
    - Project-specific standards and guidelines
    - Quality gates and compliance requirements
    - Team agreements and conventions
-   - *Customize for your project's needs*
+   - _Customize for your project's needs_
 
 4. **TASK_TEMPLATE.md**
+
    - Comprehensive task structure (full version)
    - Detailed implementation steps
    - Testing and verification sections
-   - *Use for complex or critical tasks*
+   - _Use for complex or critical tasks_
 
 5. **FESTIVAL_TODO_TEMPLATE.md** (Markdown)
+
    - Human-readable progress tracking
    - Checkbox-based task management
    - Visual project status
-   - *Use for manual tracking and documentation*
+   - _Use for manual tracking and documentation_
 
 6. **FESTIVAL_TODO_TEMPLATE.yaml** (YAML)
    - Machine-readable progress tracking
    - Structured data for automation
    - CI/CD integration ready
-   - *Use for automated tooling and reporting*
+   - _Use for automated tooling and reporting_
 
 ### When to Use Each Format
 
 **Use Markdown (.md) when:**
+
 - Working directly with AI agents
 - Manual progress tracking
 - Creating documentation
 - Sharing with stakeholders
 
 **Use YAML (.yaml) when:**
+
 - Integrating with CI/CD pipelines
 - Building automation tools
 - Generating reports programmatically
@@ -155,22 +312,24 @@ Specialized agents help maintain methodology consistency and guide festival exec
 ### Available Agents
 
 1. **festival_planning_agent.md**
+
    - Conducts structured project interviews
    - Creates complete festival structures
    - Ensures proper three-level hierarchy
-   - *Trigger: Starting a new project or festival*
+   - _Trigger: Starting a new project or festival_
 
 2. **festival_review_agent.md**
+
    - Validates festival structure compliance
    - Reviews quality gates
    - Ensures methodology adherence
-   - *Trigger: Before moving phases or major milestones*
+   - _Trigger: Before moving phases or major milestones_
 
 3. **festival_methodology_manager.md**
    - Enforces methodology during execution
    - Prevents process drift
    - Provides ongoing governance
-   - *Trigger: During active development*
+   - _Trigger: During active development_
 
 ### Using Agents with Claude Code
 
@@ -196,6 +355,7 @@ Learn from concrete implementations and proven patterns.
 ### Available Examples
 
 1. **TASK_EXAMPLES.md**
+
    - 15+ real task examples
    - Covers different domains (database, API, frontend, DevOps)
    - Shows good vs bad patterns
@@ -210,6 +370,7 @@ Learn from concrete implementations and proven patterns.
 ### Common Patterns
 
 **Pattern 1: Interface-First Development**
+
 ```
 Phase 001: Define requirements
 Phase 002: Define ALL interfaces ← Critical
@@ -218,14 +379,16 @@ Phase 004: Integration and testing
 ```
 
 **Pattern 2: Quality Gates**
+
 ```
 Every sequence ends with:
 - XX_testing_and_verify
-- XX_code_review  
+- XX_code_review
 - XX_review_results_iterate
 ```
 
 **Pattern 3: Parallel Task Execution**
+
 ```
 Tasks with same number can run in parallel:
 - 01_frontend_setup.md
@@ -240,35 +403,39 @@ Understanding the methodology principles and theory.
 ### Essential Reading Order
 
 1. **FESTIVAL_SOFTWARE_PROJECT_MANAGEMENT.md**
+
    - Core methodology principles
    - Three-level hierarchy explanation
    - Interface-first development rationale
-   - *Read this first to understand the "why"*
+   - _Read this first to understand the "why"_
 
 2. **PROJECT_MANAGEMENT_SYSTEM.md**
    - Markdown/YAML tracking system
    - Progress calculation methods
    - Automation opportunities
-   - *Read this to understand tracking mechanics*
+   - _Read this to understand tracking mechanics_
 
 ## Creating Your First Festival
 
 ### Quick Start Process
 
 1. **Understand the Goal**
+
    ```
    Read: FESTIVAL_SOFTWARE_PROJECT_MANAGEMENT.md (core principles)
-   Time: 10 minutes
+   Step: Learn step-based goal achievement approach
    ```
 
 2. **Plan the Festival**
+
    ```
    Use: festival_planning_agent.md
-   Creates: Initial festival structure
-   Time: 20-30 minutes
+   Creates: Initial festival structure based on goal requirements
+   Step: Define logical progression toward goal
    ```
 
 3. **Create Core Documents**
+
    ```
    Templates needed:
    - FESTIVAL_OVERVIEW_TEMPLATE.md → FESTIVAL_OVERVIEW.md
@@ -277,6 +444,7 @@ Understanding the methodology principles and theory.
    ```
 
 4. **Structure Phases**
+
    ```
    Standard phases:
    - 001_PLAN
@@ -286,12 +454,14 @@ Understanding the methodology principles and theory.
    ```
 
 5. **Create Tasks**
+
    ```
    Use: TASK_TEMPLATE.md
    Reference: TASK_EXAMPLES.md
    ```
 
 6. **Track Progress**
+
    ```
    Create: TODO.md from FESTIVAL_TODO_TEMPLATE.md
    Update: As tasks complete
@@ -304,10 +474,12 @@ Understanding the methodology principles and theory.
 All templates are starting points. Customize them by:
 
 1. **Removing irrelevant sections**
+
    - Not every project needs every section
    - Keep what adds value
 
 2. **Adding project-specific sections**
+
    - Add sections for your domain
    - Include compliance requirements
    - Add team-specific needs
@@ -326,12 +498,13 @@ Templates include YAML frontmatter for tooling:
 id: TEMPLATE_NAME
 aliases: [alternative, names]
 tags: []
-created: 'YYYY-MM-DD'
-modified: 'YYYY-MM-DD'
+created: "YYYY-MM-DD"
+modified: "YYYY-MM-DD"
 ---
 ```
 
 This metadata:
+
 - Enables search and indexing
 - Supports knowledge management tools
 - Provides version tracking
@@ -340,6 +513,7 @@ This metadata:
 ## Best Practices
 
 ### Do's
+
 - ✅ Start with planning agent for new festivals
 - ✅ Define interfaces before implementation
 - ✅ Include quality gates in every sequence
@@ -347,6 +521,7 @@ This metadata:
 - ✅ Customize templates to fit your project
 
 ### Don'ts
+
 - ❌ Skip Phase 002 (Interface Definition)
 - ❌ Start coding before planning is complete
 - ❌ Ignore quality verification tasks
@@ -358,24 +533,29 @@ This metadata:
 ### Common Issues and Solutions
 
 **Issue: Festival structure too complex**
+
 - Solution: Start with fewer sequences per phase
 - Expand as you understand the project better
 
 **Issue: Tasks too abstract**
+
 - Solution: Reference TASK_EXAMPLES.md
 - Make tasks concrete with specific deliverables
 
 **Issue: Losing methodology compliance**
+
 - Solution: Engage festival_methodology_manager.md
 - Regular reviews with festival_review_agent.md
 
 **Issue: Unclear interfaces**
-- Solution: Spend more time on Phase 002
+
+- Solution: Focus more effort on Phase 002 interface definition step
 - Use COMMON_INTERFACES_TEMPLATE.md thoroughly
 
 ## Integration with Development Workflow
 
 ### With Version Control
+
 ```bash
 your-project/
 ├── .git/
@@ -387,12 +567,14 @@ your-project/
 ```
 
 ### With CI/CD
+
 - Parse YAML TODO files for progress metrics
 - Generate dashboards from festival status
 - Automate phase transitions based on completion
 - Validate task completion criteria
 
 ### With Project Management Tools
+
 - Export TODO.md to JIRA/Linear/etc.
 - Generate Gantt charts from task dependencies
 - Calculate velocity from completion rates
@@ -410,3 +592,4 @@ This directory contains everything needed to implement Festival Methodology succ
 Remember: Festival Methodology is a framework, not a prescription. Adapt it to your needs while maintaining the core principles of interface-first development and three-level hierarchy.
 
 For questions or contributions, see the main [CONTRIBUTING.md](../../CONTRIBUTING.md) file.
+

@@ -8,42 +8,145 @@ tags: []
 
 ## Overview
 
-Festival methodology is a goal-oriented, flexible planning approach that
-prioritizes concrete objectives over process overhead. Unlike traditional agile
-methodologies, festivals focus on achieving specific goals rather than adhering
-to rigid ceremonies and timeboxes.
+Festival methodology is a **collaborative, step-oriented planning approach** between humans and AI agents that enables goal achievement through systematic progression. Unlike traditional project management, festivals focus on identifying and completing the logical steps needed to achieve goals, leveraging unprecedented AI-human efficiency that makes traditional time estimates obsolete.
 
 ## Core Principles
 
-1. **Goal-First Planning**: Every festival starts with a clear, high-level
-   objective
-2. **Concrete Requirements**: Goals are broken down into tangible, achievable
-   requirements
-3. **Flexible Timeframes**: No artificial sprints or deadlines - festivals
-   complete when the goal is achieved
-4. **Single Initial Planner**: One person with deep understanding plans the
-   festival initially, acting as a benevolent dictator to ensure coherent vision
-   and avoid design-by-committee
-5. **Adaptive Execution**: New requirements can be added as discovered during
-   development
-6. **Sequential Dependencies**: Work is organized in numbered sequences that
-   must complete in order
-7. **Parallel Work Within Sequences**: Tasks within each sequence can be
-   distributed across the team
-8. **Mandatory Verification**: Every sequence includes testing, code review, and
-   results iteration tasks
-9. **Numbered Task Execution**: Tasks and sequences use number prefixes to
-   indicate execution order
+1. **Goal-Oriented Step Planning**: Think in terms of steps needed to achieve goals, not time estimates or schedules
+2. **Human-AI Collaborative Planning**: Humans provide goals and requirements, AI agents identify and structure the logical steps needed
+3. **Requirements-Driven Implementation**: Implementation sequences can ONLY be created after requirements are defined - either through planning phases or external documentation
+4. **Just-in-Time Sequence Creation**: Implementation work is added one step at a time as requirements become clear, based on logical progression
+5. **Hyper-Efficient AI Execution**: AI-human collaboration works at unprecedented speeds, making traditional time estimates meaningless
+6. **Step-Based Progression**: Work is organized as logical steps (phases → sequences → tasks) that build toward goal achievement
+7. **Context Preservation**: All decisions and rationale captured in CONTEXT.md to maintain continuity across sessions
+8. **Quality Gates**: Every implementation sequence includes verification steps to ensure goal progression
+9. **Extensible Methodology**: Extensions available for specialized needs like multi-system coordination
+
+## Step-Based vs Time-Based Thinking
+
+**FUNDAMENTAL PRINCIPLE**: Festival Methodology thinks in **STEPS TO GOALS**, not time estimates.
+
+### Why Steps, Not Time?
+
+Traditional project management focuses on:
+- Time estimates and schedules
+- Duration-based planning
+- Timeline management
+- Resource allocation over time
+
+Festival Methodology focuses on:
+- **Logical steps toward goal achievement**
+- **Completion criteria for each step**
+- **Dependencies between steps**
+- **Parallel step opportunities**
+
+### The Efficiency Reality
+
+AI-human collaboration operates at unprecedented efficiency levels that make traditional time estimates obsolete. Instead of asking "How long will this take?", Festival Methodology asks:
+
+- "What steps are needed to achieve this goal?"
+- "What's the logical order for these steps?"
+- "What can be done in parallel?"
+- "How do we know each step is complete?"
+- "What's the next step after this one completes?"
+
+## Collaborative Workflow
+
+**CRITICAL UNDERSTANDING**: Festival Methodology is NOT about AI agents pre-planning entire projects. It's about **human-AI collaboration** where:
+
+### Human Responsibilities
+- Provide project goals and requirements
+- Define success criteria and constraints
+- Make architectural and design decisions
+- Review and approve AI-generated sequences
+- Guide iteration and adaptation
+
+### AI Agent Responsibilities  
+- Identify logical steps needed to achieve goals
+- Structure requirements into executable step sequences
+- Create detailed task specifications with completion criteria
+- Execute implementation steps autonomously at unprecedented speed
+- Document decisions and progress toward goal achievement
+- Request clarification when requirements are unclear
+
+### The Planning-Implementation Boundary
+
+**Planning Steps (Optional):**
+- May be completed before festival creation
+- May be first step in festival progression
+- May be provided as external documentation
+- Results in clear requirements for implementation steps
+
+**Implementation Steps:**
+- Can ONLY be created after requirements are defined
+- Are added one logical step at a time based on requirements
+- Follow goal progression logic, not time schedules
+- Emerge from human-provided specifications and goal definitions
 
 ## Festival Structure
 
-The festival directory structure introduces **phases** as a NEW organizational layer above the existing sequences and tasks structure. Phases group related sequences together logically. The standard four-phase structure is recommended, but phases can be customized, repeated, or reordered based on project needs.
+The festival directory structure introduces **phases** as a NEW organizational layer above the existing sequences and tasks structure. Phases group related sequences together logically. 
+
+**CRITICAL**: The 3-phase structure handles most goal achievement scenarios. Adapt phases to match the logical steps needed for YOUR goal:
+
+- **Skip phases** if steps are already completed elsewhere (e.g., planning completed outside festival)
+- **Add phases** for complex goals requiring multiple implementation steps
+- **Reorder phases** based on logical dependencies toward goal achievement
+- **Rename phases** to match your goal progression (e.g., 001_RESEARCH, 002_PROTOTYPE)
+- **Combine phases** for simple goals with fewer required steps
+- **Extend phases** for complex multi-step goal achievement
+
+The methodology structures steps toward YOUR goal, not arbitrary project phases.
 
 **Three-Level Hierarchy**: Phases → Sequences → Tasks
 
 - **Phases** (NEW): Top-level organization grouping related work (3-digit numbering: 001_, 002_, 003_)
 - **Sequences** (EXISTING): Work that must happen in order within a phase (2-digit numbering: 01_, 02_)
 - **Tasks** (EXISTING): Individual work items within sequences (2-digit numbering: 01_, 02_)
+
+### Sequence Creation Guidelines
+
+**WHEN TO CREATE SEQUENCES:**
+
+✅ **Create sequences when:**
+- Human provides specific requirements or specifications
+- Planning phase has been completed with clear deliverables
+- External planning documents define what needs to be built
+- Human explicitly asks for implementation of specific functionality
+
+❌ **DO NOT create sequences when:**
+- No requirements have been provided
+- Planning phase hasn't been completed
+- Guessing what might need to be implemented
+- Making assumptions about user needs
+
+### Sequence Design Guidelines
+
+**Good Sequences** contain 3-6 related tasks that:
+- Build on each other logically
+- Share common setup or dependencies  
+- Form a cohesive unit of work (e.g., "user authentication", "API endpoints")
+- Can be assigned to one person/agent for focused work
+- Are derived from specific requirements or specifications
+
+**Avoid These Sequence Anti-Patterns:**
+- Single task per sequence (make it a standalone task instead)
+- Unrelated tasks grouped arbitrarily
+- Sequences with >8 tasks (break into multiple sequences)
+- Mixing different work types (frontend + backend + DevOps in same sequence)
+- **Creating sequences without requirements** (the biggest anti-pattern)
+
+**Example Good Sequence:**
+```
+01_user_authentication/
+├── 01_create_user_model.md
+├── 02_add_password_hashing.md
+├── 03_implement_login_endpoint.md
+├── 04_add_jwt_tokens.md
+├── 05_testing_and_verify.md       ← Standard quality gate
+├── 06_code_review.md              ← Standard quality gate
+└── 07_review_results_iterate.md   ← Standard quality gate
+```
 
 Here's the recommended structure:
 
@@ -54,7 +157,6 @@ festivals/
 ├── archived/                   # Optional: Deprioritized festivals (backlog)
 └── festival_<id>/
     ├── FESTIVAL_OVERVIEW.md    # High-level goal, systems, and features overview
-    ├── COMMON_INTERFACES.md    # Master interface definitions (updated throughout phases)
     ├── FESTIVAL_RULES.md       # Rules and principles to follow throughout the festival
     ├── 001_PLAN/               # PHASE: Requirements and Planning
     │   ├── docs/              # Phase-specific documentation
@@ -75,39 +177,12 @@ festivals/
     │   │   ├── 05_review_results_update_tasks_iterate_if_needed.md  # TASK
     │   │   └── results/                        # Sequence results
     │   └── completed/                          # Completed sequences in this phase
-    ├── 002_DEFINE_INTERFACES/  # PHASE: Interface Definition and Finalization
-    │   ├── docs/                               # Phase-specific documentation
-    │   ├── 01_identify_interfaces/             # SEQUENCE: Interface discovery
-    │   │   ├── 01_api_inventory.md             # TASK
-    │   │   ├── 01_data_flow_analysis.md        # TASK (parallel with above)
-    │   │   ├── 02_interface_mapping.md         # TASK (after 01_ tasks)
-    │   │   ├── 03_testing_and_verify.md        # TASK
-    │   │   ├── 04_code_review.md               # TASK
-    │   │   ├── 05_review_results_update_tasks_iterate_if_needed.md  # TASK
-    │   │   └── results/                        # Sequence results
-    │   ├── 02_define_contracts/                # SEQUENCE: Contract definition
-    │   │   ├── 01_api_specifications.md        # TASK
-    │   │   ├── 01_data_schemas.md              # TASK (parallel with above)
-    │   │   ├── 01_component_interfaces.md      # TASK (parallel with above)
-    │   │   ├── 02_validation_rules.md          # TASK (after 01_ tasks)
-    │   │   ├── 03_testing_and_verify.md        # TASK
-    │   │   ├── 04_code_review.md               # TASK
-    │   │   ├── 05_review_results_update_tasks_iterate_if_needed.md  # TASK
-    │   │   └── results/                        # Sequence results
-    │   ├── 03_finalize_interfaces/             # SEQUENCE: Interface finalization
-    │   │   ├── 01_stakeholder_review.md        # TASK
-    │   │   ├── 02_interface_approval.md        # TASK (after 01_ task)
-    │   │   ├── 03_testing_and_verify.md        # TASK
-    │   │   ├── 04_code_review.md               # TASK
-    │   │   ├── 05_review_results_update_tasks_iterate_if_needed.md  # TASK
-    │   │   └── results/                        # Sequence results
-    │   └── completed/                          # Completed sequences in this phase
-    ├── 003_IMPLEMENT/          # PHASE: Implementation
+    ├── 002_IMPLEMENT/          # PHASE: Implementation
     │   ├── docs/                               # Phase-specific documentation
     │   ├── 01_backend_foundation/              # SEQUENCE: Backend implementation
     │   │   ├── 01_database_setup.md            # TASK (parallel tasks have same number)
     │   │   ├── 01_api_endpoints.md             # TASK (can work simultaneously)
-    │   │   ├── 01_auth_middleware.md           # TASK (based on finalized interfaces)
+    │   │   ├── 01_auth_middleware.md           # TASK
     │   │   ├── 02_integration_layer.md         # TASK (must complete after 01_* tasks)
     │   │   ├── 03_automated_testing.md         # TASK (automated testing and verification)
     │   │   ├── 04_code_review.md               # TASK
@@ -129,7 +204,7 @@ festivals/
     │   │   ├── 05_review_results_update_tasks_iterate_if_needed.md  # TASK
     │   │   └── results/                        # Sequence results
     │   └── completed/                          # Completed sequences in this phase
-    ├── 004_REVIEW_AND_UAT/     # PHASE: User Review and UAT
+    ├── 003_REVIEW_AND_UAT/     # PHASE: User Review and UAT
     │   ├── docs/                               # Phase-specific documentation
     │   ├── 01_user_acceptance_testing/         # SEQUENCE: User acceptance testing
     │   │   ├── 01_uat_planning.md              # TASK
@@ -175,27 +250,28 @@ Start with a clear, concrete objective. This should be outcome-focused, not acti
 - **Systems**: Major components or areas of work
 - **Features**: Specific functionality within systems
 
-### 3. Define Common Interfaces
+### 3. Plan Implementation Approach
 
-**This is the most critical step for enabling parallel development and reducing iterations.**
+**Define how implementation work will be organized and executed.**
 
-Before any implementation begins:
+For most projects:
 
-1. **Identify All System Interfaces**: APIs, database schemas, service contracts, component props, function signatures, event structures, etc.
-2. **Document Interface Specifications**: Create detailed interface definitions with:
-   - Input/output parameters and types
+1. **Define Implementation Approach**: Identify the components and systems that need to be built
+2. **Plan Implementation Structure**: Organize implementation work into logical sequences:
+   - System components and their responsibilities
    - Expected behavior and constraints
-   - Error handling specifications
-   - Example usage scenarios
-3. **Review and Iterate**: Have stakeholders and technical leads review all interfaces
-4. **Finalize Interfaces**: Mark interfaces as finalized before beginning implementation sequences
+   - Error handling approaches
+   - Integration patterns
+3. **Review and Iterate**: Have stakeholders and technical leads review the implementation plan
 
-**Benefits of Interface-First Approach:**
+**For Multi-System Projects**: Consider the [Interface Planning Extension](extensions/interface-planning/) to add formal interface definition phases when system coordination is critical.
 
-- Enables true parallel development across teams and agents
-- Reduces integration issues and rework
-- Provides clear contracts for all system boundaries
-- Allows accurate festival planning with minimal iterations
+**Benefits of Clear Implementation Planning:**
+
+- Enables organized development across teams and agents
+- Reduces confusion and rework through clear structure
+- Provides clear understanding of system components
+- Allows systematic festival execution with minimal iterations
 
 ### 4. Create FESTIVAL_OVERVIEW.md
 
@@ -217,7 +293,7 @@ Establish the principles and quality standards that all workers must follow thro
 
 ### 6. Organize Work into Flexible Phases
 
-**Phases are a NEW organizational layer above the existing sequences and tasks structure.** They group related sequences together logically. The standard four-phase structure is recommended, but phases can be customized, repeated, or reordered based on project needs.
+**Phases are a NEW organizational layer above the existing sequences and tasks structure.** They group related sequences together logically. The 3-phase structure handles most development scenarios, but phases can be customized, repeated, or reordered based on project needs.
 
 **Understanding the Three-Level Hierarchy:**
 
@@ -225,37 +301,40 @@ Establish the principles and quality standards that all workers must follow thro
 - **Sequences** (EXISTING CONCEPT): Work that must happen in order within a phase (use 2-digit numbering: 01_, 02_)
 - **Tasks** (EXISTING CONCEPT): Individual work items within sequences (use 2-digit numbering: 01_, 02_)
 
-#### Standard Four-Phase Structure
+#### Standard 3-Phase Structure
 
 #### Phase 001: Plan (001_PLAN/)
 
 **Purpose**: Requirements gathering, analysis, and architectural planning
 **Contains sequences for**: Requirements gathering, stakeholder interviews, user research, system architecture design, technology selection, feasibility studies, risk assessment
 
-#### Phase 002: Define Interfaces (002_DEFINE_INTERFACES/)
+#### Phase 002: Implement (002_IMPLEMENT/)
 
-**Purpose**: Interface definition and finalization - **most critical for parallel development**
-**Contains sequences for**: Interface identification, API contracts definition, data schema creation, component interface specification, stakeholder review, interface finalization
-
-#### Phase 003: Implement (003_IMPLEMENT/)
-
-**Purpose**: All implementation work based on finalized interfaces
+**Purpose**: All implementation work to achieve the goal
 **Contains sequences for**: Backend development, frontend implementation, automated testing, integration testing, code review, quality assurance
 
-#### Phase 004: Review & UAT (004_REVIEW_AND_UAT/)
+#### Phase 003: Review & UAT (003_REVIEW_AND_UAT/)
 
 **Purpose**: User-focused validation and business acceptance - **human validation separate from automated testing**
 **Contains sequences for**: User acceptance testing, stakeholder review, business sign-off, documentation validation, training material validation, deployment readiness
 
+#### Extensions for Specialized Needs
+
+For projects requiring system coordination, use the [Interface Planning Extension](extensions/interface-planning/) which adds interface definition phases. See the [Extensions Guide](extensions/) for other specialized workflow patterns.
+
 #### Flexible Phase Organization
+
+**Base 3-Phase Pattern**: `001_PLAN → 002_IMPLEMENT → 003_REVIEW_AND_UAT`
 
 Phases can be customized for different project types:
 
-**Iterative Development**: `001_PLAN → 002_DEFINE_INTERFACES → 003_IMPLEMENT → 004_REVIEW_AND_UAT → 005_PLAN → 006_IMPLEMENT → 007_REVIEW_AND_UAT`
+**Iterative Development**: `001_PLAN → 002_IMPLEMENT → 003_REVIEW_AND_UAT → 004_PLAN → 005_IMPLEMENT → 006_REVIEW_AND_UAT`
 
-**Implementation Focus**: `001_PLAN → 002_DEFINE_INTERFACES → 003_IMPLEMENT → 004_REVIEW_AND_UAT → 005_IMPLEMENT → 006_REVIEW_AND_UAT`
+**Implementation Focus**: `001_PLAN → 002_IMPLEMENT → 003_REVIEW_AND_UAT → 004_IMPLEMENT → 005_REVIEW_AND_UAT`
 
-**Research Heavy**: `001_PLAN → 002_RESEARCH → 003_DEFINE_INTERFACES → 004_PROTOTYPE → 005_REVIEW_AND_UAT → 006_IMPLEMENT`
+**Research Heavy**: `001_RESEARCH → 002_PROTOTYPE → 003_PLAN → 004_IMPLEMENT → 005_REVIEW_AND_UAT`
+
+**Multi-System Projects**: Use the [Interface Planning Extension](extensions/interface-planning/) to add interface definition phases when system coordination is needed.
 
 **Custom Phases**: Add specialized phases like `005_SECURITY_AUDIT/`, `006_PERFORMANCE_OPTIMIZATION/`, or `007_MIGRATION/` as needed
 
@@ -287,11 +366,11 @@ The three-phase structure provides significant advantages:
 **Clear Separation of Concerns**: Each phase has a distinct purpose and deliverable
 
 - Phase 1 (Plan): Complete understanding of requirements and architecture
-- Phase 2 (Define Interfaces): Finalized contracts enabling parallel development
-- Phase 3 (Implement): Systematic implementation based on solid foundations
+- Phase 2 (Implement): Systematic implementation based on solid foundations
+- Phase 3 (Review & UAT): User validation and goal completion verification
 
-**Reduced Risk**: Issues are caught early in planning and interface definition phases
-**Parallel Development**: Once interfaces are locked, teams can work simultaneously
+**Reduced Risk**: Issues are caught early in planning phases
+**Organized Development**: Clear implementation structure enables efficient execution
 **Better Communication**: Clear phase boundaries help stakeholders understand progress
 **Quality Built-In**: Each phase includes verification and iteration cycles
 
@@ -379,10 +458,10 @@ festivals/
     │   │   ├── 04_code_review.md                 # TASK
     │   │   ├── 05_review_results_update_tasks_iterate_if_needed.md  # TASK
     │   │   └── results/                          # Sequence results
-    │   ├── 03_component_interfaces/      # SEQUENCE: Component interface definition
+    │   ├── 03_frontend_implementation/   # SEQUENCE: Frontend implementation
     │   │   ├── 01_registration_components.md     # TASK
-    │   │   ├── 01_verification_ui_props.md       # TASK (parallel)
-    │   │   ├── 02_state_management_contracts.md  # TASK (after 01_ tasks)
+    │   │   ├── 01_verification_ui_components.md  # TASK (parallel)
+    │   │   ├── 02_state_management_setup.md      # TASK (after 01_ tasks)
     │   │   ├── 03_testing_and_verify.md          # TASK
     │   │   ├── 04_code_review.md                 # TASK
     │   │   ├── 05_review_results_update_tasks_iterate_if_needed.md  # TASK
