@@ -1,6 +1,8 @@
 # Sequence Design Guide
 
-This guide helps you create effective sequences that group related tasks into logical units of work. **CRITICAL**: Sequences can only be created AFTER requirements are defined. This guide assumes you have specific requirements to structure into executable work.
+This guide helps you create effective sequences that group related tasks into logical units of work.
+
+**CRITICAL**: Sequences are primarily for IMPLEMENTATION phases where AI agents need structured work. Planning phases often just contain documents and don't need sequences unless deep planning is required.
 
 ## When to Create Sequences
 
@@ -272,24 +274,25 @@ Before creating a sequence, verify:
 ## Integration with Festival Structure
 
 ### Within Phases
-Sequences should align with phase objectives:
+### Sequences by Phase Type
 
-**001_PLAN Phase:**
-- 01_requirements_gathering/
-- 02_system_architecture/
-- 03_risk_assessment/
+**Planning/Research Phases (Often Unstructured):**
+- May just contain documents and findings
+- Add sequences only if deep planning requires structure
+- Example: Just README.md with requirements, no sequences needed
 
-**002_DEFINE_INTERFACES Phase:**
-- 01_api_specification/
-- 02_data_contracts/
-- 03_component_interfaces/
+**Implementation Phases (Must Be Structured):**
+- ALWAYS have sequences and tasks for AI execution
+- Examples for 002_IMPLEMENT_CORE:
+  - 01_backend_foundation/
+  - 02_database_layer/
+  - 03_api_endpoints/
+- Examples for 003_IMPLEMENT_FEATURES:
+  - 01_user_management/
+  - 02_payment_processing/
+  - 03_notification_system/
 
-**003_IMPLEMENT Phase:**
-- 01_backend_core/
-- 02_frontend_components/
-- 03_integration_layer/
-
-**004_REVIEW_AND_UAT Phase:**
+**Validation Phases:**
 - 01_user_acceptance_testing/
 - 02_performance_validation/
 - 03_deployment_preparation/

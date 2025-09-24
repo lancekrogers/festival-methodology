@@ -83,20 +83,23 @@ AI-human collaboration operates at unprecedented efficiency levels that make tra
 - Follow goal progression logic, not time schedules
 - Emerge from human-provided specifications and goal definitions
 
-## Festival Structure
+## Festival Structure and Phase Flexibility
 
-The festival directory structure introduces **phases** as a NEW organizational layer above the existing sequences and tasks structure. Phases group related sequences together logically. 
+### Phase Types and Structure
 
-**CRITICAL**: The 3-phase structure handles most goal achievement scenarios. Adapt phases to match the logical steps needed for YOUR goal:
+**Planning/Research Phases (Unstructured):**
+- Used for requirements gathering, research, and documentation
+- Often just contain documents, findings, and specifications
+- No need for sequences and tasks unless deep planning requires it
+- Examples: 001_RESEARCH, 001_PLAN, 001_REQUIREMENTS
 
-- **Skip phases** if steps are already completed elsewhere (e.g., planning completed outside festival)
-- **Add phases** for complex goals requiring multiple implementation steps
-- **Reorder phases** based on logical dependencies toward goal achievement
-- **Rename phases** to match your goal progression (e.g., 001_RESEARCH, 002_PROTOTYPE)
-- **Combine phases** for simple goals with fewer required steps
-- **Extend phases** for complex multi-step goal achievement
+**Implementation Phases (Structured):**
+- MUST have sequences and tasks for AI agent execution
+- This is where agents work autonomously for long periods
+- Add as many implementation phases as needed
+- Examples: 002_IMPLEMENT_CORE, 003_IMPLEMENT_FEATURES, 004_IMPLEMENT_UI
 
-The methodology structures steps toward YOUR goal, not arbitrary project phases.
+**Key Principle**: Don't pre-plan phases. Add them as needed when requirements emerge or new implementation work is identified.
 
 **Three-Level Hierarchy**: Phases → Sequences → Tasks
 
@@ -301,40 +304,45 @@ Establish the principles and quality standards that all workers must follow thro
 - **Sequences** (EXISTING CONCEPT): Work that must happen in order within a phase (use 2-digit numbering: 01_, 02_)
 - **Tasks** (EXISTING CONCEPT): Individual work items within sequences (use 2-digit numbering: 01_, 02_)
 
-#### Standard 3-Phase Structure
+#### Common Phase Patterns (Not Rigid)
 
-#### Phase 001: Plan (001_PLAN/)
+#### Planning Phases (When Needed)
 
-**Purpose**: Requirements gathering, analysis, and architectural planning
-**Contains sequences for**: Requirements gathering, stakeholder interviews, user research, system architecture design, technology selection, feasibility studies, risk assessment
+**Examples**: 001_PLAN, 001_RESEARCH, 001_REQUIREMENTS
+**Structure**: Often just documents and findings - no sequences/tasks required unless deep planning
+**Purpose**: Gather requirements, research unknowns, document decisions
 
-#### Phase 002: Implement (002_IMPLEMENT/)
+#### Implementation Phases (Core Work)
 
-**Purpose**: All implementation work to achieve the goal
-**Contains sequences for**: Backend development, frontend implementation, automated testing, integration testing, code review, quality assurance
+**Examples**: 002_IMPLEMENT_CORE, 003_IMPLEMENT_FEATURES, 004_IMPLEMENT_UI
+**Structure**: MUST have sequences and tasks for AI execution
+**Purpose**: Where agents work autonomously on structured implementation tasks
+**Key**: Add as many implementation phases as your goal requires
 
-#### Phase 003: Review & UAT (003_REVIEW_AND_UAT/)
+#### Validation Phases
 
-**Purpose**: User-focused validation and business acceptance - **human validation separate from automated testing**
-**Contains sequences for**: User acceptance testing, stakeholder review, business sign-off, documentation validation, training material validation, deployment readiness
+**Examples**: 005_REVIEW_AND_UAT, 006_VALIDATE, 007_ACCEPTANCE
+**Purpose**: Human validation, user acceptance, completion verification
 
 #### Extensions for Specialized Needs
 
 For projects requiring system coordination, use the [Interface Planning Extension](extensions/interface-planning/) which adds interface definition phases. See the [Extensions Guide](extensions/) for other specialized workflow patterns.
 
-#### Flexible Phase Organization
+#### Example Phase Progressions
 
-**Base 3-Phase Pattern**: `001_PLAN → 002_IMPLEMENT → 003_REVIEW_AND_UAT`
+**Simple Project**: `001_IMPLEMENT → 002_REVIEW`
+(Requirements already provided)
 
-Phases can be customized for different project types:
+**Standard Pattern**: `001_PLAN → 002_IMPLEMENT → 003_REVIEW_AND_UAT`
+(Basic requirements gathering and implementation)
 
-**Iterative Development**: `001_PLAN → 002_IMPLEMENT → 003_REVIEW_AND_UAT → 004_PLAN → 005_IMPLEMENT → 006_REVIEW_AND_UAT`
+**Multiple Implementations**: `001_PLAN → 002_IMPLEMENT_CORE → 003_IMPLEMENT_FEATURES → 004_IMPLEMENT_UI → 005_REVIEW`
+(Complex project with staged implementation)
 
-**Implementation Focus**: `001_PLAN → 002_IMPLEMENT → 003_REVIEW_AND_UAT → 004_IMPLEMENT → 005_REVIEW_AND_UAT`
+**Research First**: `001_RESEARCH → 002_PROTOTYPE → 003_IMPLEMENT → 004_VALIDATE`
+(Phases 001-002 are unstructured exploration, 003 is structured implementation)
 
-**Research Heavy**: `001_RESEARCH → 002_PROTOTYPE → 003_PLAN → 004_IMPLEMENT → 005_REVIEW_AND_UAT`
-
-**Multi-System Projects**: Use the [Interface Planning Extension](extensions/interface-planning/) to add interface definition phases when system coordination is needed.
+**Multi-System Projects**: Use the [Interface Planning Extension](extensions/interface-planning/) when coordination is critical.
 
 **Custom Phases**: Add specialized phases like `005_SECURITY_AUDIT/`, `006_PERFORMANCE_OPTIMIZATION/`, or `007_MIGRATION/` as needed
 
@@ -359,20 +367,21 @@ Phases can be customized for different project types:
 - **Proper sorting**: Ensures correct alphabetical and numerical ordering in directory trees
 - **Visual consistency**: Clear hierarchy distinction between organizational levels
 
-## Three-Phase Benefits
+## Phase Flexibility Benefits
 
-The three-phase structure provides significant advantages:
+The flexible phase approach provides significant advantages:
 
-**Clear Separation of Concerns**: Each phase has a distinct purpose and deliverable
+**Adapt to Your Needs**: Phases match your actual work, not a rigid template
 
-- Phase 1 (Plan): Complete understanding of requirements and architecture
-- Phase 2 (Implement): Systematic implementation based on solid foundations
-- Phase 3 (Review & UAT): User validation and goal completion verification
+- Planning phases: Unstructured when simple requirements gathering
+- Implementation phases: Structured for AI agent execution
+- Multiple implementation phases: Add as many as needed for complex projects
+- Skip unnecessary phases: No planning phase if requirements provided
 
-**Reduced Risk**: Issues are caught early in planning phases
-**Organized Development**: Clear implementation structure enables efficient execution
-**Better Communication**: Clear phase boundaries help stakeholders understand progress
-**Quality Built-In**: Each phase includes verification and iteration cycles
+**Reduced Overhead**: Only add structure where it provides value
+**Clear Purpose**: Each phase type has distinct characteristics
+**Better AI Execution**: Implementation phases optimized for autonomous work
+**Natural Progression**: Phases emerge as requirements become clear
 
 ## Flexibility and Scaling
 

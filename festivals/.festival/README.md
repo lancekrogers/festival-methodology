@@ -76,31 +76,43 @@ This directory contains all the resources needed to implement Festival Methodolo
 - Implementation plans
 - Progress tracking and documentation
 
-### Standard 4-Phase Pattern (Use When Appropriate)
+### Standard 3-Phase Pattern (Simple Starting Point)
 
 ```
-001_PLAN → 002_DEFINE_INTERFACES → 003_IMPLEMENT → 004_REVIEW_AND_UAT
+001_PLAN → 002_IMPLEMENT → 003_REVIEW_AND_UAT
 ```
 
-**Use this when:** Starting from scratch with full planning needed.
+**Use this when:** Starting with basic requirements gathering and implementation.
+
+### Phase Flexibility Principles
+
+**Planning Phases (Unstructured):**
+- Used for research, requirements gathering, and documentation
+- Often just contain documents, not sequences/tasks
+- Add only when requirements aren't clear
+
+**Implementation Phases (Structured):**
+- MUST have sequences and tasks for AI execution
+- Add as many as needed (IMPLEMENT_CORE, IMPLEMENT_FEATURES, IMPLEMENT_UI, etc.)
+- This is where agents work autonomously for long periods
 
 ### Common Adaptations
 
 **Already Planned Projects:**
 
 ```
-001_DEFINE_INTERFACES → 002_IMPLEMENT → 003_REVIEW_AND_UAT
+001_IMPLEMENT → 002_REVIEW_AND_UAT
 ```
 
-Skip planning if requirements are already clear.
+Skip planning if requirements are already provided.
 
-**Iterative Development:**
+**Multiple Implementation Phases:**
 
 ```
-001_IMPLEMENT_CORE → 002_IMPLEMENT_FEATURES → 003_IMPLEMENT_POLISH → 004_FINAL_REVIEW
+001_PLAN → 002_IMPLEMENT_CORE → 003_IMPLEMENT_FEATURES → 004_IMPLEMENT_POLISH → 005_FINAL_REVIEW
 ```
 
-Multiple implementation phases for complex builds.
+Add implementation phases as needed for complex builds.
 
 **Research-Heavy Projects:**
 
@@ -108,7 +120,8 @@ Multiple implementation phases for complex builds.
 001_RESEARCH → 002_PROTOTYPE → 003_PLAN → 004_IMPLEMENT → 005_VALIDATE
 ```
 
-Add phases for exploration and validation.
+Planning phases (001-003) may just contain documents and findings.
+Implementation phase (004) has structured sequences and tasks.
 
 **Bug Fix or Enhancement:**
 
@@ -123,16 +136,17 @@ Minimal phases for focused work.
 **Good Phase:**
 
 - Represents a distinct step toward goal achievement
-- Has clear entry/exit criteria (step completion requirements)
-- Contains 2-4 related sequences that build toward phase goal
-- Represents significant progress toward overall goal
+- Has clear purpose (requirements gathering OR implementation)
+- Planning phases: Can be unstructured documents
+- Implementation phases: Must have sequences and tasks
+- Added when needed, not pre-planned
 
 **Bad Phase:**
 
-- Single sequence with one task
-- Arbitrary grouping
-- No clear boundaries
-- Duplicates other phase work
+- Created just to follow a pattern
+- Planning phase with unnecessary sequences/tasks
+- Single sequence worth of work
+- Time-based rather than goal-based
 
 ### Sequence vs Task Decision
 
@@ -255,12 +269,12 @@ Templates provide standardized structures for festival documentation. Each templ
    - Document problem statement
    - _Use this first when starting a new festival_
 
-2. **COMMON_INTERFACES_TEMPLATE.md**
+2. **Interface Planning Extension** (When Needed)
 
-   - Define all system interfaces before implementation
-   - Protocol-agnostic interface definitions
+   - For multi-system projects requiring coordination
+   - Define interfaces before implementation
    - Enables parallel development
-   - _Critical for Phase 002_DEFINE_INTERFACES_
+   - _See extensions/interface-planning/ for templates_
 
 3. **FESTIVAL_RULES_TEMPLATE.md**
 
@@ -440,17 +454,17 @@ Understanding the methodology principles and theory.
    Templates needed:
    - FESTIVAL_OVERVIEW_TEMPLATE.md → FESTIVAL_OVERVIEW.md
    - FESTIVAL_RULES_TEMPLATE.md → FESTIVAL_RULES.md
-   - COMMON_INTERFACES_TEMPLATE.md → COMMON_INTERFACES.md
+   - (Optional) Interface templates if multi-system project
    ```
 
 4. **Structure Phases**
 
    ```
-   Standard phases:
-   - 001_PLAN
-   - 002_DEFINE_INTERFACES
-   - 003_IMPLEMENT
-   - 004_REVIEW_AND_UAT
+   Common phases (add as needed):
+   - 001_PLAN (if requirements gathering needed)
+   - 002_IMPLEMENT (structured sequences/tasks)
+   - 003_IMPLEMENT_FEATURES (additional implementation)
+   - 004_REVIEW_AND_UAT (validation)
    ```
 
 5. **Create Tasks**
@@ -547,10 +561,10 @@ This metadata:
 - Solution: Engage festival_methodology_manager.md
 - Regular reviews with festival_review_agent.md
 
-**Issue: Unclear interfaces**
+**Issue: Multi-system coordination**
 
-- Solution: Focus more effort on Phase 002 interface definition step
-- Use COMMON_INTERFACES_TEMPLATE.md thoroughly
+- Solution: Use Interface Planning Extension for multi-system projects
+- See extensions/interface-planning/ for templates and guidance
 
 ## Integration with Development Workflow
 

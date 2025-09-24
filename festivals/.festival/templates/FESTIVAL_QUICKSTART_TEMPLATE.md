@@ -22,25 +22,25 @@ modified: '2025-09-12'
 
 ## Phase Structure
 
-**Selected Pattern:** [Standard 4-phase | Already Planned | Iterative | Custom]
+**Phase Type:** [Simple | Multiple Implementation | Research First | Custom]
 
-**Phase Overview:**
-- **[001_PHASE_NAME]**: [Brief objective]
-- **[002_PHASE_NAME]**: [Brief objective]
-- **[003_PHASE_NAME]**: [Brief objective]
-- **[004_PHASE_NAME]**: [Brief objective] (if applicable)
+**Phases (add as needed):**
+- **001_[NAME]**: [Brief objective - planning/research phases may just be documents]
+- **002_[NAME]**: [Brief objective - implementation phases need sequences/tasks]
+- **003_[NAME]**: [Brief objective - add more implementation phases as needed]
+- **[Additional]**: [Add phases as requirements emerge]
 
-## Key Interfaces & Contracts
+## Key Interfaces & Contracts (If Multi-System)
 
-**Critical interfaces that enable parallel work:**
+**Only needed for projects with multiple interacting systems:**
 
 ### API Contracts
-- [Interface 1]: [Brief description]
-- [Interface 2]: [Brief description]
+- [Interface 1]: [Brief description] (optional)
+- [Interface 2]: [Brief description] (optional)
 
-### Data Contracts  
-- [Data structure 1]: [Brief description]
-- [Data structure 2]: [Brief description]
+### Data Contracts
+- [Data structure 1]: [Brief description] (optional)
+- [Data structure 2]: [Brief description] (optional)
 
 ### Component Interfaces
 - [Component 1]: [Brief description]
