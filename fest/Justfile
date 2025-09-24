@@ -1,0 +1,167 @@
+#!/usr/bin/env just --justfile
+# fest CLI build and development tasks
+
+# Configuration
+binary_name := "fest"
+main_path := "cmd/fest/main.go"
+ldflags := "-ldflags '-s -w'"
+gobin := env_var_or_default("GOBIN", `go env GOPATH` + "/bin")
+
+# Show available commands (default)
+@_default:
+    just --list
+
+# Build fest binary
+build:
+    go build {{ldflags}} -o {{binary_name}} {{main_path}}
+
+# Run tests with verbose output
+test:
+    go test -v ./...
+
+# Run all tests and build
+all: test build
+
+# Run tests with coverage report
+test-coverage:
+    go test -v -cover ./...
+
+# Generate HTML coverage report
+test-coverage-html:
+    go test -coverprofile=coverage.out ./...
+    go tool cover -html=coverage.out -o coverage.html
+
+# Clean build artifacts and generated files
+clean:
+    go clean
+    rm -f {{binary_name}}
+    rm -f coverage.out coverage.html
+
+# Update and tidy dependencies
+deps:
+    go get -u ./...
+    go mod tidy
+
+# Install fest to $GOBIN
+install: build
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Installing fest..."
+    mkdir -p {{gobin}}
+    cp {{binary_name}} {{gobin}}/{{binary_name}}
+    if [[ "$(uname)" == "Darwin" ]]; then
+        echo "Signing fest binary for macOS..."
+        codesign --force --sign - {{gobin}}/{{binary_name}} 2>/dev/null || \
+        echo "Warning: Could not sign binary (non-fatal)"
+    fi
+    echo "✓ fest installed to {{gobin}}/{{binary_name}}"
+
+# Uninstall fest from $GOBIN
+uninstall:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Uninstalling fest..."
+    if [ -f {{gobin}}/{{binary_name}} ]; then
+        rm {{gobin}}/{{binary_name}}
+        echo "✓ fest uninstalled from {{gobin}}"
+    else
+        echo "fest not found in {{gobin}}"
+    fi
+
+# Show fest help
+run-help: build
+    ./{{binary_name}} --help
+
+# Initialize a new festival
+run-init: build
+    ./{{binary_name}} init
+
+# Sync festival state
+run-sync: build
+    ./{{binary_name}} sync
+
+# Update festival
+run-update: build
+    ./{{binary_name}} update
+
+# Build for Linux AMD64
+build-linux:
+    GOOS=linux GOARCH=amd64 go build {{ldflags}} -o {{binary_name}}-linux-amd64 {{main_path}}
+
+# Build for macOS Intel
+build-darwin:
+    GOOS=darwin GOARCH=amd64 go build {{ldflags}} -o {{binary_name}}-darwin-amd64 {{main_path}}
+
+# Build for macOS Apple Silicon
+build-darwin-arm64:
+    GOOS=darwin GOARCH=arm64 go build {{ldflags}} -o {{binary_name}}-darwin-arm64 {{main_path}}
+
+# Build for Windows AMD64
+build-windows:
+    GOOS=windows GOARCH=amd64 go build {{ldflags}} -o {{binary_name}}-windows-amd64.exe {{main_path}}
+
+# Build for all platforms
+build-all: build-linux build-darwin build-darwin-arm64 build-windows
+
+# Sign macOS release binaries
+sign-release: build-darwin build-darwin-arm64
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Signing macOS release binaries..."
+    if [ -f ./scripts/sign-macos.sh ]; then
+        ./scripts/sign-macos.sh {{binary_name}}-darwin-amd64
+        ./scripts/sign-macos.sh {{binary_name}}-darwin-arm64
+    else
+        echo "Warning: scripts/sign-macos.sh not found, using fallback signing"
+        codesign --force --sign - {{binary_name}}-darwin-amd64 2>/dev/null || true
+        codesign --force --sign - {{binary_name}}-darwin-arm64 2>/dev/null || true
+    fi
+
+# Create macOS release packages
+release-darwin: build-darwin sign-release
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Creating macOS release package..."
+    mkdir -p dist
+    tar -czf dist/{{binary_name}}-darwin-amd64.tar.gz {{binary_name}}-darwin-amd64
+    tar -czf dist/{{binary_name}}-darwin-arm64.tar.gz {{binary_name}}-darwin-arm64
+    echo "Release packages created in dist/"
+
+# Create Linux release package
+release-linux: build-linux
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Creating Linux release package..."
+    mkdir -p dist
+    tar -czf dist/{{binary_name}}-linux-amd64.tar.gz {{binary_name}}-linux-amd64
+
+# Create Windows release package
+release-windows: build-windows
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Creating Windows release package..."
+    mkdir -p dist
+    zip -q dist/{{binary_name}}-windows-amd64.zip {{binary_name}}-windows-amd64.exe
+
+# Create all release packages
+release: release-darwin release-linux release-windows
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "All release packages created in dist/"
+    ls -la dist/
+
+# Quick development build (no optimization)
+dev:
+    go build -o {{binary_name}} {{main_path}}
+
+# Format Go code
+fmt:
+    go fmt ./...
+
+# Run go vet
+vet:
+    go vet ./...
+
+# Run formatting and vetting
+lint: fmt vet
+    @echo "Linting complete"
