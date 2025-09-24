@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/festival-methodology/fest/internal/tokens"
-	"github.com/festival-methodology/fest/internal/ui"
+	"github.com/anthropics/guild-framework/projects/festival-methodology/fest/internal/tokens"
+	"github.com/anthropics/guild-framework/projects/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 

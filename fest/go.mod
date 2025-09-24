@@ -1,4 +1,4 @@
-module github.com/festival-methodology/fest
+module github.com/anthropics/guild-framework/projects/festival-methodology/fest
 
 go 1.25.1
 
