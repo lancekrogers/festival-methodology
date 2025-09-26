@@ -6,14 +6,15 @@ binary_name := "fest"
 main_path := "cmd/fest/main.go"
 ldflags := "-ldflags '-s -w'"
 gobin := env_var_or_default("GOBIN", `go env GOPATH` + "/bin")
+bin_dir := "bin"
 
 # Show available commands (default)
 @_default:
     just --list
 
-# Build fest binary
+# Build fest binary into bin directory
 build:
-    go build {{ldflags}} -o {{binary_name}} {{main_path}}
+    go build {{ldflags}} -o {{bin_dir}}/{{binary_name}} {{main_path}}
 
 # Run tests with verbose output
 test:
@@ -31,10 +32,10 @@ test-coverage-html:
     go test -coverprofile=coverage.out ./...
     go tool cover -html=coverage.out -o coverage.html
 
-# Clean build artifacts and generated files
+# Clean build artifacts and generated files (preserve .gitkeep)
 clean:
     go clean
-    rm -f {{binary_name}}
+    rm -f {{bin_dir}}/{{binary_name}}*
     rm -f coverage.out coverage.html
 
 # Update and tidy dependencies
@@ -70,35 +71,35 @@ uninstall:
 
 # Show fest help
 run-help: build
-    ./{{binary_name}} --help
+    ./{{bin_dir}}/{{binary_name}} --help
 
 # Initialize a new festival
 run-init: build
-    ./{{binary_name}} init
+    ./{{bin_dir}}/{{binary_name}} init
 
 # Sync festival state
 run-sync: build
-    ./{{binary_name}} sync
+    ./{{bin_dir}}/{{binary_name}} sync
 
 # Update festival
 run-update: build
-    ./{{binary_name}} update
+    ./{{bin_dir}}/{{binary_name}} update
 
 # Build for Linux AMD64
 build-linux:
-    GOOS=linux GOARCH=amd64 go build {{ldflags}} -o {{binary_name}}-linux-amd64 {{main_path}}
+    GOOS=linux GOARCH=amd64 go build {{ldflags}} -o {{bin_dir}}/{{binary_name}}-linux-amd64 {{main_path}}
 
 # Build for macOS Intel
 build-darwin:
-    GOOS=darwin GOARCH=amd64 go build {{ldflags}} -o {{binary_name}}-darwin-amd64 {{main_path}}
+    GOOS=darwin GOARCH=amd64 go build {{ldflags}} -o {{bin_dir}}/{{binary_name}}-darwin-amd64 {{main_path}}
 
 # Build for macOS Apple Silicon
 build-darwin-arm64:
-    GOOS=darwin GOARCH=arm64 go build {{ldflags}} -o {{binary_name}}-darwin-arm64 {{main_path}}
+    GOOS=darwin GOARCH=arm64 go build {{ldflags}} -o {{bin_dir}}/{{binary_name}}-darwin-arm64 {{main_path}}
 
 # Build for Windows AMD64
 build-windows:
-    GOOS=windows GOARCH=amd64 go build {{ldflags}} -o {{binary_name}}-windows-amd64.exe {{main_path}}
+    GOOS=windows GOARCH=amd64 go build {{ldflags}} -o {{bin_dir}}/{{binary_name}}-windows-amd64.exe {{main_path}}
 
 # Build for all platforms
 build-all: build-linux build-darwin build-darwin-arm64 build-windows
@@ -109,12 +110,12 @@ sign-release: build-darwin build-darwin-arm64
     set -euo pipefail
     echo "Signing macOS release binaries..."
     if [ -f ./scripts/sign-macos.sh ]; then
-        ./scripts/sign-macos.sh {{binary_name}}-darwin-amd64
-        ./scripts/sign-macos.sh {{binary_name}}-darwin-arm64
+        ./scripts/sign-macos.sh {{bin_dir}}/{{binary_name}}-darwin-amd64
+        ./scripts/sign-macos.sh {{bin_dir}}/{{binary_name}}-darwin-arm64
     else
         echo "Warning: scripts/sign-macos.sh not found, using fallback signing"
-        codesign --force --sign - {{binary_name}}-darwin-amd64 2>/dev/null || true
-        codesign --force --sign - {{binary_name}}-darwin-arm64 2>/dev/null || true
+        codesign --force --sign - {{bin_dir}}/{{binary_name}}-darwin-amd64 2>/dev/null || true
+        codesign --force --sign - {{bin_dir}}/{{binary_name}}-darwin-arm64 2>/dev/null || true
     fi
 
 # Create macOS release packages
@@ -123,8 +124,8 @@ release-darwin: build-darwin sign-release
     set -euo pipefail
     echo "Creating macOS release package..."
     mkdir -p dist
-    tar -czf dist/{{binary_name}}-darwin-amd64.tar.gz {{binary_name}}-darwin-amd64
-    tar -czf dist/{{binary_name}}-darwin-arm64.tar.gz {{binary_name}}-darwin-arm64
+    tar -czf dist/{{binary_name}}-darwin-amd64.tar.gz -C {{bin_dir}} {{binary_name}}-darwin-amd64
+    tar -czf dist/{{binary_name}}-darwin-arm64.tar.gz -C {{bin_dir}} {{binary_name}}-darwin-arm64
     echo "Release packages created in dist/"
 
 # Create Linux release package
@@ -133,7 +134,7 @@ release-linux: build-linux
     set -euo pipefail
     echo "Creating Linux release package..."
     mkdir -p dist
-    tar -czf dist/{{binary_name}}-linux-amd64.tar.gz {{binary_name}}-linux-amd64
+    tar -czf dist/{{binary_name}}-linux-amd64.tar.gz -C {{bin_dir}} {{binary_name}}-linux-amd64
 
 # Create Windows release package
 release-windows: build-windows
@@ -141,7 +142,7 @@ release-windows: build-windows
     set -euo pipefail
     echo "Creating Windows release package..."
     mkdir -p dist
-    zip -q dist/{{binary_name}}-windows-amd64.zip {{binary_name}}-windows-amd64.exe
+    cd {{bin_dir}} && zip -q ../dist/{{binary_name}}-windows-amd64.zip {{binary_name}}-windows-amd64.exe
 
 # Create all release packages
 release: release-darwin release-linux release-windows
@@ -152,7 +153,7 @@ release: release-darwin release-linux release-windows
 
 # Quick development build (no optimization)
 dev:
-    go build -o {{binary_name}} {{main_path}}
+    go build -o {{bin_dir}}/{{binary_name}} {{main_path}}
 
 # Format Go code
 fmt:
@@ -165,3 +166,11 @@ vet:
 # Run formatting and vetting
 lint: fmt vet
     @echo "Linting complete"
+
+# Build Linux binary for container testing
+build-test-binary:
+    GOOS=linux GOARCH=amd64 go build {{ldflags}} -o {{bin_dir}}/linux/{{binary_name}} {{main_path}}
+
+# Run integration tests
+test-integration: build-test-binary
+    go test -v -tags=integration -timeout 10m ./tests/integration/...
