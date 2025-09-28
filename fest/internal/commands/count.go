@@ -99,7 +99,7 @@ func outputJSON(result *tokens.CountResult) error {
 func outputTable(display *ui.UI, result *tokens.CountResult) error {
 	// Header
 	display.Info("Token Count Report for: %s", result.FilePath)
-	display.Info(strings.Repeat("═", 55))
+	display.Info("%s", strings.Repeat("═", 55))
 	display.Info("")
 	
 	// Basic statistics

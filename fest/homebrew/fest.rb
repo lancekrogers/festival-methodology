@@ -2,7 +2,7 @@
 class Fest < Formula
   desc "Festival methodology CLI for managing software development festivals"
   homepage "https://github.com/anthropics/guild-framework"
-  version "0.1.0"
+  version "0.0.1"
 
   # URL to your release archive
   if OS.mac? && Hardware::CPU.arm?
