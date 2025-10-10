@@ -1,18 +1,18 @@
 # Homebrew formula for fest CLI
 class Fest < Formula
   desc "Festival methodology CLI for managing software development festivals"
-  homepage "https://github.com/anthropics/guild-framework"
+  homepage "https://github.com/lancekrogers/festival-methodology/tree/main/fest"
   version "0.0.1"
 
   # URL to your release archive
   if OS.mac? && Hardware::CPU.arm?
-    url "https://github.com/anthropics/guild-framework/releases/download/fest-v0.1.0/fest-darwin-arm64.tar.gz"
+    url "https://github.com/lancekrogers/festival-methodology/releases/download/fest-v0.1.0/fest-darwin-arm64.tar.gz"
     sha256 "YOUR_SHA256_HERE"
   elsif OS.mac?
-    url "https://github.com/anthropics/guild-framework/releases/download/fest-v0.1.0/fest-darwin-amd64.tar.gz"
+    url "https://github.com/lancekrogers/festival-methodology/releases/download/fest-v0.1.0/fest-darwin-amd64.tar.gz"
     sha256 "YOUR_SHA256_HERE"
   elsif OS.linux?
-    url "https://github.com/anthropics/guild-framework/releases/download/fest-v0.1.0/fest-linux-amd64.tar.gz"
+    url "https://github.com/lancekrogers/festival-methodology/releases/download/fest-v0.1.0/fest-linux-amd64.tar.gz"
     sha256 "YOUR_SHA256_HERE"
   end
 

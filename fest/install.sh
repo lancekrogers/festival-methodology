@@ -35,8 +35,8 @@ case "$OS" in
         ;;
 esac
 
-# GitHub release URL (update with actual repo when available)
-GITHUB_REPO="anthropics/guild-framework"
+# GitHub release URL
+GITHUB_REPO="lancekrogers/festival-methodology"
 VERSION=${1:-latest}
 
 if [ "$VERSION" = "latest" ]; then

@@ -60,14 +60,14 @@ changelog:
 
 brews:
   - repository:
-      owner: anthropics
+      owner: lancekrogers
       name: homebrew-tap
       branch: main
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
 
     name: fest
 
-    homepage: "https://github.com/anthropics/guild-framework"
+    homepage: "https://github.com/lancekrogers/festival-methodology/tree/main/fest"
     description: "Festival methodology CLI for managing software development festivals"
     license: "MIT"
 
@@ -81,8 +81,8 @@ brews:
 
 release:
   github:
-    owner: anthropics
-    name: guild-framework
+    owner: lancekrogers
+    name: festival-methodology
 
   prerelease: auto
 
@@ -92,7 +92,7 @@ release:
     Festival methodology CLI release
 
   footer: |
-    **Full Changelog**: https://github.com/anthropics/guild-framework/compare/{{ .PreviousTag }}...{{ .Tag }}
+    **Full Changelog**: https://github.com/lancekrogers/festival-methodology/compare/{{ .PreviousTag }}...{{ .Tag }}
 
 # Universal binaries for macOS
 universal_binaries:
