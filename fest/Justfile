@@ -49,7 +49,7 @@ install: build
     set -euo pipefail
     echo "Installing fest..."
     mkdir -p {{gobin}}
-    cp {{binary_name}} {{gobin}}/{{binary_name}}
+    cp bin/{{binary_name}} {{gobin}}/{{binary_name}}
     if [[ "$(uname)" == "Darwin" ]]; then
         echo "Signing fest binary for macOS..."
         codesign --force --sign - {{gobin}}/{{binary_name}} 2>/dev/null || \
