@@ -380,16 +380,23 @@ func (r *Renumberer) executeChanges() error {
 	
 	// Display changes
 	r.displayChanges()
-	
+
 	if r.options.DryRun {
-		fmt.Println("\nDRY RUN - No changes made.")
-		return nil
-	}
-	
-	// Confirm changes
-	if !r.confirmChanges() {
-		fmt.Println("Operation cancelled.")
-		return nil
+		fmt.Println("\nDRY RUN - Preview complete.")
+		// Prompt user to apply changes after dry-run
+		if r.confirmApplyAfterDryRun() {
+			// User wants to apply changes, continue with execution
+			fmt.Println("\nApplying changes...")
+		} else {
+			fmt.Println("Operation cancelled.")
+			return nil
+		}
+	} else {
+		// Not in dry-run mode, confirm changes before applying
+		if !r.confirmChanges() {
+			fmt.Println("Operation cancelled.")
+			return nil
+		}
 	}
 	
 	// Create backup if requested
@@ -457,6 +464,15 @@ func (r *Renumberer) displayChanges() {
 // confirmChanges prompts for confirmation
 func (r *Renumberer) confirmChanges() bool {
 	fmt.Print("\nProceed with renumbering? [y/N]: ")
+	var response string
+	fmt.Scanln(&response)
+	response = strings.ToLower(strings.TrimSpace(response))
+	return response == "y" || response == "yes"
+}
+
+// confirmApplyAfterDryRun prompts to apply changes after dry-run preview
+func (r *Renumberer) confirmApplyAfterDryRun() bool {
+	fmt.Print("\nApply these changes? [y/N]: ")
 	var response string
 	fmt.Scanln(&response)
 	response = strings.ToLower(strings.TrimSpace(response))

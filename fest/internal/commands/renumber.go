@@ -33,6 +33,17 @@ removed, or reordered in the festival hierarchy.`,
 	cmd.PersistentFlags().BoolVar(&opts.backup, "backup", false, "create backup before renumbering")
 	cmd.PersistentFlags().IntVar(&opts.startFrom, "start", 1, "starting number for renumbering")
 	cmd.PersistentFlags().BoolVar(&opts.verbose, "verbose", false, "show detailed output")
+
+	// Allow skipping dry-run mode entirely
+	var skipDryRun bool
+	cmd.PersistentFlags().BoolVar(&skipDryRun, "skip-dry-run", false, "skip preview and apply changes immediately")
+
+	// Override dryRun if skip-dry-run is set
+	cmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		if skipDryRun {
+			opts.dryRun = false
+		}
+	}
 	
 	// Add subcommands
 	cmd.AddCommand(newRenumberPhaseCommand(opts))
@@ -50,10 +61,10 @@ func newRenumberPhaseCommand(opts *renumberOptions) *cobra.Command {
 		Long: `Renumber all phases starting from the specified number (default: 1).
 		
 Phases are numbered with 3 digits (001, 002, 003, etc.).`,
-		Example: `  fest renumber phase                    # Renumber phases in current directory
+		Example: `  fest renumber phase                    # Renumber phases in current directory (dry-run preview)
   fest renumber phase ./my-festival      # Renumber phases in specified directory
   fest renumber phase --start 2          # Start numbering from 002
-  fest renumber phase --no-dry-run       # Apply changes immediately`,
+  fest renumber phase --skip-dry-run     # Skip preview and apply changes immediately`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			festivalDir := "."
