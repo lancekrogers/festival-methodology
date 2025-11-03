@@ -39,8 +39,18 @@ func (t *TiktokenTokenizer) CountTokens(text string) (int, error) {
 	return len(tokens), nil
 }
 
-// Name returns the tokenizer name
+// Name returns the machine-readable tokenizer identifier
 func (t *TiktokenTokenizer) Name() string {
+	// Convert model name to snake_case identifier
+	// e.g., "gpt-4" -> "tiktoken_gpt_4"
+	//       "gpt-3.5-turbo" -> "tiktoken_gpt_3_5_turbo"
+	modelName := strings.ReplaceAll(t.model, "-", "_")
+	modelName = strings.ReplaceAll(modelName, ".", "_")
+	return fmt.Sprintf("tiktoken_%s", modelName)
+}
+
+// DisplayName returns the human-readable tokenizer name
+func (t *TiktokenTokenizer) DisplayName() string {
 	return fmt.Sprintf("GPT (%s)", t.model)
 }
 
@@ -86,8 +96,13 @@ func (c *ClaudeApproximator) CountTokens(text string) (int, error) {
 	return tokens, nil
 }
 
-// Name returns the tokenizer name
+// Name returns the machine-readable tokenizer identifier
 func (c *ClaudeApproximator) Name() string {
+	return "claude_3_approx"
+}
+
+// DisplayName returns the human-readable tokenizer name
+func (c *ClaudeApproximator) DisplayName() string {
 	return "Claude-3 (approx)"
 }
 
@@ -98,15 +113,17 @@ func (c *ClaudeApproximator) IsExact() bool {
 
 // SimpleTokenizer provides basic tokenization
 type SimpleTokenizer struct {
-	name   string
-	method string
+	name        string
+	displayName string
+	method      string
 }
 
 // NewSimpleTokenizer creates a basic tokenizer
-func NewSimpleTokenizer(name, method string) *SimpleTokenizer {
+func NewSimpleTokenizer(name, displayName, method string) *SimpleTokenizer {
 	return &SimpleTokenizer{
-		name:   name,
-		method: method,
+		name:        name,
+		displayName: displayName,
+		method:      method,
 	}
 }
 
@@ -125,9 +142,14 @@ func (s *SimpleTokenizer) CountTokens(text string) (int, error) {
 	}
 }
 
-// Name returns the tokenizer name
+// Name returns the machine-readable tokenizer identifier
 func (s *SimpleTokenizer) Name() string {
 	return s.name
+}
+
+// DisplayName returns the human-readable tokenizer name
+func (s *SimpleTokenizer) DisplayName() string {
+	return s.displayName
 }
 
 // IsExact returns false for simple tokenizers

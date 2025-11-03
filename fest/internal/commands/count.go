@@ -119,12 +119,12 @@ func outputTable(display *ui.UI, result *tokens.CountResult) error {
 		accuracy := "Approx"
 		if method.IsExact {
 			accuracy = "Exact"
-		} else if method.Name == "Claude-3" {
+		} else if method.Name == "claude_3_approx" {
 			accuracy = "Estimated"
 		}
-		
-		display.Info("  │ %-23s │ %-8d │ %-10s │", 
-			method.Name, method.Tokens, accuracy)
+
+		display.Info("  │ %-23s │ %-8d │ %-10s │",
+			method.DisplayName, method.Tokens, accuracy)
 	}
 	
 	display.Info("  └─────────────────────────┴──────────┴────────────┘")

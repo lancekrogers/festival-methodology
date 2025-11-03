@@ -19,9 +19,10 @@ type CountResult struct {
 
 // MethodResult represents token count for a specific method
 type MethodResult struct {
-	Name    string `json:"name"`
-	Tokens  int    `json:"tokens"`
-	IsExact bool   `json:"is_exact"`
+	Name        string `json:"name"`
+	DisplayName string `json:"display_name"`
+	Tokens      int    `json:"tokens"`
+	IsExact     bool   `json:"is_exact"`
 }
 
 // CostEstimate represents cost estimation for a model
@@ -48,7 +49,8 @@ type Counter struct {
 // Tokenizer interface for different tokenization methods
 type Tokenizer interface {
 	CountTokens(text string) (int, error)
-	Name() string
+	Name() string        // Machine-readable identifier (e.g., "tiktoken_gpt_4")
+	DisplayName() string // Human-readable name (e.g., "GPT (gpt-4)")
 	IsExact() bool
 }
 
@@ -101,28 +103,29 @@ func (c *Counter) Count(text string, model string, all bool) (*CountResult, erro
 // countAllMethods counts tokens using all available methods
 func (c *Counter) countAllMethods(text string) []MethodResult {
 	methods := []MethodResult{}
-	
+
 	// Try exact tokenizers first
 	for _, tokenizer := range c.tokenizers {
 		if count, err := tokenizer.CountTokens(text); err == nil {
 			methods = append(methods, MethodResult{
-				Name:    tokenizer.Name(),
-				Tokens:  count,
-				IsExact: tokenizer.IsExact(),
+				Name:        tokenizer.Name(),
+				DisplayName: tokenizer.DisplayName(),
+				Tokens:      count,
+				IsExact:     tokenizer.IsExact(),
 			})
 		}
 	}
-	
+
 	// Add approximation methods
 	methods = append(methods, c.getApproximations(text)...)
-	
+
 	return methods
 }
 
 // countSpecificModel counts tokens for a specific model
 func (c *Counter) countSpecificModel(text string, model string) ([]MethodResult, error) {
 	methods := []MethodResult{}
-	
+
 	// Check if we have an exact tokenizer for this model
 	if tokenizer, ok := c.tokenizers[model]; ok {
 		count, err := tokenizer.CountTokens(text)
@@ -130,15 +133,16 @@ func (c *Counter) countSpecificModel(text string, model string) ([]MethodResult,
 			return nil, err
 		}
 		methods = append(methods, MethodResult{
-			Name:    tokenizer.Name(),
-			Tokens:  count,
-			IsExact: tokenizer.IsExact(),
+			Name:        tokenizer.Name(),
+			DisplayName: tokenizer.DisplayName(),
+			Tokens:      count,
+			IsExact:     tokenizer.IsExact(),
 		})
 	} else {
 		// Fall back to approximations
 		methods = append(methods, c.getApproximations(text)...)
 	}
-	
+
 	return methods, nil
 }
 
@@ -146,22 +150,29 @@ func (c *Counter) countSpecificModel(text string, model string) ([]MethodResult,
 func (c *Counter) getApproximations(text string) []MethodResult {
 	chars := len(text)
 	words := countWords(text)
-	
+
+	// Format multiplier for word-based calculation
+	multiplier := 1.0 / c.wordsPerToken
+	multiplierStr := fmt.Sprintf("%.0f", multiplier*100) // e.g., "133" for 1.33
+
 	return []MethodResult{
 		{
-			Name:    fmt.Sprintf("Character-based (÷%.1f)", c.charsPerToken),
-			Tokens:  int(float64(chars) / c.charsPerToken),
-			IsExact: false,
+			Name:        fmt.Sprintf("character_based_div%.0f", c.charsPerToken),
+			DisplayName: fmt.Sprintf("Character-based (÷%.1f)", c.charsPerToken),
+			Tokens:      int(float64(chars) / c.charsPerToken),
+			IsExact:     false,
 		},
 		{
-			Name:    fmt.Sprintf("Word-based (×%.2f)", 1.0/c.wordsPerToken),
-			Tokens:  int(float64(words) / c.wordsPerToken),
-			IsExact: false,
+			Name:        fmt.Sprintf("word_based_mul%s", multiplierStr),
+			DisplayName: fmt.Sprintf("Word-based (×%.2f)", multiplier),
+			Tokens:      int(float64(words) / c.wordsPerToken),
+			IsExact:     false,
 		},
 		{
-			Name:    "Whitespace split",
-			Tokens:  words,
-			IsExact: false,
+			Name:        "whitespace_split",
+			DisplayName: "Whitespace split",
+			Tokens:      words,
+			IsExact:     false,
 		},
 	}
 }
