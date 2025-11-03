@@ -42,8 +42,8 @@ func (r *rendererImpl) RenderString(content string, ctx *Context) (string, error
 		return "", fmt.Errorf("failed to parse template: %w", err)
 	}
 
-	// Flatten context for template execution
-	vars := ctx.ToFlatMap()
+	// Convert context to template data for execution
+	vars := ctx.ToTemplateData()
 
 	// Execute template
 	var buf bytes.Buffer
@@ -122,24 +122,44 @@ func PreserveGuidance(content string) string {
 
 // RenderWithDefaults renders a template with default values for missing variables
 func RenderWithDefaults(tmpl *Template, ctx *Context) (string, error) {
-	// Create a new context with defaults for optional variables
-	enrichedCtx := &Context{
-		Auto:     ctx.Auto,
-		User:     make(map[string]interface{}),
-		Computed: ctx.Computed,
-	}
+	// Create a copy of the context
+	enrichedCtx := NewContext()
 
-	// Copy user variables
-	for k, v := range ctx.User {
-		enrichedCtx.User[k] = v
+	// Copy all fields from original context
+	enrichedCtx.FestivalName = ctx.FestivalName
+	enrichedCtx.FestivalGoal = ctx.FestivalGoal
+	enrichedCtx.FestivalTags = ctx.FestivalTags
+	enrichedCtx.FestivalDescription = ctx.FestivalDescription
+	enrichedCtx.PhaseNumber = ctx.PhaseNumber
+	enrichedCtx.PhaseName = ctx.PhaseName
+	enrichedCtx.PhaseID = ctx.PhaseID
+	enrichedCtx.PhaseType = ctx.PhaseType
+	enrichedCtx.PhaseStructure = ctx.PhaseStructure
+	enrichedCtx.PhaseObjective = ctx.PhaseObjective
+	enrichedCtx.SequenceNumber = ctx.SequenceNumber
+	enrichedCtx.SequenceName = ctx.SequenceName
+	enrichedCtx.SequenceID = ctx.SequenceID
+	enrichedCtx.SequenceObjective = ctx.SequenceObjective
+	enrichedCtx.TaskNumber = ctx.TaskNumber
+	enrichedCtx.TaskName = ctx.TaskName
+	enrichedCtx.TaskID = ctx.TaskID
+	enrichedCtx.TaskObjective = ctx.TaskObjective
+	enrichedCtx.CurrentLevel = ctx.CurrentLevel
+	enrichedCtx.ParentPhaseID = ctx.ParentPhaseID
+	enrichedCtx.ParentSequenceID = ctx.ParentSequenceID
+	enrichedCtx.FullPath = ctx.FullPath
+
+	// Copy custom variables
+	for k, v := range ctx.Custom {
+		enrichedCtx.Custom[k] = v
 	}
 
 	// Add defaults for missing optional variables
 	if tmpl.Metadata != nil {
 		for _, optional := range tmpl.Metadata.OptionalVariables {
 			if _, ok := enrichedCtx.Get(optional); !ok {
-				// Set default value (empty string or "TBD")
-				enrichedCtx.User[optional] = ""
+				// Set default value (empty string)
+				enrichedCtx.SetCustom(optional, "")
 			}
 		}
 	}

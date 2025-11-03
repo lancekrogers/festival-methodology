@@ -2,193 +2,239 @@ package template
 
 import (
 	"fmt"
-	"os"
-	"os/user"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
-// Context holds all variables available for template rendering
+// Context holds all variables available for template rendering.
+// It focuses exclusively on festival structure variables (festival/phase/sequence/task)
+// and does NOT include time-based, user/account, or system variables.
 type Context struct {
-	// Automatic variables (fest provides)
-	Auto map[string]interface{}
+	// Festival-level variables
+	FestivalName        string
+	FestivalGoal        string
+	FestivalTags        []string
+	FestivalDescription string
 
-	// User-provided variables (from forms/CLI)
-	User map[string]interface{}
+	// Phase-level variables
+	PhaseNumber    int
+	PhaseName      string
+	PhaseID        string // formatted: "001_PLANNING"
+	PhaseType      string // "planning", "implementation", "validation", "review"
+	PhaseStructure string // "freeform" or "structured"
+	PhaseObjective string
 
-	// Computed variables (derived from other values)
-	Computed map[string]interface{}
+	// Sequence-level variables
+	SequenceNumber    int
+	SequenceName      string
+	SequenceID        string // formatted: "01_requirements"
+	SequenceObjective string
+	SequenceDependencies []string
+
+	// Task-level variables
+	TaskNumber       int
+	TaskName         string
+	TaskID           string // formatted: "01_user_research.md"
+	TaskObjective    string
+	TaskDeliverables []string
+	TaskParallel     bool
+	TaskDependencies []string
+
+	// Computed/structure variables
+	CurrentLevel     string // "festival", "phase", "sequence", or "task"
+	ParentPhaseID    string // e.g., "001_PLANNING"
+	ParentSequenceID string // e.g., "01_requirements"
+	FullPath         string // e.g., "001_PLANNING/01_requirements/01_task.md"
+
+	// Custom user-provided variables (from TUI or CLI)
+	Custom map[string]interface{}
 }
 
-// ContextBuilder builds variable contexts for template rendering
-type ContextBuilder interface {
-	WithUser(key string, value interface{}) ContextBuilder
-	WithUserMap(values map[string]interface{}) ContextBuilder
-	Build() *Context
-	BuildForFestival(festivalName, goal string) *Context
-	BuildForPhase(festivalName string, phaseNumber int, phaseName string) *Context
-}
-
-type contextBuilderImpl struct {
-	userVars map[string]interface{}
-}
-
-// NewContextBuilder creates a new context builder
-func NewContextBuilder() ContextBuilder {
-	return &contextBuilderImpl{
-		userVars: make(map[string]interface{}),
+// NewContext creates a new empty context
+func NewContext() *Context {
+	return &Context{
+		Custom: make(map[string]interface{}),
 	}
 }
 
-// WithUser adds a user-provided variable
-func (b *contextBuilderImpl) WithUser(key string, value interface{}) ContextBuilder {
-	b.userVars[key] = value
-	return b
+// SetFestival sets festival-level variables
+func (c *Context) SetFestival(name, goal string, tags []string) {
+	c.FestivalName = name
+	c.FestivalGoal = goal
+	c.FestivalTags = tags
+	c.CurrentLevel = "festival"
 }
 
-// WithUserMap adds multiple user-provided variables
-func (b *contextBuilderImpl) WithUserMap(values map[string]interface{}) ContextBuilder {
-	for k, v := range values {
-		b.userVars[k] = v
-	}
-	return b
+// SetFestivalDescription sets the extended festival description
+func (c *Context) SetFestivalDescription(description string) {
+	c.FestivalDescription = description
 }
 
-// Build creates a context with automatic variables
-func (b *contextBuilderImpl) Build() *Context {
-	ctx := &Context{
-		Auto:     buildAutomaticVariables(),
-		User:     b.userVars,
-		Computed: make(map[string]interface{}),
-	}
-
-	return ctx
+// SetPhase sets phase-level variables
+func (c *Context) SetPhase(number int, name, phaseType string) {
+	c.PhaseNumber = number
+	c.PhaseName = name
+	c.PhaseType = phaseType
+	c.PhaseID = FormatPhaseID(number, name)
+	c.CurrentLevel = "phase"
 }
 
-// BuildForFestival creates a context for festival creation
-func (b *contextBuilderImpl) BuildForFestival(festivalName, goal string) *Context {
-	// Add festival-specific user variables
-	b.WithUser("festival_name", festivalName)
-	b.WithUser("festival_goal", goal)
-
-	ctx := b.Build()
-
-	// Add computed variables
-	ctx.Computed["festival_id"] = generateFestivalID(festivalName)
-	ctx.Computed["festival_path"] = festivalName
-
-	return ctx
+// SetPhaseStructure sets whether the phase is freeform or structured
+func (c *Context) SetPhaseStructure(structure string) {
+	c.PhaseStructure = structure
 }
 
-// BuildForPhase creates a context for phase creation
-func (b *contextBuilderImpl) BuildForPhase(festivalName string, phaseNumber int, phaseName string) *Context {
-	// Add phase-specific user variables
-	b.WithUser("festival_name", festivalName)
-	b.WithUser("phase_number", phaseNumber)
-	b.WithUser("phase_name", phaseName)
-
-	ctx := b.Build()
-
-	// Add computed variables
-	ctx.Computed["phase_id"] = fmt.Sprintf("%03d_%s", phaseNumber, phaseName)
-	ctx.Computed["phase_path"] = filepath.Join(festivalName, fmt.Sprintf("%03d_%s", phaseNumber, phaseName))
-
-	return ctx
+// SetPhaseObjective sets the phase objective
+func (c *Context) SetPhaseObjective(objective string) {
+	c.PhaseObjective = objective
 }
 
-// buildAutomaticVariables creates the automatic variables available in all templates
-func buildAutomaticVariables() map[string]interface{} {
-	auto := make(map[string]interface{})
-
-	// Time-based variables
-	now := time.Now()
-	auto["now"] = now.Format(time.RFC3339)
-	auto["today"] = now.Format("2006-01-02")
-	auto["current_year"] = now.Year()
-	auto["current_month"] = now.Format("January")
-	auto["current_date"] = now.Format("January 2, 2006")
-	auto["created_date"] = now.Format("2006-01-02")
-	auto["timestamp"] = now.Unix()
-
-	// User information
-	if currentUser, err := user.Current(); err == nil {
-		auto["user_name"] = currentUser.Username
-		auto["user_home"] = currentUser.HomeDir
-
-		// Try to get display name from full name
-		if currentUser.Name != "" {
-			auto["user_full_name"] = currentUser.Name
-		}
-	}
-
-	// Hostname
-	if hostname, err := os.Hostname(); err == nil {
-		auto["hostname"] = hostname
-	}
-
-	// Fest version (placeholder - would be injected at build time)
-	auto["fest_version"] = "2.0.0-dev"
-
-	// Working directory
-	if wd, err := os.Getwd(); err == nil {
-		auto["working_dir"] = wd
-		auto["working_dir_name"] = filepath.Base(wd)
-	}
-
-	return auto
+// SetSequence sets sequence-level variables
+func (c *Context) SetSequence(number int, name string) {
+	c.SequenceNumber = number
+	c.SequenceName = name
+	c.SequenceID = FormatSequenceID(number, name)
+	c.CurrentLevel = "sequence"
 }
 
-// generateFestivalID creates a unique festival ID from the name
-func generateFestivalID(name string) string {
-	// Convert to lowercase, replace spaces/underscores with hyphens
-	id := strings.ToLower(name)
-	id = strings.ReplaceAll(id, " ", "-")
-	id = strings.ReplaceAll(id, "_", "-")
-
-	// Add timestamp for uniqueness
-	timestamp := time.Now().Unix()
-	return fmt.Sprintf("%s-%d", id, timestamp)
+// SetSequenceObjective sets the sequence objective
+func (c *Context) SetSequenceObjective(objective string) {
+	c.SequenceObjective = objective
 }
 
-// ToFlatMap converts a Context to a flat map for template rendering
-func (c *Context) ToFlatMap() map[string]interface{} {
-	flat := make(map[string]interface{})
-
-	// Copy automatic variables
-	for k, v := range c.Auto {
-		flat[k] = v
-	}
-
-	// Copy user variables (override auto if conflicts)
-	for k, v := range c.User {
-		flat[k] = v
-	}
-
-	// Copy computed variables (override all if conflicts)
-	for k, v := range c.Computed {
-		flat[k] = v
-	}
-
-	return flat
+// SetSequenceDependencies sets the sequence dependencies
+func (c *Context) SetSequenceDependencies(dependencies []string) {
+	c.SequenceDependencies = dependencies
 }
 
-// Get retrieves a variable value by key, searching in order: Computed, User, Auto
+// SetTask sets task-level variables
+func (c *Context) SetTask(number int, name string) {
+	c.TaskNumber = number
+	c.TaskName = name
+	c.TaskID = FormatTaskID(number, name)
+	c.CurrentLevel = "task"
+}
+
+// SetTaskObjective sets the task objective
+func (c *Context) SetTaskObjective(objective string) {
+	c.TaskObjective = objective
+}
+
+// SetTaskDeliverables sets the task deliverables
+func (c *Context) SetTaskDeliverables(deliverables []string) {
+	c.TaskDeliverables = deliverables
+}
+
+// SetTaskParallel sets whether the task can run in parallel
+func (c *Context) SetTaskParallel(parallel bool) {
+	c.TaskParallel = parallel
+}
+
+// SetTaskDependencies sets the task dependencies
+func (c *Context) SetTaskDependencies(dependencies []string) {
+	c.TaskDependencies = dependencies
+}
+
+// SetCustom sets a custom user-provided variable
+func (c *Context) SetCustom(key string, value interface{}) {
+	c.Custom[key] = value
+}
+
+// ComputeStructureVariables calculates full_path, parent_* variables based on current level
+func (c *Context) ComputeStructureVariables() {
+	switch c.CurrentLevel {
+	case "task":
+		c.ParentPhaseID = c.PhaseID
+		c.ParentSequenceID = c.SequenceID
+		c.FullPath = filepath.Join(c.PhaseID, c.SequenceID, c.TaskID)
+	case "sequence":
+		c.ParentPhaseID = c.PhaseID
+		c.FullPath = filepath.Join(c.PhaseID, c.SequenceID)
+	case "phase":
+		c.FullPath = c.PhaseID
+	case "festival":
+		c.FullPath = ""
+	}
+}
+
+// ToTemplateData converts Context to map[string]interface{} for Go templates
+func (c *Context) ToTemplateData() map[string]interface{} {
+	data := map[string]interface{}{
+		// Festival-level
+		"festival_name":        c.FestivalName,
+		"festival_goal":        c.FestivalGoal,
+		"festival_tags":        c.FestivalTags,
+		"festival_description": c.FestivalDescription,
+
+		// Phase-level
+		"phase_number":    c.PhaseNumber,
+		"phase_name":      c.PhaseName,
+		"phase_id":        c.PhaseID,
+		"phase_type":      c.PhaseType,
+		"phase_structure": c.PhaseStructure,
+		"phase_objective": c.PhaseObjective,
+
+		// Sequence-level
+		"sequence_number":       c.SequenceNumber,
+		"sequence_name":         c.SequenceName,
+		"sequence_id":           c.SequenceID,
+		"sequence_objective":    c.SequenceObjective,
+		"sequence_dependencies": c.SequenceDependencies,
+
+		// Task-level
+		"task_number":       c.TaskNumber,
+		"task_name":         c.TaskName,
+		"task_id":           c.TaskID,
+		"task_objective":    c.TaskObjective,
+		"task_deliverables": c.TaskDeliverables,
+		"task_parallel":     c.TaskParallel,
+		"task_dependencies": c.TaskDependencies,
+
+		// Structure
+		"current_level":      c.CurrentLevel,
+		"parent_phase_id":    c.ParentPhaseID,
+		"parent_sequence_id": c.ParentSequenceID,
+		"full_path":          c.FullPath,
+	}
+
+	// Merge custom variables
+	for k, v := range c.Custom {
+		data[k] = v
+	}
+
+	return data
+}
+
+// Get retrieves a variable value by key
 func (c *Context) Get(key string) (interface{}, bool) {
-	// Check computed first (highest priority)
-	if val, ok := c.Computed[key]; ok {
+	// Try custom variables first
+	if val, ok := c.Custom[key]; ok {
 		return val, true
 	}
 
-	// Check user second
-	if val, ok := c.User[key]; ok {
-		return val, true
-	}
+	// Convert to template data and look up
+	data := c.ToTemplateData()
+	val, ok := data[key]
+	return val, ok
+}
 
-	// Check auto last
-	if val, ok := c.Auto[key]; ok {
-		return val, true
-	}
+// FormatPhaseID creates formatted phase ID: "001_PLANNING"
+func FormatPhaseID(number int, name string) string {
+	// Normalize name: uppercase, replace spaces with underscores
+	normalized := strings.ToUpper(strings.ReplaceAll(name, " ", "_"))
+	return fmt.Sprintf("%03d_%s", number, normalized)
+}
 
-	return nil, false
+// FormatSequenceID creates formatted sequence ID: "01_requirements"
+func FormatSequenceID(number int, name string) string {
+	// Normalize name: lowercase, replace spaces with underscores
+	normalized := strings.ToLower(strings.ReplaceAll(name, " ", "_"))
+	return fmt.Sprintf("%02d_%s", number, normalized)
+}
+
+// FormatTaskID creates formatted task ID: "01_user_research.md"
+func FormatTaskID(number int, name string) string {
+	// Normalize name: lowercase, replace spaces with underscores
+	normalized := strings.ToLower(strings.ReplaceAll(name, " ", "_"))
+	return fmt.Sprintf("%02d_%s.md", number, normalized)
 }

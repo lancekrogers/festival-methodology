@@ -72,11 +72,11 @@ Created: {{.created_date}}
 	}
 
 	// Step 1: Build context for festival creation
-	ctx := NewContextBuilder().
-		BuildForFestival("auth-system-enhancement", "Implement OAuth authentication")
-
-	// Add owner
-	ctx.User["owner"] = "Lance Rogers"
+	ctx := NewContext()
+	ctx.SetFestival("auth-system-enhancement", "Implement OAuth authentication", []string{"backend", "security"})
+	ctx.SetCustom("owner", "Lance Rogers")
+	ctx.SetCustom("created_date", "2025-10-25") // Mock date for testing
+	ctx.SetCustom("fest_version", "2.0.0")
 
 	// Step 2: Render templates
 	manager := NewManager()
