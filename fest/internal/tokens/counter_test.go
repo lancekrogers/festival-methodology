@@ -90,14 +90,14 @@ func TestCounter_Count(t *testing.T) {
 	hasCharBased := false
 	hasWordBased := false
 	for _, method := range result.Methods {
-		if strings.Contains(method.Name, "Character-based") {
+		if strings.Contains(method.DisplayName, "Character-based") {
 			hasCharBased = true
 		}
-		if strings.Contains(method.Name, "Word-based") {
+		if strings.Contains(method.DisplayName, "Word-based") {
 			hasWordBased = true
 		}
 	}
-	
+
 	if !hasCharBased {
 		t.Error("Missing character-based approximation")
 	}
@@ -123,7 +123,7 @@ func TestGetApproximations(t *testing.T) {
 	expectedCharTokens := len(text) / 4
 	found := false
 	for _, method := range methods {
-		if strings.Contains(method.Name, "Character-based") {
+		if strings.Contains(method.DisplayName, "Character-based") {
 			found = true
 			if method.Tokens != expectedCharTokens {
 				t.Errorf("Character-based tokens = %d, want %d", method.Tokens, expectedCharTokens)
@@ -145,10 +145,10 @@ func TestCounterOptions(t *testing.T) {
 	})
 	
 	methods := counter.getApproximations(text)
-	
+
 	// Find character-based method
 	for _, method := range methods {
-		if strings.Contains(method.Name, "÷2.0") {
+		if strings.Contains(method.DisplayName, "÷2.0") {
 			expectedTokens := len(text) / 2
 			if method.Tokens != expectedTokens {
 				t.Errorf("Custom char ratio: got %d tokens, want %d", method.Tokens, expectedTokens)
@@ -156,7 +156,7 @@ func TestCounterOptions(t *testing.T) {
 			return
 		}
 	}
-	
+
 	t.Error("Custom character ratio not applied")
 }
 
