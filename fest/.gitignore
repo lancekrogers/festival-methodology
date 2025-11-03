@@ -1,2 +1,6 @@
 fest
 bin/*
+
+# Test coverage files
+coverage.out
+*.coverprofile

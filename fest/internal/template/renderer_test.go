@@ -7,6 +7,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Helper function to create context with custom variables for tests
+func newTestContext(vars map[string]interface{}) *Context {
+	ctx := NewContext()
+	for k, v := range vars {
+		ctx.SetCustom(k, v)
+	}
+	return ctx
+}
+
 func TestRenderer_RenderString(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -18,52 +27,42 @@ func TestRenderer_RenderString(t *testing.T) {
 		{
 			name:    "simple variable substitution",
 			content: "Hello {{.name}}!",
-			context: &Context{
-				User: map[string]interface{}{
-					"name": "World",
-				},
-			},
+			context: newTestContext(map[string]interface{}{
+				"name": "World",
+			}),
 			expected: "Hello World!",
 			wantErr:  false,
 		},
 		{
 			name:    "multiple variables",
 			content: "Festival: {{.festival_name}}\nGoal: {{.goal}}",
-			context: &Context{
-				User: map[string]interface{}{
-					"festival_name": "my-festival",
-					"goal":          "Build awesome things",
-				},
-			},
+			context: newTestContext(map[string]interface{}{
+				"festival_name": "my-festival",
+				"goal":          "Build awesome things",
+			}),
 			expected: "Festival: my-festival\nGoal: Build awesome things",
 			wantErr:  false,
 		},
 		{
 			name:    "sprig functions - default",
 			content: "Name: {{.name | default \"Unknown\"}}",
-			context: &Context{
-				User: map[string]interface{}{},
-			},
+			context: newTestContext(map[string]interface{}{}),
 			expected: "Name: Unknown",
 			wantErr:  false,
 		},
 		{
 			name:    "sprig functions - upper",
 			content: "Name: {{.name | upper}}",
-			context: &Context{
-				User: map[string]interface{}{
-					"name": "festival",
-				},
-			},
+			context: newTestContext(map[string]interface{}{
+				"name": "festival",
+			}),
 			expected: "Name: FESTIVAL",
 			wantErr:  false,
 		},
 		{
 			name:    "preserve guidance markers",
 			content: "# Title\n\n[GUIDANCE: Fill this in]\n\n[FILL: Add description]",
-			context: &Context{
-				User: map[string]interface{}{},
-			},
+			context: newTestContext(map[string]interface{}{}),
 			expected: "# Title\n\n[GUIDANCE: Fill this in]\n\n[FILL: Add description]",
 			wantErr:  false,
 		},
@@ -95,11 +94,9 @@ func TestRenderer_Render(t *testing.T) {
 		Content: "Hello {{.name}}!",
 	}
 
-	ctx := &Context{
-		User: map[string]interface{}{
-			"name": "World",
-		},
-	}
+	ctx := newTestContext(map[string]interface{}{
+		"name": "World",
+	})
 
 	renderer := NewRenderer()
 	output, err := renderer.Render(tmpl, ctx)
@@ -120,12 +117,10 @@ func TestValidateTemplate(t *testing.T) {
 			metadata: &Metadata{
 				RequiredVariables: []string{"name", "goal"},
 			},
-			context: &Context{
-				User: map[string]interface{}{
-					"name": "test",
-					"goal": "test goal",
-				},
-			},
+			context: newTestContext(map[string]interface{}{
+				"name": "test",
+				"goal": "test goal",
+			}),
 			wantErr: false,
 		},
 		{
@@ -133,19 +128,15 @@ func TestValidateTemplate(t *testing.T) {
 			metadata: &Metadata{
 				RequiredVariables: []string{"name", "goal"},
 			},
-			context: &Context{
-				User: map[string]interface{}{
-					"name": "test",
-				},
-			},
+			context: newTestContext(map[string]interface{}{
+				"name": "test",
+			}),
 			wantErr: true,
 		},
 		{
 			name:     "no metadata",
 			metadata: nil,
-			context: &Context{
-				User: map[string]interface{}{},
-			},
+			context: newTestContext(map[string]interface{}{}),
 			wantErr: false,
 		},
 		{
@@ -154,11 +145,9 @@ func TestValidateTemplate(t *testing.T) {
 				RequiredVariables: []string{"name"},
 				OptionalVariables: []string{"description"},
 			},
-			context: &Context{
-				User: map[string]interface{}{
-					"name": "test",
-				},
-			},
+			context: newTestContext(map[string]interface{}{
+				"name": "test",
+			}),
 			wantErr: false,
 		},
 	}
@@ -224,11 +213,9 @@ func TestRenderWithDefaults(t *testing.T) {
 		Content: "Name: {{.name}}\nDescription: {{.description}}\nOwner: {{.owner}}",
 	}
 
-	ctx := &Context{
-		User: map[string]interface{}{
-			"name": "Test Festival",
-		},
-	}
+	ctx := newTestContext(map[string]interface{}{
+		"name": "Test Festival",
+	})
 
 	output, err := RenderWithDefaults(tmpl, ctx)
 	require.NoError(t, err)

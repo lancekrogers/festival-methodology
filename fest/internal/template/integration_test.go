@@ -76,7 +76,7 @@ Created: {{.created_date}}
 	ctx.SetFestival("auth-system-enhancement", "Implement OAuth authentication", []string{"backend", "security"})
 	ctx.SetCustom("owner", "Lance Rogers")
 	ctx.SetCustom("created_date", "2025-10-25") // Mock date for testing
-	ctx.SetCustom("fest_version", "2.0.0")
+	ctx.SetCustom("fest_version", "2.0.0-dev")
 
 	// Step 2: Render templates
 	manager := NewManager()
@@ -143,7 +143,9 @@ Phase {{.phase_number}} of the festival
 	require.NoError(t, err)
 
 	// Build context for phase
-	ctx := NewContextBuilder().BuildForPhase("auth-system-enhancement", 1, "PLANNING")
+	ctx := NewContext()
+	ctx.SetFestival("auth-system-enhancement", "Implement OAuth authentication", []string{"backend", "security"})
+	ctx.SetPhase(1, "PLANNING", "planning")
 
 	// Render phase
 	manager := NewManager()
@@ -180,10 +182,9 @@ This festival has {{len .tags}} tags.
 
 [GUIDANCE: Add more details about {{.name}}]`
 
-	ctx := NewContextBuilder().
-		WithUser("name", "my-festival").
-		WithUser("tags", []string{"auth", "security", "api"}).
-		Build()
+	ctx := NewContext()
+	ctx.SetCustom("name", "my-festival")
+	ctx.SetCustom("tags", []string{"auth", "security", "api"})
 
 	output, err := manager.RenderString(template, ctx)
 	require.NoError(t, err)
@@ -223,10 +224,9 @@ Description: {{.description}}`
 	require.NoError(t, err)
 
 	// Create context missing 'description'
-	ctx := NewContextBuilder().
-		WithUser("name", "test").
-		WithUser("goal", "test goal").
-		Build()
+	ctx := NewContext()
+	ctx.SetCustom("name", "test")
+	ctx.SetCustom("goal", "test goal")
 
 	// Should fail validation
 	manager := NewManager()
@@ -250,10 +250,14 @@ func TestIntegration_RealWorldScenario(t *testing.T) {
 		"owner":         "Development Team",
 		"tags":          []string{"authentication", "security", "api"},
 		"tech_stack":    "Go, PostgreSQL, Redis",
+		"created_date":  "2025-10-25", // Mock date for testing
 	}
 
 	// Step 3: Build context
-	ctx := NewContextBuilder().WithUserMap(userData).Build()
+	ctx := NewContext()
+	for k, v := range userData {
+		ctx.SetCustom(k, v)
+	}
 
 	// Step 4: Create simple overview template
 	template := `# Festival: {{.festival_name}}

@@ -30,10 +30,9 @@ Goal: {{.goal}}
 	require.NoError(t, err)
 
 	// Create context
-	ctx := NewContextBuilder().
-		WithUser("name", "my-festival").
-		WithUser("goal", "Build awesome things").
-		Build()
+	ctx := NewContext()
+	ctx.SetCustom("name", "my-festival")
+	ctx.SetCustom("goal", "Build awesome things")
 
 	// Render template
 	manager := NewManager()
@@ -64,9 +63,8 @@ Goal: {{.goal}}`
 	require.NoError(t, err)
 
 	// Create context with missing variable
-	ctx := NewContextBuilder().
-		WithUser("name", "my-festival").
-		Build()
+	ctx := NewContext()
+	ctx.SetCustom("name", "my-festival")
 
 	// Render template - should fail validation
 	manager := NewManager()
@@ -90,10 +88,9 @@ Goal: {{.goal}}`
 	require.NoError(t, err)
 
 	// Create context
-	ctx := NewContextBuilder().
-		WithUser("name", "my-festival").
-		WithUser("goal", "Build awesome things").
-		Build()
+	ctx := NewContext()
+	ctx.SetCustom("name", "my-festival")
+	ctx.SetCustom("goal", "Build awesome things")
 
 	// Render to file
 	manager := NewManager()
@@ -132,10 +129,9 @@ func TestManager_RenderDirectory(t *testing.T) {
 	}
 
 	// Create context
-	ctx := NewContextBuilder().
-		WithUser("name", "my-festival").
-		WithUser("goal", "Build awesome things").
-		Build()
+	ctx := NewContext()
+	ctx.SetCustom("name", "my-festival")
+	ctx.SetCustom("goal", "Build awesome things")
 
 	// Render directory
 	manager := NewManager()
@@ -160,9 +156,8 @@ func TestManager_RenderDirectory(t *testing.T) {
 func TestManager_RenderString(t *testing.T) {
 	manager := NewManager()
 
-	ctx := NewContextBuilder().
-		WithUser("name", "Test").
-		Build()
+	ctx := NewContext()
+	ctx.SetCustom("name", "Test")
 
 	output, err := manager.RenderString("Hello {{.name}}!", ctx)
 	require.NoError(t, err)
