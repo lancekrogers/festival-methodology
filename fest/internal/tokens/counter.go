@@ -8,13 +8,15 @@ import (
 
 // CountResult represents the result of token counting
 type CountResult struct {
-	FilePath   string         `json:"file_path"`
-	FileSize   int            `json:"file_size"`
-	Characters int            `json:"characters"`
-	Words      int            `json:"words"`
-	Lines      int            `json:"lines"`
-	Methods    []MethodResult `json:"methods"`
-	Costs      []CostEstimate `json:"costs,omitempty"`
+	FilePath    string         `json:"file_path"`
+	IsDirectory bool           `json:"is_directory,omitempty"`
+	FileCount   int            `json:"file_count,omitempty"`
+	FileSize    int            `json:"file_size"`
+	Characters  int            `json:"characters"`
+	Words       int            `json:"words"`
+	Lines       int            `json:"lines"`
+	Methods     []MethodResult `json:"methods"`
+	Costs       []CostEstimate `json:"costs,omitempty"`
 }
 
 // MethodResult represents token count for a specific method
