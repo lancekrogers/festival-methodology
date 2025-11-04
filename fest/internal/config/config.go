@@ -9,11 +9,11 @@ import (
 
 const (
 	// DefaultRepositoryURL is the default festival methodology repository
-	DefaultRepositoryURL = "https://github.com/user/festival-methodology"
-	
+	DefaultRepositoryURL = "https://github.com/lancekrogers/festival-methodology"
+
 	// DefaultBranch is the default git branch
 	DefaultBranch = "main"
-	
+
 	// ConfigFileName is the name of the config file
 	ConfigFileName = "config.json"
 )
