@@ -216,3 +216,66 @@ func (d *Downloader) getFilesFromGitHub(owner, repo string) ([]string, error) {
 
 	return files, nil
 }
+
+// CheckForUpdates checks if remote repository has changes compared to local cache
+func (d *Downloader) CheckForUpdates(owner, repo, targetDir string) (bool, []string, error) {
+	// Get remote file list
+	remoteFiles, err := d.getFilesFromGitHub(owner, repo)
+	if err != nil {
+		return false, nil, fmt.Errorf("failed to get remote file list: %w", err)
+	}
+
+	// Build map of remote files for quick lookup
+	remoteFileMap := make(map[string]bool)
+	for _, file := range remoteFiles {
+		remoteFileMap[file] = true
+	}
+
+	changes := []string{}
+
+	// Check for new or modified files
+	for _, remoteFile := range remoteFiles {
+		localPath := filepath.Join(targetDir, remoteFile)
+		if _, err := os.Stat(localPath); os.IsNotExist(err) {
+			// File doesn't exist locally (new file)
+			changes = append(changes, fmt.Sprintf("+ %s (new)", remoteFile))
+		}
+		// Note: We're not comparing file contents/checksums here for simplicity
+		// A more sophisticated implementation would compare hashes
+	}
+
+	// Check for deleted files (in local but not in remote)
+	err = filepath.Walk(targetDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil // Skip errors
+		}
+		if info.IsDir() {
+			return nil // Skip directories
+		}
+
+		// Get relative path
+		relPath, err := filepath.Rel(targetDir, path)
+		if err != nil {
+			return nil
+		}
+
+		// Skip hidden files and checksums
+		if strings.HasPrefix(filepath.Base(relPath), ".") {
+			return nil
+		}
+
+		// Check if file exists in remote
+		if !remoteFileMap[relPath] {
+			changes = append(changes, fmt.Sprintf("- %s (deleted)", relPath))
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return false, nil, fmt.Errorf("failed to walk local directory: %w", err)
+	}
+
+	hasUpdates := len(changes) > 0
+	return hasUpdates, changes, nil
+}

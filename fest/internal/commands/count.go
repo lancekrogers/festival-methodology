@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/anthropics/guild-framework/projects/festival-methodology/fest/internal/fileops"
-	"github.com/anthropics/guild-framework/projects/festival-methodology/fest/internal/tokens"
-	"github.com/anthropics/guild-framework/projects/festival-methodology/fest/internal/ui"
+	"github.com/lancekrogers/festival-methodology/fest/internal/fileops"
+	"github.com/lancekrogers/festival-methodology/fest/internal/tokens"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 

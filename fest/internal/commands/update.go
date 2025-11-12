@@ -3,11 +3,12 @@ package commands
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
-	"github.com/anthropics/guild-framework/projects/festival-methodology/fest/internal/config"
-	"github.com/anthropics/guild-framework/projects/festival-methodology/fest/internal/fileops"
-	"github.com/anthropics/guild-framework/projects/festival-methodology/fest/internal/ui"
+	"github.com/lancekrogers/festival-methodology/fest/internal/config"
+	"github.com/lancekrogers/festival-methodology/fest/internal/fileops"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -65,10 +66,10 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 		opts.interactive = false
 	}
 	
-	// Find festival directory
-	festivalPath := filepath.Join(targetPath, "festivals")
+	// Find .festival directory in current working directory
+	festivalPath := filepath.Join(targetPath, ".festival")
 	if !fileops.Exists(festivalPath) {
-		return fmt.Errorf("no festival directory found at %s", festivalPath)
+		return fmt.Errorf("no .festival/ directory found in current directory. Run 'fest init' first or navigate to a festival project")
 	}
 	
 	// Load checksums
@@ -139,9 +140,10 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 	}
 	
 	// Handle modified files
+	acceptAll := false
 	for _, file := range changes.modified {
-		if opts.force {
-			// Force update
+		if opts.force || acceptAll {
+			// Force update or accept all
 			if err := updater.UpdateFile(file); err != nil {
 				display.Warning("Failed to update %s: %v", file, err)
 			} else {
@@ -149,24 +151,22 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 			}
 		} else if opts.interactive {
 			// Interactive prompt
-			action := promptForFile(display, file, sourceDir, festivalPath, opts.diff)
+			action := promptForFile(display, file)
 			switch action {
-			case "overwrite":
+			case "yes":
 				if err := updater.UpdateFile(file); err != nil {
 					display.Warning("Failed to update %s: %v", file, err)
 				} else {
 					updatedFiles = append(updatedFiles, file)
 				}
-			case "backup":
-				backupPath := file + ".backup"
-				if err := fileops.CopyFile(filepath.Join(festivalPath, file), 
-					filepath.Join(festivalPath, backupPath)); err == nil {
-					if err := updater.UpdateFile(file); err != nil {
-						display.Warning("Failed to update %s: %v", file, err)
-					} else {
-						updatedFiles = append(updatedFiles, file)
-						display.Info("Backed up to %s", backupPath)
-					}
+			case "skip":
+				skippedFiles = append(skippedFiles, file)
+			case "all":
+				acceptAll = true
+				if err := updater.UpdateFile(file); err != nil {
+					display.Warning("Failed to update %s: %v", file, err)
+				} else {
+					updatedFiles = append(updatedFiles, file)
 				}
 			default:
 				skippedFiles = append(skippedFiles, file)
@@ -236,37 +236,21 @@ func categorizeChanges(stored, current map[string]fileops.ChecksumEntry) fileCha
 	return changes
 }
 
-func promptForFile(display *ui.UI, file, sourceDir, targetDir string, showDiff bool) string {
-	display.Warning("\nFile: %s", file)
-	display.Info("Status: Modified (you've made changes)")
-	
-	if showDiff {
-		sourcePath := filepath.Join(sourceDir, file)
-		targetPath := filepath.Join(targetDir, file)
-		display.ShowDiff(targetPath, sourcePath)
-	}
-	
-	options := []string{
-		"Skip - Keep your version (default)",
-		"Overwrite - Replace with template version",
-		"Backup & Update - Backup your version, then update",
-	}
-	
-	if !showDiff {
-		options = append(options, "Diff - Show differences")
-	}
-	
-	choice := display.Choose("What would you like to do?", options)
-	
-	switch choice {
-	case 0:
+func promptForFile(display *ui.UI, file string) string {
+	fmt.Printf("\nFile modified: %s\n", file)
+	fmt.Print("Update this file? [Y/s/a] (Y=yes, s=skip, a=accept all): ")
+
+	var response string
+	fmt.Scanln(&response)
+	response = strings.ToLower(strings.TrimSpace(response))
+
+	switch response {
+	case "", "y", "yes":
+		return "yes"
+	case "s", "skip":
 		return "skip"
-	case 1:
-		return "overwrite"
-	case 2:
-		return "backup"
-	case 3:
-		return "diff"
+	case "a", "all", "accept":
+		return "all"
 	default:
 		return "skip"
 	}

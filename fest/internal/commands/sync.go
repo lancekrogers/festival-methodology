@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
-	"github.com/anthropics/guild-framework/projects/festival-methodology/fest/internal/config"
-	"github.com/anthropics/guild-framework/projects/festival-methodology/fest/internal/github"
-	"github.com/anthropics/guild-framework/projects/festival-methodology/fest/internal/ui"
+	"github.com/lancekrogers/festival-methodology/fest/internal/config"
+	"github.com/lancekrogers/festival-methodology/fest/internal/github"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -51,12 +52,18 @@ configured repository and stores it locally for use with init and update command
 }
 
 func runSync(opts *syncOptions) error {
+	// Determine target directory
+	targetDir := filepath.Join(config.ConfigDir(), "festivals")
+
+	// Create UI handler
+	display := ui.New(noColor, verbose)
+
 	// Load configuration
 	cfg, err := config.Load(configFile)
 	if err != nil && opts.source == "" {
 		return fmt.Errorf("no config found and no --source specified: %w", err)
 	}
-	
+
 	// Determine repository URL
 	repoURL := opts.source
 	if repoURL == "" && cfg != nil {
@@ -65,32 +72,53 @@ func runSync(opts *syncOptions) error {
 	if repoURL == "" {
 		repoURL = config.DefaultRepositoryURL
 	}
-	
-	// Create UI handler
-	display := ui.New(noColor, verbose)
-	
-	if opts.dryRun {
-		display.Info("DRY RUN: Would sync from %s (branch: %s)", repoURL, opts.branch)
-		return nil
+
+	// Parse repository to get owner and repo
+	owner, repo, err := parseRepoURLForSync(repoURL)
+	if err != nil {
+		return fmt.Errorf("invalid repository URL: %w", err)
 	}
-	
-	display.Info("Syncing from %s (branch: %s)...", repoURL, opts.branch)
-	
+
 	// Create downloader
 	downloader := github.NewDownloader(repoURL, opts.branch)
 	downloader.SetTimeout(opts.timeout)
 	downloader.SetRetry(opts.retry)
-	
-	// Determine target directory
-	targetDir := filepath.Join(config.ConfigDir(), "festivals")
-	
-	// Check if exists and not forcing
-	if !opts.force && fileExists(targetDir) {
-		if !display.Confirm("Local cache exists. Overwrite?") {
-			display.Warning("Sync cancelled")
+
+	// Check if directory exists and we're not forcing
+	if fileExists(targetDir) && !opts.force {
+		display.Info("Checking for updates from %s...", repoURL)
+
+		hasUpdates, changes, err := downloader.CheckForUpdates(owner, repo, targetDir)
+		if err != nil {
+			display.Warning("Failed to check for updates: %v", err)
+			display.Info("Use --force to re-download")
+			return nil
+		}
+
+		if !hasUpdates {
+			display.Success("Festival templates are up to date!")
+			return nil
+		}
+
+		// Show changes
+		display.Info("\nUpdates available (%d changes):", len(changes))
+		for _, change := range changes {
+			display.Info("  %s", change)
+		}
+
+		// Prompt user
+		if !display.Confirm("\nDownload updates?") {
+			display.Info("Sync cancelled")
 			return nil
 		}
 	}
+
+	if opts.dryRun {
+		display.Info("DRY RUN: Would sync from %s (branch: %s)", repoURL, opts.branch)
+		return nil
+	}
+
+	display.Info("Syncing from %s (branch: %s)...", repoURL, opts.branch)
 	
 	// Download with progress
 	progressBar := display.NewProgressBar("Downloading", -1)
@@ -122,4 +150,24 @@ func fileExists(path string) bool {
 
 func timeNow() string {
 	return time.Now().Format(time.RFC3339)
+}
+
+func parseRepoURLForSync(url string) (owner, repo string, err error) {
+	// Remove protocol
+	url = strings.TrimPrefix(url, "https://")
+	url = strings.TrimPrefix(url, "http://")
+
+	// Remove github.com
+	url = strings.TrimPrefix(url, "github.com/")
+
+	// Split owner and repo
+	parts := strings.Split(url, "/")
+	if len(parts) < 2 {
+		return "", "", fmt.Errorf("invalid repository URL format")
+	}
+
+	owner = parts[0]
+	repo = strings.TrimSuffix(parts[1], ".git")
+
+	return owner, repo, nil
 }

@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/anthropics/guild-framework/projects/festival-methodology/fest/internal/config"
-	"github.com/anthropics/guild-framework/projects/festival-methodology/fest/internal/fileops"
-	"github.com/anthropics/guild-framework/projects/festival-methodology/fest/internal/ui"
+	"github.com/lancekrogers/festival-methodology/fest/internal/config"
+	"github.com/lancekrogers/festival-methodology/fest/internal/fileops"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 

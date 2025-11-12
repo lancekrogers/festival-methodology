@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/anthropics/guild-framework/projects/festival-methodology/fest/internal/commands"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands"
 )
 
 func main() {

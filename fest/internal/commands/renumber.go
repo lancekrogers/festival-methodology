@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/anthropics/guild-framework/projects/festival-methodology/fest/internal/festival"
+	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	"github.com/spf13/cobra"
 )
 
