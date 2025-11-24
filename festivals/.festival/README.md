@@ -87,11 +87,13 @@ This directory contains all the resources needed to implement Festival Methodolo
 ### Phase Flexibility Principles
 
 **Planning Phases (Unstructured):**
+
 - Used for research, requirements gathering, and documentation
 - Often just contain documents, not sequences/tasks
 - Add only when requirements aren't clear
 
 **Implementation Phases (Structured):**
+
 - MUST have sequences and tasks for AI execution
 - Add as many as needed (IMPLEMENT_CORE, IMPLEMENT_FEATURES, IMPLEMENT_UI, etc.)
 - This is where agents work autonomously for long periods
@@ -215,14 +217,12 @@ festival/
 ### Goal Templates
 
 1. **FESTIVAL_GOAL_TEMPLATE.md**
-
    - Comprehensive festival-level goals
    - Success criteria across all dimensions
    - KPIs and stakeholder metrics
    - Post-festival evaluation framework
 
 2. **PHASE_GOAL_TEMPLATE.md**
-
    - Phase-specific objectives
    - Contribution to festival goal
    - Phase evaluation criteria
@@ -263,35 +263,30 @@ Templates provide standardized structures for festival documentation. Each templ
 ### Essential Templates
 
 1. **FESTIVAL_OVERVIEW_TEMPLATE.md**
-
    - Define project goals and success criteria
    - Create stakeholder matrix
    - Document problem statement
    - _Use this first when starting a new festival_
 
 2. **Interface Planning Extension** (When Needed)
-
    - For multi-system projects requiring coordination
    - Define interfaces before implementation
    - Enables parallel development
    - _See extensions/interface-planning/ for templates_
 
 3. **FESTIVAL_RULES_TEMPLATE.md**
-
    - Project-specific standards and guidelines
    - Quality gates and compliance requirements
    - Team agreements and conventions
    - _Customize for your project's needs_
 
 4. **TASK_TEMPLATE.md**
-
    - Comprehensive task structure (full version)
    - Detailed implementation steps
    - Testing and verification sections
    - _Use for complex or critical tasks_
 
 5. **FESTIVAL_TODO_TEMPLATE.md** (Markdown)
-
    - Human-readable progress tracking
    - Checkbox-based task management
    - Visual project status
@@ -326,14 +321,12 @@ Specialized agents help maintain methodology consistency and guide festival exec
 ### Available Agents
 
 1. **festival_planning_agent.md**
-
    - Conducts structured project interviews
    - Creates complete festival structures
    - Ensures proper three-level hierarchy
    - _Trigger: Starting a new project or festival_
 
 2. **festival_review_agent.md**
-
    - Validates festival structure compliance
    - Reviews quality gates
    - Ensures methodology adherence
@@ -369,7 +362,6 @@ Learn from concrete implementations and proven patterns.
 ### Available Examples
 
 1. **TASK_EXAMPLES.md**
-
    - 15+ real task examples
    - Covers different domains (database, API, frontend, DevOps)
    - Shows good vs bad patterns
@@ -417,7 +409,6 @@ Understanding the methodology principles and theory.
 ### Essential Reading Order
 
 1. **FESTIVAL_SOFTWARE_PROJECT_MANAGEMENT.md**
-
    - Core methodology principles
    - Three-level hierarchy explanation
    - Interface-first development rationale
@@ -488,12 +479,10 @@ Understanding the methodology principles and theory.
 All templates are starting points. Customize them by:
 
 1. **Removing irrelevant sections**
-
    - Not every project needs every section
    - Keep what adds value
 
 2. **Adding project-specific sections**
-
    - Add sections for your domain
    - Include compliance requirements
    - Add team-specific needs
@@ -606,4 +595,3 @@ This directory contains everything needed to implement Festival Methodology succ
 Remember: Festival Methodology is a framework, not a prescription. Adapt it to your needs while maintaining the core principles of interface-first development and three-level hierarchy.
 
 For questions or contributions, see the main [CONTRIBUTING.md](../../CONTRIBUTING.md) file.
-

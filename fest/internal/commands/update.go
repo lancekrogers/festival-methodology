@@ -66,8 +66,8 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 		opts.interactive = false
 	}
 	
-	// Find .festival directory in current working directory
-	festivalDir := filepath.Join(targetPath, ".festival")
+    // Find .festival directory in current working directory
+    festivalDir := filepath.Join(targetPath, ".festival")
 	if !fileops.Exists(festivalDir) {
 		return fmt.Errorf("no .festival/ directory found in current directory. Run 'fest init' first or navigate to a festival project")
 	}
@@ -83,16 +83,16 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 		return fmt.Errorf("failed to load checksums: %w", err)
 	}
 
-	// Get source directory
-	sourceDir := filepath.Join(config.ConfigDir(), "festivals")
-	if !fileops.Exists(sourceDir) {
-		return fmt.Errorf("no cached templates found. Run 'fest sync' first")
-	}
+    // Get source directory (.festival only)
+    sourceDir := filepath.Join(config.ConfigDir(), "festivals", ".festival")
+    if !fileops.Exists(sourceDir) {
+        return fmt.Errorf("no cached .festival templates found. Run 'fest sync' first")
+    }
 
-	display.Info("Analyzing festival files...")
+    display.Info("Analyzing .festival files...")
 
-	// Calculate current checksums for the festivals directory (parent of .festival)
-	currentChecksums, err := fileops.GenerateChecksums(targetPath)
+    // Calculate current checksums for the .festival directory only
+    currentChecksums, err := fileops.GenerateChecksums(festivalDir)
 	if err != nil {
 		return fmt.Errorf("failed to generate checksums: %w", err)
 	}
@@ -113,17 +113,17 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 		return nil
 	}
 	
-	// Create backup if requested
-	if opts.backup {
-		backupDir := filepath.Join(targetPath, ".fest-backup", timeStamp())
-		display.Info("\nCreating backup at %s...", backupDir)
-		if err := fileops.CreateBackup(targetPath, backupDir); err != nil {
-			return fmt.Errorf("failed to create backup: %w", err)
-		}
-	}
+    // Create backup if requested (backup only .festival directory)
+    if opts.backup {
+        backupDir := filepath.Join(festivalDir, ".fest-backup", timeStamp())
+        display.Info("\nCreating backup at %s...", backupDir)
+        if err := fileops.CreateBackup(festivalDir, backupDir); err != nil {
+            return fmt.Errorf("failed to create backup: %w", err)
+        }
+    }
 
-	// Process updates
-	updater := fileops.NewUpdater(sourceDir, targetPath)
+    // Process updates (update only .festival files)
+    updater := fileops.NewUpdater(sourceDir, festivalDir)
 	updatedFiles := []string{}
 	skippedFiles := []string{}
 	
@@ -178,9 +178,9 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 	}
 	
 	// Update checksums for updated files
-	if len(updatedFiles) > 0 {
-		display.Info("\nUpdating checksums...")
-		newChecksums, err := fileops.GenerateChecksums(targetPath)
+    if len(updatedFiles) > 0 {
+        display.Info("\nUpdating .festival checksums...")
+        newChecksums, err := fileops.GenerateChecksums(festivalDir)
 		if err != nil {
 			display.Warning("Failed to update checksums: %v", err)
 		} else {

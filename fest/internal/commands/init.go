@@ -109,22 +109,24 @@ func runInit(targetPath string, opts *initOptions) error {
 		}
 	}
 	
-	// Generate checksums unless disabled
-	if !opts.noChecksums {
-		display.Info("Generating checksums...")
-		checksumFile := filepath.Join(festivalPath, ".festival", ".fest-checksums.json")
+    // Generate checksums unless disabled
+    if !opts.noChecksums {
+        display.Info("Generating .festival checksums...")
+        checksumFile := filepath.Join(festivalPath, ".festival", ".fest-checksums.json")
 
-		checksums, err := fileops.GenerateChecksums(festivalPath)
-		if err != nil {
-			return fmt.Errorf("failed to generate checksums: %w", err)
-		}
+        // Only checksum the .festival directory
+        festivalMetaDir := filepath.Join(festivalPath, ".festival")
+        checksums, err := fileops.GenerateChecksums(festivalMetaDir)
+        if err != nil {
+            return fmt.Errorf("failed to generate checksums: %w", err)
+        }
 
-		if err := fileops.SaveChecksums(checksumFile, checksums); err != nil {
-			return fmt.Errorf("failed to save checksums: %w", err)
-		}
+        if err := fileops.SaveChecksums(checksumFile, checksums); err != nil {
+            return fmt.Errorf("failed to save checksums: %w", err)
+        }
 
-		display.Info("Created checksum tracking at %s", checksumFile)
-	}
+        display.Info("Created checksum tracking at %s", checksumFile)
+    }
 	
 	// Show summary
 	display.Success("Successfully initialized festival structure at %s", festivalPath)
