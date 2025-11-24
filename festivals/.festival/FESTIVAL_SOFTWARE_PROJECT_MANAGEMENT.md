@@ -157,7 +157,7 @@ Here's the recommended structure:
 festivals/
 ├── completed/                  # Optional: Successfully completed festivals
 ├── canceled/                   # Optional: Abandoned festivals
-├── archived/                   # Optional: Deprioritized festivals (backlog)
+├── dungeon/                    # Optional: Archived/deprioritized festivals (backlog)
 └── festival_<id>/
     ├── FESTIVAL_OVERVIEW.md    # High-level goal, systems, and features overview
     ├── FESTIVAL_RULES.md       # Rules and principles to follow throughout the festival
@@ -237,7 +237,7 @@ festivals/
     │   └── completed/                          # Completed sequences in this phase
     ├── completed/              # Optional: Completed phases moved here
     ├── canceled/               # Optional: Abandoned phases or sequences
-    └── archived/               # Optional: Deprioritized work (backlog)
+    └── dungeon/                # Optional: Archived/deprioritized work (backlog)
 ```
 
 Note: This structure is a guideline, not a rigid requirement. Adapt it to fit your festival's specific needs.
@@ -397,7 +397,7 @@ The optional directories serve specific purposes:
 - **docs/**: House documentation directly related to the festival's goal
 - **completed/**: Move successfully finished festivals or sequences here to keep the active workspace clean
 - **canceled/**: Store abandoned festivals or sequences that were planned but won't be executed
-- **archived/**: Like a backlog - deprioritized work that may be valuable later but isn't needed for the current goal
+- **dungeon/**: Archived work - like a backlog for deprioritized festivals that may be valuable later but aren't needed for the current goal
 
 These directories can be included at any complexity level as needed and are only created when necessary.
 
@@ -524,7 +524,7 @@ festivals/
     │   └── completed/                    # Completed sequences in this phase
     ├── completed/                        # Completed phases
     ├── canceled/                         # Abandoned work
-    └── archived/                         # Deprioritized work
+    └── dungeon/                          # Archived/deprioritized work
 ````
 
 ## Festival Rules
@@ -740,7 +740,7 @@ Every task should be "implementation-ready" - meaning a developer (human or AI) 
 5. **Stay Flexible**: Add new sequences or tasks as needed
 6. **Complete Before Proceeding**: Finish each sequence before starting the next
 7. **Organize Finished Work**: Move completed sequences to completed/, canceled
-   work to canceled/, and deprioritized work to archived/
+   work to canceled/, and archived/deprioritized work to dungeon/
 8. **Follow Festival Rules**: Reference and adhere to FESTIVAL_RULES.md
    throughout execution
 9. **Test Everything**: Include specific testing commands and expected outputs

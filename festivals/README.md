@@ -69,7 +69,7 @@ festivals/                          # Your festival workspace
 ├── planned/                        # Festivals being planned
 ├── active/                         # Currently executing festivals
 ├── completed/                      # Finished festivals
-├── archived/                       # Deprioritized or cancelled work
+├── dungeon/                        # Deprioritized or cancelled work (archived)
 ├── .festival/                      # Methodology resources (DO NOT READ ALL AT ONCE)
 └── README.md                       # This file - agent instructions
 ```
@@ -126,9 +126,9 @@ Festivals currently being executed. Move from `planned/` when execution begins.
 
 Successfully finished festivals. Move from `active/` when all objectives achieved.
 
-### archived/
+### dungeon/
 
-Cancelled, deprioritized, or paused work. Move here to keep workspace clean.
+Archived festivals - cancelled, deprioritized, or paused work. Move here to keep workspace clean.
 
 ## Remember: Preserve Context
 
