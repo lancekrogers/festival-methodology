@@ -112,17 +112,17 @@ func runInit(targetPath string, opts *initOptions) error {
 	// Generate checksums unless disabled
 	if !opts.noChecksums {
 		display.Info("Generating checksums...")
-		checksumFile := filepath.Join(festivalPath, ".fest-checksums.json")
-		
+		checksumFile := filepath.Join(festivalPath, ".festival", ".fest-checksums.json")
+
 		checksums, err := fileops.GenerateChecksums(festivalPath)
 		if err != nil {
 			return fmt.Errorf("failed to generate checksums: %w", err)
 		}
-		
+
 		if err := fileops.SaveChecksums(checksumFile, checksums); err != nil {
 			return fmt.Errorf("failed to save checksums: %w", err)
 		}
-		
+
 		display.Info("Created checksum tracking at %s", checksumFile)
 	}
 	
