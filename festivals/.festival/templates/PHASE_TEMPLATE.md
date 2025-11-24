@@ -70,71 +70,64 @@ Before this phase is considered complete:
 
 ## Usage Guide
 
-Phases represent major milestones in your festival. Standard phases include:
+Phases represent major steps toward your goal. Common patterns:
 
-1. **001_PLAN** - Requirements, architecture, initial planning
-2. **002_DEFINE_INTERFACES** - Critical phase for defining all contracts
-3. **003_IMPLEMENT** - Parallel implementation based on interfaces
-4. **004_REVIEW_AND_UAT** - Testing, validation, and acceptance
+**Planning Phases** (often unstructured):
+- Requirements gathering, research, documentation
+- May just contain documents, no sequences needed
 
-Customize phases based on your project needs.
+**Implementation Phases** (must be structured):
+- Where AI agents execute tasks autonomously
+- Must have sequences and tasks
+- Add as many as needed (CORE, FEATURES, UI, etc.)
+
+**Validation Phases**:
+- User acceptance, reviews, deployment prep
+
+Add phases as requirements emerge, not all upfront.
 
 ### Example (Filled Out):
 
-# Phase: 002_DEFINE_INTERFACES
+# Phase: 002_IMPLEMENT_CORE
 
-**Phase Number:** 002 | **Status:** Planning | **Type:** Definition
+**Phase Number:** 002 | **Status:** Planning | **Type:** Implementation
 
 ## Objective
-Define all system interfaces, contracts, and specifications to enable parallel development in Phase 003.
+Implement core system functionality including authentication, database layer, and basic API endpoints.
 
 ## Success Criteria
-- [ ] All API endpoints fully specified
-- [ ] All data models defined with schemas
-- [ ] All function signatures documented
-- [ ] All integration points identified
-- [ ] Interface documentation reviewed and approved
+- [ ] User authentication system working
+- [ ] Database connections established
+- [ ] Core API endpoints functional
+- [ ] Basic error handling implemented
+- [ ] Unit tests passing
+- [ ] Code review completed
 
 ## Planned Sequences
 
-### 01_api_design
-**Purpose:** Design and document all REST API endpoints
+### 01_authentication_system
+**Purpose:** Implement user registration, login, and session management
 **Dependencies:** None (can start immediately)
 **Deliverables:**
-- OpenAPI specification
-- Endpoint documentation
-- Error code definitions
+- User model and database
+- Login/logout endpoints
+- JWT token management
 
-### 02_data_models
-**Purpose:** Define all data structures and database schemas
+### 02_database_layer
+**Purpose:** Set up database connections and models
 **Dependencies:** None (can run parallel with 01)
 **Deliverables:**
-- Database schema diagrams
-- Model definitions
-- Relationship mappings
+- Database configuration
+- Core data models
+- Migration scripts
 
-### 03_integration_contracts
-**Purpose:** Define external service integrations
-**Dependencies:** 01_api_design, 02_data_models
+### 03_core_api_endpoints
+**Purpose:** Implement basic CRUD operations
+**Dependencies:** 01_authentication_system, 02_database_layer
 **Deliverables:**
-- Third-party API usage docs
-- Webhook specifications
-- Event contracts
-
-### 04_frontend_contracts
-**Purpose:** Define frontend-backend contracts
-**Dependencies:** 01_api_design, 02_data_models
-**Deliverables:**
-- Component prop interfaces
-- State management structure
-- Route definitions
-
-### 05_review_and_finalize
-**Purpose:** Review all interfaces and lock for implementation
-**Dependencies:** All previous sequences
-**Deliverables:**
-- Approved interface documentation
-- Implementation ready signal
+- REST endpoints for core entities
+- Input validation
+- Response formatting
 
 ## Phase Dependencies
 
@@ -144,29 +137,28 @@ Define all system interfaces, contracts, and specifications to enable parallel d
 - Technology stack selected (Phase 001)
 
 **Provides (to subsequent phases):**
-- Complete interface specifications for Phase 003
-- Test scenarios derived from interfaces
-- Integration test plans
+- Working core functionality for feature implementation
+- Database schema for additional entities
+- Authentication system for user features
 
 ## Parallel Work Opportunities
 - Sequences 01 and 02 can run completely in parallel
-- Sequences 03 and 04 can start once 01 and 02 produce initial drafts
-- Frontend and backend teams can begin planning based on draft interfaces
+- Sequence 03 depends on both 01 and 02
 
 ## Risk Assessment
 | Risk | Impact | Mitigation Strategy |
 |------|--------|-------------------|
-| Incomplete interface definition | High | Multiple review cycles, stakeholder signoff |
-| Interface changes during implementation | High | Lock interfaces before Phase 003, change control process |
-| Missing edge cases | Medium | Comprehensive examples in specifications |
+| Database performance issues | High | Early performance testing, indexing strategy |
+| Security vulnerabilities | High | Security review, penetration testing |
+| Integration problems | Medium | Continuous integration testing |
 
 ## Quality Gates
 Before this phase is considered complete:
 - [ ] All sequences completed
-- [ ] Technical review conducted
-- [ ] Stakeholder approval received
-- [ ] No undefined interfaces remain
-- [ ] Implementation teams confirm clarity
+- [ ] All tests passing
+- [ ] Code review conducted
+- [ ] Security review completed
+- [ ] Documentation updated
 
 ## Notes
-This is the most critical phase for enabling parallel development. Time invested here saves multiples during implementation. All interfaces must be locked before proceeding to Phase 003.
+This phase implements the foundation that all other features will build upon. Focus on stability and extensibility.

@@ -254,7 +254,7 @@ festivals/
 │           └── PHASE_GOAL.md        # Validation criteria
 ├── planned/                         # Festivals being designed
 ├── completed/                       # Finished projects
-├── archived/                        # Paused or cancelled work
+├── dungeon/                         # Archived: paused or cancelled work
 └── .festival/                       # Methodology resources
     ├── agents/                      # AI agent prompts
     ├── templates/                   # Document templates
