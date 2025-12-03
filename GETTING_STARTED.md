@@ -27,6 +27,7 @@ your-workspace/
 ### Approach 1: Comprehensive Planning
 
 Plan everything upfront:
+
 - Create the complete festival structure
 - Define all phases, sequences, and tasks
 - Review and refine the entire plan
@@ -35,6 +36,7 @@ Plan everything upfront:
 ### Approach 2: Iterative Development
 
 Start simple and evolve:
+
 - Create basic festival structure with high-level goals
 - Detail out only the immediate sequences
 - Expand the plan as you learn more
@@ -53,6 +55,7 @@ Custom agents can help maintain consistency, but they're not required. Often you
 ### Working Without Custom Agents
 
 Simply:
+
 1. Create the festival structure
 2. Give Claude your requirements
 3. Point Claude to specific tasks or sequences to work on
@@ -63,6 +66,7 @@ Simply:
 ### Starting Work
 
 Tell Claude something like:
+
 - "Let's work on sequence 01 of phase 001"
 - "Please complete task 01_api_design.md"
 - "Update the TODO.md file as you complete tasks"
@@ -79,6 +83,7 @@ Tell Claude something like:
 ### This Is Not a Polished Product
 
 Festival Methodology is a framework that requires adaptation:
+
 - Results will vary based on your approach
 - You'll need to find what works for your workflow
 - Expect to iterate and refine your process
@@ -86,6 +91,7 @@ Festival Methodology is a framework that requires adaptation:
 ### The Power Is in the Process
 
 Using this methodology, you can achieve:
+
 - Years worth of progress in months
 - Complex software products built systematically
 - Clear documentation of decisions and progress

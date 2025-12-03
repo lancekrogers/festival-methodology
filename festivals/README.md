@@ -137,4 +137,3 @@ Your context window is precious. Reading all documentation upfront wastes contex
 ---
 
 **For Agents**: This README provides mandatory first steps and a just-in-time reading strategy. You MUST follow the verification steps at the top before any festival work. Read templates and examples ONLY when you need them, not before.
-

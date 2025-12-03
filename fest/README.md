@@ -199,11 +199,13 @@ During updates, files are categorized as:
 The `fest` tool includes powerful commands for managing Festival Methodology structures:
 
 ### Three-Level Hierarchy
+
 - **Phases**: 3-digit directories (001_PLAN, 002_DEFINE_INTERFACES, etc.)
 - **Sequences**: 2-digit directories within phases (01_requirements, 02_architecture, etc.)
 - **Tasks**: 2-digit markdown files within sequences (01_analyze.md, 02_implement.md, etc.)
 
 ### Renumbering Features
+
 - **Automatic Renumbering**: When inserting or removing elements, all subsequent items are automatically renumbered
 - **Parallel Task Support**: Multiple tasks with the same number (parallel execution) are preserved
 - **Dry-Run by Default**: Preview changes before applying them
@@ -211,6 +213,7 @@ The `fest` tool includes powerful commands for managing Festival Methodology str
 - **Smart Detection**: Automatically identifies element types based on naming patterns
 
 ### Common Use Cases
+
 1. **Insert a new phase**: All subsequent phases shift forward
 2. **Remove a sequence**: Following sequences move up to fill the gap
 3. **Reorder tasks**: Maintain proper numbering after reorganization
@@ -221,21 +224,26 @@ The `fest` tool includes powerful commands for managing Festival Methodology str
 The `fest count` command provides comprehensive token counting using multiple methods:
 
 ### Exact Tokenizers
+
 - **GPT-4/GPT-3.5**: Uses OpenAI's tiktoken library for exact token counts
 - **Claude**: Approximation based on character ratios (API required for exact counts)
 
 ### Approximation Methods
+
 - **Character-based**: Divides total characters by ratio (default: 4 chars = 1 token)
 - **Word-based**: Multiplies word count by ratio (default: 1 word = 1.33 tokens)
 - **Whitespace split**: Simple word count based on whitespace
 
 ### Cost Estimation
+
 When using `--cost`, the tool estimates API costs for popular models:
+
 - OpenAI GPT-4, GPT-3.5-turbo
 - Anthropic Claude-3 Opus, Sonnet, Haiku
 - Prices are for input tokens only
 
 ### Output Formats
+
 - **Table format** (default): Human-readable table with all metrics
 - **JSON format** (`--json`): Machine-readable for scripting and automation
 
@@ -248,6 +256,7 @@ When using `--cost`, the tool estimates API costs for popular models:
 ## Command-Line Flags
 
 ### Global Flags
+
 - `--config`: Specify custom config file
 - `--verbose`: Enable verbose output
 - `--no-color`: Disable colored output
@@ -256,11 +265,13 @@ When using `--cost`, the tool estimates API costs for popular models:
 ### Command-Specific Flags
 
 #### init
+
 - `--source`: Source directory for templates
 - `--yes`: Skip confirmation prompt
 - `--force`: Overwrite existing files
 
 #### sync
+
 - `--source`: GitHub repository URL
 - `--branch`: Git branch to sync from
 - `--force`: Overwrite existing cache
@@ -269,6 +280,7 @@ When using `--cost`, the tool estimates API costs for popular models:
 - `--dry-run`: Preview without downloading
 
 #### update
+
 - `--dry-run`: Preview changes without modifying
 - `--force`: Update all files regardless of modifications
 - `--backup`: Create backup before updating
@@ -277,6 +289,7 @@ When using `--cost`, the tool estimates API costs for popular models:
 - `--diff`: Show diffs for modified files
 
 #### count
+
 - `--model`: Specific model for tokenization (gpt-4, gpt-3.5-turbo, claude-3)
 - `--all`: Show all counting methods
 - `--json`: Output in JSON format

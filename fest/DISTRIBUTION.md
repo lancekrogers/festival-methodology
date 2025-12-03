@@ -7,6 +7,7 @@ This guide explains how to build, sign, and distribute the fest CLI tool across 
 ### Why Code Signing?
 
 Modern operating systems (especially macOS) require binaries to be signed to avoid security warnings. Without signing:
+
 - macOS Gatekeeper will block the binary by default
 - Users will see "unidentified developer" warnings
 - Windows SmartScreen may flag the binary
@@ -23,6 +24,7 @@ make sign
 ```
 
 This creates a locally-signed binary that:
+
 - Works on your machine without warnings
 - Can be shared with technical users who know how to bypass Gatekeeper
 - Does NOT work seamlessly for general distribution
@@ -69,6 +71,7 @@ xcrun stapler staple fest
 ### Linux Distribution
 
 Linux doesn't require signing, but you can:
+
 - Sign with GPG for authenticity
 - Provide checksums for verification
 - Package as .deb/.rpm for package managers
@@ -114,6 +117,7 @@ make release
 The project includes a GitHub Actions workflow for automated releases:
 
 1. Push a version tag:
+
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
@@ -131,11 +135,13 @@ git push origin v1.0.0
 ### Direct Download
 
 Provide signed binaries on:
+
 - GitHub Releases (automatic with workflow)
 - Your website
 - CDN
 
 Include:
+
 - Clear installation instructions
 - SHA256 checksums
 - GPG signatures (optional)
@@ -195,6 +201,7 @@ If users see "cannot be opened because the developer cannot be verified":
 
 1. Right-click the binary and select "Open"
 2. Or remove quarantine attribute:
+
 ```bash
 xattr -d com.apple.quarantine fest
 ```
@@ -209,6 +216,7 @@ If Windows blocks the executable:
 ### Linux Permission Issues
 
 Ensure executable permission:
+
 ```bash
 chmod +x fest
 ```
@@ -253,6 +261,7 @@ make build VERSION=v1.0.0
 ## Monitoring Distribution
 
 Track:
+
 - Download counts on GitHub Releases
 - Issue reports for platform-specific problems
 - Security scanner results

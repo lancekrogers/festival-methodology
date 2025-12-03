@@ -31,7 +31,9 @@ Festival enables:
 ## What Makes Festival Different
 
 ### 🎯 Hierarchical Goal System
+
 Every level of your project has clear, measurable goals:
+
 - **Festival Goals** - Overall success criteria and KPIs
 - **Phase Goals** - Stage-specific objectives that build toward the festival goal
 - **Sequence Goals** - Granular targets that ensure phase completion
@@ -39,7 +41,9 @@ Every level of your project has clear, measurable goals:
 Each goal includes evaluation frameworks, so you always know if you've succeeded.
 
 ### 🧠 Context Preservation
+
 The `CONTEXT.md` file captures:
+
 - Key decisions and rationale
 - Session handoff notes
 - Open questions for human review
@@ -48,7 +52,9 @@ The `CONTEXT.md` file captures:
 This maintains continuity across AI sessions and human reviews.
 
 ### 🤖 Autonomy Levels
+
 Every task is marked with an autonomy level:
+
 - **High** - Agent completes independently
 - **Medium** - May need edge case clarification
 - **Low** - Expect human collaboration
@@ -56,26 +62,33 @@ Every task is marked with an autonomy level:
 This helps agents know when to proceed vs when to ask for help.
 
 ### 📚 Just-In-Time Documentation
+
 Agents read templates and examples only when needed, preserving context window for actual work.
 
 ## How It Works: From Goal to Execution
 
 ### 1. Define Your Goal
+
 You specify what you want to achieve - a complete feature, system, or product.
 
 ### 2. Create Goal Hierarchy
+
 Festival helps structure your goal into measurable objectives at every level.
 
 ### 3. Plan with Autonomy Levels
+
 Break down work into tasks, marking which can be done autonomously.
 
 ### 4. Execute with Context Tracking
+
 AI agents work independently, documenting decisions in CONTEXT.md.
 
 ### 5. Evaluate Against Goals
+
 Review progress using built-in evaluation frameworks.
 
 ### 6. Iterate or Complete
+
 Based on goal achievement, refine and continue or mark complete.
 
 ## The Three-Level Structure
@@ -185,6 +198,7 @@ cat README.md
 ### 2. Define Your Goal Hierarchy
 
 Create goal documents at each level:
+
 - `FESTIVAL_GOAL.md` - Overall project success criteria
 - `PHASE_GOAL.md` - Goals for each phase
 - `SEQUENCE_GOAL.md` - Goals for each sequence
@@ -202,6 +216,7 @@ festivals/.festival/agents/festival_planning_agent.md
 ### 4. Mark Autonomy Levels
 
 As you create tasks, assign autonomy levels:
+
 - Review similar past tasks to gauge complexity
 - Start conservative (low autonomy) for unfamiliar work
 - Increase autonomy as patterns emerge
@@ -264,6 +279,7 @@ festivals/
 ## What's Included
 
 ### Templates
+
 - **Goal Templates** - Festival, Phase, and Sequence goal tracking
 - **Task Templates** - With autonomy level support
 - **Context Template** - For decision and rationale tracking
@@ -271,11 +287,13 @@ festivals/
 - **Tracking Templates** - For progress monitoring
 
 ### AI Agents
+
 - **Planning Agent** - Guides festival structure creation
 - **Review Agent** - Validates methodology compliance
 - **Manager Agent** - Enforces process during execution
 
 ### Examples & Documentation
+
 - **15+ Real Task Examples** - Showing concrete implementations
 - **Goal Examples** - Demonstrating evaluation frameworks
 - **Complete Methodology Guide** - Detailed principles and practices
