@@ -43,11 +43,18 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logging")
 	
 	// Add commands
-	rootCmd.AddCommand(NewSyncCommand())
-	rootCmd.AddCommand(NewInitCommand())
-	rootCmd.AddCommand(NewUpdateCommand())
-	rootCmd.AddCommand(NewCountCommand())
-	rootCmd.AddCommand(NewRenumberCommand())
-	rootCmd.AddCommand(NewInsertCommand())
-	rootCmd.AddCommand(NewRemoveCommand())
+    rootCmd.AddCommand(NewSyncCommand())
+    rootCmd.AddCommand(NewInitCommand())
+    rootCmd.AddCommand(NewUpdateCommand())
+    rootCmd.AddCommand(NewCountCommand())
+    rootCmd.AddCommand(NewRenumberCommand())
+    rootCmd.AddCommand(NewInsertCommand())
+    rootCmd.AddCommand(NewRemoveCommand())
+    // Headless-first creation commands
+    rootCmd.AddCommand(NewApplyCommand())
+    // Grouped under 'create'
+    createCmd := &cobra.Command{Use: "create", Short: "Create festival elements"}
+    createCmd.AddCommand(NewCreateFestivalCommand())
+    createCmd.AddCommand(NewCreatePhaseCommand())
+    rootCmd.AddCommand(createCmd)
 }

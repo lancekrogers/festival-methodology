@@ -54,7 +54,9 @@ When counting a directory with --recursive, the command:
 	cmd.Flags().BoolVar(&opts.all, "all", false, "show all counting methods")
 	cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "output in JSON format")
 	cmd.Flags().BoolVar(&opts.showCost, "cost", false, "include cost estimates")
-	cmd.Flags().BoolVarP(&opts.recursive, "recursive", "r", false, "recursively count tokens in directory (respects .gitignore)")
+    cmd.Flags().BoolVarP(&opts.recursive, "recursive", "r", false, "recursively count tokens in directory (respects .gitignore)")
+    // Alias: -d / --directory for recursive directory counting
+    cmd.Flags().BoolVarP(&opts.recursive, "directory", "d", false, "alias for --recursive: count all files in a directory")
 	cmd.Flags().Float64Var(&opts.charsPerToken, "chars-per-token", 4.0, "characters per token ratio for approximation")
 	cmd.Flags().Float64Var(&opts.wordsPerToken, "words-per-token", 0.75, "words per token ratio for approximation")
 	
