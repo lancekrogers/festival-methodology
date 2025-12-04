@@ -18,7 +18,7 @@ func TestMainHelp(t *testing.T) {
 			t.Fatalf("Help command failed: %v\nOutput: %s", err, output)
 		}
 	}
-	
+
 	// Verify help contains expected commands
 	outputStr := string(output)
 	expectedCommands := []string{"init", "sync", "update"}
@@ -48,10 +48,10 @@ func TestBuildBinary(t *testing.T) {
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("Failed to build binary: %v", err)
 	}
-	
+
 	// Clean up
 	defer os.Remove("fest-test")
-	
+
 	// Test that built binary runs
 	cmd = exec.Command("./fest-test", "--help")
 	output, _ := cmd.CombinedOutput()

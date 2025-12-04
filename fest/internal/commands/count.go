@@ -25,7 +25,7 @@ type countOptions struct {
 // NewCountCommand creates the count command
 func NewCountCommand() *cobra.Command {
 	opts := &countOptions{}
-	
+
 	cmd := &cobra.Command{
 		Use:   "count [file|directory]",
 		Short: "Count tokens in a file or directory using various methods",
@@ -49,17 +49,17 @@ When counting a directory with --recursive, the command:
 			return runCount(args[0], opts)
 		},
 	}
-	
+
 	cmd.Flags().StringVar(&opts.model, "model", "", "specific model to use for tokenization (gpt-4, gpt-3.5-turbo, claude-3)")
 	cmd.Flags().BoolVar(&opts.all, "all", false, "show all counting methods")
 	cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "output in JSON format")
 	cmd.Flags().BoolVar(&opts.showCost, "cost", false, "include cost estimates")
-    cmd.Flags().BoolVarP(&opts.recursive, "recursive", "r", false, "recursively count tokens in directory (respects .gitignore)")
-    // Alias: -d / --directory for recursive directory counting
-    cmd.Flags().BoolVarP(&opts.recursive, "directory", "d", false, "alias for --recursive: count all files in a directory")
+	cmd.Flags().BoolVarP(&opts.recursive, "recursive", "r", false, "recursively count tokens in directory (respects .gitignore)")
+	// Alias: -d / --directory for recursive directory counting
+	cmd.Flags().BoolVarP(&opts.recursive, "directory", "d", false, "alias for --recursive: count all files in a directory")
 	cmd.Flags().Float64Var(&opts.charsPerToken, "chars-per-token", 4.0, "characters per token ratio for approximation")
 	cmd.Flags().Float64Var(&opts.wordsPerToken, "words-per-token", 0.75, "words per token ratio for approximation")
-	
+
 	return cmd
 }
 
@@ -172,13 +172,13 @@ func outputTable(display *ui.UI, result *tokens.CountResult) error {
 	display.Info("  Words:          %d", result.Words)
 	display.Info("  Lines:          %d", result.Lines)
 	display.Info("")
-	
+
 	// Token counts
 	display.Info("Token Counts by Method:")
 	display.Info("  ┌─────────────────────────┬──────────┬────────────┐")
 	display.Info("  │ Method                  │ Tokens   │ Accuracy   │")
 	display.Info("  ├─────────────────────────┼──────────┼────────────┤")
-	
+
 	for _, method := range result.Methods {
 		accuracy := "Approx"
 		if method.IsExact {
@@ -190,19 +190,19 @@ func outputTable(display *ui.UI, result *tokens.CountResult) error {
 		display.Info("  │ %-23s │ %-8d │ %-10s │",
 			method.DisplayName, method.Tokens, accuracy)
 	}
-	
+
 	display.Info("  └─────────────────────────┴──────────┴────────────┘")
-	
+
 	// Cost estimates
 	if len(result.Costs) > 0 {
 		display.Info("")
 		display.Info("Cost Estimates (Input):")
-		
+
 		for _, cost := range result.Costs {
-			display.Info("  %-16s $%.3f ($%.4f/1K tokens)", 
+			display.Info("  %-16s $%.3f ($%.4f/1K tokens)",
 				cost.Model+":", cost.Cost, cost.RatePer1K)
 		}
 	}
-	
+
 	return nil
 }

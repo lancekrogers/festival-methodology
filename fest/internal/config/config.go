@@ -44,10 +44,10 @@ type Local struct {
 
 // Behavior contains behavior configuration
 type Behavior struct {
-	AutoBackup   bool `json:"auto_backup"`
-	Interactive  bool `json:"interactive"`
-	UseColor     bool `json:"use_color"`
-	Verbose      bool `json:"verbose"`
+	AutoBackup  bool `json:"auto_backup"`
+	Interactive bool `json:"interactive"`
+	UseColor    bool `json:"use_color"`
+	Verbose     bool `json:"verbose"`
 }
 
 // Network contains network configuration
@@ -62,12 +62,12 @@ func ConfigDir() string {
 	if dir := os.Getenv("FEST_CONFIG_DIR"); dir != "" {
 		return dir
 	}
-	
+
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return ".fest"
 	}
-	
+
 	return filepath.Join(home, ".config", "fest")
 }
 
@@ -77,28 +77,28 @@ func Load(customPath string) (*Config, error) {
 	if configPath == "" {
 		configPath = filepath.Join(ConfigDir(), ConfigFileName)
 	}
-	
+
 	// Check if file exists
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		// Return default config if file doesn't exist
 		return DefaultConfig(), nil
 	}
-	
+
 	// Read file
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config: %w", err)
 	}
-	
+
 	// Parse JSON
 	var cfg Config
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
-	
+
 	// Apply defaults for missing values
 	applyDefaults(&cfg)
-	
+
 	return &cfg, nil
 }
 
@@ -106,23 +106,23 @@ func Load(customPath string) (*Config, error) {
 func Save(cfg *Config) error {
 	configDir := ConfigDir()
 	configPath := filepath.Join(configDir, ConfigFileName)
-	
+
 	// Create directory if it doesn't exist
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
-	
+
 	// Marshal to JSON
 	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
-	
+
 	// Write file
 	if err := os.WriteFile(configPath, data, 0644); err != nil {
 		return fmt.Errorf("failed to write config: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -157,43 +157,43 @@ func DefaultConfig() *Config {
 // applyDefaults applies default values to missing configuration fields
 func applyDefaults(cfg *Config) {
 	defaults := DefaultConfig()
-	
+
 	if cfg.Version == "" {
 		cfg.Version = defaults.Version
 	}
-	
+
 	if cfg.Repository.URL == "" {
 		cfg.Repository.URL = defaults.Repository.URL
 	}
-	
+
 	if cfg.Repository.Branch == "" {
 		cfg.Repository.Branch = defaults.Repository.Branch
 	}
-	
+
 	if cfg.Repository.Path == "" {
 		cfg.Repository.Path = defaults.Repository.Path
 	}
-	
+
 	if cfg.Local.CacheDir == "" {
 		cfg.Local.CacheDir = defaults.Local.CacheDir
 	}
-	
+
 	if cfg.Local.BackupDir == "" {
 		cfg.Local.BackupDir = defaults.Local.BackupDir
 	}
-	
+
 	if cfg.Local.ChecksumFile == "" {
 		cfg.Local.ChecksumFile = defaults.Local.ChecksumFile
 	}
-	
+
 	if cfg.Network.Timeout == 0 {
 		cfg.Network.Timeout = defaults.Network.Timeout
 	}
-	
+
 	if cfg.Network.RetryCount == 0 {
 		cfg.Network.RetryCount = defaults.Network.RetryCount
 	}
-	
+
 	if cfg.Network.RetryDelay == 0 {
 		cfg.Network.RetryDelay = defaults.Network.RetryDelay
 	}

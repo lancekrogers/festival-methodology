@@ -69,20 +69,20 @@ func (r *Renumberer) RenumberPhases(festivalDir string, startFrom int) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse phases: %w", err)
 	}
-	
+
 	if len(phases) == 0 {
 		return fmt.Errorf("no phases found in %s", festivalDir)
 	}
-	
+
 	// Build renumbering plan
 	r.changes = []Change{}
 	newNumber := startFrom
-	
+
 	for _, phase := range phases {
 		if phase.Number != newNumber {
 			newName := BuildElementName(newNumber, phase.Name, PhaseType)
 			newPath := filepath.Join(filepath.Dir(phase.Path), newName)
-			
+
 			r.changes = append(r.changes, Change{
 				Type:    ChangeRename,
 				OldPath: phase.Path,
@@ -92,7 +92,7 @@ func (r *Renumberer) RenumberPhases(festivalDir string, startFrom int) error {
 		}
 		newNumber++
 	}
-	
+
 	// Execute changes
 	return r.executeChanges()
 }
@@ -103,20 +103,20 @@ func (r *Renumberer) RenumberSequences(phaseDir string, startFrom int) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse sequences: %w", err)
 	}
-	
+
 	if len(sequences) == 0 {
 		return fmt.Errorf("no sequences found in %s", phaseDir)
 	}
-	
+
 	// Build renumbering plan
 	r.changes = []Change{}
 	newNumber := startFrom
-	
+
 	for _, seq := range sequences {
 		if seq.Number != newNumber {
 			newName := BuildElementName(newNumber, seq.Name, SequenceType)
 			newPath := filepath.Join(filepath.Dir(seq.Path), newName)
-			
+
 			r.changes = append(r.changes, Change{
 				Type:    ChangeRename,
 				OldPath: seq.Path,
@@ -126,7 +126,7 @@ func (r *Renumberer) RenumberSequences(phaseDir string, startFrom int) error {
 		}
 		newNumber++
 	}
-	
+
 	// Execute changes
 	return r.executeChanges()
 }
@@ -137,33 +137,33 @@ func (r *Renumberer) RenumberTasks(sequenceDir string, startFrom int) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse tasks: %w", err)
 	}
-	
+
 	if len(tasks) == 0 {
 		return fmt.Errorf("no tasks found in %s", sequenceDir)
 	}
-	
+
 	// Check for parallel tasks
 	parallel, err := r.parser.HasParallelTasks(sequenceDir)
 	if err != nil {
 		return fmt.Errorf("failed to check parallel tasks: %w", err)
 	}
-	
+
 	if len(parallel) > 0 && !r.options.DryRun {
 		fmt.Println("Warning: Parallel tasks detected. They will be preserved with the same number.")
 	}
-	
+
 	// Build renumbering plan
 	r.changes = []Change{}
 	newNumber := startFrom
 	processedNumbers := make(map[int]bool)
-	
+
 	for _, task := range tasks {
 		// Skip if we've already processed this number (parallel tasks)
 		if processedNumbers[task.Number] {
 			continue
 		}
 		processedNumbers[task.Number] = true
-		
+
 		// Get all tasks with this number
 		tasksWithNumber := []FestivalElement{task}
 		for _, t := range tasks {
@@ -171,13 +171,13 @@ func (r *Renumberer) RenumberTasks(sequenceDir string, startFrom int) error {
 				tasksWithNumber = append(tasksWithNumber, t)
 			}
 		}
-		
+
 		// Renumber all tasks with this number
 		for _, t := range tasksWithNumber {
 			if t.Number != newNumber {
 				newName := BuildElementName(newNumber, t.Name+".md", TaskType)
 				newPath := filepath.Join(filepath.Dir(t.Path), newName)
-				
+
 				r.changes = append(r.changes, Change{
 					Type:    ChangeRename,
 					OldPath: t.Path,
@@ -186,10 +186,10 @@ func (r *Renumberer) RenumberTasks(sequenceDir string, startFrom int) error {
 				})
 			}
 		}
-		
+
 		newNumber++
 	}
-	
+
 	// Execute changes
 	return r.executeChanges()
 }
@@ -200,29 +200,29 @@ func (r *Renumberer) InsertPhase(festivalDir string, afterNumber int, name strin
 	if err != nil {
 		return fmt.Errorf("failed to parse phases: %w", err)
 	}
-	
+
 	// Find insertion point
 	insertAt := afterNumber + 1
-	
+
 	// Build changes
 	r.changes = []Change{}
-	
+
 	// Create new phase
 	newPhaseName := BuildElementName(insertAt, name, PhaseType)
 	newPhasePath := filepath.Join(festivalDir, newPhaseName)
-	
+
 	r.changes = append(r.changes, Change{
 		Type:    ChangeCreate,
 		NewPath: newPhasePath,
 	})
-	
+
 	// Renumber subsequent phases
 	for _, phase := range phases {
 		if phase.Number >= insertAt {
 			newNumber := phase.Number + 1
 			newName := BuildElementName(newNumber, phase.Name, PhaseType)
 			newPath := filepath.Join(filepath.Dir(phase.Path), newName)
-			
+
 			r.changes = append(r.changes, Change{
 				Type:    ChangeRename,
 				OldPath: phase.Path,
@@ -231,7 +231,7 @@ func (r *Renumberer) InsertPhase(festivalDir string, afterNumber int, name strin
 			})
 		}
 	}
-	
+
 	// Sort changes to rename in reverse order (avoid conflicts)
 	sort.Slice(r.changes, func(i, j int) bool {
 		if r.changes[i].Type == ChangeCreate {
@@ -243,7 +243,7 @@ func (r *Renumberer) InsertPhase(festivalDir string, afterNumber int, name strin
 		// Rename higher numbers first
 		return r.changes[i].Element.Number > r.changes[j].Element.Number
 	})
-	
+
 	return r.executeChanges()
 }
 
@@ -253,29 +253,29 @@ func (r *Renumberer) InsertSequence(phaseDir string, afterNumber int, name strin
 	if err != nil {
 		return fmt.Errorf("failed to parse sequences: %w", err)
 	}
-	
+
 	// Find insertion point
 	insertAt := afterNumber + 1
-	
+
 	// Build changes
 	r.changes = []Change{}
-	
+
 	// Create new sequence
 	newSeqName := BuildElementName(insertAt, name, SequenceType)
 	newSeqPath := filepath.Join(phaseDir, newSeqName)
-	
+
 	r.changes = append(r.changes, Change{
 		Type:    ChangeCreate,
 		NewPath: newSeqPath,
 	})
-	
+
 	// Renumber subsequent sequences
 	for _, seq := range sequences {
 		if seq.Number >= insertAt {
 			newNumber := seq.Number + 1
 			newName := BuildElementName(newNumber, seq.Name, SequenceType)
 			newPath := filepath.Join(filepath.Dir(seq.Path), newName)
-			
+
 			r.changes = append(r.changes, Change{
 				Type:    ChangeRename,
 				OldPath: seq.Path,
@@ -284,7 +284,7 @@ func (r *Renumberer) InsertSequence(phaseDir string, afterNumber int, name strin
 			})
 		}
 	}
-	
+
 	// Sort changes to rename in reverse order
 	sort.Slice(r.changes, func(i, j int) bool {
 		if r.changes[i].Type == ChangeCreate {
@@ -295,7 +295,7 @@ func (r *Renumberer) InsertSequence(phaseDir string, afterNumber int, name strin
 		}
 		return r.changes[i].Element.Number > r.changes[j].Element.Number
 	})
-	
+
 	return r.executeChanges()
 }
 
@@ -303,12 +303,12 @@ func (r *Renumberer) InsertSequence(phaseDir string, afterNumber int, name strin
 func (r *Renumberer) RemoveElement(path string) error {
 	dir := filepath.Dir(path)
 	base := filepath.Base(path)
-	
+
 	// Determine element type
 	var elemType ElementType
 	var elements []FestivalElement
 	var err error
-	
+
 	if matched := regexp.MustCompile(`^\d{3}_`).MatchString(base); matched {
 		elemType = PhaseType
 		elements, err = r.parser.ParsePhases(dir)
@@ -323,11 +323,11 @@ func (r *Renumberer) RemoveElement(path string) error {
 	} else {
 		return fmt.Errorf("unable to determine element type for %s", path)
 	}
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to parse elements: %w", err)
 	}
-	
+
 	// Find element to remove
 	var toRemove *FestivalElement
 	var removeIndex int
@@ -338,11 +338,11 @@ func (r *Renumberer) RemoveElement(path string) error {
 			break
 		}
 	}
-	
+
 	if toRemove == nil {
 		return fmt.Errorf("element not found: %s", path)
 	}
-	
+
 	// Build changes
 	r.changes = []Change{
 		{
@@ -350,7 +350,7 @@ func (r *Renumberer) RemoveElement(path string) error {
 			OldPath: path,
 		},
 	}
-	
+
 	// Renumber subsequent elements
 	for i := removeIndex + 1; i < len(elements); i++ {
 		newNumber := elements[i].Number - 1
@@ -359,7 +359,7 @@ func (r *Renumberer) RemoveElement(path string) error {
 			newName += ".md"
 		}
 		newPath := filepath.Join(dir, newName)
-		
+
 		r.changes = append(r.changes, Change{
 			Type:    ChangeRename,
 			OldPath: elements[i].Path,
@@ -367,7 +367,7 @@ func (r *Renumberer) RemoveElement(path string) error {
 			Element: elements[i],
 		})
 	}
-	
+
 	return r.executeChanges()
 }
 
@@ -377,7 +377,7 @@ func (r *Renumberer) executeChanges() error {
 		fmt.Println("No changes needed.")
 		return nil
 	}
-	
+
 	// Display changes
 	r.displayChanges()
 
@@ -398,14 +398,14 @@ func (r *Renumberer) executeChanges() error {
 			return nil
 		}
 	}
-	
+
 	// Create backup if requested
 	if r.options.Backup {
 		if err := r.createBackup(); err != nil {
 			return fmt.Errorf("failed to create backup: %w", err)
 		}
 	}
-	
+
 	// Apply changes
 	for _, change := range r.changes {
 		switch change.Type {
@@ -416,7 +416,7 @@ func (r *Renumberer) executeChanges() error {
 			if r.options.Verbose {
 				fmt.Printf("Renamed: %s → %s\n", filepath.Base(change.OldPath), filepath.Base(change.NewPath))
 			}
-			
+
 		case ChangeCreate:
 			if err := os.MkdirAll(change.NewPath, 0755); err != nil {
 				return fmt.Errorf("failed to create %s: %w", change.NewPath, err)
@@ -424,7 +424,7 @@ func (r *Renumberer) executeChanges() error {
 			if r.options.Verbose {
 				fmt.Printf("Created: %s\n", filepath.Base(change.NewPath))
 			}
-			
+
 		case ChangeRemove:
 			if err := os.RemoveAll(change.OldPath); err != nil {
 				return fmt.Errorf("failed to remove %s: %w", change.OldPath, err)
@@ -434,7 +434,7 @@ func (r *Renumberer) executeChanges() error {
 			}
 		}
 	}
-	
+
 	fmt.Printf("\n✓ Successfully applied %d changes.\n", len(r.changes))
 	return nil
 }
@@ -444,12 +444,12 @@ func (r *Renumberer) displayChanges() {
 	fmt.Println("\nFestival Renumbering Report")
 	fmt.Println(strings.Repeat("═", 55))
 	fmt.Println("\nChanges to be made:")
-	
+
 	for _, change := range r.changes {
 		switch change.Type {
 		case ChangeRename:
-			fmt.Printf("  → Rename: %s → %s\n", 
-				filepath.Base(change.OldPath), 
+			fmt.Printf("  → Rename: %s → %s\n",
+				filepath.Base(change.OldPath),
 				filepath.Base(change.NewPath))
 		case ChangeCreate:
 			fmt.Printf("  ✓ Create: %s\n", filepath.Base(change.NewPath))
@@ -457,7 +457,7 @@ func (r *Renumberer) displayChanges() {
 			fmt.Printf("  ✗ Remove: %s\n", filepath.Base(change.OldPath))
 		}
 	}
-	
+
 	fmt.Printf("\nTotal: %d changes\n", len(r.changes))
 }
 

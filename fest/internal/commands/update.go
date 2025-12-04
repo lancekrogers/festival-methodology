@@ -24,7 +24,7 @@ type updateOptions struct {
 // NewUpdateCommand creates the update command
 func NewUpdateCommand() *cobra.Command {
 	opts := &updateOptions{}
-	
+
 	cmd := &cobra.Command{
 		Use:   "update [path]",
 		Short: "Update festival files from latest templates",
@@ -46,28 +46,28 @@ for action unless --no-interactive is specified.`,
 			return runUpdate(targetPath, opts)
 		},
 	}
-	
+
 	cmd.Flags().BoolVar(&opts.dryRun, "dry-run", false, "show what would be updated without making changes")
 	cmd.Flags().BoolVar(&opts.force, "force", false, "update all files regardless of modifications")
 	cmd.Flags().BoolVar(&opts.backup, "backup", false, "create backups before updating")
 	cmd.Flags().BoolVar(&opts.interactive, "interactive", true, "prompt for each modified file")
 	cmd.Flags().BoolVar(&opts.noInteractive, "no-interactive", false, "update only unchanged files, skip modified")
 	cmd.Flags().BoolVar(&opts.diff, "diff", false, "show diffs for modified files")
-	
+
 	return cmd
 }
 
 func runUpdate(targetPath string, opts *updateOptions) error {
 	// Create UI handler
 	display := ui.New(noColor, verbose)
-	
+
 	// If no-interactive is set, disable interactive
 	if opts.noInteractive {
 		opts.interactive = false
 	}
-	
-    // Find .festival directory in current working directory
-    festivalDir := filepath.Join(targetPath, ".festival")
+
+	// Find .festival directory in current working directory
+	festivalDir := filepath.Join(targetPath, ".festival")
 	if !fileops.Exists(festivalDir) {
 		return fmt.Errorf("no .festival/ directory found in current directory. Run 'fest init' first or navigate to a festival project")
 	}
@@ -83,50 +83,50 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 		return fmt.Errorf("failed to load checksums: %w", err)
 	}
 
-    // Get source directory (.festival only)
-    sourceDir := filepath.Join(config.ConfigDir(), "festivals", ".festival")
-    if !fileops.Exists(sourceDir) {
-        return fmt.Errorf("no cached .festival templates found. Run 'fest sync' first")
-    }
+	// Get source directory (.festival only)
+	sourceDir := filepath.Join(config.ConfigDir(), "festivals", ".festival")
+	if !fileops.Exists(sourceDir) {
+		return fmt.Errorf("no cached .festival templates found. Run 'fest sync' first")
+	}
 
-    display.Info("Analyzing .festival files...")
+	display.Info("Analyzing .festival files...")
 
-    // Calculate current checksums for the .festival directory only
-    currentChecksums, err := fileops.GenerateChecksums(festivalDir)
+	// Calculate current checksums for the .festival directory only
+	currentChecksums, err := fileops.GenerateChecksums(festivalDir)
 	if err != nil {
 		return fmt.Errorf("failed to generate checksums: %w", err)
 	}
-	
+
 	// Categorize files
 	changes := categorizeChanges(storedChecksums, currentChecksums)
-	
+
 	// Show summary
 	display.Info("\nFile status:")
 	display.Info("  Unchanged: %d files (safe to update)", len(changes.unchanged))
 	display.Info("  Modified:  %d files (need decision)", len(changes.modified))
 	display.Info("  New:       %d files (user created, will skip)", len(changes.new))
 	display.Info("  Deleted:   %d files (user removed, will skip)", len(changes.deleted))
-	
+
 	if opts.dryRun {
 		display.Warning("\nDRY RUN - No files will be modified")
 		displayChanges(display, changes)
 		return nil
 	}
-	
-    // Create backup if requested (backup only .festival directory)
-    if opts.backup {
-        backupDir := filepath.Join(festivalDir, ".fest-backup", timeStamp())
-        display.Info("\nCreating backup at %s...", backupDir)
-        if err := fileops.CreateBackup(festivalDir, backupDir); err != nil {
-            return fmt.Errorf("failed to create backup: %w", err)
-        }
-    }
 
-    // Process updates (update only .festival files)
-    updater := fileops.NewUpdater(sourceDir, festivalDir)
+	// Create backup if requested (backup only .festival directory)
+	if opts.backup {
+		backupDir := filepath.Join(festivalDir, ".fest-backup", timeStamp())
+		display.Info("\nCreating backup at %s...", backupDir)
+		if err := fileops.CreateBackup(festivalDir, backupDir); err != nil {
+			return fmt.Errorf("failed to create backup: %w", err)
+		}
+	}
+
+	// Process updates (update only .festival files)
+	updater := fileops.NewUpdater(sourceDir, festivalDir)
 	updatedFiles := []string{}
 	skippedFiles := []string{}
-	
+
 	// Update unchanged files
 	for _, file := range changes.unchanged {
 		if verbose {
@@ -138,7 +138,7 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 			updatedFiles = append(updatedFiles, file)
 		}
 	}
-	
+
 	// Handle modified files
 	acceptAll := false
 	for _, file := range changes.modified {
@@ -176,11 +176,11 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 			skippedFiles = append(skippedFiles, file)
 		}
 	}
-	
+
 	// Update checksums for updated files
-    if len(updatedFiles) > 0 {
-        display.Info("\nUpdating .festival checksums...")
-        newChecksums, err := fileops.GenerateChecksums(festivalDir)
+	if len(updatedFiles) > 0 {
+		display.Info("\nUpdating .festival checksums...")
+		newChecksums, err := fileops.GenerateChecksums(festivalDir)
 		if err != nil {
 			display.Warning("Failed to update checksums: %v", err)
 		} else {
@@ -189,12 +189,12 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 			}
 		}
 	}
-	
+
 	// Show summary
 	display.Success("\nUpdate complete:")
 	display.Info("  Updated: %d files", len(updatedFiles))
 	display.Info("  Skipped: %d files", len(skippedFiles))
-	
+
 	return nil
 }
 
@@ -212,7 +212,7 @@ func categorizeChanges(stored, current map[string]fileops.ChecksumEntry) fileCha
 		new:       []string{},
 		deleted:   []string{},
 	}
-	
+
 	// Check existing files
 	for path, currentEntry := range current {
 		if storedEntry, exists := stored[path]; exists {
@@ -225,14 +225,14 @@ func categorizeChanges(stored, current map[string]fileops.ChecksumEntry) fileCha
 			changes.new = append(changes.new, path)
 		}
 	}
-	
+
 	// Check deleted files
 	for path := range stored {
 		if _, exists := current[path]; !exists {
 			changes.deleted = append(changes.deleted, path)
 		}
 	}
-	
+
 	return changes
 }
 
@@ -263,7 +263,7 @@ func displayChanges(display *ui.UI, changes fileChanges) {
 			display.Info("  ✓ %s", file)
 		}
 	}
-	
+
 	if len(changes.modified) > 0 {
 		display.Info("\nModified files (would skip):")
 		for _, file := range changes.modified {

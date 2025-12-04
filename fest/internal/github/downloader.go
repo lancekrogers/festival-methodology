@@ -67,7 +67,7 @@ func (d *Downloader) Download(targetDir string, progress ProgressFunc) error {
 	if err != nil {
 		return fmt.Errorf("invalid repository URL: %w", err)
 	}
-	
+
 	// Build raw content base URL
 	baseURL := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s", owner, repo, d.branch)
 
@@ -88,17 +88,17 @@ func (d *Downloader) Download(targetDir string, progress ProgressFunc) error {
 
 	totalFiles := int64(len(files))
 	currentFile := int64(0)
-	
+
 	// Download each file
 	for _, file := range files {
 		currentFile++
 		if progress != nil {
 			progress(currentFile, totalFiles, file)
 		}
-		
+
 		fileURL := fmt.Sprintf("%s/festivals/%s", baseURL, file)
 		targetPath := filepath.Join(targetDir, file)
-		
+
 		// Download with retry
 		var lastErr error
 		for attempt := 0; attempt < d.retry; attempt++ {
@@ -110,12 +110,12 @@ func (d *Downloader) Download(targetDir string, progress ProgressFunc) error {
 			lastErr = nil
 			break
 		}
-		
+
 		if lastErr != nil {
 			return fmt.Errorf("failed to download %s after %d attempts: %w", file, d.retry, lastErr)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -126,31 +126,31 @@ func (d *Downloader) downloadFile(url, targetPath string) error {
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
-	
+
 	// Make HTTP request
 	resp, err := d.client.Get(url)
 	if err != nil {
 		return fmt.Errorf("failed to download: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("download failed with status: %d", resp.StatusCode)
 	}
-	
+
 	// Create target file
 	out, err := os.Create(targetPath)
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
 	}
 	defer out.Close()
-	
+
 	// Copy content
 	if _, err := io.Copy(out, resp.Body); err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
-	
+
 	return out.Sync()
 }
 

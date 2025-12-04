@@ -25,7 +25,7 @@ type syncOptions struct {
 // NewSyncCommand creates the sync command
 func NewSyncCommand() *cobra.Command {
 	opts := &syncOptions{}
-	
+
 	cmd := &cobra.Command{
 		Use:   "sync",
 		Short: "Download latest festival templates from GitHub",
@@ -40,14 +40,14 @@ configured repository and stores it locally for use with init and update command
 			return runSync(opts)
 		},
 	}
-	
+
 	cmd.Flags().StringVar(&opts.source, "source", "", "GitHub repository URL")
 	cmd.Flags().StringVar(&opts.branch, "branch", "main", "Git branch to sync from")
 	cmd.Flags().BoolVar(&opts.force, "force", false, "overwrite existing files without checking")
 	cmd.Flags().IntVar(&opts.timeout, "timeout", 30, "timeout in seconds")
 	cmd.Flags().IntVar(&opts.retry, "retry", 3, "number of retry attempts")
 	cmd.Flags().BoolVar(&opts.dryRun, "dry-run", false, "show what would be downloaded")
-	
+
 	return cmd
 }
 
@@ -119,18 +119,18 @@ func runSync(opts *syncOptions) error {
 	}
 
 	display.Info("Syncing from %s (branch: %s)...", repoURL, opts.branch)
-	
+
 	// Download with progress
 	progressBar := display.NewProgressBar("Downloading", -1)
 	err = downloader.Download(targetDir, func(current, total int64, file string) {
 		progressBar.Update(current, total, file)
 	})
 	progressBar.Finish()
-	
+
 	if err != nil {
 		return fmt.Errorf("download failed: %w", err)
 	}
-	
+
 	// Update config with sync time
 	if cfg != nil {
 		cfg.LastSync = timeNow()
@@ -138,7 +138,7 @@ func runSync(opts *syncOptions) error {
 			display.Warning("Failed to update config: %v", err)
 		}
 	}
-	
+
 	display.Success("Successfully synced festival templates to %s", targetDir)
 	return nil
 }

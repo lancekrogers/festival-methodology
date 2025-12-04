@@ -20,6 +20,11 @@ func NewManager() *Manager {
 	}
 }
 
+// Render renders an already-loaded template using the manager's renderer
+func (m *Manager) Render(t *Template, ctx *Context) (string, error) {
+	return m.renderer.Render(t, ctx)
+}
+
 // RenderFile renders a template file with the given context
 func (m *Manager) RenderFile(templatePath string, ctx *Context) (string, error) {
 	// Load template

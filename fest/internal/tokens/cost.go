@@ -6,9 +6,9 @@ import (
 
 // ModelPricing represents pricing for a model
 type ModelPricing struct {
-	Model        string
-	InputPer1K   float64 // Cost per 1K input tokens
-	OutputPer1K  float64 // Cost per 1K output tokens
+	Model       string
+	InputPer1K  float64 // Cost per 1K input tokens
+	OutputPer1K float64 // Cost per 1K output tokens
 }
 
 // Common model pricing (as of 2024)
@@ -17,11 +17,11 @@ var modelPricing = []ModelPricing{
 	{Model: "gpt-4", InputPer1K: 0.01, OutputPer1K: 0.03},
 	{Model: "gpt-4-turbo", InputPer1K: 0.01, OutputPer1K: 0.03},
 	{Model: "gpt-4o", InputPer1K: 0.005, OutputPer1K: 0.015},
-	
+
 	// OpenAI GPT-3.5
 	{Model: "gpt-3.5-turbo", InputPer1K: 0.0005, OutputPer1K: 0.0015},
 	{Model: "gpt-3.5-turbo-16k", InputPer1K: 0.003, OutputPer1K: 0.004},
-	
+
 	// Anthropic Claude
 	{Model: "claude-3-opus", InputPer1K: 0.015, OutputPer1K: 0.075},
 	{Model: "claude-3-sonnet", InputPer1K: 0.003, OutputPer1K: 0.015},
@@ -33,13 +33,13 @@ var modelPricing = []ModelPricing{
 // CalculateCosts calculates cost estimates based on token counts
 func CalculateCosts(methods []MethodResult) []CostEstimate {
 	costs := []CostEstimate{}
-	
+
 	// Find the most accurate token count to use
 	tokenCount := getTokenCount(methods)
 	if tokenCount == 0 {
 		return costs
 	}
-	
+
 	// Calculate costs for common models
 	for _, pricing := range modelPricing {
 		// Only show main models by default
@@ -53,7 +53,7 @@ func CalculateCosts(methods []MethodResult) []CostEstimate {
 			costs = append(costs, cost)
 		}
 	}
-	
+
 	return costs
 }
 
@@ -65,19 +65,19 @@ func getTokenCount(methods []MethodResult) int {
 			return method.Tokens
 		}
 	}
-	
+
 	// Fall back to approximations
 	for _, method := range methods {
 		if strings.Contains(method.Name, "Character-based") {
 			return method.Tokens
 		}
 	}
-	
+
 	// Use first available
 	if len(methods) > 0 {
 		return methods[0].Tokens
 	}
-	
+
 	return 0
 }
 
@@ -89,33 +89,33 @@ func isMainModel(model string) bool {
 		"claude-3-opus",
 		"claude-3-sonnet",
 	}
-	
+
 	for _, main := range mainModels {
 		if model == main {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
 // GetPricingForModel returns pricing information for a specific model
 func GetPricingForModel(model string) *ModelPricing {
 	model = strings.ToLower(model)
-	
+
 	for _, pricing := range modelPricing {
 		if strings.ToLower(pricing.Model) == model {
 			return &pricing
 		}
 	}
-	
+
 	// Check partial matches
 	for _, pricing := range modelPricing {
 		if strings.Contains(strings.ToLower(pricing.Model), model) ||
-		   strings.Contains(model, strings.ToLower(pricing.Model)) {
+			strings.Contains(model, strings.ToLower(pricing.Model)) {
 			return &pricing
 		}
 	}
-	
+
 	return nil
 }

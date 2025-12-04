@@ -25,10 +25,10 @@ type Context struct {
 	PhaseObjective string
 
 	// Sequence-level variables
-	SequenceNumber    int
-	SequenceName      string
-	SequenceID        string // formatted: "01_requirements"
-	SequenceObjective string
+	SequenceNumber       int
+	SequenceName         string
+	SequenceID           string // formatted: "01_requirements"
+	SequenceObjective    string
 	SequenceDependencies []string
 
 	// Task-level variables

@@ -290,7 +290,7 @@ func TestFormatPhaseID(t *testing.T) {
 		{2, "IMPLEMENTATION", "002_IMPLEMENTATION"},
 		{10, "REVIEW", "010_REVIEW"},
 		{99, "FINAL PHASE", "099_FINAL_PHASE"},
-		{1, "planning", "001_PLANNING"}, // lowercase converted to uppercase
+		{1, "planning", "001_PLANNING"},         // lowercase converted to uppercase
 		{5, "User Testing", "005_USER_TESTING"}, // spaces to underscores
 	}
 
@@ -311,7 +311,7 @@ func TestFormatSequenceID(t *testing.T) {
 		{1, "requirements", "01_requirements"},
 		{2, "architecture design", "02_architecture_design"},
 		{15, "integration testing", "15_integration_testing"},
-		{3, "BACKEND API", "03_backend_api"}, // uppercase converted to lowercase
+		{3, "BACKEND API", "03_backend_api"},       // uppercase converted to lowercase
 		{8, "User Interface", "08_user_interface"}, // spaces to underscores
 	}
 
@@ -333,7 +333,7 @@ func TestFormatTaskID(t *testing.T) {
 		{2, "competitor analysis", "02_competitor_analysis.md"},
 		{25, "code review", "25_code_review.md"},
 		{5, "Database Schema", "05_database_schema.md"}, // mixed case normalized
-		{10, "API Design", "10_api_design.md"}, // spaces to underscores
+		{10, "API Design", "10_api_design.md"},          // spaces to underscores
 	}
 
 	for _, tt := range tests {

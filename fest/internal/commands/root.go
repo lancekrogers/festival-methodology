@@ -12,7 +12,7 @@ var (
 	verbose    bool
 	noColor    bool
 	debug      bool
-	
+
 	// Version information (set at build time)
 	Version   = "dev"
 	BuildTime = "unknown"
@@ -41,20 +41,20 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "enable verbose output")
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable colored output")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logging")
-	
+
 	// Add commands
-    rootCmd.AddCommand(NewSyncCommand())
-    rootCmd.AddCommand(NewInitCommand())
-    rootCmd.AddCommand(NewUpdateCommand())
-    rootCmd.AddCommand(NewCountCommand())
-    rootCmd.AddCommand(NewRenumberCommand())
-    rootCmd.AddCommand(NewInsertCommand())
-    rootCmd.AddCommand(NewRemoveCommand())
-    // Headless-first creation commands
-    rootCmd.AddCommand(NewApplyCommand())
-    // Grouped under 'create'
-    createCmd := &cobra.Command{Use: "create", Short: "Create festival elements"}
-    createCmd.AddCommand(NewCreateFestivalCommand())
-    createCmd.AddCommand(NewCreatePhaseCommand())
-    rootCmd.AddCommand(createCmd)
+	rootCmd.AddCommand(NewSyncCommand())
+	rootCmd.AddCommand(NewInitCommand())
+	rootCmd.AddCommand(NewUpdateCommand())
+	rootCmd.AddCommand(NewCountCommand())
+	rootCmd.AddCommand(NewRenumberCommand())
+	rootCmd.AddCommand(NewInsertCommand())
+	rootCmd.AddCommand(NewRemoveCommand())
+	// Headless-first creation commands
+	rootCmd.AddCommand(NewApplyCommand())
+	// Grouped under 'create'
+	createCmd := &cobra.Command{Use: "create", Short: "Create festival elements"}
+	createCmd.AddCommand(NewCreateFestivalCommand())
+	createCmd.AddCommand(NewCreatePhaseCommand())
+	rootCmd.AddCommand(createCmd)
 }

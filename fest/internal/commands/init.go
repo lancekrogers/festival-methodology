@@ -21,7 +21,7 @@ type initOptions struct {
 // NewInitCommand creates the init command
 func NewInitCommand() *cobra.Command {
 	opts := &initOptions{}
-	
+
 	cmd := &cobra.Command{
 		Use:   "init [path]",
 		Short: "Initialize a new festival directory structure",
@@ -42,25 +42,25 @@ This command copies the festival template structure from your local cache
 			return runInit(targetPath, opts)
 		},
 	}
-	
+
 	cmd.Flags().BoolVar(&opts.force, "force", false, "overwrite existing festival directory")
 	cmd.Flags().StringVar(&opts.from, "from", "", "source directory (default: ~/.config/fest)")
 	cmd.Flags().BoolVar(&opts.minimal, "minimal", false, "create minimal structure only")
 	cmd.Flags().BoolVar(&opts.noChecksums, "no-checksums", false, "skip checksum generation")
-	
+
 	return cmd
 }
 
 func runInit(targetPath string, opts *initOptions) error {
 	// Create UI handler
 	display := ui.New(noColor, verbose)
-	
+
 	// Convert to absolute path
 	absPath, err := filepath.Abs(targetPath)
 	if err != nil {
 		return fmt.Errorf("invalid path: %w", err)
 	}
-	
+
 	// Check if festival already exists
 	festivalPath := filepath.Join(absPath, "festivals")
 	if fileops.Exists(festivalPath) && !opts.force {
@@ -69,25 +69,25 @@ func runInit(targetPath string, opts *initOptions) error {
 			return nil
 		}
 	}
-	
+
 	// Determine source directory
 	sourceDir := opts.from
 	if sourceDir == "" {
 		sourceDir = filepath.Join(config.ConfigDir(), "festivals")
 	}
-	
+
 	// Check if source exists
 	if !fileops.Exists(sourceDir) {
 		return fmt.Errorf("source directory not found at %s. Run 'fest sync' first", sourceDir)
 	}
-	
+
 	display.Info("Initializing festival structure at %s...", festivalPath)
-	
+
 	// Create festivals directory if it doesn't exist
 	if err := os.MkdirAll(festivalPath, 0755); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
-	
+
 	// Copy structure
 	copier := fileops.NewCopier()
 	if opts.minimal {
@@ -108,32 +108,32 @@ func runInit(targetPath string, opts *initOptions) error {
 			return fmt.Errorf("failed to copy festival structure: %w", err)
 		}
 	}
-	
-    // Generate checksums unless disabled
-    if !opts.noChecksums {
-        display.Info("Generating .festival checksums...")
-        checksumFile := filepath.Join(festivalPath, ".festival", ".fest-checksums.json")
 
-        // Only checksum the .festival directory
-        festivalMetaDir := filepath.Join(festivalPath, ".festival")
-        checksums, err := fileops.GenerateChecksums(festivalMetaDir)
-        if err != nil {
-            return fmt.Errorf("failed to generate checksums: %w", err)
-        }
+	// Generate checksums unless disabled
+	if !opts.noChecksums {
+		display.Info("Generating .festival checksums...")
+		checksumFile := filepath.Join(festivalPath, ".festival", ".fest-checksums.json")
 
-        if err := fileops.SaveChecksums(checksumFile, checksums); err != nil {
-            return fmt.Errorf("failed to save checksums: %w", err)
-        }
+		// Only checksum the .festival directory
+		festivalMetaDir := filepath.Join(festivalPath, ".festival")
+		checksums, err := fileops.GenerateChecksums(festivalMetaDir)
+		if err != nil {
+			return fmt.Errorf("failed to generate checksums: %w", err)
+		}
 
-        display.Info("Created checksum tracking at %s", checksumFile)
-    }
-	
+		if err := fileops.SaveChecksums(checksumFile, checksums); err != nil {
+			return fmt.Errorf("failed to save checksums: %w", err)
+		}
+
+		display.Info("Created checksum tracking at %s", checksumFile)
+	}
+
 	// Show summary
 	display.Success("Successfully initialized festival structure at %s", festivalPath)
 	display.Info("\nNext steps:")
 	display.Info("  1. cd %s", absPath)
 	display.Info("  2. Review festivals/.festival/README.md")
 	display.Info("  3. Start planning your festival in festivals/planned/")
-	
+
 	return nil
 }

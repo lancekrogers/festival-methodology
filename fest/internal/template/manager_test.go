@@ -115,8 +115,8 @@ func TestManager_RenderDirectory(t *testing.T) {
 
 	// Create multiple template files
 	templates := map[string]string{
-		"overview.md": `# Festival: {{.name}}`,
-		"goals.md":    `Goal: {{.goal}}`,
+		"overview.md":       `# Festival: {{.name}}`,
+		"goals.md":          `Goal: {{.goal}}`,
 		"subdir/details.md": `Details for {{.name}}`,
 	}
 

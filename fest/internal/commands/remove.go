@@ -19,7 +19,7 @@ type removeOptions struct {
 // NewRemoveCommand creates the remove command
 func NewRemoveCommand() *cobra.Command {
 	opts := &removeOptions{}
-	
+
 	cmd := &cobra.Command{
 		Use:   "remove",
 		Short: "Remove festival elements and renumber",
@@ -28,18 +28,18 @@ func NewRemoveCommand() *cobra.Command {
 This command safely removes elements and maintains proper numbering
 for all following elements in the hierarchy.`,
 	}
-	
+
 	// Add persistent flags
 	cmd.PersistentFlags().BoolVar(&opts.dryRun, "dry-run", true, "preview changes without applying them")
 	cmd.PersistentFlags().BoolVar(&opts.backup, "backup", false, "create backup before removal")
 	cmd.PersistentFlags().BoolVar(&opts.force, "force", false, "skip confirmation prompts")
 	cmd.PersistentFlags().BoolVar(&opts.verbose, "verbose", false, "show detailed output")
-	
+
 	// Add subcommands
 	cmd.AddCommand(newRemovePhaseCommand(opts))
 	cmd.AddCommand(newRemoveSequenceCommand(opts))
 	cmd.AddCommand(newRemoveTaskCommand(opts))
-	
+
 	return cmd
 }
 
@@ -57,7 +57,7 @@ Warning: This will permanently delete the phase and all its contents!`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			target := args[0]
-			
+
 			// Determine if target is a number or path
 			var targetPath string
 			if num, err := parsePhaseNumber(target); err == nil {
@@ -67,7 +67,7 @@ Warning: This will permanently delete the phase and all its contents!`,
 				if err != nil {
 					return fmt.Errorf("failed to parse phases: %w", err)
 				}
-				
+
 				found := false
 				for _, phase := range phases {
 					if phase.Number == num {
@@ -76,7 +76,7 @@ Warning: This will permanently delete the phase and all its contents!`,
 						break
 					}
 				}
-				
+
 				if !found {
 					return fmt.Errorf("phase %03d not found", num)
 				}
@@ -84,13 +84,13 @@ Warning: This will permanently delete the phase and all its contents!`,
 				// Use as path
 				targetPath = target
 			}
-			
+
 			// Convert to absolute path
 			absPath, err := filepath.Abs(targetPath)
 			if err != nil {
 				return fmt.Errorf("failed to resolve path: %w", err)
 			}
-			
+
 			// Confirm removal if not forced
 			if !opts.force && !opts.dryRun {
 				fmt.Printf("Warning: This will permanently delete %s and all its contents!\n", filepath.Base(absPath))
@@ -102,14 +102,14 @@ Warning: This will permanently delete the phase and all its contents!`,
 					return nil
 				}
 			}
-			
+
 			// Create renumberer
 			renumberer := festival.NewRenumberer(festival.RenumberOptions{
 				DryRun:  opts.dryRun,
 				Backup:  opts.backup,
 				Verbose: opts.verbose || verbose,
 			})
-			
+
 			// Perform removal
 			return renumberer.RemoveElement(absPath)
 		},
@@ -119,7 +119,7 @@ Warning: This will permanently delete the phase and all its contents!`,
 // newRemoveSequenceCommand creates the sequence removal subcommand
 func newRemoveSequenceCommand(opts *removeOptions) *cobra.Command {
 	var phaseDir string
-	
+
 	cmd := &cobra.Command{
 		Use:   "sequence [sequence-number|sequence-name]",
 		Short: "Remove a sequence and renumber subsequent sequences",
@@ -133,15 +133,15 @@ Warning: This will permanently delete the sequence and all its contents!`,
 			if phaseDir == "" {
 				return fmt.Errorf("--phase flag is required")
 			}
-			
+
 			target := args[0]
-			
+
 			// Convert phase to absolute path
 			phaseAbs, err := filepath.Abs(phaseDir)
 			if err != nil {
 				return fmt.Errorf("failed to resolve phase path: %w", err)
 			}
-			
+
 			// Determine target path
 			var targetPath string
 			if num, err := parseSequenceNumber(target); err == nil {
@@ -151,7 +151,7 @@ Warning: This will permanently delete the sequence and all its contents!`,
 				if err != nil {
 					return fmt.Errorf("failed to parse sequences: %w", err)
 				}
-				
+
 				found := false
 				for _, seq := range sequences {
 					if seq.Number == num {
@@ -160,7 +160,7 @@ Warning: This will permanently delete the sequence and all its contents!`,
 						break
 					}
 				}
-				
+
 				if !found {
 					return fmt.Errorf("sequence %02d not found in %s", num, phaseDir)
 				}
@@ -168,7 +168,7 @@ Warning: This will permanently delete the sequence and all its contents!`,
 				// Use as name/path
 				targetPath = filepath.Join(phaseAbs, target)
 			}
-			
+
 			// Confirm removal if not forced
 			if !opts.force && !opts.dryRun {
 				fmt.Printf("Warning: This will permanently delete %s and all its contents!\n", filepath.Base(targetPath))
@@ -180,29 +180,29 @@ Warning: This will permanently delete the sequence and all its contents!`,
 					return nil
 				}
 			}
-			
+
 			// Create renumberer
 			renumberer := festival.NewRenumberer(festival.RenumberOptions{
 				DryRun:  opts.dryRun,
 				Backup:  opts.backup,
 				Verbose: opts.verbose || verbose,
 			})
-			
+
 			// Perform removal
 			return renumberer.RemoveElement(targetPath)
 		},
 	}
-	
+
 	cmd.Flags().StringVar(&phaseDir, "phase", "", "phase containing the sequence")
 	cmd.MarkFlagRequired("phase")
-	
+
 	return cmd
 }
 
 // newRemoveTaskCommand creates the task removal subcommand
 func newRemoveTaskCommand(opts *removeOptions) *cobra.Command {
 	var sequenceDir string
-	
+
 	cmd := &cobra.Command{
 		Use:   "task [task-number|task-name]",
 		Short: "Remove a task and renumber subsequent tasks",
@@ -216,15 +216,15 @@ Warning: This will permanently delete the task file!`,
 			if sequenceDir == "" {
 				return fmt.Errorf("--sequence flag is required")
 			}
-			
+
 			target := args[0]
-			
+
 			// Convert sequence to absolute path
 			seqAbs, err := filepath.Abs(sequenceDir)
 			if err != nil {
 				return fmt.Errorf("failed to resolve sequence path: %w", err)
 			}
-			
+
 			// Determine target path
 			var targetPath string
 			if num, err := parseTaskNumber(target); err == nil {
@@ -234,7 +234,7 @@ Warning: This will permanently delete the task file!`,
 				if err != nil {
 					return fmt.Errorf("failed to parse tasks: %w", err)
 				}
-				
+
 				// Handle potential parallel tasks
 				var matches []festival.FestivalElement
 				for _, task := range tasks {
@@ -242,7 +242,7 @@ Warning: This will permanently delete the task file!`,
 						matches = append(matches, task)
 					}
 				}
-				
+
 				if len(matches) == 0 {
 					return fmt.Errorf("task %02d not found in %s", num, sequenceDir)
 				} else if len(matches) > 1 {
@@ -268,7 +268,7 @@ Warning: This will permanently delete the task file!`,
 				}
 				targetPath = filepath.Join(seqAbs, target)
 			}
-			
+
 			// Confirm removal if not forced
 			if !opts.force && !opts.dryRun {
 				fmt.Printf("Warning: This will permanently delete %s!\n", filepath.Base(targetPath))
@@ -280,22 +280,22 @@ Warning: This will permanently delete the task file!`,
 					return nil
 				}
 			}
-			
+
 			// Create renumberer
 			renumberer := festival.NewRenumberer(festival.RenumberOptions{
 				DryRun:  opts.dryRun,
 				Backup:  opts.backup,
 				Verbose: opts.verbose || verbose,
 			})
-			
+
 			// Perform removal
 			return renumberer.RemoveElement(targetPath)
 		},
 	}
-	
+
 	cmd.Flags().StringVar(&sequenceDir, "sequence", "", "sequence containing the task")
 	cmd.MarkFlagRequired("sequence")
-	
+
 	return cmd
 }
 

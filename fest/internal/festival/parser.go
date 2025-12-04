@@ -63,12 +63,12 @@ func (p *Parser) ParseFestival(festivalDir string) ([]FestivalElement, error) {
 	if !isDir(festivalDir) {
 		return nil, fmt.Errorf("festival directory does not exist: %s", festivalDir)
 	}
-	
+
 	phases, err := p.ParsePhases(festivalDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse phases: %w", err)
 	}
-	
+
 	// Parse sequences within each phase
 	for i := range phases {
 		sequences, err := p.ParseSequences(phases[i].Path)
@@ -76,7 +76,7 @@ func (p *Parser) ParseFestival(festivalDir string) ([]FestivalElement, error) {
 			return nil, fmt.Errorf("failed to parse sequences in %s: %w", phases[i].Name, err)
 		}
 		phases[i].Children = sequences
-		
+
 		// Parse tasks within each sequence
 		for j := range phases[i].Children {
 			tasks, err := p.ParseTasks(phases[i].Children[j].Path)
@@ -86,7 +86,7 @@ func (p *Parser) ParseFestival(festivalDir string) ([]FestivalElement, error) {
 			phases[i].Children[j].Children = tasks
 		}
 	}
-	
+
 	return phases, nil
 }
 
@@ -111,9 +111,9 @@ func (p *Parser) parseElements(dir string, pattern *regexp.Regexp, elemType Elem
 	if err != nil {
 		return nil, fmt.Errorf("failed to read directory %s: %w", dir, err)
 	}
-	
+
 	var elements []FestivalElement
-	
+
 	for _, entry := range entries {
 		// Skip if type doesn't match
 		if isDirectory && !entry.IsDir() {
@@ -122,19 +122,19 @@ func (p *Parser) parseElements(dir string, pattern *regexp.Regexp, elemType Elem
 		if !isDirectory && entry.IsDir() {
 			continue
 		}
-		
+
 		// Check if name matches pattern
 		matches := pattern.FindStringSubmatch(entry.Name())
 		if matches == nil {
 			continue
 		}
-		
+
 		// Parse number
 		num, err := strconv.Atoi(matches[1])
 		if err != nil {
 			continue
 		}
-		
+
 		// Create element
 		element := FestivalElement{
 			Type:     elemType,
@@ -143,15 +143,15 @@ func (p *Parser) parseElements(dir string, pattern *regexp.Regexp, elemType Elem
 			Path:     filepath.Join(dir, entry.Name()),
 			FullName: entry.Name(),
 		}
-		
+
 		elements = append(elements, element)
 	}
-	
+
 	// Sort by number
 	sort.Slice(elements, func(i, j int) bool {
 		return elements[i].Number < elements[j].Number
 	})
-	
+
 	return elements, nil
 }
 
@@ -159,7 +159,7 @@ func (p *Parser) parseElements(dir string, pattern *regexp.Regexp, elemType Elem
 func (p *Parser) GetNextNumber(dir string, elemType ElementType) (int, error) {
 	var elements []FestivalElement
 	var err error
-	
+
 	switch elemType {
 	case PhaseType:
 		elements, err = p.ParsePhases(dir)
@@ -170,15 +170,15 @@ func (p *Parser) GetNextNumber(dir string, elemType ElementType) (int, error) {
 	default:
 		return 0, fmt.Errorf("unknown element type: %v", elemType)
 	}
-	
+
 	if err != nil {
 		return 0, err
 	}
-	
+
 	if len(elements) == 0 {
 		return 1, nil
 	}
-	
+
 	// Return the highest number + 1
 	return elements[len(elements)-1].Number + 1, nil
 }
@@ -187,7 +187,7 @@ func (p *Parser) GetNextNumber(dir string, elemType ElementType) (int, error) {
 func (p *Parser) FindElement(dir string, number int, elemType ElementType) (*FestivalElement, error) {
 	var elements []FestivalElement
 	var err error
-	
+
 	switch elemType {
 	case PhaseType:
 		elements, err = p.ParsePhases(dir)
@@ -198,17 +198,17 @@ func (p *Parser) FindElement(dir string, number int, elemType ElementType) (*Fes
 	default:
 		return nil, fmt.Errorf("unknown element type: %v", elemType)
 	}
-	
+
 	if err != nil {
 		return nil, err
 	}
-	
+
 	for _, elem := range elements {
 		if elem.Number == number {
 			return &elem, nil
 		}
 	}
-	
+
 	return nil, fmt.Errorf("%s %d not found", elemType, number)
 }
 
@@ -233,7 +233,7 @@ func BuildElementName(number int, name string, elemType ElementType) string {
 // ParseElementName extracts number and name from a numbered element
 func ParseElementName(fullName string, elemType ElementType) (int, string, error) {
 	var pattern *regexp.Regexp
-	
+
 	switch elemType {
 	case PhaseType:
 		pattern = regexp.MustCompile(`^(\d{3})_(.+)$`)
@@ -244,17 +244,17 @@ func ParseElementName(fullName string, elemType ElementType) (int, string, error
 	default:
 		return 0, "", fmt.Errorf("unknown element type: %v", elemType)
 	}
-	
+
 	matches := pattern.FindStringSubmatch(fullName)
 	if matches == nil {
 		return 0, "", fmt.Errorf("name does not match %s pattern: %s", elemType, fullName)
 	}
-	
+
 	num, err := strconv.Atoi(matches[1])
 	if err != nil {
 		return 0, "", fmt.Errorf("failed to parse number: %w", err)
 	}
-	
+
 	return num, matches[2], nil
 }
 
@@ -264,19 +264,19 @@ func (p *Parser) HasParallelTasks(sequenceDir string) (map[int][]FestivalElement
 	if err != nil {
 		return nil, err
 	}
-	
+
 	parallel := make(map[int][]FestivalElement)
 	for _, task := range tasks {
 		parallel[task.Number] = append(parallel[task.Number], task)
 	}
-	
+
 	// Remove entries with only one task
 	for num, tasks := range parallel {
 		if len(tasks) <= 1 {
 			delete(parallel, num)
 		}
 	}
-	
+
 	return parallel, nil
 }
 
@@ -304,12 +304,12 @@ func NormalizeName(fullName string) string {
 	if matches := regexp.MustCompile(`^\d{3}_(.+)$`).FindStringSubmatch(fullName); matches != nil {
 		return matches[1]
 	}
-	
+
 	// Remove sequence/task prefix (2 digits)
 	if matches := regexp.MustCompile(`^\d{2}_(.+?)(?:\.md)?$`).FindStringSubmatch(fullName); matches != nil {
 		return matches[1]
 	}
-	
+
 	// Return as-is if no pattern matches
 	return strings.TrimSuffix(fullName, ".md")
 }

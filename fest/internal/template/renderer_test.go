@@ -44,9 +44,9 @@ func TestRenderer_RenderString(t *testing.T) {
 			wantErr:  false,
 		},
 		{
-			name:    "sprig functions - default",
-			content: "Name: {{.name | default \"Unknown\"}}",
-			context: newTestContext(map[string]interface{}{}),
+			name:     "sprig functions - default",
+			content:  "Name: {{.name | default \"Unknown\"}}",
+			context:  newTestContext(map[string]interface{}{}),
 			expected: "Name: Unknown",
 			wantErr:  false,
 		},
@@ -60,9 +60,9 @@ func TestRenderer_RenderString(t *testing.T) {
 			wantErr:  false,
 		},
 		{
-			name:    "preserve guidance markers",
-			content: "# Title\n\n[GUIDANCE: Fill this in]\n\n[FILL: Add description]",
-			context: newTestContext(map[string]interface{}{}),
+			name:     "preserve guidance markers",
+			content:  "# Title\n\n[GUIDANCE: Fill this in]\n\n[FILL: Add description]",
+			context:  newTestContext(map[string]interface{}{}),
 			expected: "# Title\n\n[GUIDANCE: Fill this in]\n\n[FILL: Add description]",
 			wantErr:  false,
 		},
@@ -136,8 +136,8 @@ func TestValidateTemplate(t *testing.T) {
 		{
 			name:     "no metadata",
 			metadata: nil,
-			context: newTestContext(map[string]interface{}{}),
-			wantErr: false,
+			context:  newTestContext(map[string]interface{}{}),
+			wantErr:  false,
 		},
 		{
 			name: "optional variables missing",
@@ -171,28 +171,28 @@ func TestValidateTemplate(t *testing.T) {
 
 func TestCheckUnrenderedVariables(t *testing.T) {
 	tests := []struct {
-		name       string
-		content    string
+		name           string
+		content        string
 		wantUnrendered []string
 	}{
 		{
-			name:       "no unrendered variables",
-			content:    "Hello World! This is content.",
+			name:           "no unrendered variables",
+			content:        "Hello World! This is content.",
 			wantUnrendered: []string{},
 		},
 		{
-			name:       "one unrendered variable",
-			content:    "Hello {{name}}!",
+			name:           "one unrendered variable",
+			content:        "Hello {{name}}!",
 			wantUnrendered: []string{"name"},
 		},
 		{
-			name:       "multiple unrendered variables",
-			content:    "{{festival_name}} - {{goal}} - {{description}}",
+			name:           "multiple unrendered variables",
+			content:        "{{festival_name}} - {{goal}} - {{description}}",
 			wantUnrendered: []string{"festival_name", "goal", "description"},
 		},
 		{
-			name:       "guidance markers not counted",
-			content:    "[GUIDANCE: Fill this in]\n[FILL: Add description]",
+			name:           "guidance markers not counted",
+			content:        "[GUIDANCE: Fill this in]\n[FILL: Add description]",
 			wantUnrendered: []string{},
 		},
 	}

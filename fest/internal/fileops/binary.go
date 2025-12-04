@@ -39,12 +39,12 @@ var binaryExtensions = map[string]bool{
 	".rar": true,
 
 	// Executables
-	".exe": true,
-	".dll": true,
-	".so":  true,
+	".exe":   true,
+	".dll":   true,
+	".so":    true,
 	".dylib": true,
-	".app": true,
-	".bin": true,
+	".app":   true,
+	".bin":   true,
 
 	// Audio/Video
 	".mp3":  true,
@@ -58,16 +58,16 @@ var binaryExtensions = map[string]bool{
 	".ogg":  true,
 
 	// Fonts
-	".ttf":  true,
-	".otf":  true,
-	".woff": true,
+	".ttf":   true,
+	".otf":   true,
+	".woff":  true,
 	".woff2": true,
 
 	// Other
-	".pyc": true,
+	".pyc":   true,
 	".class": true,
-	".o": true,
-	".a": true,
+	".o":     true,
+	".a":     true,
 }
 
 // IsBinaryFile checks if a file is likely binary

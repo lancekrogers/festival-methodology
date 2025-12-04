@@ -64,7 +64,7 @@ func NewCounter(opts CounterOptions) *Counter {
 	if opts.WordsPerToken == 0 {
 		opts.WordsPerToken = 0.75
 	}
-	
+
 	return &Counter{
 		charsPerToken: opts.CharsPerToken,
 		wordsPerToken: opts.WordsPerToken,
@@ -80,13 +80,13 @@ func (c *Counter) Count(text string, model string, all bool) (*CountResult, erro
 		Lines:      countLines(text),
 		Methods:    []MethodResult{},
 	}
-	
+
 	// Initialize tokenizers if needed
 	if err := c.initializeTokenizers(); err != nil {
 		// Continue with approximations even if exact tokenizers fail
 		// Silent failure - we'll use approximations
 	}
-	
+
 	if all || model == "" {
 		// Use all available methods
 		result.Methods = c.countAllMethods(text)
@@ -98,7 +98,7 @@ func (c *Counter) Count(text string, model string, all bool) (*CountResult, erro
 		}
 		result.Methods = methods
 	}
-	
+
 	return result, nil
 }
 
@@ -185,14 +185,14 @@ func (c *Counter) initializeTokenizers() error {
 	if tokenizer, err := NewTiktokenTokenizer("gpt-4"); err == nil {
 		c.tokenizers["gpt-4"] = tokenizer
 	}
-	
+
 	if tokenizer, err := NewTiktokenTokenizer("gpt-3.5-turbo"); err == nil {
 		c.tokenizers["gpt-3.5-turbo"] = tokenizer
 	}
-	
+
 	// Add Claude approximation (since we don't have offline tokenizer)
 	c.tokenizers["claude-3"] = NewClaudeApproximator()
-	
+
 	return nil
 }
 
@@ -200,7 +200,7 @@ func (c *Counter) initializeTokenizers() error {
 func countWords(text string) int {
 	words := 0
 	inWord := false
-	
+
 	for _, r := range text {
 		if unicode.IsSpace(r) || unicode.IsPunct(r) {
 			if inWord {
@@ -211,11 +211,11 @@ func countWords(text string) int {
 			inWord = true
 		}
 	}
-	
+
 	if inWord {
 		words++
 	}
-	
+
 	return words
 }
 
@@ -224,12 +224,12 @@ func countLines(text string) int {
 	if len(text) == 0 {
 		return 0
 	}
-	
+
 	lines := strings.Count(text, "\n")
 	// Add 1 if the last character is not a newline
 	if text[len(text)-1] != '\n' {
 		lines++
 	}
-	
+
 	return lines
 }

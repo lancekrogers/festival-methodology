@@ -17,7 +17,7 @@ type TiktokenTokenizer struct {
 func NewTiktokenTokenizer(model string) (*TiktokenTokenizer, error) {
 	// Map model names to encodings
 	encodingName := getEncodingForModel(model)
-	
+
 	encoding, err := tiktoken.GetEncoding(encodingName)
 	if err != nil {
 		// Try to get encoding for the model directly
@@ -26,7 +26,7 @@ func NewTiktokenTokenizer(model string) (*TiktokenTokenizer, error) {
 			return nil, fmt.Errorf("failed to get encoding for model %s: %w", model, err)
 		}
 	}
-	
+
 	return &TiktokenTokenizer{
 		model:    model,
 		encoding: encoding,
@@ -62,17 +62,17 @@ func (t *TiktokenTokenizer) IsExact() bool {
 // getEncodingForModel maps model names to encoding types
 func getEncodingForModel(model string) string {
 	model = strings.ToLower(model)
-	
+
 	// GPT-4 and GPT-3.5-turbo use cl100k_base encoding
 	if strings.Contains(model, "gpt-4") || strings.Contains(model, "gpt-3.5") {
 		return "cl100k_base"
 	}
-	
+
 	// Older models
 	if strings.Contains(model, "davinci") || strings.Contains(model, "curie") {
 		return "p50k_base"
 	}
-	
+
 	// Default to cl100k_base for newer models
 	return "cl100k_base"
 }
@@ -92,7 +92,7 @@ func (c *ClaudeApproximator) CountTokens(text string) (int, error) {
 	// Claude tends to use slightly more tokens than GPT for the same text
 	chars := len(text)
 	tokens := int(float64(chars) / 3.8) // Slightly more tokens than the 4.0 ratio
-	
+
 	return tokens, nil
 }
 

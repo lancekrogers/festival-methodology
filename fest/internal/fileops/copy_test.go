@@ -8,26 +8,26 @@ import (
 
 func TestCopyFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	// Create source file
 	srcPath := filepath.Join(tmpDir, "source.txt")
 	srcContent := []byte("test content")
 	if err := os.WriteFile(srcPath, srcContent, 0644); err != nil {
 		t.Fatal(err)
 	}
-	
+
 	// Copy file
 	dstPath := filepath.Join(tmpDir, "dest.txt")
 	if err := CopyFile(srcPath, dstPath); err != nil {
 		t.Fatalf("CopyFile failed: %v", err)
 	}
-	
+
 	// Verify destination file
 	dstContent, err := os.ReadFile(dstPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	
+
 	if string(dstContent) != string(srcContent) {
 		t.Error("Content mismatch after copy")
 	}
@@ -35,15 +35,15 @@ func TestCopyFile(t *testing.T) {
 
 func TestCopyDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	// Create source directory structure
 	srcDir := filepath.Join(tmpDir, "source")
 	files := map[string]string{
-		"file1.txt":        "content1",
-		"subdir/file2.txt": "content2",
+		"file1.txt":         "content1",
+		"subdir/file2.txt":  "content2",
 		".hidden/file3.txt": "content3",
 	}
-	
+
 	for path, content := range files {
 		fullPath := filepath.Join(srcDir, path)
 		dir := filepath.Dir(fullPath)
@@ -54,14 +54,14 @@ func TestCopyDirectory(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	
+
 	// Copy directory
 	dstDir := filepath.Join(tmpDir, "dest")
 	copier := NewCopier()
 	if err := copier.CopyDirectory(srcDir, dstDir); err != nil {
 		t.Fatalf("CopyDirectory failed: %v", err)
 	}
-	
+
 	// Verify all files were copied
 	for path, expectedContent := range files {
 		dstPath := filepath.Join(dstDir, path)
@@ -78,17 +78,17 @@ func TestCopyDirectory(t *testing.T) {
 
 func TestExists(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	// Test existing file
 	existingFile := filepath.Join(tmpDir, "exists.txt")
 	if err := os.WriteFile(existingFile, []byte("test"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	
+
 	if !Exists(existingFile) {
 		t.Error("Exists returned false for existing file")
 	}
-	
+
 	// Test non-existing file
 	nonExistingFile := filepath.Join(tmpDir, "does-not-exist.txt")
 	if Exists(nonExistingFile) {
@@ -98,31 +98,31 @@ func TestExists(t *testing.T) {
 
 func TestCreateBackup(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	// Create source directory
 	srcDir := filepath.Join(tmpDir, "source")
 	if err := os.MkdirAll(srcDir, 0755); err != nil {
 		t.Fatal(err)
 	}
-	
+
 	// Create test file
 	testFile := filepath.Join(srcDir, "test.txt")
 	if err := os.WriteFile(testFile, []byte("test content"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	
+
 	// Create backup
 	backupDir := filepath.Join(tmpDir, "backup")
 	if err := CreateBackup(srcDir, backupDir); err != nil {
 		t.Fatalf("CreateBackup failed: %v", err)
 	}
-	
+
 	// Verify backup
 	backupFile := filepath.Join(backupDir, "test.txt")
 	if !Exists(backupFile) {
 		t.Error("Backup file not created")
 	}
-	
+
 	// Check manifest
 	manifestFile := filepath.Join(backupDir, "manifest.json")
 	if !Exists(manifestFile) {

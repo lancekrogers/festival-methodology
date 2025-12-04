@@ -12,13 +12,13 @@ import (
 
 // Metadata represents the YAML frontmatter of a template
 type Metadata struct {
-    TemplateID        string   `yaml:"template_id"`
-    ID                string   `yaml:"id"`
-    Aliases           []string `yaml:"aliases"`
-    TemplateVersion   string   `yaml:"template_version"`
-    RequiredVariables []string `yaml:"required_variables"`
-    OptionalVariables []string `yaml:"optional_variables"`
-    Description       string   `yaml:"description"`
+	TemplateID        string   `yaml:"template_id"`
+	ID                string   `yaml:"id"`
+	Aliases           []string `yaml:"aliases"`
+	TemplateVersion   string   `yaml:"template_version"`
+	RequiredVariables []string `yaml:"required_variables"`
+	OptionalVariables []string `yaml:"optional_variables"`
+	Description       string   `yaml:"description"`
 }
 
 // Template represents a loaded template with its metadata and content
@@ -56,20 +56,20 @@ func (l *loaderImpl) Load(path string) (*Template, error) {
 		return nil, fmt.Errorf("failed to parse template %s: %w", path, err)
 	}
 
-    t := &Template{
-        Path:     path,
-        Metadata: metadata,
-        Content:  content,
-    }
+	t := &Template{
+		Path:     path,
+		Metadata: metadata,
+		Content:  content,
+	}
 
-    // Normalize metadata: prefer template_id, fallback to id
-    if t.Metadata != nil {
-        if t.Metadata.TemplateID == "" && t.Metadata.ID != "" {
-            t.Metadata.TemplateID = t.Metadata.ID
-        }
-    }
+	// Normalize metadata: prefer template_id, fallback to id
+	if t.Metadata != nil {
+		if t.Metadata.TemplateID == "" && t.Metadata.ID != "" {
+			t.Metadata.TemplateID = t.Metadata.ID
+		}
+	}
 
-    return t, nil
+	return t, nil
 }
 
 // LoadAll loads all markdown templates from a directory

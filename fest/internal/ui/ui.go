@@ -21,7 +21,7 @@ func New(noColor, verbose bool) *UI {
 	if noColor {
 		color.NoColor = true
 	}
-	
+
 	return &UI{
 		noColor: noColor,
 		verbose: verbose,
@@ -69,12 +69,12 @@ func (u *UI) Error(format string, args ...interface{}) {
 func (u *UI) Confirm(format string, args ...interface{}) bool {
 	message := fmt.Sprintf(format, args...)
 	fmt.Printf("%s [Y/n]: ", message)
-	
+
 	response, err := u.reader.ReadString('\n')
 	if err != nil {
 		return false
 	}
-	
+
 	response = strings.TrimSpace(strings.ToLower(response))
 	return response == "" || response == "y" || response == "yes"
 }
@@ -86,22 +86,22 @@ func (u *UI) Choose(message string, options []string) int {
 		fmt.Printf("  [%d] %s\n", i+1, option)
 	}
 	fmt.Print("Choice: ")
-	
+
 	response, err := u.reader.ReadString('\n')
 	if err != nil {
 		return 0
 	}
-	
+
 	response = strings.TrimSpace(response)
 	var choice int
 	if _, err := fmt.Sscanf(response, "%d", &choice); err != nil {
 		return 0
 	}
-	
+
 	if choice < 1 || choice > len(options) {
 		return 0
 	}
-	
+
 	return choice - 1
 }
 
@@ -135,7 +135,7 @@ func (p *ProgressBar) Update(current, total int64, file string) {
 	if total > 0 {
 		p.total = total
 	}
-	
+
 	if p.total > 0 {
 		percent := int(float64(p.current) * 100 / float64(p.total))
 		fmt.Printf("\r%s: [%3d%%] %d/%d files - %s", p.label, percent, p.current, p.total, file)

@@ -39,44 +39,44 @@ type ChecksumSource struct {
 // GenerateChecksums generates checksums for all files in a directory
 func GenerateChecksums(rootPath string) (map[string]ChecksumEntry, error) {
 	checksums := make(map[string]ChecksumEntry)
-	
+
 	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		
+
 		// Skip directories
 		if info.IsDir() {
 			return nil
 		}
-		
+
 		// Skip hidden files and special files
 		if shouldSkipFile(path, rootPath) {
 			return nil
 		}
-		
+
 		// Calculate relative path
 		relPath, err := filepath.Rel(rootPath, path)
 		if err != nil {
 			return err
 		}
-		
+
 		// Calculate checksum
 		hash, err := calculateFileChecksum(path)
 		if err != nil {
 			return fmt.Errorf("failed to checksum %s: %w", relPath, err)
 		}
-		
+
 		checksums[relPath] = ChecksumEntry{
 			Hash:     hash,
 			Size:     info.Size(),
 			Modified: info.ModTime(),
 			Original: true,
 		}
-		
+
 		return nil
 	})
-	
+
 	return checksums, err
 }
 
@@ -86,7 +86,7 @@ func LoadChecksums(path string) (map[string]ChecksumEntry, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read checksum file: %w", err)
 	}
-	
+
 	var checksumData ChecksumData
 	if err := json.Unmarshal(data, &checksumData); err != nil {
 		// Try to unmarshal as simple map for backward compatibility
@@ -96,7 +96,7 @@ func LoadChecksums(path string) (map[string]ChecksumEntry, error) {
 		}
 		return nil, fmt.Errorf("failed to parse checksum file: %w", err)
 	}
-	
+
 	return checksumData.Files, nil
 }
 
@@ -108,7 +108,7 @@ func SaveChecksums(path string, checksums map[string]ChecksumEntry) error {
 		Updated: time.Now(),
 		Files:   checksums,
 	}
-	
+
 	// Check if file exists to preserve creation time
 	if existingData, err := os.ReadFile(path); err == nil {
 		var existing ChecksumData
@@ -116,16 +116,16 @@ func SaveChecksums(path string, checksums map[string]ChecksumEntry) error {
 			checksumData.Created = existing.Created
 		}
 	}
-	
+
 	data, err := json.MarshalIndent(checksumData, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal checksums: %w", err)
 	}
-	
+
 	if err := os.WriteFile(path, data, 0644); err != nil {
 		return fmt.Errorf("failed to write checksum file: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -143,14 +143,14 @@ func CompareChecksums(stored, current map[string]ChecksumEntry) (unchanged, modi
 			added = append(added, path)
 		}
 	}
-	
+
 	// Check deleted files
 	for path := range stored {
 		if _, exists := current[path]; !exists {
 			deleted = append(deleted, path)
 		}
 	}
-	
+
 	return
 }
 
@@ -161,12 +161,12 @@ func calculateFileChecksum(path string) (string, error) {
 		return "", err
 	}
 	defer file.Close()
-	
+
 	hash := sha256.New()
 	if _, err := io.Copy(hash, file); err != nil {
 		return "", err
 	}
-	
+
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
@@ -176,32 +176,32 @@ func shouldSkipFile(path, rootPath string) bool {
 	if err != nil {
 		return true
 	}
-	
+
 	// Skip checksum file itself
 	if strings.HasSuffix(relPath, ".fest-checksums.json") {
 		return true
 	}
-	
+
 	// Skip backup directories
 	if strings.Contains(relPath, ".fest-backup") {
 		return true
 	}
-	
+
 	// Skip git files
 	if strings.Contains(relPath, ".git") {
 		return true
 	}
-	
+
 	// Skip lock files
 	if strings.HasSuffix(relPath, ".fest.lock") {
 		return true
 	}
-	
+
 	// Skip temporary files
 	if strings.HasSuffix(relPath, ".tmp") || strings.HasSuffix(relPath, "~") {
 		return true
 	}
-	
+
 	return false
 }
 

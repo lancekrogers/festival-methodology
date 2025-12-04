@@ -11,11 +11,11 @@ import (
 
 func TestLoader_Load(t *testing.T) {
 	tests := []struct {
-		name          string
-		content       string
-		wantMetadata  *Metadata
-		wantContent   string
-		wantErr       bool
+		name         string
+		content      string
+		wantMetadata *Metadata
+		wantContent  string
+		wantErr      bool
 	}{
 		{
 			name: "template with frontmatter",
@@ -136,11 +136,11 @@ Content 3`,
 
 func TestParseFrontmatter(t *testing.T) {
 	tests := []struct {
-		name            string
-		content         string
-		wantMetadata    bool
-		wantContentLen  int
-		wantErr         bool
+		name           string
+		content        string
+		wantMetadata   bool
+		wantContentLen int
+		wantErr        bool
 	}{
 		{
 			name: "valid frontmatter",
