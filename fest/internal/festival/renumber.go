@@ -299,6 +299,58 @@ func (r *Renumberer) InsertSequence(phaseDir string, afterNumber int, name strin
 	return r.executeChanges()
 }
 
+// InsertTask inserts a new task after the specified number in a sequence directory
+func (r *Renumberer) InsertTask(sequenceDir string, afterNumber int, name string) error {
+	tasks, err := r.parser.ParseTasks(sequenceDir)
+	if err != nil {
+		return fmt.Errorf("failed to parse tasks: %w", err)
+	}
+
+	// Find insertion point
+	insertAt := afterNumber + 1
+
+	// Build changes
+	r.changes = []Change{}
+
+	// Create new task (as file, not directory)
+	newTaskName := BuildElementName(insertAt, name, TaskType) + ".md"
+	newTaskPath := filepath.Join(sequenceDir, newTaskName)
+
+	r.changes = append(r.changes, Change{
+		Type:    ChangeCreate,
+		NewPath: newTaskPath,
+	})
+
+	// Renumber subsequent tasks
+	for _, task := range tasks {
+		if task.Number >= insertAt {
+			newNumber := task.Number + 1
+			newName := BuildElementName(newNumber, task.Name, TaskType) + ".md"
+			newPath := filepath.Join(filepath.Dir(task.Path), newName)
+
+			r.changes = append(r.changes, Change{
+				Type:    ChangeRename,
+				OldPath: task.Path,
+				NewPath: newPath,
+				Element: task,
+			})
+		}
+	}
+
+	// Sort changes to rename in reverse order
+	sort.Slice(r.changes, func(i, j int) bool {
+		if r.changes[i].Type == ChangeCreate {
+			return false
+		}
+		if r.changes[j].Type == ChangeCreate {
+			return true
+		}
+		return r.changes[i].Element.Number > r.changes[j].Element.Number
+	})
+
+	return r.executeChanges()
+}
+
 // RemoveElement removes an element and renumbers subsequent ones
 func (r *Renumberer) RemoveElement(path string) error {
 	dir := filepath.Dir(path)

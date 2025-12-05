@@ -52,17 +52,17 @@ func NewCreateFestivalCommand() *cobra.Command {
 
 func runCreateFestival(opts *createFestivalOptions) error {
 	display := ui.New(noColor, verbose)
-	cwd, _ := os.Getwd()
+    cwd, _ := os.Getwd()
 
-	// Resolve workspace root and template root
-	root, err := tpl.FindWorkspaceRoot(cwd)
-	if err != nil {
-		return emitCreateFestivalError(opts, fmt.Errorf("%w", err))
-	}
-	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
-	if err != nil {
-		return emitCreateFestivalError(opts, err)
-	}
+    // Resolve festivals root and template root
+    festivalsRoot, err := tpl.FindFestivalsRoot(cwd)
+    if err != nil {
+        return emitCreateFestivalError(opts, fmt.Errorf("%w", err))
+    }
+    tmplRoot, err := tpl.LocalTemplateRoot(cwd)
+    if err != nil {
+        return emitCreateFestivalError(opts, err)
+    }
 
 	// Load vars
 	vars := map[string]interface{}{}
@@ -83,7 +83,7 @@ func runCreateFestival(opts *createFestivalOptions) error {
 
 	// Destination
 	slug := slugify(opts.name)
-	destDir := filepath.Join(root, "festivals", "active", slug)
+    destDir := filepath.Join(festivalsRoot, "active", slug)
 	if err := os.MkdirAll(destDir, 0755); err != nil {
 		return emitCreateFestivalError(opts, fmt.Errorf("failed to create festival directory: %w", err))
 	}

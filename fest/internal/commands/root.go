@@ -1,9 +1,11 @@
 package commands
 
 import (
-	"fmt"
+    "fmt"
+    "os"
 
-	"github.com/spf13/cobra"
+    tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+    "github.com/spf13/cobra"
 )
 
 var (
@@ -20,14 +22,14 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "fest",
-	Short: "Festival Methodology CLI tool",
-	Long: `fest is a CLI tool for managing Festival Methodology files.
+    Use:   "fest",
+    Short: "Festival Methodology CLI tool",
+    Long: `fest is a CLI tool for managing Festival Methodology files.
 	
 It helps you initialize, sync, and update festival directories while
 preserving your modifications and ensuring you always have the latest
 templates available.`,
-	Version: fmt.Sprintf("%s (built %s, commit %s)", Version, BuildTime, GitCommit),
+    Version: fmt.Sprintf("%s (built %s, commit %s)", Version, BuildTime, GitCommit),
 }
 
 // Execute runs the root command
@@ -36,6 +38,19 @@ func Execute() error {
 }
 
 func init() {
+    // Enforce being inside a festivals/ tree for most commands
+    rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+        // Allow root (help/version), init and sync to run anywhere
+        if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "sync" || cmd.Name() == "help" {
+            return nil
+        }
+        cwd, _ := os.Getwd()
+        if _, err := tpl.FindFestivalsRoot(cwd); err != nil {
+            // Standardize the message expected by callers
+            return fmt.Errorf("no festivals/ directory detected")
+        }
+        return nil
+    }
 	// Global flags
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file (default: ~/.config/fest/config.json)")
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "enable verbose output")
@@ -56,5 +71,7 @@ func init() {
 	createCmd := &cobra.Command{Use: "create", Short: "Create festival elements"}
 	createCmd.AddCommand(NewCreateFestivalCommand())
 	createCmd.AddCommand(NewCreatePhaseCommand())
+	createCmd.AddCommand(NewCreateSequenceCommand())
+	createCmd.AddCommand(NewCreateTaskCommand())
 	rootCmd.AddCommand(createCmd)
 }

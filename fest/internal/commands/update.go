@@ -1,15 +1,16 @@
 package commands
 
 import (
-	"fmt"
-	"path/filepath"
-	"strings"
-	"time"
+    "fmt"
+    "path/filepath"
+    "strings"
+    "time"
 
-	"github.com/lancekrogers/festival-methodology/fest/internal/config"
-	"github.com/lancekrogers/festival-methodology/fest/internal/fileops"
-	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
-	"github.com/spf13/cobra"
+    "github.com/lancekrogers/festival-methodology/fest/internal/config"
+    "github.com/lancekrogers/festival-methodology/fest/internal/fileops"
+    tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+    "github.com/lancekrogers/festival-methodology/fest/internal/ui"
+    "github.com/spf13/cobra"
 )
 
 type updateOptions struct {
@@ -58,19 +59,24 @@ for action unless --no-interactive is specified.`,
 }
 
 func runUpdate(targetPath string, opts *updateOptions) error {
-	// Create UI handler
-	display := ui.New(noColor, verbose)
+    // Create UI handler
+    display := ui.New(noColor, verbose)
 
 	// If no-interactive is set, disable interactive
 	if opts.noInteractive {
 		opts.interactive = false
 	}
 
-	// Find .festival directory in current working directory
-	festivalDir := filepath.Join(targetPath, ".festival")
-	if !fileops.Exists(festivalDir) {
-		return fmt.Errorf("no .festival/ directory found in current directory. Run 'fest init' first or navigate to a festival project")
-	}
+    // Resolve festivals root from targetPath (works from any subdirectory under festivals/)
+    absTarget, err := filepath.Abs(targetPath)
+    if err != nil {
+        return fmt.Errorf("failed to resolve path: %w", err)
+    }
+    festivalsRoot, err := tpl.FindFestivalsRoot(absTarget)
+    if err != nil {
+        return fmt.Errorf("%w", err)
+    }
+    festivalDir := filepath.Join(festivalsRoot, ".festival")
 
 	// Load checksums (stored in .festival/ directory)
 	checksumFile := filepath.Join(festivalDir, ".fest-checksums.json")
