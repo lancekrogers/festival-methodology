@@ -1,3 +1,10 @@
+---
+id: phase
+aliases:
+  - ph
+description: Structure a complete phase with objectives and sequences
+---
+
 # Phase: [NNN_PHASE_NAME]
 
 **Phase Number:** [NNN] | **Status:** [Planning/Active/Complete] | **Type:** [Planning/Definition/Implementation/Validation]

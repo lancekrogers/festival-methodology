@@ -41,7 +41,7 @@ func init() {
     // Enforce being inside a festivals/ tree for most commands
     rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
         // Allow root (help/version), init and sync to run anywhere
-        if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "sync" || cmd.Name() == "help" {
+        if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "sync" || cmd.Name() == "help" || cmd.Name() == "tui" {
             return nil
         }
         cwd, _ := os.Getwd()
@@ -57,14 +57,15 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable colored output")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logging")
 
-	// Add commands
-	rootCmd.AddCommand(NewSyncCommand())
-	rootCmd.AddCommand(NewInitCommand())
-	rootCmd.AddCommand(NewUpdateCommand())
-	rootCmd.AddCommand(NewCountCommand())
-	rootCmd.AddCommand(NewRenumberCommand())
-	rootCmd.AddCommand(NewInsertCommand())
-	rootCmd.AddCommand(NewRemoveCommand())
+    // Add commands
+    rootCmd.AddCommand(NewSyncCommand())
+    rootCmd.AddCommand(NewInitCommand())
+    rootCmd.AddCommand(NewTUICommand())
+    rootCmd.AddCommand(NewUpdateCommand())
+    rootCmd.AddCommand(NewCountCommand())
+    rootCmd.AddCommand(NewRenumberCommand())
+    rootCmd.AddCommand(NewInsertCommand())
+    rootCmd.AddCommand(NewRemoveCommand())
 	// Headless-first creation commands
 	rootCmd.AddCommand(NewApplyCommand())
 	// Grouped under 'create'

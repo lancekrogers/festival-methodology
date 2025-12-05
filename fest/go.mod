@@ -3,11 +3,14 @@ module github.com/lancekrogers/festival-methodology/fest
 go 1.25.1
 
 require (
-	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/fatih/color v1.18.0
-	github.com/pkoukk/tiktoken-go v0.1.8
-	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
-	github.com/spf13/cobra v1.10.1
+    github.com/charmbracelet/huh v0.7.1
+    github.com/charmbracelet/lipgloss v0.11.1
+    github.com/charmbracelet/bubbletea v0.27.1
+    github.com/Masterminds/sprig/v3 v3.3.0
+    github.com/fatih/color v1.18.0
+    github.com/pkoukk/tiktoken-go v0.1.8
+    github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
+    github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.39.0
 	gopkg.in/yaml.v3 v3.0.1

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
@@ -14,11 +13,12 @@ import (
 )
 
 type createFestivalOptions struct {
-	name       string
-	goal       string
-	tags       string
-	varsFile   string
-	jsonOutput bool
+    name       string
+    goal       string
+    tags       string
+    varsFile   string
+    jsonOutput bool
+    dest       string // "active" or "planned"
 }
 
 type createFestivalResult struct {
@@ -33,21 +33,22 @@ type createFestivalResult struct {
 
 // NewCreateFestivalCommand adds 'create festival'
 func NewCreateFestivalCommand() *cobra.Command {
-	opts := &createFestivalOptions{}
-	cmd := &cobra.Command{
-		Use:   "festival",
-		Short: "Create a new festival scaffold under festivals/active",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return runCreateFestival(opts)
-		},
-	}
-	cmd.Flags().StringVar(&opts.name, "name", "", "Festival name (required)")
-	cmd.Flags().StringVar(&opts.goal, "goal", "", "Festival goal")
-	cmd.Flags().StringVar(&opts.tags, "tags", "", "Comma-separated tags")
-	cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON file with variables")
-	cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
-	cmd.MarkFlagRequired("name")
-	return cmd
+    opts := &createFestivalOptions{}
+    cmd := &cobra.Command{
+        Use:   "festival",
+        Short: "Create a new festival scaffold under festivals/(active|planned)",
+        RunE: func(cmd *cobra.Command, args []string) error {
+            return runCreateFestival(opts)
+        },
+    }
+    cmd.Flags().StringVar(&opts.name, "name", "", "Festival name (required)")
+    cmd.Flags().StringVar(&opts.goal, "goal", "", "Festival goal")
+    cmd.Flags().StringVar(&opts.tags, "tags", "", "Comma-separated tags")
+    cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON file with variables")
+    cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
+    cmd.Flags().StringVar(&opts.dest, "dest", "active", "Destination under festivals/: active or planned")
+    cmd.MarkFlagRequired("name")
+    return cmd
 }
 
 func runCreateFestival(opts *createFestivalOptions) error {
@@ -81,12 +82,16 @@ func runCreateFestival(opts *createFestivalOptions) error {
 		ctx.SetCustom(k, v)
 	}
 
-	// Destination
-	slug := slugify(opts.name)
-    destDir := filepath.Join(festivalsRoot, "active", slug)
-	if err := os.MkdirAll(destDir, 0755); err != nil {
-		return emitCreateFestivalError(opts, fmt.Errorf("failed to create festival directory: %w", err))
-	}
+    // Destination
+    slug := slugify(opts.name)
+    destCategory := strings.ToLower(strings.TrimSpace(opts.dest))
+    if destCategory != "planned" && destCategory != "active" {
+        destCategory = "active"
+    }
+    destDir := filepath.Join(festivalsRoot, destCategory, slug)
+    if err := os.MkdirAll(destDir, 0755); err != nil {
+        return emitCreateFestivalError(opts, fmt.Errorf("failed to create festival directory: %w", err))
+    }
 
 	// Render/copy core files
 	mgr := tpl.NewManager()
@@ -130,34 +135,24 @@ func runCreateFestival(opts *createFestivalOptions) error {
 		created = append(created, outPath)
 	}
 
-	if opts.jsonOutput {
-		return emitCreateFestivalJSON(opts, createFestivalResult{
-			OK:     true,
-			Action: "create_festival",
-			Festival: map[string]string{
-				"name": opts.name,
-				"slug": slug,
-			},
-			Created: created,
-		})
-	}
+    if opts.jsonOutput {
+        return emitCreateFestivalJSON(opts, createFestivalResult{
+            OK:     true,
+            Action: "create_festival",
+            Festival: map[string]string{
+                "name": opts.name,
+                "slug": slug,
+                "dest": destCategory,
+            },
+            Created: created,
+        })
+    }
 
-	display.Success("Created festival: %s", slug)
-	for _, p := range created {
-		display.Info("  • %s", p)
-	}
-	return nil
-}
-
-func slugify(s string) string {
-	lower := strings.ToLower(strings.TrimSpace(s))
-	re := regexp.MustCompile(`[^a-z0-9]+`)
-	slug := re.ReplaceAllString(lower, "-")
-	slug = strings.Trim(slug, "-")
-	if slug == "" {
-		slug = "festival"
-	}
-	return slug
+    display.Success("Created festival: %s (%s)", slug, destCategory)
+    for _, p := range created {
+        display.Info("  • %s", p)
+    }
+    return nil
 }
 
 func parseTags(s string) []string {

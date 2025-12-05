@@ -1,0 +1,460 @@
+//go:build charm
+
+package commands
+
+import (
+    "fmt"
+    "os"
+    "path/filepath"
+    "strings"
+
+    "github.com/charmbracelet/huh"
+    "github.com/charmbracelet/lipgloss"
+    tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+    "github.com/spf13/cobra"
+)
+
+// NewTUICommand (charm version) provides a richer interactive UI using Charm libs
+func NewTUICommand() *cobra.Command {
+    cmd := &cobra.Command{
+        Use:   "tui",
+        Short: "Interactive UI (Charm) for festival creation and editing",
+        RunE: func(cmd *cobra.Command, args []string) error {
+            return runCharmTUI()
+        },
+    }
+    return cmd
+}
+
+func runCharmTUI() error {
+    // Validate inside festivals workspace; if absent, offer to init
+    cwd, _ := os.Getwd()
+    if _, err := tpl.FindFestivalsRoot(cwd); err != nil {
+        var initNow bool
+        form := huh.NewForm(
+            huh.NewGroup(
+                huh.NewConfirm().Title("No festivals/ directory detected. Initialize here?").Value(&initNow),
+            ),
+        ).WithTheme(theme())
+        if err := form.Run(); err != nil { return err }
+        if initNow {
+            if err := runInit(".", &initOptions{}); err != nil { return err }
+        } else {
+            return fmt.Errorf("no festivals/ directory detected")
+        }
+    }
+
+    // main menu loop
+    for {
+        var action string
+        menu := huh.NewForm(
+            huh.NewGroup(
+                huh.NewSelect[string]().
+                    Title("What would you like to do?").
+                    Options(
+                        huh.NewOption("Plan a New Festival (wizard)", "plan_festival"),
+                        huh.NewOption("Create a Festival (quick)", "create_festival"),
+                        huh.NewOption("Add a Phase", "create_phase"),
+                        huh.NewOption("Add a Sequence", "create_sequence"),
+                        huh.NewOption("Add a Task", "create_task"),
+                        huh.NewOption("Generate Festival Goal", "festival_goal"),
+                        huh.NewOption("Quit", "quit"),
+                    ).
+                    Value(&action),
+            ),
+        ).WithTheme(huh.ThemeBase())
+
+        if err := menu.Run(); err != nil {
+            return err
+        }
+
+        switch action {
+        case "plan_festival":
+            if err := charmPlanFestivalWizard(); err != nil {
+                return err
+            }
+        case "create_festival":
+            if err := charmCreateFestival(); err != nil {
+                return err
+            }
+        case "create_phase":
+            if err := charmCreatePhase(); err != nil {
+                return err
+            }
+        case "create_sequence":
+            if err := charmCreateSequence(); err != nil {
+                return err
+            }
+        case "create_task":
+            if err := charmCreateTask(); err != nil {
+                return err
+            }
+        case "festival_goal":
+            if err := charmGenerateFestivalGoal(); err != nil {
+                return err
+            }
+        default:
+            return nil
+        }
+    }
+}
+
+func charmCreateFestival() error {
+    cwd, _ := os.Getwd()
+    tmplRoot, err := tpl.LocalTemplateRoot(cwd)
+    if err != nil {
+        return err
+    }
+
+    var name, goal, tags string
+    var dest string = "active"
+    form := huh.NewForm(
+        huh.NewGroup(
+            huh.NewInput().Title("Festival name").Placeholder("e.g., ecommerce-platform").Value(&name).Validate(notEmpty),
+            huh.NewInput().Title("Festival goal").Placeholder("e.g., Launch MVP").Value(&goal),
+            huh.NewInput().Title("Tags (comma-separated)").Placeholder("backend,security").Value(&tags),
+            huh.NewSelect[string]().Title("Destination").Options(
+                huh.NewOption("active", "active"),
+                huh.NewOption("planned", "planned"),
+            ).Value(&dest),
+        ),
+    ).WithTheme(theme())
+    if err := form.Run(); err != nil {
+        return err
+    }
+
+    // Additional variables from templates
+    required := uniqueStrings(collectRequiredVars(tmplRoot, defaultFestivalTemplatePaths(tmplRoot)))
+    vars := map[string]interface{}{"festival_name": name, "festival_goal": goal}
+    if strings.TrimSpace(tags) != "" {
+        vars["festival_tags"] = strings.Split(tags, ",")
+    }
+    // Build dynamic inputs for missing variables
+    dyn := huh.NewGroup()
+    values := map[string]*string{}
+    for _, k := range required {
+        if k == "festival_name" || k == "festival_goal" || k == "festival_tags" || k == "festival_description" {
+            continue
+        }
+        var v string
+        values[k] = &v
+        dyn.Add(huh.NewInput().Title(k).Value(&v))
+    }
+    if len(dyn.Items) > 0 {
+        if err := huh.NewForm(dyn).WithTheme(theme()).Run(); err != nil {
+            return err
+        }
+        for k, ptr := range values {
+            if ptr != nil && strings.TrimSpace(*ptr) != "" {
+                vars[k] = *ptr
+            }
+        }
+    }
+
+    varsFile, err := writeTempVarsFile(vars)
+    if err != nil {
+        return err
+    }
+
+    opts := &createFestivalOptions{name: name, goal: goal, tags: tags, varsFile: varsFile, dest: dest}
+    return runCreateFestival(opts)
+}
+
+func charmPlanFestivalWizard() error {
+    cwd, _ := os.Getwd()
+    festivalsRoot, err := tpl.FindFestivalsRoot(cwd)
+    if err != nil {
+        return err
+    }
+    tmplRoot, err := tpl.LocalTemplateRoot(cwd)
+    if err != nil {
+        return err
+    }
+    var name, goal, tags string
+    var dest string = "planned"
+    base := huh.NewForm(
+        huh.NewGroup(
+            huh.NewInput().Title("Festival name").Placeholder("e.g., ecommerce-platform").Value(&name).Validate(notEmpty),
+            huh.NewInput().Title("Festival goal").Placeholder("e.g., Launch MVP").Value(&goal),
+            huh.NewInput().Title("Tags (comma-separated)").Placeholder("backend,security").Value(&tags),
+            huh.NewSelect[string]().Title("Destination").Options(
+                huh.NewOption("planned", "planned"),
+                huh.NewOption("active", "active"),
+            ).Value(&dest),
+        ),
+    ).WithTheme(theme())
+    if err := base.Run(); err != nil {
+        return err
+    }
+
+    required := uniqueStrings(collectRequiredVars(tmplRoot, defaultFestivalTemplatePaths(tmplRoot)))
+    vars := map[string]interface{}{"festival_name": name, "festival_goal": goal}
+    if strings.TrimSpace(tags) != "" {
+        vars["festival_tags"] = strings.Split(tags, ",")
+    }
+    dyn := huh.NewGroup()
+    values := map[string]*string{}
+    for _, k := range required {
+        if k == "festival_name" || k == "festival_goal" || k == "festival_tags" || k == "festival_description" {
+            continue
+        }
+        var v string
+        values[k] = &v
+        dyn.Add(huh.NewInput().Title(k).Value(&v))
+    }
+    if len(dyn.Items) > 0 {
+        if err := huh.NewForm(dyn).WithTheme(theme()).Run(); err != nil {
+            return err
+        }
+        for k, ptr := range values {
+            if ptr != nil && strings.TrimSpace(*ptr) != "" {
+                vars[k] = *ptr
+            }
+        }
+    }
+    varsFile, err := writeTempVarsFile(vars)
+    if err != nil { return err }
+
+    if err := runCreateFestival(&createFestivalOptions{name: name, goal: goal, tags: tags, varsFile: varsFile, dest: dest}); err != nil {
+        return err
+    }
+    slug := slugify(name)
+    festivalDir := filepath.Join(festivalsRoot, dest, slug)
+
+    // Add phases
+    var addPhases bool
+    var count int
+    phasesForm := huh.NewForm(
+        huh.NewGroup(
+            huh.NewConfirm().Title("Add initial phases now?").Value(&addPhases),
+            huh.NewInput().Title("How many phases?").ValueInt(&count),
+        ),
+    ).WithTheme(theme())
+    if err := phasesForm.Run(); err != nil { return err }
+    if addPhases && count > 0 {
+        after := 0
+        for i := 0; i < count; i++ {
+            var pname, ptype string
+            ptype = "planning"
+            pf := huh.NewForm(
+                huh.NewGroup(
+                    huh.NewInput().Title(fmt.Sprintf("Phase %d name", i+1)).Placeholder("PLAN").Value(&pname).Validate(notEmpty),
+                    huh.NewSelect[string]().Title("Phase type").Options(toOptions([]string{"planning","implementation","review","deployment"})...).Value(&ptype),
+                ),
+            ).WithTheme(theme())
+            if err := pf.Run(); err != nil { return err }
+            if err := runCreatePhase(&createPhaseOptions{after: after, name: pname, phaseType: ptype, path: festivalDir}); err != nil { return err }
+            after++
+        }
+    }
+    return nil
+}
+
+func charmGenerateFestivalGoal() error {
+    cwd, _ := os.Getwd()
+    if _, err := tpl.LocalTemplateRoot(cwd); err != nil { return err }
+    var festDir, name, goal string
+    form := huh.NewForm(
+        huh.NewGroup(
+            huh.NewInput().Title("Festival directory").Placeholder(".").Value(&festDir),
+            huh.NewInput().Title("festival_name").Value(&name),
+            huh.NewInput().Title("festival_goal").Value(&goal),
+        ),
+    ).WithTheme(theme())
+    if err := form.Run(); err != nil { return err }
+    vars := map[string]interface{}{}
+    if strings.TrimSpace(name) != "" { vars["festival_name"] = name }
+    if strings.TrimSpace(goal) != "" { vars["festival_goal"] = goal }
+    varsFile, err := writeTempVarsFile(vars)
+    if err != nil { return err }
+    destPath := filepath.Join(festDir, "FESTIVAL_GOAL.md")
+    return runApply(&applyOptions{templatePath: "FESTIVAL_GOAL_TEMPLATE.md", destPath: destPath, varsFile: varsFile})
+}
+
+func charmCreatePhase() error {
+    cwd, _ := os.Getwd()
+    tmplRoot, err := tpl.LocalTemplateRoot(cwd)
+    if err != nil {
+        return err
+    }
+    var name, path string
+    var after int
+    phaseTypes := []string{"planning", "implementation", "review", "deployment"}
+    var phaseType string = phaseTypes[0]
+
+    form := huh.NewForm(
+        huh.NewGroup(
+            huh.NewInput().Title("Phase name").Placeholder("PLAN").Value(&name).Validate(notEmpty),
+            huh.NewSelect[string]().Title("Phase type").Options(
+                toOptions(phaseTypes)...,
+            ).Value(&phaseType),
+            huh.NewInput().Title("Festival directory (contains numbered phases)").Placeholder(".").Value(&path),
+            huh.NewInput().Title("Insert after number (0 to insert at beginning)").ValueInt(&after),
+        ),
+    ).WithTheme(theme())
+    if err := form.Run(); err != nil {
+        return err
+    }
+
+    required := uniqueStrings(collectRequiredVars(tmplRoot, []string{filepath.Join(tmplRoot, "PHASE_GOAL_TEMPLATE.md")}))
+    vars := map[string]interface{}{}
+    dyn := huh.NewGroup()
+    values := map[string]*string{}
+    for _, k := range required {
+        if k == "phase_number" || k == "phase_name" || k == "phase_type" {
+            continue
+        }
+        var v string
+        values[k] = &v
+        dyn.Add(huh.NewInput().Title(k).Value(&v))
+    }
+    if len(dyn.Items) > 0 {
+        if err := huh.NewForm(dyn).WithTheme(theme()).Run(); err != nil {
+            return err
+        }
+        for k, ptr := range values {
+            if ptr != nil && strings.TrimSpace(*ptr) != "" {
+                vars[k] = *ptr
+            }
+        }
+    }
+
+    varsFile, err := writeTempVarsFile(vars)
+    if err != nil {
+        return err
+    }
+    opts := &createPhaseOptions{after: after, name: name, phaseType: phaseType, path: fallbackDot(path), varsFile: varsFile}
+    return runCreatePhase(opts)
+}
+
+func charmCreateSequence() error {
+    cwd, _ := os.Getwd()
+    tmplRoot, err := tpl.LocalTemplateRoot(cwd)
+    if err != nil {
+        return err
+    }
+    var name, path string
+    var after int
+
+    form := huh.NewForm(
+        huh.NewGroup(
+            huh.NewInput().Title("Sequence name").Placeholder("requirements").Value(&name).Validate(notEmpty),
+            huh.NewInput().Title("Phase directory (contains numbered sequences)").Placeholder(".").Value(&path),
+            huh.NewInput().Title("Insert after number (0 to insert at beginning)").ValueInt(&after),
+        ),
+    ).WithTheme(theme())
+    if err := form.Run(); err != nil {
+        return err
+    }
+
+    required := uniqueStrings(collectRequiredVars(tmplRoot, []string{filepath.Join(tmplRoot, "SEQUENCE_GOAL_TEMPLATE.md")}))
+    vars := map[string]interface{}{}
+    dyn := huh.NewGroup()
+    values := map[string]*string{}
+    for _, k := range required {
+        if k == "sequence_number" || k == "sequence_name" {
+            continue
+        }
+        var v string
+        values[k] = &v
+        dyn.Add(huh.NewInput().Title(k).Value(&v))
+    }
+    if len(dyn.Items) > 0 {
+        if err := huh.NewForm(dyn).WithTheme(theme()).Run(); err != nil {
+            return err
+        }
+        for k, ptr := range values {
+            if ptr != nil && strings.TrimSpace(*ptr) != "" {
+                vars[k] = *ptr
+            }
+        }
+    }
+
+    varsFile, err := writeTempVarsFile(vars)
+    if err != nil {
+        return err
+    }
+    opts := &createSequenceOptions{after: after, name: name, path: fallbackDot(path), varsFile: varsFile}
+    return runCreateSequence(opts)
+}
+
+func charmCreateTask() error {
+    cwd, _ := os.Getwd()
+    tmplRoot, err := tpl.LocalTemplateRoot(cwd)
+    if err != nil {
+        return err
+    }
+    var name, path string
+    var after int
+
+    form := huh.NewForm(
+        huh.NewGroup(
+            huh.NewInput().Title("Task name").Placeholder("user_research").Value(&name).Validate(notEmpty),
+            huh.NewInput().Title("Sequence directory (contains numbered task files)").Placeholder(".").Value(&path),
+            huh.NewInput().Title("Insert after number (0 to insert at beginning)").ValueInt(&after),
+        ),
+    ).WithTheme(theme())
+    if err := form.Run(); err != nil {
+        return err
+    }
+
+    required := uniqueStrings(collectRequiredVars(tmplRoot, []string{filepath.Join(tmplRoot, "TASK_TEMPLATE.md")}))
+    vars := map[string]interface{}{}
+    dyn := huh.NewGroup()
+    values := map[string]*string{}
+    for _, k := range required {
+        if k == "task_number" || k == "task_name" {
+            continue
+        }
+        var v string
+        values[k] = &v
+        dyn.Add(huh.NewInput().Title(k).Value(&v))
+    }
+    if len(dyn.Items) > 0 {
+        if err := huh.NewForm(dyn).WithTheme(theme()).Run(); err != nil {
+            return err
+        }
+        for k, ptr := range values {
+            if ptr != nil && strings.TrimSpace(*ptr) != "" {
+                vars[k] = *ptr
+            }
+        }
+    }
+
+    varsFile, err := writeTempVarsFile(vars)
+    if err != nil {
+        return err
+    }
+    opts := &createTaskOptions{after: after, name: name, path: fallbackDot(path), varsFile: varsFile}
+    return runCreateTask(opts)
+}
+
+func notEmpty(s string) error {
+    if strings.TrimSpace(s) == "" {
+        return fmt.Errorf("value required")
+    }
+    return nil
+}
+
+func toOptions(values []string) []huh.Option[string] {
+    opts := make([]huh.Option[string], 0, len(values))
+    for _, v := range values {
+        opts = append(opts, huh.NewOption(v, v))
+    }
+    return opts
+}
+
+func theme() *huh.Theme {
+    th := huh.ThemeBase()
+    th.Focused.Title = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
+    th.Focused.Description = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
+    th.Blurred.Title = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
+    return th
+}
+
+func fallbackDot(s string) string {
+    if strings.TrimSpace(s) == "" {
+        return "."
+    }
+    return s
+}

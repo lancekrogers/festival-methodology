@@ -1,3 +1,11 @@
+---
+id: festival-goal
+aliases:
+  - goal
+  - fg
+description: Defines festival objective, success criteria, and KPIs
+---
+
 # Festival Goal: [Festival Name]
 
 **Festival:** [Festival Name] | **Status:** [Planning/Active/Complete] | **Created:** [Date] | **Target Completion:** [Date]

@@ -30,6 +30,23 @@ go build -o fest cmd/fest/main.go
 
 ## Usage
 
+### Interactive TUI
+
+```bash
+# Launch interactive menu (inside a festivals/ workspace)
+fest tui
+
+# Create a festival, add phases/sequences/tasks with guided prompts.
+# The TUI inspects template requirements and asks only for missing variables.
+```
+
+Advanced TUI (Charm-based): build with tag `charm` after installing dependencies:
+
+```bash
+go get github.com/charmbracelet/huh@latest github.com/charmbracelet/lipgloss@latest github.com/charmbracelet/bubbletea@latest
+go build -tags charm -o fest cmd/fest/main.go
+```
+
 ### Initialize a new festival directory
 
 ```bash

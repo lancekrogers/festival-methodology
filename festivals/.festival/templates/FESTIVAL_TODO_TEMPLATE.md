@@ -1,3 +1,12 @@
+---
+id: festival-todo
+aliases:
+  - todo
+  - progress
+  - tracking
+description: Unified project tracking template with checkboxes for manual progress tracking
+---
+
 # Festival TODO - Unified Project Tracking
 
 ## Festival: [FESTIVAL_NAME]

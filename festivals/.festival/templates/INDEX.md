@@ -1,3 +1,12 @@
+---
+id: template-index
+aliases:
+  - index
+  - catalog
+  - reference
+description: Quick reference guide for selecting the right template
+---
+
 # Festival Methodology Template Index
 
 Quick reference guide for selecting the right template for your needs.
