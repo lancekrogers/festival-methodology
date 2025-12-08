@@ -368,38 +368,68 @@ func tuiCreateTask(display *ui.UI) error {
     }
     var resolvedSeq string
     if isSequenceDirPath(cwd) {
+        // Already in a sequence directory
         resolvedSeq = cwd
-    } else {
-        // Determine base phase dir for listing sequences
-        basePhase := cwd
-        switch {
-        case isPhaseDirPath(cwd):
-            basePhase = cwd
-        case isSequenceDirPath(cwd):
-            basePhase = filepath.Dir(cwd)
-        default:
-            basePhase = findFestivalDir(cwd)
-        }
-        seqs := listSequenceDirs(basePhase)
+    } else if isPhaseDirPath(cwd) {
+        // In a phase directory: offer sequence picker within this phase
+        seqs := listSequenceDirs(cwd)
         if len(seqs) > 0 {
             items := append(append([]string{}, seqs...), "Other...")
             idx := display.Choose("Select a sequence:", items)
             if idx >= 0 && idx < len(seqs) {
-                resolvedSeq = filepath.Join(basePhase, seqs[idx])
+                resolvedSeq = filepath.Join(cwd, seqs[idx])
             } else {
                 path := strings.TrimSpace(display.PromptDefault("Sequence (dir or number, e.g., 01 or 01_requirements)", "."))
                 rs, rerr := resolveSequenceDirInput(path, cwd)
-                if rerr != nil {
-                    return emitCreateTaskError(&createTaskOptions{name: name, path: path}, fmt.Errorf("invalid sequence: %w", rerr))
-                }
+                if rerr != nil { return emitCreateTaskError(&createTaskOptions{name: name, path: path}, fmt.Errorf("invalid sequence: %w", rerr)) }
                 resolvedSeq = rs
             }
         } else {
             path := strings.TrimSpace(display.PromptDefault("Sequence (dir or number, e.g., 01 or 01_requirements)", "."))
             rs, rerr := resolveSequenceDirInput(path, cwd)
-            if rerr != nil {
-                return emitCreateTaskError(&createTaskOptions{name: name, path: path}, fmt.Errorf("invalid sequence: %w", rerr))
+            if rerr != nil { return emitCreateTaskError(&createTaskOptions{name: name, path: path}, fmt.Errorf("invalid sequence: %w", rerr)) }
+            resolvedSeq = rs
+        }
+    } else {
+        // Not in phase or sequence: pick a phase first, then a sequence within it
+        festDir := findFestivalDir(cwd)
+        phases := listPhaseDirs(festDir)
+        var chosenPhase string
+        if len(phases) > 0 {
+            items := append(append([]string{}, phases...), "Other...")
+            idx := display.Choose("Select a phase:", items)
+            if idx >= 0 && idx < len(phases) {
+                chosenPhase = filepath.Join(festDir, phases[idx])
+            } else {
+                p := strings.TrimSpace(display.PromptDefault("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)", "."))
+                rp, rerr := resolvePhaseDirInput(p, cwd)
+                if rerr != nil { return emitCreateTaskError(&createTaskOptions{name: name, path: p}, fmt.Errorf("invalid phase: %w", rerr)) }
+                chosenPhase = rp
             }
+        } else {
+            p := strings.TrimSpace(display.PromptDefault("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)", "."))
+            rp, rerr := resolvePhaseDirInput(p, cwd)
+            if rerr != nil { return emitCreateTaskError(&createTaskOptions{name: name, path: p}, fmt.Errorf("invalid phase: %w", rerr)) }
+            chosenPhase = rp
+        }
+
+        // Now pick sequence within chosen phase
+        seqs := listSequenceDirs(chosenPhase)
+        if len(seqs) > 0 {
+            items := append(append([]string{}, seqs...), "Other...")
+            idx := display.Choose("Select a sequence:", items)
+            if idx >= 0 && idx < len(seqs) {
+                resolvedSeq = filepath.Join(chosenPhase, seqs[idx])
+            } else {
+                s := strings.TrimSpace(display.PromptDefault("Sequence (dir or number, e.g., 01 or 01_requirements)", "."))
+                rs, rerr := resolveSequenceDirInput(s, chosenPhase)
+                if rerr != nil { return emitCreateTaskError(&createTaskOptions{name: name, path: s}, fmt.Errorf("invalid sequence: %w", rerr)) }
+                resolvedSeq = rs
+            }
+        } else {
+            s := strings.TrimSpace(display.PromptDefault("Sequence (dir or number, e.g., 01 or 01_requirements)", "."))
+            rs, rerr := resolveSequenceDirInput(s, chosenPhase)
+            if rerr != nil { return emitCreateTaskError(&createTaskOptions{name: name, path: s}, fmt.Errorf("invalid sequence: %w", rerr)) }
             resolvedSeq = rs
         }
     }

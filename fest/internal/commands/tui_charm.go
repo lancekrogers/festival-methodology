@@ -382,34 +382,55 @@ func charmCreateTask() error {
         ).WithTheme(theme())
         if err := form.Run(); err != nil { return err }
     } else {
-        // Offer sequence picker from nearest phase dir
-        basePhase := cwd
-        switch {
-        case isPhaseDirPath(cwd):
-            basePhase = cwd
-        case isSequenceDirPath(cwd):
-            basePhase = filepath.Dir(cwd)
-        default:
-            basePhase = findFestivalDir(cwd)
+        // Not in a sequence: choose phase (if needed), then sequence
+        var phasePath string
+        if isPhaseDirPath(cwd) {
+            phasePath = cwd
+        } else {
+            festDir := findFestivalDir(cwd)
+            phases := listPhaseDirs(festDir)
+            if len(phases) > 0 {
+                var pSel string
+                pOpts := make([]huh.Option[string], 0, len(phases)+1)
+                for _, p := range phases { pOpts = append(pOpts, huh.NewOption(p, filepath.Join(festDir, p))) }
+                pOpts = append(pOpts, huh.NewOption("Other...", "__other__"))
+                pf := huh.NewForm(huh.NewGroup(
+                    huh.NewSelect[string]().Title("Select phase").Options(pOpts...).Value(&pSel),
+                )).WithTheme(theme())
+                if err := pf.Run(); err != nil { return err }
+                if pSel == "__other__" {
+                    if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Phase (dir or number)").Value(&path))).WithTheme(theme()).Run(); err != nil { return err }
+                    rp, rerr := resolvePhaseDirInput(path, cwd); if rerr != nil { return rerr }
+                    phasePath = rp
+                } else {
+                    phasePath = pSel
+                }
+            } else {
+                if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Phase (dir or number)").Value(&path))).WithTheme(theme()).Run(); err != nil { return err }
+                rp, rerr := resolvePhaseDirInput(path, cwd); if rerr != nil { return rerr }
+                phasePath = rp
+            }
         }
-        seqs := listSequenceDirs(basePhase)
+
+        // Now choose sequence within the selected phase
+        seqs := listSequenceDirs(phasePath)
         if len(seqs) > 0 {
-            var selected string
-            opts := make([]huh.Option[string], 0, len(seqs)+1)
-            for _, s := range seqs { opts = append(opts, huh.NewOption(s, filepath.Join(basePhase, s))) }
-            opts = append(opts, huh.NewOption("Other...", "__other__"))
+            var sSel string
+            sOpts := make([]huh.Option[string], 0, len(seqs)+1)
+            for _, s := range seqs { sOpts = append(sOpts, huh.NewOption(s, filepath.Join(phasePath, s))) }
+            sOpts = append(sOpts, huh.NewOption("Other...", "__other__"))
             form := huh.NewForm(
                 huh.NewGroup(
                     huh.NewInput().Title("Task name").Placeholder("user_research").Value(&name).Validate(notEmpty),
-                    huh.NewSelect[string]().Title("Select sequence").Options(opts...).Value(&selected),
+                    huh.NewSelect[string]().Title("Select sequence").Options(sOpts...).Value(&sSel),
                     huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
                 ),
             ).WithTheme(theme())
             if err := form.Run(); err != nil { return err }
-            if selected == "__other__" {
+            if sSel == "__other__" {
                 if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Sequence (dir or number)").Value(&path))).WithTheme(theme()).Run(); err != nil { return err }
             } else {
-                path = selected
+                path = sSel
             }
         } else {
             form := huh.NewForm(
@@ -439,6 +460,8 @@ func charmCreateTask() error {
     }
     resolvedSeq := cwd
     if !inSequence {
+        // If we selected a phase and sequence via pickers above, 'path' will be a full directory.
+        // Otherwise, resolve the user's input relative to current cwd (phase-aware if cwd is a phase)
         rs, rerr := resolveSequenceDirInput(path, cwd)
         if rerr != nil { return rerr }
         resolvedSeq = rs
