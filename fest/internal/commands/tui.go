@@ -1,3 +1,5 @@
+//go:build no_charm
+
 package commands
 
 import (
@@ -293,7 +295,7 @@ func tuiCreateSequence(display *ui.UI) error {
     if name == "" {
         return fmt.Errorf("sequence name is required")
     }
-    path := strings.TrimSpace(display.PromptDefault("Phase directory (contains numbered sequences)", "."))
+    path := strings.TrimSpace(display.PromptDefault("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)", "."))
     afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", "0"))
     after := atoiDefault(afterStr, 0)
 
@@ -315,10 +317,16 @@ func tuiCreateSequence(display *ui.UI) error {
         return err
     }
 
+    // Resolve numeric or name-based shortcuts to a real phase dir
+    resolvedPath, rerr := resolvePhaseDirInput(path, cwd)
+    if rerr != nil {
+        return emitCreateSequenceError(&createSequenceOptions{name: name, path: path}, fmt.Errorf("invalid phase: %w", rerr))
+    }
+
     opts := &createSequenceOptions{
         after:     after,
         name:      name,
-        path:      path,
+        path:      resolvedPath,
         varsFile:  varsFile,
     }
     return runCreateSequence(opts)

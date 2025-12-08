@@ -1,4 +1,4 @@
-//go:build charm
+//go:build !no_charm
 
 package commands
 
@@ -129,26 +129,14 @@ func charmCreateFestival() error {
     if strings.TrimSpace(tags) != "" {
         vars["festival_tags"] = strings.Split(tags, ",")
     }
-    // Build dynamic inputs for missing variables
-    dyn := huh.NewGroup()
-    values := map[string]*string{}
+    // Collect missing variables one-by-one
     for _, k := range required {
         if k == "festival_name" || k == "festival_goal" || k == "festival_tags" || k == "festival_description" {
             continue
         }
         var v string
-        values[k] = &v
-        dyn.Add(huh.NewInput().Title(k).Value(&v))
-    }
-    if len(dyn.Items) > 0 {
-        if err := huh.NewForm(dyn).WithTheme(theme()).Run(); err != nil {
-            return err
-        }
-        for k, ptr := range values {
-            if ptr != nil && strings.TrimSpace(*ptr) != "" {
-                vars[k] = *ptr
-            }
-        }
+        if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title(k).Value(&v))).WithTheme(theme()).Run(); err != nil { return err }
+        if strings.TrimSpace(v) != "" { vars[k] = v }
     }
 
     varsFile, err := writeTempVarsFile(vars)
@@ -192,25 +180,11 @@ func charmPlanFestivalWizard() error {
     if strings.TrimSpace(tags) != "" {
         vars["festival_tags"] = strings.Split(tags, ",")
     }
-    dyn := huh.NewGroup()
-    values := map[string]*string{}
     for _, k := range required {
-        if k == "festival_name" || k == "festival_goal" || k == "festival_tags" || k == "festival_description" {
-            continue
-        }
+        if k == "festival_name" || k == "festival_goal" || k == "festival_tags" || k == "festival_description" { continue }
         var v string
-        values[k] = &v
-        dyn.Add(huh.NewInput().Title(k).Value(&v))
-    }
-    if len(dyn.Items) > 0 {
-        if err := huh.NewForm(dyn).WithTheme(theme()).Run(); err != nil {
-            return err
-        }
-        for k, ptr := range values {
-            if ptr != nil && strings.TrimSpace(*ptr) != "" {
-                vars[k] = *ptr
-            }
-        }
+        if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title(k).Value(&v))).WithTheme(theme()).Run(); err != nil { return err }
+        if strings.TrimSpace(v) != "" { vars[k] = v }
     }
     varsFile, err := writeTempVarsFile(vars)
     if err != nil { return err }
@@ -223,14 +197,15 @@ func charmPlanFestivalWizard() error {
 
     // Add phases
     var addPhases bool
-    var count int
+    var countStr string
     phasesForm := huh.NewForm(
         huh.NewGroup(
             huh.NewConfirm().Title("Add initial phases now?").Value(&addPhases),
-            huh.NewInput().Title("How many phases?").ValueInt(&count),
+            huh.NewInput().Title("How many phases?").Value(&countStr),
         ),
     ).WithTheme(theme())
     if err := phasesForm.Run(); err != nil { return err }
+    count := atoiDefault(countStr, 0)
     if addPhases && count > 0 {
         after := 0
         for i := 0; i < count; i++ {
@@ -277,8 +252,7 @@ func charmCreatePhase() error {
     if err != nil {
         return err
     }
-    var name, path string
-    var after int
+    var name, path, afterStr string
     phaseTypes := []string{"planning", "implementation", "review", "deployment"}
     var phaseType string = phaseTypes[0]
 
@@ -289,34 +263,21 @@ func charmCreatePhase() error {
                 toOptions(phaseTypes)...,
             ).Value(&phaseType),
             huh.NewInput().Title("Festival directory (contains numbered phases)").Placeholder(".").Value(&path),
-            huh.NewInput().Title("Insert after number (0 to insert at beginning)").ValueInt(&after),
+            huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
         ),
     ).WithTheme(theme())
     if err := form.Run(); err != nil {
         return err
     }
+    after := atoiDefault(afterStr, 0)
 
     required := uniqueStrings(collectRequiredVars(tmplRoot, []string{filepath.Join(tmplRoot, "PHASE_GOAL_TEMPLATE.md")}))
     vars := map[string]interface{}{}
-    dyn := huh.NewGroup()
-    values := map[string]*string{}
     for _, k := range required {
-        if k == "phase_number" || k == "phase_name" || k == "phase_type" {
-            continue
-        }
+        if k == "phase_number" || k == "phase_name" || k == "phase_type" { continue }
         var v string
-        values[k] = &v
-        dyn.Add(huh.NewInput().Title(k).Value(&v))
-    }
-    if len(dyn.Items) > 0 {
-        if err := huh.NewForm(dyn).WithTheme(theme()).Run(); err != nil {
-            return err
-        }
-        for k, ptr := range values {
-            if ptr != nil && strings.TrimSpace(*ptr) != "" {
-                vars[k] = *ptr
-            }
-        }
+        if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title(k).Value(&v))).WithTheme(theme()).Run(); err != nil { return err }
+        if strings.TrimSpace(v) != "" { vars[k] = v }
     }
 
     varsFile, err := writeTempVarsFile(vars)
@@ -333,48 +294,36 @@ func charmCreateSequence() error {
     if err != nil {
         return err
     }
-    var name, path string
-    var after int
+    var name, path, afterStr string
 
     form := huh.NewForm(
         huh.NewGroup(
             huh.NewInput().Title("Sequence name").Placeholder("requirements").Value(&name).Validate(notEmpty),
-            huh.NewInput().Title("Phase directory (contains numbered sequences)").Placeholder(".").Value(&path),
-            huh.NewInput().Title("Insert after number (0 to insert at beginning)").ValueInt(&after),
+            huh.NewInput().Title("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)").Placeholder(".").Value(&path),
+            huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
         ),
     ).WithTheme(theme())
     if err := form.Run(); err != nil {
         return err
     }
+    after := atoiDefault(afterStr, 0)
+    resolvedPath, rerr := resolvePhaseDirInput(path, cwd)
+    if rerr != nil { return rerr }
 
     required := uniqueStrings(collectRequiredVars(tmplRoot, []string{filepath.Join(tmplRoot, "SEQUENCE_GOAL_TEMPLATE.md")}))
     vars := map[string]interface{}{}
-    dyn := huh.NewGroup()
-    values := map[string]*string{}
     for _, k := range required {
-        if k == "sequence_number" || k == "sequence_name" {
-            continue
-        }
+        if k == "sequence_number" || k == "sequence_name" { continue }
         var v string
-        values[k] = &v
-        dyn.Add(huh.NewInput().Title(k).Value(&v))
-    }
-    if len(dyn.Items) > 0 {
-        if err := huh.NewForm(dyn).WithTheme(theme()).Run(); err != nil {
-            return err
-        }
-        for k, ptr := range values {
-            if ptr != nil && strings.TrimSpace(*ptr) != "" {
-                vars[k] = *ptr
-            }
-        }
+        if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title(k).Value(&v))).WithTheme(theme()).Run(); err != nil { return err }
+        if strings.TrimSpace(v) != "" { vars[k] = v }
     }
 
     varsFile, err := writeTempVarsFile(vars)
     if err != nil {
         return err
     }
-    opts := &createSequenceOptions{after: after, name: name, path: fallbackDot(path), varsFile: varsFile}
+    opts := &createSequenceOptions{after: after, name: name, path: fallbackDot(resolvedPath), varsFile: varsFile}
     return runCreateSequence(opts)
 }
 
@@ -384,41 +333,27 @@ func charmCreateTask() error {
     if err != nil {
         return err
     }
-    var name, path string
-    var after int
+    var name, path, afterStr string
 
     form := huh.NewForm(
         huh.NewGroup(
             huh.NewInput().Title("Task name").Placeholder("user_research").Value(&name).Validate(notEmpty),
             huh.NewInput().Title("Sequence directory (contains numbered task files)").Placeholder(".").Value(&path),
-            huh.NewInput().Title("Insert after number (0 to insert at beginning)").ValueInt(&after),
+            huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
         ),
     ).WithTheme(theme())
     if err := form.Run(); err != nil {
         return err
     }
+    after := atoiDefault(afterStr, 0)
 
     required := uniqueStrings(collectRequiredVars(tmplRoot, []string{filepath.Join(tmplRoot, "TASK_TEMPLATE.md")}))
     vars := map[string]interface{}{}
-    dyn := huh.NewGroup()
-    values := map[string]*string{}
     for _, k := range required {
-        if k == "task_number" || k == "task_name" {
-            continue
-        }
+        if k == "task_number" || k == "task_name" { continue }
         var v string
-        values[k] = &v
-        dyn.Add(huh.NewInput().Title(k).Value(&v))
-    }
-    if len(dyn.Items) > 0 {
-        if err := huh.NewForm(dyn).WithTheme(theme()).Run(); err != nil {
-            return err
-        }
-        for k, ptr := range values {
-            if ptr != nil && strings.TrimSpace(*ptr) != "" {
-                vars[k] = *ptr
-            }
-        }
+        if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title(k).Value(&v))).WithTheme(theme()).Run(); err != nil { return err }
+        if strings.TrimSpace(v) != "" { vars[k] = v }
     }
 
     varsFile, err := writeTempVarsFile(vars)

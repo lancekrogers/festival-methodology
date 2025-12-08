@@ -1,6 +1,8 @@
 package github
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,6 +27,13 @@ type GitHubTreeItem struct {
 	Path string `json:"path"`
 	Type string `json:"type"`
 	Size int64  `json:"size,omitempty"`
+	SHA  string `json:"sha,omitempty"`
+}
+
+// FileInfo contains path and SHA for a file
+type FileInfo struct {
+	Path string
+	SHA  string
 }
 
 // Downloader handles downloading from GitHub
@@ -217,31 +226,104 @@ func (d *Downloader) getFilesFromGitHub(owner, repo string) ([]string, error) {
 	return files, nil
 }
 
-// CheckForUpdates checks if remote repository has changes compared to local cache
-func (d *Downloader) CheckForUpdates(owner, repo, targetDir string) (bool, []string, error) {
-	// Get remote file list
-	remoteFiles, err := d.getFilesFromGitHub(owner, repo)
+// getFilesWithSHA fetches the file list with SHA hashes from GitHub API
+func (d *Downloader) getFilesWithSHA(owner, repo string) (map[string]string, error) {
+	// Build API URL
+	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1", owner, repo, d.branch)
+
+	// Make API request
+	resp, err := d.client.Get(apiURL)
 	if err != nil {
-		return false, nil, fmt.Errorf("failed to get remote file list: %w", err)
+		return nil, fmt.Errorf("failed to fetch file tree from GitHub API: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check status code
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GitHub API request failed with status: %d", resp.StatusCode)
 	}
 
-	// Build map of remote files for quick lookup
-	remoteFileMap := make(map[string]bool)
-	for _, file := range remoteFiles {
-		remoteFileMap[file] = true
+	// Parse response
+	var treeResp GitHubTreeResponse
+	if err := json.NewDecoder(resp.Body).Decode(&treeResp); err != nil {
+		return nil, fmt.Errorf("failed to parse GitHub API response: %w", err)
+	}
+
+	// Build map of path -> SHA for files in festivals/ directory
+	files := make(map[string]string)
+	for _, item := range treeResp.Tree {
+		// Only include files (blobs), not directories (trees)
+		if item.Type != "blob" {
+			continue
+		}
+
+		// Only include files under festivals/ directory
+		if strings.HasPrefix(item.Path, "festivals/") {
+			// Remove "festivals/" prefix to get relative path
+			relativePath := strings.TrimPrefix(item.Path, "festivals/")
+			files[relativePath] = item.SHA
+		}
+	}
+
+	return files, nil
+}
+
+// calculateGitBlobSHA calculates the Git blob SHA1 hash for a file
+// Git blob SHA = SHA1("blob <size>\0<content>")
+func calculateGitBlobSHA(filePath string) (string, error) {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file: %w", err)
+	}
+
+	// Git blob format: "blob <size>\0<content>"
+	header := fmt.Sprintf("blob %d\x00", len(content))
+
+	h := sha1.New()
+	h.Write([]byte(header))
+	h.Write(content)
+
+	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
+// CheckForUpdates checks if remote repository has changes compared to local cache
+func (d *Downloader) CheckForUpdates(owner, repo, targetDir string) (bool, []string, error) {
+	// Get remote file list with SHAs
+	remoteFiles, err := d.getFilesWithSHA(owner, repo)
+	if err != nil {
+		return false, nil, fmt.Errorf("failed to get remote file list: %w", err)
 	}
 
 	changes := []string{}
 
 	// Check for new or modified files
-	for _, remoteFile := range remoteFiles {
-		localPath := filepath.Join(targetDir, remoteFile)
-		if _, err := os.Stat(localPath); os.IsNotExist(err) {
+	for remotePath, remoteSHA := range remoteFiles {
+		localPath := filepath.Join(targetDir, remotePath)
+		info, err := os.Stat(localPath)
+		if os.IsNotExist(err) {
 			// File doesn't exist locally (new file)
-			changes = append(changes, fmt.Sprintf("+ %s (new)", remoteFile))
+			changes = append(changes, fmt.Sprintf("+ %s (new)", remotePath))
+			continue
 		}
-		// Note: We're not comparing file contents/checksums here for simplicity
-		// A more sophisticated implementation would compare hashes
+		if err != nil {
+			// Other error, skip this file
+			continue
+		}
+		if info.IsDir() {
+			// Unexpected: remote is a file but local is a directory
+			continue
+		}
+
+		// File exists locally - compare SHA hashes
+		localSHA, err := calculateGitBlobSHA(localPath)
+		if err != nil {
+			// Can't calculate local SHA, skip comparison
+			continue
+		}
+
+		if localSHA != remoteSHA {
+			changes = append(changes, fmt.Sprintf("~ %s (modified)", remotePath))
+		}
 	}
 
 	// Check for deleted files (in local but not in remote)
@@ -265,7 +347,7 @@ func (d *Downloader) CheckForUpdates(owner, repo, targetDir string) (bool, []str
 		}
 
 		// Check if file exists in remote
-		if !remoteFileMap[relPath] {
+		if _, exists := remoteFiles[relPath]; !exists {
 			changes = append(changes, fmt.Sprintf("- %s (deleted)", relPath))
 		}
 
