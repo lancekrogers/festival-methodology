@@ -295,20 +295,33 @@ func charmCreateSequence() error {
         return err
     }
     var name, path, afterStr string
+    inPhase := isPhaseDirPath(cwd)
 
-    form := huh.NewForm(
-        huh.NewGroup(
-            huh.NewInput().Title("Sequence name").Placeholder("requirements").Value(&name).Validate(notEmpty),
-            huh.NewInput().Title("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)").Placeholder(".").Value(&path),
-            huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
-        ),
-    ).WithTheme(theme())
-    if err := form.Run(); err != nil {
-        return err
+    if inPhase {
+        form := huh.NewForm(
+            huh.NewGroup(
+                huh.NewInput().Title("Sequence name").Placeholder("requirements").Value(&name).Validate(notEmpty),
+                huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
+            ),
+        ).WithTheme(theme())
+        if err := form.Run(); err != nil { return err }
+    } else {
+        form := huh.NewForm(
+            huh.NewGroup(
+                huh.NewInput().Title("Sequence name").Placeholder("requirements").Value(&name).Validate(notEmpty),
+                huh.NewInput().Title("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)").Placeholder(".").Value(&path),
+                huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
+            ),
+        ).WithTheme(theme())
+        if err := form.Run(); err != nil { return err }
     }
     after := atoiDefault(afterStr, 0)
-    resolvedPath, rerr := resolvePhaseDirInput(path, cwd)
-    if rerr != nil { return rerr }
+    resolvedPath := cwd
+    if !inPhase {
+        rp, rerr := resolvePhaseDirInput(path, cwd)
+        if rerr != nil { return rerr }
+        resolvedPath = rp
+    }
 
     required := uniqueStrings(collectRequiredVars(tmplRoot, []string{filepath.Join(tmplRoot, "SEQUENCE_GOAL_TEMPLATE.md")}))
     vars := map[string]interface{}{}
@@ -334,16 +347,25 @@ func charmCreateTask() error {
         return err
     }
     var name, path, afterStr string
+    inSequence := isSequenceDirPath(cwd)
 
-    form := huh.NewForm(
-        huh.NewGroup(
-            huh.NewInput().Title("Task name").Placeholder("user_research").Value(&name).Validate(notEmpty),
-            huh.NewInput().Title("Sequence directory (contains numbered task files)").Placeholder(".").Value(&path),
-            huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
-        ),
-    ).WithTheme(theme())
-    if err := form.Run(); err != nil {
-        return err
+    if inSequence {
+        form := huh.NewForm(
+            huh.NewGroup(
+                huh.NewInput().Title("Task name").Placeholder("user_research").Value(&name).Validate(notEmpty),
+                huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
+            ),
+        ).WithTheme(theme())
+        if err := form.Run(); err != nil { return err }
+    } else {
+        form := huh.NewForm(
+            huh.NewGroup(
+                huh.NewInput().Title("Task name").Placeholder("user_research").Value(&name).Validate(notEmpty),
+                huh.NewInput().Title("Sequence (dir or number, e.g., 01 or 01_requirements)").Placeholder(".").Value(&path),
+                huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
+            ),
+        ).WithTheme(theme())
+        if err := form.Run(); err != nil { return err }
     }
     after := atoiDefault(afterStr, 0)
 
@@ -360,7 +382,13 @@ func charmCreateTask() error {
     if err != nil {
         return err
     }
-    opts := &createTaskOptions{after: after, name: name, path: fallbackDot(path), varsFile: varsFile}
+    resolvedSeq := cwd
+    if !inSequence {
+        rs, rerr := resolveSequenceDirInput(path, cwd)
+        if rerr != nil { return rerr }
+        resolvedSeq = rs
+    }
+    opts := &createTaskOptions{after: after, name: name, path: fallbackDot(resolvedSeq), varsFile: varsFile}
     return runCreateTask(opts)
 }
 

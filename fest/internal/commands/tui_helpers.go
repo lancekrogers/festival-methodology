@@ -191,6 +191,12 @@ func isPhaseDirPath(path string) bool {
     return re.MatchString(base)
 }
 
+func isSequenceDirPath(path string) bool {
+    base := filepath.Base(path)
+    re := regexp.MustCompile(`^[0-9]{2}_.+`)
+    return re.MatchString(base)
+}
+
 func listPhaseDirs(dir string) []string {
     entries, err := os.ReadDir(dir)
     if err != nil {
@@ -204,6 +210,89 @@ func listPhaseDirs(dir string) []string {
         }
     }
     return out
+}
+
+func listSequenceDirs(phaseDir string) []string {
+    entries, err := os.ReadDir(phaseDir)
+    if err != nil {
+        return nil
+    }
+    re := regexp.MustCompile(`^[0-9]{2}_.+`)
+    out := []string{}
+    for _, e := range entries {
+        if e.IsDir() && re.MatchString(e.Name()) {
+            out = append(out, e.Name())
+        }
+    }
+    return out
+}
+
+// resolveSequenceDirInput resolves user input like "01" or a sequence name to a real sequence directory
+// relative to the nearest phase directory around cwd. If input is "." and cwd is a sequence dir, returns cwd.
+func resolveSequenceDirInput(input, cwd string) (string, error) {
+    input = strings.TrimSpace(input)
+    absCwd, _ := filepath.Abs(cwd)
+
+    if input == "" || input == "." {
+        if isSequenceDirPath(absCwd) {
+            return absCwd, nil
+        }
+        return "", fmt.Errorf("please specify a sequence (e.g., 01_requirements or 01)")
+    }
+
+    // If a direct path exists
+    if filepath.IsAbs(input) {
+        if info, err := os.Stat(input); err == nil && info.IsDir() {
+            return input, nil
+        }
+    } else {
+        candidate := filepath.Join(absCwd, input)
+        if info, err := os.Stat(candidate); err == nil && info.IsDir() {
+            return candidate, nil
+        }
+    }
+
+    // Determine base phase directory to search
+    var phaseDir string
+    switch {
+    case isPhaseDirPath(absCwd):
+        phaseDir = absCwd
+    case isSequenceDirPath(absCwd):
+        phaseDir = filepath.Dir(absCwd)
+    default:
+        phaseDir = findFestivalDir(absCwd) // best-effort fallback
+    }
+
+    sequences := listSequenceDirs(phaseDir)
+    if len(sequences) == 0 {
+        return "", fmt.Errorf("no sequence directories found under %s", phaseDir)
+    }
+
+    if isDigits(input) {
+        n, _ := strconv.Atoi(input)
+        code := fmt.Sprintf("%02d", n)
+        for _, name := range sequences {
+            if strings.HasPrefix(name, code+"_") || name == code {
+                return filepath.Join(phaseDir, name), nil
+            }
+        }
+        return "", fmt.Errorf("sequence %s not found under %s", code, phaseDir)
+    }
+
+    needle := strings.ToLower(input)
+    for _, name := range sequences {
+        if name == input {
+            return filepath.Join(phaseDir, name), nil
+        }
+        parts := strings.SplitN(name, "_", 2)
+        if len(parts) == 2 {
+            if strings.ToLower(parts[1]) == needle {
+                return filepath.Join(phaseDir, name), nil
+            }
+        }
+    }
+
+    return "", fmt.Errorf("could not resolve sequence '%s'", input)
 }
 
 func exists(p string) bool {

@@ -295,7 +295,17 @@ func tuiCreateSequence(display *ui.UI) error {
     if name == "" {
         return fmt.Errorf("sequence name is required")
     }
-    path := strings.TrimSpace(display.PromptDefault("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)", "."))
+    var resolvedPhase string
+    if isPhaseDirPath(cwd) {
+        resolvedPhase = cwd
+    } else {
+        path := strings.TrimSpace(display.PromptDefault("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)", "."))
+        rp, rerr := resolvePhaseDirInput(path, cwd)
+        if rerr != nil {
+            return emitCreateSequenceError(&createSequenceOptions{name: name, path: path}, fmt.Errorf("invalid phase: %w", rerr))
+        }
+        resolvedPhase = rp
+    }
     afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", "0"))
     after := atoiDefault(afterStr, 0)
 
@@ -317,16 +327,10 @@ func tuiCreateSequence(display *ui.UI) error {
         return err
     }
 
-    // Resolve numeric or name-based shortcuts to a real phase dir
-    resolvedPath, rerr := resolvePhaseDirInput(path, cwd)
-    if rerr != nil {
-        return emitCreateSequenceError(&createSequenceOptions{name: name, path: path}, fmt.Errorf("invalid phase: %w", rerr))
-    }
-
     opts := &createSequenceOptions{
         after:     after,
         name:      name,
-        path:      resolvedPath,
+        path:      resolvedPhase,
         varsFile:  varsFile,
     }
     return runCreateSequence(opts)
@@ -343,7 +347,17 @@ func tuiCreateTask(display *ui.UI) error {
     if name == "" {
         return fmt.Errorf("task name is required")
     }
-    path := strings.TrimSpace(display.PromptDefault("Sequence directory (contains numbered task files)", "."))
+    var resolvedSeq string
+    if isSequenceDirPath(cwd) {
+        resolvedSeq = cwd
+    } else {
+        path := strings.TrimSpace(display.PromptDefault("Sequence (dir or number, e.g., 01 or 01_requirements)", "."))
+        rs, rerr := resolveSequenceDirInput(path, cwd)
+        if rerr != nil {
+            return emitCreateTaskError(&createTaskOptions{name: name, path: path}, fmt.Errorf("invalid sequence: %w", rerr))
+        }
+        resolvedSeq = rs
+    }
     afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", "0"))
     after := atoiDefault(afterStr, 0)
 
@@ -369,7 +383,7 @@ func tuiCreateTask(display *ui.UI) error {
     opts := &createTaskOptions{
         after:     after,
         name:      name,
-        path:      path,
+        path:      resolvedSeq,
         varsFile:  varsFile,
     }
     return runCreateTask(opts)
