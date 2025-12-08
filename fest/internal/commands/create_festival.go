@@ -38,6 +38,14 @@ func NewCreateFestivalCommand() *cobra.Command {
         Use:   "festival",
         Short: "Create a new festival scaffold under festivals/(active|planned)",
         RunE: func(cmd *cobra.Command, args []string) error {
+            // If no flags were provided, open TUI for this flow
+            if cmd.Flags().NFlag() == 0 {
+                return StartCreateFestivalTUI()
+            }
+            // Otherwise, require name and proceed
+            if strings.TrimSpace(opts.name) == "" {
+                return fmt.Errorf("--name is required (or run without flags to open TUI)")
+            }
             return runCreateFestival(opts)
         },
     }
@@ -47,7 +55,6 @@ func NewCreateFestivalCommand() *cobra.Command {
     cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON file with variables")
     cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
     cmd.Flags().StringVar(&opts.dest, "dest", "active", "Destination under festivals/: active or planned")
-    cmd.MarkFlagRequired("name")
     return cmd
 }
 

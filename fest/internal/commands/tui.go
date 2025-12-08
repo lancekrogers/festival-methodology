@@ -388,3 +388,51 @@ func tuiCreateTask(display *ui.UI) error {
     }
     return runCreateTask(opts)
 }
+// StartCreateTUI shows a create-only menu (fallback implementation)
+func StartCreateTUI() error {
+    display := ui.New(noColor, verbose)
+    for {
+        choice := display.Choose("Create what?", []string{
+            "Festival",
+            "Phase",
+            "Sequence",
+            "Task",
+            "Back",
+        })
+        switch choice {
+        case 0:
+            if err := tuiCreateFestival(display); err != nil { return err }
+        case 1:
+            if err := tuiCreatePhase(display); err != nil { return err }
+        case 2:
+            if err := tuiCreateSequence(display); err != nil { return err }
+        case 3:
+            if err := tuiCreateTask(display); err != nil { return err }
+        default:
+            return nil
+        }
+        if !display.Confirm("Create another?") {
+            return nil
+        }
+    }
+}
+
+func StartCreateFestivalTUI() error {
+    display := ui.New(noColor, verbose)
+    return tuiCreateFestival(display)
+}
+
+func StartCreatePhaseTUI() error {
+    display := ui.New(noColor, verbose)
+    return tuiCreatePhase(display)
+}
+
+func StartCreateSequenceTUI() error {
+    display := ui.New(noColor, verbose)
+    return tuiCreateSequence(display)
+}
+
+func StartCreateTaskTUI() error {
+    display := ui.New(noColor, verbose)
+    return tuiCreateTask(display)
+}

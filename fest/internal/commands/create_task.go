@@ -33,21 +33,26 @@ type createTaskResult struct {
 
 // NewCreateTaskCommand adds 'create task'
 func NewCreateTaskCommand() *cobra.Command {
-	opts := &createTaskOptions{}
-	cmd := &cobra.Command{
-		Use:   "task",
-		Short: "Insert a new task file in a sequence",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return runCreateTask(opts)
-		},
-	}
-	cmd.Flags().IntVar(&opts.after, "after", 0, "Insert after this number (0 inserts at beginning)")
-	cmd.Flags().StringVar(&opts.name, "name", "", "Task name (required)")
-	cmd.Flags().StringVar(&opts.path, "path", ".", "Path to sequence directory (directory containing numbered task files)")
-	cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON vars for rendering")
-	cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
-	cmd.MarkFlagRequired("name")
-	return cmd
+    opts := &createTaskOptions{}
+    cmd := &cobra.Command{
+        Use:   "task",
+        Short: "Insert a new task file in a sequence",
+        RunE: func(cmd *cobra.Command, args []string) error {
+            if cmd.Flags().NFlag() == 0 {
+                return StartCreateTaskTUI()
+            }
+            if strings.TrimSpace(opts.name) == "" {
+                return fmt.Errorf("--name is required (or run without flags to open TUI)")
+            }
+            return runCreateTask(opts)
+        },
+    }
+    cmd.Flags().IntVar(&opts.after, "after", 0, "Insert after this number (0 inserts at beginning)")
+    cmd.Flags().StringVar(&opts.name, "name", "", "Task name (required)")
+    cmd.Flags().StringVar(&opts.path, "path", ".", "Path to sequence directory (directory containing numbered task files)")
+    cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON vars for rendering")
+    cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
+    return cmd
 }
 
 func runCreateTask(opts *createTaskOptions) error {

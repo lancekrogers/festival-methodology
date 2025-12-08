@@ -34,22 +34,27 @@ type createPhaseResult struct {
 
 // NewCreatePhaseCommand adds 'create phase'
 func NewCreatePhaseCommand() *cobra.Command {
-	opts := &createPhaseOptions{}
-	cmd := &cobra.Command{
-		Use:   "phase",
-		Short: "Insert a new phase and render its goal file",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return runCreatePhase(opts)
-		},
-	}
-	cmd.Flags().IntVar(&opts.after, "after", 0, "Insert after this number (0 inserts at beginning)")
-	cmd.Flags().StringVar(&opts.name, "name", "", "Phase name (required)")
-	cmd.Flags().StringVar(&opts.phaseType, "type", "planning", "Phase type (planning|implementation|review|deployment)")
-	cmd.Flags().StringVar(&opts.path, "path", ".", "Path to festival root (directory containing numbered phases)")
-	cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON vars for rendering")
-	cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
-	cmd.MarkFlagRequired("name")
-	return cmd
+    opts := &createPhaseOptions{}
+    cmd := &cobra.Command{
+        Use:   "phase",
+        Short: "Insert a new phase and render its goal file",
+        RunE: func(cmd *cobra.Command, args []string) error {
+            if cmd.Flags().NFlag() == 0 {
+                return StartCreatePhaseTUI()
+            }
+            if strings.TrimSpace(opts.name) == "" {
+                return fmt.Errorf("--name is required (or run without flags to open TUI)")
+            }
+            return runCreatePhase(opts)
+        },
+    }
+    cmd.Flags().IntVar(&opts.after, "after", 0, "Insert after this number (0 inserts at beginning)")
+    cmd.Flags().StringVar(&opts.name, "name", "", "Phase name (required)")
+    cmd.Flags().StringVar(&opts.phaseType, "type", "planning", "Phase type (planning|implementation|review|deployment)")
+    cmd.Flags().StringVar(&opts.path, "path", ".", "Path to festival root (directory containing numbered phases)")
+    cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON vars for rendering")
+    cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
+    return cmd
 }
 
 func runCreatePhase(opts *createPhaseOptions) error {

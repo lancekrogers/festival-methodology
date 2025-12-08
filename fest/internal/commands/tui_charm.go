@@ -421,3 +421,41 @@ func fallbackDot(s string) string {
     }
     return s
 }
+// StartCreateTUI shows a create-only menu (Charm implementation)
+func StartCreateTUI() error {
+    for {
+        var action string
+        menu := huh.NewForm(
+            huh.NewGroup(
+                huh.NewSelect[string]().
+                    Title("Create what?").
+                    Options(
+                        huh.NewOption("Festival", "festival"),
+                        huh.NewOption("Phase", "phase"),
+                        huh.NewOption("Sequence", "sequence"),
+                        huh.NewOption("Task", "task"),
+                        huh.NewOption("Back", "back"),
+                    ).
+                    Value(&action),
+            ),
+        ).WithTheme(theme())
+        if err := menu.Run(); err != nil { return err }
+        switch action {
+        case "festival":
+            if err := charmCreateFestival(); err != nil { return err }
+        case "phase":
+            if err := charmCreatePhase(); err != nil { return err }
+        case "sequence":
+            if err := charmCreateSequence(); err != nil { return err }
+        case "task":
+            if err := charmCreateTask(); err != nil { return err }
+        default:
+            return nil
+        }
+    }
+}
+
+func StartCreateFestivalTUI() error { return charmCreateFestival() }
+func StartCreatePhaseTUI() error    { return charmCreatePhase() }
+func StartCreateSequenceTUI() error { return charmCreateSequence() }
+func StartCreateTaskTUI() error     { return charmCreateTask() }

@@ -69,7 +69,11 @@ func init() {
 	// Headless-first creation commands
 	rootCmd.AddCommand(NewApplyCommand())
 	// Grouped under 'create'
-	createCmd := &cobra.Command{Use: "create", Short: "Create festival elements"}
+    createCmd := &cobra.Command{Use: "create", Short: "Create festival elements",
+        RunE: func(cmd *cobra.Command, args []string) error {
+            return StartCreateTUI()
+        },
+    }
 	createCmd.AddCommand(NewCreateFestivalCommand())
 	createCmd.AddCommand(NewCreatePhaseCommand())
 	createCmd.AddCommand(NewCreateSequenceCommand())
