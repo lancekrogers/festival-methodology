@@ -251,7 +251,13 @@ func tuiCreatePhase(display *ui.UI) error {
     phaseType := types[tIdx]
 
     path := strings.TrimSpace(display.PromptDefault("Festival directory (contains numbered phases)", "."))
-    afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", "0"))
+    // Default to appending at end
+    festDir := path
+    if festDir == "." || festDir == "" {
+        festDir = findFestivalDir(cwd)
+    }
+    defAfter := nextPhaseAfter(festDir)
+    afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", fmt.Sprintf("%d", defAfter)))
     after := atoiDefault(afterStr, 0)
 
     required := uniqueStrings(collectRequiredVars(tmplRoot, []string{
@@ -325,7 +331,9 @@ func tuiCreateSequence(display *ui.UI) error {
             resolvedPhase = rp
         }
     }
-    afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", "0"))
+    // Default to append after last sequence in resolved phase
+    defAfter := nextSequenceAfter(resolvedPhase)
+    afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", fmt.Sprintf("%d", defAfter)))
     after := atoiDefault(afterStr, 0)
 
     required := uniqueStrings(collectRequiredVars(tmplRoot, []string{
@@ -433,7 +441,9 @@ func tuiCreateTask(display *ui.UI) error {
             resolvedSeq = rs
         }
     }
-    afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", "0"))
+    // Default to append after last task in resolved sequence
+    defAfter := nextTaskAfter(resolvedSeq)
+    afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", fmt.Sprintf("%d", defAfter)))
     after := atoiDefault(afterStr, 0)
 
     // Prefer TASK_TEMPLATE.md for required vars

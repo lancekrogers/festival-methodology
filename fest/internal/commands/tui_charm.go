@@ -256,6 +256,7 @@ func charmCreatePhase() error {
     phaseTypes := []string{"planning", "implementation", "review", "deployment"}
     var phaseType string = phaseTypes[0]
 
+    // Two-step: first fields; then compute default 'after'
     form := huh.NewForm(
         huh.NewGroup(
             huh.NewInput().Title("Phase name").Placeholder("PLAN").Value(&name).Validate(notEmpty),
@@ -263,12 +264,13 @@ func charmCreatePhase() error {
                 toOptions(phaseTypes)...,
             ).Value(&phaseType),
             huh.NewInput().Title("Festival directory (contains numbered phases)").Placeholder(".").Value(&path),
-            huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
         ),
     ).WithTheme(theme())
-    if err := form.Run(); err != nil {
-        return err
-    }
+    if err := form.Run(); err != nil { return err }
+    basePath := path
+    if strings.TrimSpace(basePath) == "" || basePath == "." { basePath = findFestivalDir(cwd) }
+    afterStr = fmt.Sprintf("%d", nextPhaseAfter(basePath))
+    if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr))).WithTheme(theme()).Run(); err != nil { return err }
     after := atoiDefault(afterStr, 0)
 
     required := uniqueStrings(collectRequiredVars(tmplRoot, []string{filepath.Join(tmplRoot, "PHASE_GOAL_TEMPLATE.md")}))

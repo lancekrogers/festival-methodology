@@ -9,6 +9,7 @@ import (
     "strconv"
     "strings"
 
+    "github.com/lancekrogers/festival-methodology/fest/internal/festival"
     tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 )
 
@@ -298,4 +299,47 @@ func resolveSequenceDirInput(input, cwd string) (string, error) {
 func exists(p string) bool {
     _, err := os.Stat(p)
     return err == nil
+}
+
+// nextPhaseAfter returns the number to use for --after when inserting a new phase
+// so that the new phase is appended at the end. If no phases exist, returns 0.
+func nextPhaseAfter(festivalDir string) int {
+    parser := festival.NewParser()
+    phases, err := parser.ParsePhases(festivalDir)
+    if err != nil || len(phases) == 0 {
+        return 0
+    }
+    max := 0
+    for _, p := range phases {
+        if p.Number > max { max = p.Number }
+    }
+    return max
+}
+
+// nextSequenceAfter returns the number to use for --after when inserting a sequence in a phase
+func nextSequenceAfter(phaseDir string) int {
+    parser := festival.NewParser()
+    seqs, err := parser.ParseSequences(phaseDir)
+    if err != nil || len(seqs) == 0 {
+        return 0
+    }
+    max := 0
+    for _, s := range seqs {
+        if s.Number > max { max = s.Number }
+    }
+    return max
+}
+
+// nextTaskAfter returns the number to use for --after when inserting a task in a sequence
+func nextTaskAfter(seqDir string) int {
+    parser := festival.NewParser()
+    tasks, err := parser.ParseTasks(seqDir)
+    if err != nil || len(tasks) == 0 {
+        return 0
+    }
+    max := 0
+    for _, t := range tasks {
+        if t.Number > max { max = t.Number }
+    }
+    return max
 }
