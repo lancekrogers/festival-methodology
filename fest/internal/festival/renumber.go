@@ -11,10 +11,14 @@ import (
 
 // RenumberOptions configures renumbering behavior
 type RenumberOptions struct {
-	DryRun    bool
-	Backup    bool
-	StartFrom int
-	Verbose   bool
+    DryRun    bool
+    Backup    bool
+    StartFrom int
+    Verbose   bool
+    // Quiet suppresses all printouts (no report, no success lines)
+    Quiet     bool
+    // AutoApprove skips confirmation prompts and applies changes immediately
+    AutoApprove bool
 }
 
 // Renumberer handles renumbering operations
@@ -425,31 +429,51 @@ func (r *Renumberer) RemoveElement(path string) error {
 
 // executeChanges applies the planned changes
 func (r *Renumberer) executeChanges() error {
-	if len(r.changes) == 0 {
-		fmt.Println("No changes needed.")
-		return nil
-	}
+    if len(r.changes) == 0 {
+        if !r.options.Quiet {
+            fmt.Println("No changes needed.")
+        }
+        return nil
+    }
 
-	// Display changes
-	r.displayChanges()
+    // Display changes
+    if !r.options.Quiet {
+        r.displayChanges()
+    }
 
-	if r.options.DryRun {
-		fmt.Println("\nDRY RUN - Preview complete.")
-		// Prompt user to apply changes after dry-run
-		if r.confirmApplyAfterDryRun() {
-			// User wants to apply changes, continue with execution
-			fmt.Println("\nApplying changes...")
-		} else {
-			fmt.Println("Operation cancelled.")
-			return nil
-		}
-	} else {
-		// Not in dry-run mode, confirm changes before applying
-		if !r.confirmChanges() {
-			fmt.Println("Operation cancelled.")
-			return nil
-		}
-	}
+    if r.options.DryRun {
+        if !r.options.Quiet {
+            fmt.Println("\nDRY RUN - Preview complete.")
+        }
+        // If auto-approve, proceed to apply after dry-run preview
+        if r.options.AutoApprove {
+            if !r.options.Quiet {
+                fmt.Println("\nApplying changes...")
+            }
+        } else {
+            // Prompt user to apply changes after dry-run
+            if r.confirmApplyAfterDryRun() {
+                if !r.options.Quiet {
+                    fmt.Println("\nApplying changes...")
+                }
+            } else {
+                if !r.options.Quiet {
+                    fmt.Println("Operation cancelled.")
+                }
+                return nil
+            }
+        }
+    } else {
+        // Not in dry-run mode, confirm changes before applying
+        if !r.options.AutoApprove {
+            if !r.confirmChanges() {
+                if !r.options.Quiet {
+                    fmt.Println("Operation cancelled.")
+                }
+                return nil
+            }
+        }
+    }
 
 	// Create backup if requested
 	if r.options.Backup {
@@ -473,14 +497,9 @@ func (r *Renumberer) executeChanges() error {
 			// If NewPath looks like a file (e.g., ends with .md), create an empty file.
 			// Otherwise, create a directory (used for phases/sequences).
 			if strings.HasSuffix(strings.ToLower(change.NewPath), ".md") {
+				// For file creations, just ensure parent exists; the caller writes content.
 				if err := os.MkdirAll(filepath.Dir(change.NewPath), 0755); err != nil {
 					return fmt.Errorf("failed to create parent directory for %s: %w", change.NewPath, err)
-				}
-				// Create the file if it doesn't exist
-				if _, err := os.Stat(change.NewPath); os.IsNotExist(err) {
-					if err := os.WriteFile(change.NewPath, []byte(""), 0644); err != nil {
-						return fmt.Errorf("failed to create file %s: %w", change.NewPath, err)
-					}
 				}
 			} else {
 				if err := os.MkdirAll(change.NewPath, 0755); err != nil {
@@ -501,8 +520,10 @@ func (r *Renumberer) executeChanges() error {
 		}
 	}
 
-	fmt.Printf("\n✓ Successfully applied %d changes.\n", len(r.changes))
-	return nil
+    if !r.options.Quiet {
+        fmt.Printf("\n✓ Successfully applied %d changes.\n", len(r.changes))
+    }
+    return nil
 }
 
 // displayChanges shows planned changes

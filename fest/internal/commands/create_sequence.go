@@ -71,7 +71,7 @@ func runCreateSequence(opts *createSequenceOptions) error {
 	}
 
 	// Insert sequence
-	ren := festival.NewRenumberer(festival.RenumberOptions{})
+    ren := festival.NewRenumberer(festival.RenumberOptions{AutoApprove: true, Quiet: true})
 	if err := ren.InsertSequence(absPath, opts.after, opts.name); err != nil {
 		return emitCreateSequenceError(opts, fmt.Errorf("failed to insert sequence: %w", err))
 	}
