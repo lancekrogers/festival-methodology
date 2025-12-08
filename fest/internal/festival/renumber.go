@@ -470,8 +470,22 @@ func (r *Renumberer) executeChanges() error {
 			}
 
 		case ChangeCreate:
-			if err := os.MkdirAll(change.NewPath, 0755); err != nil {
-				return fmt.Errorf("failed to create %s: %w", change.NewPath, err)
+			// If NewPath looks like a file (e.g., ends with .md), create an empty file.
+			// Otherwise, create a directory (used for phases/sequences).
+			if strings.HasSuffix(strings.ToLower(change.NewPath), ".md") {
+				if err := os.MkdirAll(filepath.Dir(change.NewPath), 0755); err != nil {
+					return fmt.Errorf("failed to create parent directory for %s: %w", change.NewPath, err)
+				}
+				// Create the file if it doesn't exist
+				if _, err := os.Stat(change.NewPath); os.IsNotExist(err) {
+					if err := os.WriteFile(change.NewPath, []byte(""), 0644); err != nil {
+						return fmt.Errorf("failed to create file %s: %w", change.NewPath, err)
+					}
+				}
+			} else {
+				if err := os.MkdirAll(change.NewPath, 0755); err != nil {
+					return fmt.Errorf("failed to create %s: %w", change.NewPath, err)
+				}
 			}
 			if r.options.Verbose {
 				fmt.Printf("Created: %s\n", filepath.Base(change.NewPath))
