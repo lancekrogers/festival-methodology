@@ -269,9 +269,22 @@ func charmCreatePhase() error {
     if err := form.Run(); err != nil { return err }
     basePath := path
     if strings.TrimSpace(basePath) == "" || basePath == "." { basePath = findFestivalDir(cwd) }
-    afterStr = fmt.Sprintf("%d", nextPhaseAfter(basePath))
-    if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr))).WithTheme(theme()).Run(); err != nil { return err }
-    after := atoiDefault(afterStr, 0)
+    defAfter := nextPhaseAfter(basePath)
+    // Choose position for phase
+    var posPhase string
+    if err := huh.NewForm(huh.NewGroup(
+        huh.NewSelect[string]().Title("Position").Options(
+            huh.NewOption("Append at end", "append"),
+            huh.NewOption("Insert after number", "insert"),
+        ).Value(&posPhase),
+    )).WithTheme(theme()).Run(); err != nil { return err }
+    if posPhase == "insert" {
+        afterStr = fmt.Sprintf("%d", defAfter)
+        if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr))).WithTheme(theme()).Run(); err != nil { return err }
+    } else {
+        afterStr = fmt.Sprintf("%d", defAfter)
+    }
+    after := atoiDefault(afterStr, defAfter)
 
     required := uniqueStrings(collectRequiredVars(tmplRoot, []string{filepath.Join(tmplRoot, "PHASE_GOAL_TEMPLATE.md")}))
     vars := map[string]interface{}{}
@@ -300,13 +313,25 @@ func charmCreateSequence() error {
     inPhase := isPhaseDirPath(cwd)
 
     if inPhase {
-        form := huh.NewForm(
-            huh.NewGroup(
-                huh.NewInput().Title("Sequence name").Placeholder("requirements").Value(&name).Validate(notEmpty),
-                huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
-            ),
-        ).WithTheme(theme())
-        if err := form.Run(); err != nil { return err }
+        // Name first
+        if err := huh.NewForm(huh.NewGroup(
+            huh.NewInput().Title("Sequence name").Placeholder("requirements").Value(&name).Validate(notEmpty),
+        )).WithTheme(theme()).Run(); err != nil { return err }
+        // Position selection with default append
+        defAfter := nextSequenceAfter(cwd)
+        var pos string
+        if err := huh.NewForm(huh.NewGroup(
+            huh.NewSelect[string]().Title("Position").Options(
+                huh.NewOption("Append at end", "append"),
+                huh.NewOption("Insert after number", "insert"),
+            ).Value(&pos),
+        )).WithTheme(theme()).Run(); err != nil { return err }
+        if pos == "insert" {
+            afterStr = fmt.Sprintf("%d", defAfter)
+            if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr))).WithTheme(theme()).Run(); err != nil { return err }
+        } else {
+            afterStr = fmt.Sprintf("%d", defAfter)
+        }
     } else {
         // Offer phase picker if available
         festDir := findFestivalDir(cwd)
@@ -320,7 +345,6 @@ func charmCreateSequence() error {
                 huh.NewGroup(
                     huh.NewInput().Title("Sequence name").Placeholder("requirements").Value(&name).Validate(notEmpty),
                     huh.NewSelect[string]().Title("Select phase").Options(opts...).Value(&selected),
-                    huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
                 ),
             ).WithTheme(theme())
             if err := form.Run(); err != nil { return err }
@@ -335,10 +359,25 @@ func charmCreateSequence() error {
                 huh.NewGroup(
                     huh.NewInput().Title("Sequence name").Placeholder("requirements").Value(&name).Validate(notEmpty),
                     huh.NewInput().Title("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)").Placeholder(".").Value(&path),
-                    huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
                 ),
             ).WithTheme(theme())
             if err := form.Run(); err != nil { return err }
+        }
+        // After selection
+        rp, rerr := resolvePhaseDirInput(path, cwd); if rerr != nil { return rerr }
+        defAfter := nextSequenceAfter(rp)
+        var pos string
+        if err := huh.NewForm(huh.NewGroup(
+            huh.NewSelect[string]().Title("Position").Options(
+                huh.NewOption("Append at end", "append"),
+                huh.NewOption("Insert after number", "insert"),
+            ).Value(&pos),
+        )).WithTheme(theme()).Run(); err != nil { return err }
+        if pos == "insert" {
+            afterStr = fmt.Sprintf("%d", defAfter)
+            if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr))).WithTheme(theme()).Run(); err != nil { return err }
+        } else {
+            afterStr = fmt.Sprintf("%d", defAfter)
         }
     }
     after := atoiDefault(afterStr, 0)
@@ -376,13 +415,25 @@ func charmCreateTask() error {
     inSequence := isSequenceDirPath(cwd)
 
     if inSequence {
-        form := huh.NewForm(
-            huh.NewGroup(
-                huh.NewInput().Title("Task name").Placeholder("user_research").Value(&name).Validate(notEmpty),
-                huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
-            ),
-        ).WithTheme(theme())
-        if err := form.Run(); err != nil { return err }
+        // Name first
+        if err := huh.NewForm(huh.NewGroup(
+            huh.NewInput().Title("Task name").Placeholder("user_research").Value(&name).Validate(notEmpty),
+        )).WithTheme(theme()).Run(); err != nil { return err }
+        // Position select with default append
+        defAfter := nextTaskAfter(cwd)
+        var pos string
+        if err := huh.NewForm(huh.NewGroup(
+            huh.NewSelect[string]().Title("Position").Options(
+                huh.NewOption("Append at end", "append"),
+                huh.NewOption("Insert after number", "insert"),
+            ).Value(&pos),
+        )).WithTheme(theme()).Run(); err != nil { return err }
+        if pos == "insert" {
+            afterStr = fmt.Sprintf("%d", defAfter)
+            if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr))).WithTheme(theme()).Run(); err != nil { return err }
+        } else {
+            afterStr = fmt.Sprintf("%d", defAfter)
+        }
     } else {
         // Not in a sequence: choose phase (if needed), then sequence
         var phasePath string
@@ -425,7 +476,6 @@ func charmCreateTask() error {
                 huh.NewGroup(
                     huh.NewInput().Title("Task name").Placeholder("user_research").Value(&name).Validate(notEmpty),
                     huh.NewSelect[string]().Title("Select sequence").Options(sOpts...).Value(&sSel),
-                    huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
                 ),
             ).WithTheme(theme())
             if err := form.Run(); err != nil { return err }
@@ -439,10 +489,25 @@ func charmCreateTask() error {
                 huh.NewGroup(
                     huh.NewInput().Title("Task name").Placeholder("user_research").Value(&name).Validate(notEmpty),
                     huh.NewInput().Title("Sequence (dir or number, e.g., 01 or 01_requirements)").Placeholder(".").Value(&path),
-                    huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
                 ),
             ).WithTheme(theme())
             if err := form.Run(); err != nil { return err }
+        }
+        // Compute default after based on resolved sequence path, then choose position
+        rs, rerr := resolveSequenceDirInput(path, cwd); if rerr != nil { return rerr }
+        defAfter := nextTaskAfter(rs)
+        var pos string
+        if err := huh.NewForm(huh.NewGroup(
+            huh.NewSelect[string]().Title("Position").Options(
+                huh.NewOption("Append at end", "append"),
+                huh.NewOption("Insert after number", "insert"),
+            ).Value(&pos),
+        )).WithTheme(theme()).Run(); err != nil { return err }
+        if pos == "insert" {
+            afterStr = fmt.Sprintf("%d", defAfter)
+            if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr))).WithTheme(theme()).Run(); err != nil { return err }
+        } else {
+            afterStr = fmt.Sprintf("%d", defAfter)
         }
     }
     after := atoiDefault(afterStr, 0)

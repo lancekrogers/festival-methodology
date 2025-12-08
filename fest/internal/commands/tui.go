@@ -257,8 +257,11 @@ func tuiCreatePhase(display *ui.UI) error {
         festDir = findFestivalDir(cwd)
     }
     defAfter := nextPhaseAfter(festDir)
-    afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", fmt.Sprintf("%d", defAfter)))
-    after := atoiDefault(afterStr, 0)
+    after := defAfter
+    if !display.Confirm("Append at end?") {
+        afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", fmt.Sprintf("%d", defAfter)))
+        after = atoiDefault(afterStr, defAfter)
+    }
 
     required := uniqueStrings(collectRequiredVars(tmplRoot, []string{
         filepath.Join(tmplRoot, "PHASE_GOAL_TEMPLATE.md"),
@@ -333,8 +336,11 @@ func tuiCreateSequence(display *ui.UI) error {
     }
     // Default to append after last sequence in resolved phase
     defAfter := nextSequenceAfter(resolvedPhase)
-    afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", fmt.Sprintf("%d", defAfter)))
-    after := atoiDefault(afterStr, 0)
+    after := defAfter
+    if !display.Confirm("Append at end?") {
+        afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", fmt.Sprintf("%d", defAfter)))
+        after = atoiDefault(afterStr, defAfter)
+    }
 
     required := uniqueStrings(collectRequiredVars(tmplRoot, []string{
         filepath.Join(tmplRoot, "SEQUENCE_GOAL_TEMPLATE.md"),
@@ -443,8 +449,11 @@ func tuiCreateTask(display *ui.UI) error {
     }
     // Default to append after last task in resolved sequence
     defAfter := nextTaskAfter(resolvedSeq)
-    afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", fmt.Sprintf("%d", defAfter)))
-    after := atoiDefault(afterStr, 0)
+    after := defAfter
+    if !display.Confirm("Append at end?") {
+        afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", fmt.Sprintf("%d", defAfter)))
+        after = atoiDefault(afterStr, defAfter)
+    }
 
     // Prefer TASK_TEMPLATE.md for required vars
     required := uniqueStrings(collectRequiredVars(tmplRoot, []string{
