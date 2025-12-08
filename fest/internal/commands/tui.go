@@ -299,12 +299,31 @@ func tuiCreateSequence(display *ui.UI) error {
     if isPhaseDirPath(cwd) {
         resolvedPhase = cwd
     } else {
-        path := strings.TrimSpace(display.PromptDefault("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)", "."))
-        rp, rerr := resolvePhaseDirInput(path, cwd)
-        if rerr != nil {
-            return emitCreateSequenceError(&createSequenceOptions{name: name, path: path}, fmt.Errorf("invalid phase: %w", rerr))
+        // Offer a quick picker of phases if available
+        festDir := findFestivalDir(cwd)
+        phases := listPhaseDirs(festDir)
+        if len(phases) > 0 {
+            items := append(append([]string{}, phases...), "Other...")
+            idx := display.Choose("Select a phase:", items)
+            if idx >= 0 && idx < len(phases) {
+                resolvedPhase = filepath.Join(festDir, phases[idx])
+            } else {
+                // Fallback to manual input
+                path := strings.TrimSpace(display.PromptDefault("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)", "."))
+                rp, rerr := resolvePhaseDirInput(path, cwd)
+                if rerr != nil {
+                    return emitCreateSequenceError(&createSequenceOptions{name: name, path: path}, fmt.Errorf("invalid phase: %w", rerr))
+                }
+                resolvedPhase = rp
+            }
+        } else {
+            path := strings.TrimSpace(display.PromptDefault("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)", "."))
+            rp, rerr := resolvePhaseDirInput(path, cwd)
+            if rerr != nil {
+                return emitCreateSequenceError(&createSequenceOptions{name: name, path: path}, fmt.Errorf("invalid phase: %w", rerr))
+            }
+            resolvedPhase = rp
         }
-        resolvedPhase = rp
     }
     afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", "0"))
     after := atoiDefault(afterStr, 0)
@@ -351,12 +370,38 @@ func tuiCreateTask(display *ui.UI) error {
     if isSequenceDirPath(cwd) {
         resolvedSeq = cwd
     } else {
-        path := strings.TrimSpace(display.PromptDefault("Sequence (dir or number, e.g., 01 or 01_requirements)", "."))
-        rs, rerr := resolveSequenceDirInput(path, cwd)
-        if rerr != nil {
-            return emitCreateTaskError(&createTaskOptions{name: name, path: path}, fmt.Errorf("invalid sequence: %w", rerr))
+        // Determine base phase dir for listing sequences
+        basePhase := cwd
+        switch {
+        case isPhaseDirPath(cwd):
+            basePhase = cwd
+        case isSequenceDirPath(cwd):
+            basePhase = filepath.Dir(cwd)
+        default:
+            basePhase = findFestivalDir(cwd)
         }
-        resolvedSeq = rs
+        seqs := listSequenceDirs(basePhase)
+        if len(seqs) > 0 {
+            items := append(append([]string{}, seqs...), "Other...")
+            idx := display.Choose("Select a sequence:", items)
+            if idx >= 0 && idx < len(seqs) {
+                resolvedSeq = filepath.Join(basePhase, seqs[idx])
+            } else {
+                path := strings.TrimSpace(display.PromptDefault("Sequence (dir or number, e.g., 01 or 01_requirements)", "."))
+                rs, rerr := resolveSequenceDirInput(path, cwd)
+                if rerr != nil {
+                    return emitCreateTaskError(&createTaskOptions{name: name, path: path}, fmt.Errorf("invalid sequence: %w", rerr))
+                }
+                resolvedSeq = rs
+            }
+        } else {
+            path := strings.TrimSpace(display.PromptDefault("Sequence (dir or number, e.g., 01 or 01_requirements)", "."))
+            rs, rerr := resolveSequenceDirInput(path, cwd)
+            if rerr != nil {
+                return emitCreateTaskError(&createTaskOptions{name: name, path: path}, fmt.Errorf("invalid sequence: %w", rerr))
+            }
+            resolvedSeq = rs
+        }
     }
     afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", "0"))
     after := atoiDefault(afterStr, 0)

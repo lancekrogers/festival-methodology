@@ -306,14 +306,38 @@ func charmCreateSequence() error {
         ).WithTheme(theme())
         if err := form.Run(); err != nil { return err }
     } else {
-        form := huh.NewForm(
-            huh.NewGroup(
-                huh.NewInput().Title("Sequence name").Placeholder("requirements").Value(&name).Validate(notEmpty),
-                huh.NewInput().Title("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)").Placeholder(".").Value(&path),
-                huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
-            ),
-        ).WithTheme(theme())
-        if err := form.Run(); err != nil { return err }
+        // Offer phase picker if available
+        festDir := findFestivalDir(cwd)
+        phases := listPhaseDirs(festDir)
+        if len(phases) > 0 {
+            var selected string
+            opts := make([]huh.Option[string], 0, len(phases)+1)
+            for _, p := range phases { opts = append(opts, huh.NewOption(p, filepath.Join(festDir, p))) }
+            opts = append(opts, huh.NewOption("Other...", "__other__"))
+            form := huh.NewForm(
+                huh.NewGroup(
+                    huh.NewInput().Title("Sequence name").Placeholder("requirements").Value(&name).Validate(notEmpty),
+                    huh.NewSelect[string]().Title("Select phase").Options(opts...).Value(&selected),
+                    huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
+                ),
+            ).WithTheme(theme())
+            if err := form.Run(); err != nil { return err }
+            if selected == "__other__" {
+                // Ask for manual path/number
+                if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Phase (dir or number)").Value(&path))).WithTheme(theme()).Run(); err != nil { return err }
+            } else {
+                path = selected
+            }
+        } else {
+            form := huh.NewForm(
+                huh.NewGroup(
+                    huh.NewInput().Title("Sequence name").Placeholder("requirements").Value(&name).Validate(notEmpty),
+                    huh.NewInput().Title("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)").Placeholder(".").Value(&path),
+                    huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
+                ),
+            ).WithTheme(theme())
+            if err := form.Run(); err != nil { return err }
+        }
     }
     after := atoiDefault(afterStr, 0)
     resolvedPath := cwd
@@ -358,14 +382,45 @@ func charmCreateTask() error {
         ).WithTheme(theme())
         if err := form.Run(); err != nil { return err }
     } else {
-        form := huh.NewForm(
-            huh.NewGroup(
-                huh.NewInput().Title("Task name").Placeholder("user_research").Value(&name).Validate(notEmpty),
-                huh.NewInput().Title("Sequence (dir or number, e.g., 01 or 01_requirements)").Placeholder(".").Value(&path),
-                huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
-            ),
-        ).WithTheme(theme())
-        if err := form.Run(); err != nil { return err }
+        // Offer sequence picker from nearest phase dir
+        basePhase := cwd
+        switch {
+        case isPhaseDirPath(cwd):
+            basePhase = cwd
+        case isSequenceDirPath(cwd):
+            basePhase = filepath.Dir(cwd)
+        default:
+            basePhase = findFestivalDir(cwd)
+        }
+        seqs := listSequenceDirs(basePhase)
+        if len(seqs) > 0 {
+            var selected string
+            opts := make([]huh.Option[string], 0, len(seqs)+1)
+            for _, s := range seqs { opts = append(opts, huh.NewOption(s, filepath.Join(basePhase, s))) }
+            opts = append(opts, huh.NewOption("Other...", "__other__"))
+            form := huh.NewForm(
+                huh.NewGroup(
+                    huh.NewInput().Title("Task name").Placeholder("user_research").Value(&name).Validate(notEmpty),
+                    huh.NewSelect[string]().Title("Select sequence").Options(opts...).Value(&selected),
+                    huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
+                ),
+            ).WithTheme(theme())
+            if err := form.Run(); err != nil { return err }
+            if selected == "__other__" {
+                if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Sequence (dir or number)").Value(&path))).WithTheme(theme()).Run(); err != nil { return err }
+            } else {
+                path = selected
+            }
+        } else {
+            form := huh.NewForm(
+                huh.NewGroup(
+                    huh.NewInput().Title("Task name").Placeholder("user_research").Value(&name).Validate(notEmpty),
+                    huh.NewInput().Title("Sequence (dir or number, e.g., 01 or 01_requirements)").Placeholder(".").Value(&path),
+                    huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr),
+                ),
+            ).WithTheme(theme())
+            if err := form.Run(); err != nil { return err }
+        }
     }
     after := atoiDefault(afterStr, 0)
 
