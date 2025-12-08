@@ -1,3 +1,10 @@
+---
+id: phase-goal
+aliases:
+  - pg
+description: Defines phase objective, success criteria, and quality metrics
+---
+
 # Phase Goal: [NNN_PHASE_NAME]
 
 **Phase:** [NNN_PHASE_NAME] | **Status:** [Planning/Active/Complete] | **Created:** [Date] | **Target Completion:** [Date]

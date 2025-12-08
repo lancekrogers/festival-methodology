@@ -1,3 +1,10 @@
+---
+id: sequence
+aliases:
+  - seq
+description: Plan a sequence of related tasks within a phase
+---
+
 # Sequence: [NN_sequence_name]
 
 **Sequence Number:** [NN] | **Phase:** [Phase Name] | **Parallel Sequences:** [List or None]

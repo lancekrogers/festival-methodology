@@ -1,3 +1,11 @@
+---
+id: context
+aliases:
+  - festival-context
+  - ctx
+description: Captures key decisions, rationale, and session handoff information
+---
+
 # Festival Context: [Festival Name]
 
 **Festival:** [Festival Name] | **Status:** [Planning/Active/Complete] | **Last Updated:** [Date]

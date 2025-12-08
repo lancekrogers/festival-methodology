@@ -1,3 +1,10 @@
+---
+id: sequence-goal
+aliases:
+  - sg
+description: Defines sequence objective, deliverables, and quality standards
+---
+
 # Sequence Goal: [NN_sequence_name]
 
 **Sequence:** [NN_sequence_name] | **Phase:** [NNN_PHASE_NAME] | **Status:** [Planning/Active/Complete] | **Created:** [Date]

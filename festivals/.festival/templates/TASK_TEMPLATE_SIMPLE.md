@@ -1,3 +1,11 @@
+---
+id: task-simple
+aliases:
+  - simple-task
+  - ts
+description: Streamlined task template for simple, well-understood tasks
+---
+
 # Task: [Task_Name]
 
 **Task Number:** [N] | **Parallel Group:** [N or None] | **Dependencies:** [Task numbers or None] | **Autonomy:** [high/medium/low]
