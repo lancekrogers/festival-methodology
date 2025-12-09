@@ -43,18 +43,24 @@ func NewLoader() Loader {
 
 // Load loads a single template file
 func (l *loaderImpl) Load(path string) (*Template, error) {
-	// Read file
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open template file %s: %w", path, err)
-	}
-	defer file.Close()
+    // Read file
+    file, err := os.Open(path)
+    if err != nil {
+        return nil, fmt.Errorf("failed to open template file %s: %w", path, err)
+    }
+    defer file.Close()
 
-	// Parse frontmatter and content
-	metadata, content, err := parseFrontmatter(file)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse template %s: %w", path, err)
-	}
+    // Parse frontmatter and content. If YAML frontmatter parsing fails,
+    // fall back to treating the entire file as content without metadata.
+    metadata, content, err := parseFrontmatter(file)
+    if err != nil {
+        // Tolerant fallback for non‑YAML frontmatter: load full file content
+        b, rerr := os.ReadFile(path)
+        if rerr != nil {
+            return nil, fmt.Errorf("failed to read template %s: %w", path, err)
+        }
+        return &Template{Path: path, Metadata: nil, Content: string(b)}, nil
+    }
 
 	t := &Template{
 		Path:     path,
