@@ -40,8 +40,8 @@ func Execute() error {
 func init() {
     // Enforce being inside a festivals/ tree for most commands
     rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-        // Allow root (help/version), init and sync to run anywhere
-        if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "sync" || cmd.Name() == "help" || cmd.Name() == "tui" {
+        // Allow root (help/version), init, sync, and count to run anywhere
+        if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "sync" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" {
             return nil
         }
         cwd, _ := os.Getwd()
