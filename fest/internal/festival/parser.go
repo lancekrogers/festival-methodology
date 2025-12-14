@@ -313,3 +313,29 @@ func NormalizeName(fullName string) string {
 	// Return as-is if no pattern matches
 	return strings.TrimSuffix(fullName, ".md")
 }
+
+// IsPhase checks if a directory name matches the phase pattern (3-digit prefix)
+func IsPhase(name string) bool {
+	pattern := regexp.MustCompile(`^\d{3}_`)
+	return pattern.MatchString(name)
+}
+
+// IsSequence checks if a directory name matches the sequence pattern (2-digit prefix)
+func IsSequence(name string) bool {
+	pattern := regexp.MustCompile(`^\d{2}_`)
+	return pattern.MatchString(name)
+}
+
+// ParseTaskNumber extracts the task number from a task filename
+func ParseTaskNumber(name string) int {
+	pattern := regexp.MustCompile(`^(\d{2})_`)
+	matches := pattern.FindStringSubmatch(name)
+	if matches == nil {
+		return 0
+	}
+	num, err := strconv.Atoi(matches[1])
+	if err != nil {
+		return 0
+	}
+	return num
+}

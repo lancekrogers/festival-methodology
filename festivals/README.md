@@ -130,6 +130,99 @@ Successfully finished festivals. Move from `active/` when all objectives achieve
 
 Archived festivals - cancelled, deprioritized, or paused work. Move here to keep workspace clean.
 
+## Using the fest CLI (Recommended for AI Agents)
+
+The `fest` CLI provides efficient festival management that **saves tokens and ensures structure consistency**. Always use CLI commands instead of manually creating files.
+
+### Why Use CLI Instead of Manual File Creation
+
+| Approach | Token Cost | Structure Guarantee | Speed |
+|----------|------------|---------------------|-------|
+| Manual file creation | High (read template + write file) | Error-prone | Slow |
+| CLI with `--json` | Low (single command) | Guaranteed correct | Fast |
+
+### Quick Reference
+
+```bash
+# Create a new festival
+fest create festival --name "my-project" --goal "Build X" --json
+
+# Create phases
+fest create phase --name "PLAN" --json
+fest create phase --name "IMPLEMENT" --json
+
+# Create sequences (run from inside phase directory)
+fest create sequence --name "requirements" --json
+
+# Create tasks (run from inside sequence directory)
+fest create task --name "analyze_requirements" --json
+
+# Sync quality gate tasks to all sequences
+fest task defaults sync --dry-run --json
+fest task defaults sync --approve --json
+```
+
+### Agent Workflow Pattern
+
+1. **Use `fest create` commands** with `--json` flag for machine-readable output
+2. **Parse JSON response** to confirm success and get created file paths
+3. **Use `fest task defaults sync`** after creating sequences to add quality gates
+4. **Edit only content sections** of generated files - structure is already correct
+
+### Available Commands
+
+| Command | Purpose | When to Use |
+|---------|---------|-------------|
+| `fest create festival` | Create festival scaffold | Starting new project |
+| `fest create phase` | Add phase to festival | Building structure |
+| `fest create sequence` | Add sequence to phase | Grouping tasks |
+| `fest create task` | Add task to sequence | Creating work items |
+| `fest task defaults sync` | Sync quality gates | After creating sequences |
+| `fest renumber` | Fix numbering gaps | After removing elements |
+| `fest count` | Token estimation | Planning context usage |
+
+### JSON Output
+
+All commands support `--json` for automation:
+
+```json
+{
+  "ok": true,
+  "action": "create_festival",
+  "festival": {
+    "name": "my-project",
+    "path": "/path/to/festivals/active/my-project"
+  },
+  "created": [
+    "FESTIVAL_OVERVIEW.md",
+    "FESTIVAL_GOAL.md",
+    "TODO.md"
+  ]
+}
+```
+
+### Quality Gate Configuration
+
+Create `fest.yaml` in your festival root to customize quality gate tasks:
+
+```yaml
+version: "1.0"
+quality_gates:
+  enabled: true
+  tasks:
+    - id: testing_and_verify
+      template: QUALITY_GATE_TESTING
+      enabled: true
+    - id: code_review
+      template: QUALITY_GATE_REVIEW
+      enabled: true
+    - id: review_results_iterate
+      template: QUALITY_GATE_ITERATE
+      enabled: true
+```
+
+For full CLI documentation, see `.festival/CLI_REFERENCE.md`.
+
 ## Remember: Preserve Context
 
 Your context window is precious. Reading all documentation upfront wastes context that should be used for actual work. Follow this README's instructions to read resources just-in-time.

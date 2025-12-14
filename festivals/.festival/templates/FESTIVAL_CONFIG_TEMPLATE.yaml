@@ -1,0 +1,71 @@
+# fest.yaml - Festival Configuration Template
+#
+# Place this file at the root of your festival directory.
+# It customizes quality gate behavior and template preferences.
+#
+# Usage:
+#   1. Copy this file to your festival root as "fest.yaml"
+#   2. Customize the settings below
+#   3. Run "fest task defaults sync --approve" to apply
+
+version: "1.0"
+
+# Quality gate tasks added to implementation sequences
+quality_gates:
+  # Enable/disable quality gates entirely
+  enabled: true
+
+  # Auto-add quality gates when creating sequences via CLI
+  auto_append: true
+
+  # Define which quality gate tasks to include
+  tasks:
+    # Testing and verification task
+    - id: testing_and_verify
+      template: QUALITY_GATE_TESTING
+      name: "Testing and Verification"
+      enabled: true
+      customizations:
+        # Custom test command (optional)
+        test_command: "make test"
+        # Minimum coverage percentage (optional)
+        coverage_threshold: 80
+
+    # Code review task
+    - id: code_review
+      template: QUALITY_GATE_REVIEW
+      name: "Code Review"
+      enabled: true
+      customizations:
+        # Custom lint command (optional)
+        lint_command: "make lint"
+
+    # Review results and iterate task
+    - id: review_results_iterate
+      template: QUALITY_GATE_ITERATE
+      name: "Review Results and Iterate"
+      enabled: true
+
+# Sequences matching these patterns won't get quality gates
+# (planning/research sequences typically don't need them)
+excluded_patterns:
+  - "*_planning"
+  - "*_research"
+  - "*_requirements"
+  - "*_docs"
+
+# Template preferences
+templates:
+  # Default task template (TASK_TEMPLATE or TASK_TEMPLATE_SIMPLE)
+  task_default: TASK_TEMPLATE_SIMPLE
+
+  # Prefer simple templates when creating elements
+  prefer_simple: true
+
+# File tracking for modification detection
+tracking:
+  # Enable checksum tracking to detect manual modifications
+  enabled: true
+
+  # File to store checksums (relative to festival root)
+  checksum_file: ".festival-checksums.json"

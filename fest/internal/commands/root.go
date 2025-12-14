@@ -79,4 +79,7 @@ func init() {
 	createCmd.AddCommand(NewCreateSequenceCommand())
 	createCmd.AddCommand(NewCreateTaskCommand())
 	rootCmd.AddCommand(createCmd)
+
+	// Task management commands
+	rootCmd.AddCommand(NewTaskCommand())
 }
