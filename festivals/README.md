@@ -64,7 +64,7 @@ Templates are in `.festival/templates/` but should ONLY be read when you reach t
 
 ## Directory Structure
 
-```
+```text
 festivals/                          # Your festival workspace
 ├── planned/                        # Festivals being planned
 ├── active/                         # Currently executing festivals

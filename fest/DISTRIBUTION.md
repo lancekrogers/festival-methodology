@@ -123,7 +123,7 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-2. The workflow will:
+1. The workflow will:
    - Build binaries for all platforms
    - Ad-hoc sign macOS binaries
    - Create archives
