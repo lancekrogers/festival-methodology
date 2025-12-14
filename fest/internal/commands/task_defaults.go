@@ -63,12 +63,12 @@ type taskDefaultsSyncOptions struct {
 
 // Sync result structure
 type taskDefaultsSyncResult struct {
-	OK      bool              `json:"ok"`
-	Action  string            `json:"action"`
-	DryRun  bool              `json:"dry_run"`
-	Changes []syncChange      `json:"changes,omitempty"`
-	Summary syncSummary       `json:"summary,omitempty"`
-	Errors  []map[string]any  `json:"errors,omitempty"`
+	OK       bool             `json:"ok"`
+	Action   string           `json:"action"`
+	DryRun   bool             `json:"dry_run"`
+	Changes  []syncChange     `json:"changes,omitempty"`
+	Summary  syncSummary      `json:"summary,omitempty"`
+	Errors   []map[string]any `json:"errors,omitempty"`
 	Warnings []string         `json:"warnings,omitempty"`
 }
 
@@ -725,10 +725,10 @@ func runTaskDefaultsInit(jsonOutput bool) error {
 			enc := json.NewEncoder(os.Stdout)
 			enc.SetIndent("", "  ")
 			return enc.Encode(map[string]any{
-				"ok":      false,
-				"action":  "task_defaults_init",
-				"error":   "fest.yaml already exists",
-				"path":    configPath,
+				"ok":     false,
+				"action": "task_defaults_init",
+				"error":  "fest.yaml already exists",
+				"path":   configPath,
 			})
 		}
 		return fmt.Errorf("fest.yaml already exists at %s", configPath)

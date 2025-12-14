@@ -33,26 +33,26 @@ type createSequenceResult struct {
 
 // NewCreateSequenceCommand adds 'create sequence'
 func NewCreateSequenceCommand() *cobra.Command {
-    opts := &createSequenceOptions{}
-    cmd := &cobra.Command{
-        Use:   "sequence",
-        Short: "Insert a new sequence and render its goal file",
-        RunE: func(cmd *cobra.Command, args []string) error {
-            if cmd.Flags().NFlag() == 0 {
-                return StartCreateSequenceTUI()
-            }
-            if strings.TrimSpace(opts.name) == "" {
-                return fmt.Errorf("--name is required (or run without flags to open TUI)")
-            }
-            return runCreateSequence(opts)
-        },
-    }
-    cmd.Flags().IntVar(&opts.after, "after", 0, "Insert after this number (0 inserts at beginning)")
-    cmd.Flags().StringVar(&opts.name, "name", "", "Sequence name (required)")
-    cmd.Flags().StringVar(&opts.path, "path", ".", "Path to phase directory (directory containing numbered sequences)")
-    cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON vars for rendering")
-    cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
-    return cmd
+	opts := &createSequenceOptions{}
+	cmd := &cobra.Command{
+		Use:   "sequence",
+		Short: "Insert a new sequence and render its goal file",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if cmd.Flags().NFlag() == 0 {
+				return StartCreateSequenceTUI()
+			}
+			if strings.TrimSpace(opts.name) == "" {
+				return fmt.Errorf("--name is required (or run without flags to open TUI)")
+			}
+			return runCreateSequence(opts)
+		},
+	}
+	cmd.Flags().IntVar(&opts.after, "after", 0, "Insert after this number (0 inserts at beginning)")
+	cmd.Flags().StringVar(&opts.name, "name", "", "Sequence name (required)")
+	cmd.Flags().StringVar(&opts.path, "path", ".", "Path to phase directory (directory containing numbered sequences)")
+	cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON vars for rendering")
+	cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
+	return cmd
 }
 
 func runCreateSequence(opts *createSequenceOptions) error {
@@ -71,7 +71,7 @@ func runCreateSequence(opts *createSequenceOptions) error {
 	}
 
 	// Insert sequence
-    ren := festival.NewRenumberer(festival.RenumberOptions{AutoApprove: true, Quiet: true})
+	ren := festival.NewRenumberer(festival.RenumberOptions{AutoApprove: true, Quiet: true})
 	if err := ren.InsertSequence(absPath, opts.after, opts.name); err != nil {
 		return emitCreateSequenceError(opts, fmt.Errorf("failed to insert sequence: %w", err))
 	}

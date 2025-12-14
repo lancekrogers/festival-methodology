@@ -11,9 +11,9 @@ import (
 
 // UI handles user interface operations
 type UI struct {
-    noColor bool
-    verbose bool
-    reader  *bufio.Reader
+	noColor bool
+	verbose bool
+	reader  *bufio.Reader
 }
 
 // New creates a new UI handler
@@ -107,30 +107,30 @@ func (u *UI) Choose(message string, options []string) int {
 
 // Prompt asks the user to input a value
 func (u *UI) Prompt(label string) string {
-    fmt.Printf("%s: ", label)
-    response, err := u.reader.ReadString('\n')
-    if err != nil {
-        return ""
-    }
-    return strings.TrimSpace(response)
+	fmt.Printf("%s: ", label)
+	response, err := u.reader.ReadString('\n')
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(response)
 }
 
 // PromptDefault asks the user to input a value with a default
 func (u *UI) PromptDefault(label, def string) string {
-    if def != "" {
-        fmt.Printf("%s [%s]: ", label, def)
-    } else {
-        fmt.Printf("%s: ", label)
-    }
-    response, err := u.reader.ReadString('\n')
-    if err != nil {
-        return def
-    }
-    response = strings.TrimSpace(response)
-    if response == "" {
-        return def
-    }
-    return response
+	if def != "" {
+		fmt.Printf("%s [%s]: ", label, def)
+	} else {
+		fmt.Printf("%s: ", label)
+	}
+	response, err := u.reader.ReadString('\n')
+	if err != nil {
+		return def
+	}
+	response = strings.TrimSpace(response)
+	if response == "" {
+		return def
+	}
+	return response
 }
 
 // ShowDiff shows the difference between two files

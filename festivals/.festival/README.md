@@ -357,110 +357,21 @@ Planning → Review → Execution Management
 
 ## fest CLI Tool
 
-The `fest` CLI provides efficient festival management that **saves tokens and enforces structure consistency**. AI agents should prefer CLI commands over manual file creation.
-
-### Installation
-
-The fest CLI is in the `fest/` directory. Build and install:
+Use the `fest` CLI for efficient festival management. It saves tokens and ensures correct structure.
 
 ```bash
-cd fest && just build && just install
-```
+# Learn the methodology
+fest understand
 
-Or use directly:
-
-```bash
-./fest/bin/fest --help
-```
-
-### Why Use CLI
-
-| Approach | Token Cost | Structure | Speed |
-|----------|------------|-----------|-------|
-| Manual creation | High | Error-prone | Slow |
-| CLI with `--json` | Low | Guaranteed | Fast |
-
-### Essential Commands
-
-```bash
-# Create festival structure
-fest create festival --name "my-project" --goal "Build X" --json
+# Create structure
+fest create festival --name "my-project" --json
 fest create phase --name "IMPLEMENT" --json
-fest create sequence --name "api" --json
-fest create task --name "endpoints" --json
 
-# Manage quality gates
-fest task defaults sync --dry-run --json   # Preview
-fest task defaults sync --approve --json   # Apply
-fest task defaults add --sequence ./path --approve --json
-
-# Utilities
-fest renumber phase .   # Fix numbering
-fest count ./path       # Token estimation
+# Add quality gates
+fest task defaults sync --approve --json
 ```
 
-### Command Reference
-
-| Command | Purpose |
-|---------|---------|
-| `fest create festival` | Create festival scaffold |
-| `fest create phase` | Add phase |
-| `fest create sequence` | Add sequence |
-| `fest create task` | Add task |
-| `fest task defaults sync` | Sync quality gates to all sequences |
-| `fest task defaults add` | Add quality gates to specific sequence |
-| `fest task defaults show` | Show fest.yaml config |
-| `fest task defaults init` | Create starter fest.yaml |
-| `fest renumber` | Fix numbering gaps |
-| `fest insert` | Insert and renumber |
-| `fest remove` | Remove and renumber |
-| `fest count` | Token counting |
-| `fest apply` | Apply template by ID |
-
-### Festival Configuration
-
-Create `fest.yaml` in festival root to customize quality gates:
-
-```yaml
-version: "1.0"
-quality_gates:
-  enabled: true
-  tasks:
-    - id: testing_and_verify
-      template: QUALITY_GATE_TESTING
-      enabled: true
-    - id: code_review
-      template: QUALITY_GATE_REVIEW
-      enabled: true
-    - id: review_results_iterate
-      template: QUALITY_GATE_ITERATE
-      enabled: true
-excluded_patterns:
-  - "*_planning"
-  - "*_requirements"
-```
-
-### JSON Output
-
-All commands support `--json` for automation:
-
-```json
-{
-  "ok": true,
-  "action": "create_phase",
-  "phase": {"id": "001_IMPLEMENT", "name": "IMPLEMENT"},
-  "created": ["001_IMPLEMENT/PHASE_GOAL.md"]
-}
-```
-
-### Agent Workflow
-
-1. Use `fest create` commands with `--json`
-2. Parse JSON to verify success
-3. Run `fest task defaults sync` after creating sequences
-4. Edit only content sections - structure is correct
-
-For complete documentation, see `CLI_REFERENCE.md`.
+Run `fest understand` for methodology guidance, or `fest --help` for command details.
 
 ## Examples
 

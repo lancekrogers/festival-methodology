@@ -13,12 +13,12 @@ import (
 )
 
 type createFestivalOptions struct {
-    name       string
-    goal       string
-    tags       string
-    varsFile   string
-    jsonOutput bool
-    dest       string // "active" or "planned"
+	name       string
+	goal       string
+	tags       string
+	varsFile   string
+	jsonOutput bool
+	dest       string // "active" or "planned"
 }
 
 type createFestivalResult struct {
@@ -33,44 +33,44 @@ type createFestivalResult struct {
 
 // NewCreateFestivalCommand adds 'create festival'
 func NewCreateFestivalCommand() *cobra.Command {
-    opts := &createFestivalOptions{}
-    cmd := &cobra.Command{
-        Use:   "festival",
-        Short: "Create a new festival scaffold under festivals/(active|planned)",
-        RunE: func(cmd *cobra.Command, args []string) error {
-            // If no flags were provided, open TUI for this flow
-            if cmd.Flags().NFlag() == 0 {
-                return StartCreateFestivalTUI()
-            }
-            // Otherwise, require name and proceed
-            if strings.TrimSpace(opts.name) == "" {
-                return fmt.Errorf("--name is required (or run without flags to open TUI)")
-            }
-            return runCreateFestival(opts)
-        },
-    }
-    cmd.Flags().StringVar(&opts.name, "name", "", "Festival name (required)")
-    cmd.Flags().StringVar(&opts.goal, "goal", "", "Festival goal")
-    cmd.Flags().StringVar(&opts.tags, "tags", "", "Comma-separated tags")
-    cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON file with variables")
-    cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
-    cmd.Flags().StringVar(&opts.dest, "dest", "active", "Destination under festivals/: active or planned")
-    return cmd
+	opts := &createFestivalOptions{}
+	cmd := &cobra.Command{
+		Use:   "festival",
+		Short: "Create a new festival scaffold under festivals/(active|planned)",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// If no flags were provided, open TUI for this flow
+			if cmd.Flags().NFlag() == 0 {
+				return StartCreateFestivalTUI()
+			}
+			// Otherwise, require name and proceed
+			if strings.TrimSpace(opts.name) == "" {
+				return fmt.Errorf("--name is required (or run without flags to open TUI)")
+			}
+			return runCreateFestival(opts)
+		},
+	}
+	cmd.Flags().StringVar(&opts.name, "name", "", "Festival name (required)")
+	cmd.Flags().StringVar(&opts.goal, "goal", "", "Festival goal")
+	cmd.Flags().StringVar(&opts.tags, "tags", "", "Comma-separated tags")
+	cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON file with variables")
+	cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
+	cmd.Flags().StringVar(&opts.dest, "dest", "active", "Destination under festivals/: active or planned")
+	return cmd
 }
 
 func runCreateFestival(opts *createFestivalOptions) error {
 	display := ui.New(noColor, verbose)
-    cwd, _ := os.Getwd()
+	cwd, _ := os.Getwd()
 
-    // Resolve festivals root and template root
-    festivalsRoot, err := tpl.FindFestivalsRoot(cwd)
-    if err != nil {
-        return emitCreateFestivalError(opts, fmt.Errorf("%w", err))
-    }
-    tmplRoot, err := tpl.LocalTemplateRoot(cwd)
-    if err != nil {
-        return emitCreateFestivalError(opts, err)
-    }
+	// Resolve festivals root and template root
+	festivalsRoot, err := tpl.FindFestivalsRoot(cwd)
+	if err != nil {
+		return emitCreateFestivalError(opts, fmt.Errorf("%w", err))
+	}
+	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
+	if err != nil {
+		return emitCreateFestivalError(opts, err)
+	}
 
 	// Load vars
 	vars := map[string]interface{}{}
@@ -89,16 +89,16 @@ func runCreateFestival(opts *createFestivalOptions) error {
 		ctx.SetCustom(k, v)
 	}
 
-    // Destination
-    slug := slugify(opts.name)
-    destCategory := strings.ToLower(strings.TrimSpace(opts.dest))
-    if destCategory != "planned" && destCategory != "active" {
-        destCategory = "active"
-    }
-    destDir := filepath.Join(festivalsRoot, destCategory, slug)
-    if err := os.MkdirAll(destDir, 0755); err != nil {
-        return emitCreateFestivalError(opts, fmt.Errorf("failed to create festival directory: %w", err))
-    }
+	// Destination
+	slug := slugify(opts.name)
+	destCategory := strings.ToLower(strings.TrimSpace(opts.dest))
+	if destCategory != "planned" && destCategory != "active" {
+		destCategory = "active"
+	}
+	destDir := filepath.Join(festivalsRoot, destCategory, slug)
+	if err := os.MkdirAll(destDir, 0755); err != nil {
+		return emitCreateFestivalError(opts, fmt.Errorf("failed to create festival directory: %w", err))
+	}
 
 	// Render/copy core files
 	mgr := tpl.NewManager()
@@ -142,24 +142,24 @@ func runCreateFestival(opts *createFestivalOptions) error {
 		created = append(created, outPath)
 	}
 
-    if opts.jsonOutput {
-        return emitCreateFestivalJSON(opts, createFestivalResult{
-            OK:     true,
-            Action: "create_festival",
-            Festival: map[string]string{
-                "name": opts.name,
-                "slug": slug,
-                "dest": destCategory,
-            },
-            Created: created,
-        })
-    }
+	if opts.jsonOutput {
+		return emitCreateFestivalJSON(opts, createFestivalResult{
+			OK:     true,
+			Action: "create_festival",
+			Festival: map[string]string{
+				"name": opts.name,
+				"slug": slug,
+				"dest": destCategory,
+			},
+			Created: created,
+		})
+	}
 
-    display.Success("Created festival: %s (%s)", slug, destCategory)
-    for _, p := range created {
-        display.Info("  • %s", p)
-    }
-    return nil
+	display.Success("Created festival: %s (%s)", slug, destCategory)
+	for _, p := range created {
+		display.Info("  • %s", p)
+	}
+	return nil
 }
 
 func parseTags(s string) []string {

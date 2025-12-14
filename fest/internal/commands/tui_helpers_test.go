@@ -63,10 +63,10 @@ func TestSlugify(t *testing.T) {
 
 func TestAtoiDefault(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    string
-		def      int
-		want     int
+		name  string
+		input string
+		def   int
+		want  int
 	}{
 		{"valid number", "42", 0, 42},
 		{"valid with spaces", "  42  ", 0, 42},
@@ -89,9 +89,9 @@ func TestAtoiDefault(t *testing.T) {
 
 func TestIsPhaseDirPath(t *testing.T) {
 	tests := []struct {
-		name  string
-		path  string
-		want  bool
+		name string
+		path string
+		want bool
 	}{
 		{"valid 3-digit", "/festival/001_PLANNING", true},
 		{"valid 3-digit with longer name", "/festival/002_IMPLEMENTATION_PHASE", true},
@@ -116,9 +116,9 @@ func TestIsPhaseDirPath(t *testing.T) {
 
 func TestIsSequenceDirPath(t *testing.T) {
 	tests := []struct {
-		name  string
-		path  string
-		want  bool
+		name string
+		path string
+		want bool
 	}{
 		{"valid 2-digit", "/phase/01_requirements", true},
 		{"valid 2-digit with longer name", "/phase/02_design_review", true},

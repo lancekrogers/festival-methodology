@@ -11,14 +11,14 @@ import (
 
 // RenumberOptions configures renumbering behavior
 type RenumberOptions struct {
-    DryRun    bool
-    Backup    bool
-    StartFrom int
-    Verbose   bool
-    // Quiet suppresses all printouts (no report, no success lines)
-    Quiet     bool
-    // AutoApprove skips confirmation prompts and applies changes immediately
-    AutoApprove bool
+	DryRun    bool
+	Backup    bool
+	StartFrom int
+	Verbose   bool
+	// Quiet suppresses all printouts (no report, no success lines)
+	Quiet bool
+	// AutoApprove skips confirmation prompts and applies changes immediately
+	AutoApprove bool
 }
 
 // Renumberer handles renumbering operations
@@ -429,51 +429,51 @@ func (r *Renumberer) RemoveElement(path string) error {
 
 // executeChanges applies the planned changes
 func (r *Renumberer) executeChanges() error {
-    if len(r.changes) == 0 {
-        if !r.options.Quiet {
-            fmt.Println("No changes needed.")
-        }
-        return nil
-    }
+	if len(r.changes) == 0 {
+		if !r.options.Quiet {
+			fmt.Println("No changes needed.")
+		}
+		return nil
+	}
 
-    // Display changes
-    if !r.options.Quiet {
-        r.displayChanges()
-    }
+	// Display changes
+	if !r.options.Quiet {
+		r.displayChanges()
+	}
 
-    if r.options.DryRun {
-        if !r.options.Quiet {
-            fmt.Println("\nDRY RUN - Preview complete.")
-        }
-        // If auto-approve, proceed to apply after dry-run preview
-        if r.options.AutoApprove {
-            if !r.options.Quiet {
-                fmt.Println("\nApplying changes...")
-            }
-        } else {
-            // Prompt user to apply changes after dry-run
-            if r.confirmApplyAfterDryRun() {
-                if !r.options.Quiet {
-                    fmt.Println("\nApplying changes...")
-                }
-            } else {
-                if !r.options.Quiet {
-                    fmt.Println("Operation cancelled.")
-                }
-                return nil
-            }
-        }
-    } else {
-        // Not in dry-run mode, confirm changes before applying
-        if !r.options.AutoApprove {
-            if !r.confirmChanges() {
-                if !r.options.Quiet {
-                    fmt.Println("Operation cancelled.")
-                }
-                return nil
-            }
-        }
-    }
+	if r.options.DryRun {
+		if !r.options.Quiet {
+			fmt.Println("\nDRY RUN - Preview complete.")
+		}
+		// If auto-approve, proceed to apply after dry-run preview
+		if r.options.AutoApprove {
+			if !r.options.Quiet {
+				fmt.Println("\nApplying changes...")
+			}
+		} else {
+			// Prompt user to apply changes after dry-run
+			if r.confirmApplyAfterDryRun() {
+				if !r.options.Quiet {
+					fmt.Println("\nApplying changes...")
+				}
+			} else {
+				if !r.options.Quiet {
+					fmt.Println("Operation cancelled.")
+				}
+				return nil
+			}
+		}
+	} else {
+		// Not in dry-run mode, confirm changes before applying
+		if !r.options.AutoApprove {
+			if !r.confirmChanges() {
+				if !r.options.Quiet {
+					fmt.Println("Operation cancelled.")
+				}
+				return nil
+			}
+		}
+	}
 
 	// Create backup if requested
 	if r.options.Backup {
@@ -520,10 +520,10 @@ func (r *Renumberer) executeChanges() error {
 		}
 	}
 
-    if !r.options.Quiet {
-        fmt.Printf("\n✓ Successfully applied %d changes.\n", len(r.changes))
-    }
-    return nil
+	if !r.options.Quiet {
+		fmt.Printf("\n✓ Successfully applied %d changes.\n", len(r.changes))
+	}
+	return nil
 }
 
 // displayChanges shows planned changes

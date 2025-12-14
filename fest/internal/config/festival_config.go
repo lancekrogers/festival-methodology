@@ -15,11 +15,11 @@ const (
 
 // FestivalConfig represents per-festival configuration
 type FestivalConfig struct {
-	Version          string              `yaml:"version"`
-	QualityGates     QualityGatesConfig  `yaml:"quality_gates"`
-	ExcludedPatterns []string            `yaml:"excluded_patterns"`
-	Templates        TemplatePrefs       `yaml:"templates"`
-	Tracking         TrackingConfig      `yaml:"tracking"`
+	Version          string             `yaml:"version"`
+	QualityGates     QualityGatesConfig `yaml:"quality_gates"`
+	ExcludedPatterns []string           `yaml:"excluded_patterns"`
+	Templates        TemplatePrefs      `yaml:"templates"`
+	Tracking         TrackingConfig     `yaml:"tracking"`
 }
 
 // QualityGatesConfig contains quality gate settings

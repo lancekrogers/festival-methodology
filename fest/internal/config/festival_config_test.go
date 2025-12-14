@@ -61,7 +61,8 @@ quality_gates:
       template: CUSTOM_TEMPLATE
       enabled: true
 excluded_patterns:
-  - "*_docs"
+
+- "*_docs"
 `
 	configPath := filepath.Join(tmpDir, FestivalConfigFileName)
 	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {

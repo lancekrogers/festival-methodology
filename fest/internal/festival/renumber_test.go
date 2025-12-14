@@ -271,8 +271,8 @@ func TestRenumberer_ExecuteOrder_RenameHighestFirst(t *testing.T) {
 	// Verify final structure
 	expected := []string{
 		"001_PLANNING",
-		"002_IMPLEMENT",  // was 002, stayed 002 because insert was at 0+1=1, so 002 becomes 003
-		"003_IMPLEMENT",  // Actually 002 should become 003
+		"002_IMPLEMENT", // was 002, stayed 002 because insert was at 0+1=1, so 002 becomes 003
+		"003_IMPLEMENT", // Actually 002 should become 003
 	}
 	_ = expected // Structure validation
 

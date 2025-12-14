@@ -1,5 +1,7 @@
-#!/bin/bash
+# !/bin/bash
+
 # Sign macOS binary for distribution
+
 # This script handles code signing for macOS binaries to avoid Gatekeeper warnings
 
 set -e
@@ -8,6 +10,7 @@ BINARY_NAME="${1:-fest}"
 IDENTITY="${CODESIGN_IDENTITY:-}"
 
 # Colors for output
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -17,6 +20,7 @@ echo -e "${GREEN}macOS Binary Signing Script${NC}"
 echo "================================"
 
 # Check if binary exists
+
 if [ ! -f "$BINARY_NAME" ]; then
     echo -e "${RED}Error: Binary '$BINARY_NAME' not found${NC}"
     echo "Please build the binary first with: make build"
@@ -24,12 +28,14 @@ if [ ! -f "$BINARY_NAME" ]; then
 fi
 
 # Check if running on macOS
+
 if [[ "$OSTYPE" != "darwin"* ]]; then
     echo -e "${YELLOW}Warning: Not running on macOS, skipping signing${NC}"
     exit 0
 fi
 
 # Check if codesign is available
+
 if ! command -v codesign &> /dev/null; then
     echo -e "${RED}Error: codesign command not found${NC}"
     echo "This script must be run on macOS with Xcode Command Line Tools installed"
@@ -37,10 +43,11 @@ if ! command -v codesign &> /dev/null; then
 fi
 
 # Ad-hoc signing if no identity provided
+
 if [ -z "$IDENTITY" ]; then
     echo -e "${YELLOW}No signing identity provided, using ad-hoc signing${NC}"
     echo "For distribution, set CODESIGN_IDENTITY environment variable"
-    
+
     # Ad-hoc sign the binary
     echo "Signing $BINARY_NAME with ad-hoc signature..."
     codesign --force --deep --sign - "$BINARY_NAME"
@@ -54,7 +61,7 @@ if [ -z "$IDENTITY" ]; then
 else
     # Sign with provided identity
     echo "Signing $BINARY_NAME with identity: $IDENTITY"
-    
+
     # Sign the binary with hardened runtime for notarization
     codesign --force \
              --deep \
@@ -72,12 +79,13 @@ else
 fi
 
 # Verify the signature
+
 echo "Verifying signature..."
 codesign --verify --deep --strict --verbose=2 "$BINARY_NAME"
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Signature verification passed${NC}"
-    
+
     # Display signature info
     echo ""
     echo "Signature Information:"
