@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/docs/understand"
 	"github.com/spf13/cobra"
 )
 
@@ -108,156 +109,52 @@ func newUnderstandTemplatesCmd() *cobra.Command {
 }
 
 func printOverview(dotFestival string) {
-	fmt.Print(`
-Festival Methodology - AI Agent Build System
-=============================================
-
-Festival Methodology is a goal-oriented project management system designed
-for human-AI collaboration and long-running autonomous development cycles.
-
-`)
-
-	// Try to pull core concepts from .festival/README.md
-	if dotFestival != "" {
-		if content := extractSection(filepath.Join(dotFestival, "README.md"), "Core Concepts", "Quick Navigation"); content != "" {
-			fmt.Println(content)
-		} else {
-			printDefaultCoreConcepts()
-		}
-	} else {
-		printDefaultCoreConcepts()
-	}
-
-	fmt.Print(`
-
-Quick Start
------------
-
-  fest understand --help        # See all topics
-  fest understand rules         # MANDATORY structure requirements
-  fest understand templates     # Variables that save tokens
-  fest understand structure     # Scaffold examples with annotations
-
-Token-Efficient Workflow
-------------------------
-
-Use the fest CLI instead of manual file creation:
-
-  fest create festival --name "my-project" --goal "Build X" --json
-  fest create phase --name "IMPLEMENT" --json
-  fest create sequence --name "api" --json
-  fest task defaults sync --approve --json   # Add quality gates
-
-Variables are passed to templates - no post-creation editing needed.
-Run 'fest understand templates' to see all available variables.
-
-`)
+	// Use embedded overview content
+	fmt.Print("\n")
+	fmt.Print(understand.Load("overview.txt"))
 
 	if dotFestival != "" {
-		fmt.Printf("Source: %s\n", dotFestival)
+		fmt.Printf("\nSource: %s\n", dotFestival)
 	} else {
-		fmt.Println("Note: No .festival/ directory found. Showing default content.")
+		fmt.Println("\nNote: No .festival/ directory found. Showing default content.")
 		fmt.Println("      Run from a festivals/ tree to see your methodology resources.")
 	}
 }
 
-func printDefaultCoreConcepts() {
-	fmt.Print(`Core Concepts
--------------
-
-• Three-level hierarchy: Phases → Sequences → Tasks
-• Requirements-driven: Implementation only after requirements are defined
-• Just-in-time context: Read templates and docs only when needed
-• Quality gates: Every sequence ends with testing, review, iteration
-`)
-}
-
 func printMethodology(dotFestival string) {
-	fmt.Print(`
-Festival Methodology - Core Principles
-======================================
-
-`)
-
-	// Try to read from FESTIVAL_SOFTWARE_PROJECT_MANAGEMENT.md
+	// Hybrid: try .festival/ supplements first, fall back to embedded defaults
 	if dotFestival != "" {
 		docPath := filepath.Join(dotFestival, "FESTIVAL_SOFTWARE_PROJECT_MANAGEMENT.md")
 		if content := readFileContent(docPath); content != "" {
-			// Extract key sections
+			// Extract key sections from .festival/
 			if section := extractSection(content, "## Core Principles", "## "); section != "" {
+				fmt.Print("\nFestival Methodology - Core Principles\n")
+				fmt.Println("======================================")
 				fmt.Println(section)
-			} else {
-				// Show the whole file summary if no specific section
-				fmt.Printf("See: %s\n\n", docPath)
-				printDefaultMethodology()
+
+				// Also check README.md for additional methodology guidance
+				readmePath := filepath.Join(dotFestival, "README.md")
+				if rdContent := extractSection(readmePath, "Requirements-Driven Implementation", "### Standard 3-Phase"); rdContent != "" {
+					fmt.Println("\nRequirements-Driven Implementation")
+					fmt.Println("-----------------------------------")
+					fmt.Println(rdContent)
+				}
+
+				if paContent := extractSection(readmePath, "Phase Adaptability", "## Goal Files"); paContent != "" {
+					fmt.Println("\nPhase Adaptability")
+					fmt.Println("------------------")
+					fmt.Println(paContent)
+				}
+
+				fmt.Printf("\nSource: %s\n", dotFestival)
+				return
 			}
-		} else {
-			printDefaultMethodology()
 		}
-
-		// Also check README.md for methodology guidance
-		readmePath := filepath.Join(dotFestival, "README.md")
-		if content := extractSection(readmePath, "Requirements-Driven Implementation", "### Standard 3-Phase"); content != "" {
-			fmt.Println("\nRequirements-Driven Implementation")
-			fmt.Println("-----------------------------------")
-			fmt.Println(content)
-		}
-
-		if content := extractSection(readmePath, "Phase Adaptability", "## Goal Files"); content != "" {
-			fmt.Println("\nPhase Adaptability")
-			fmt.Println("------------------")
-			fmt.Println(content)
-		}
-	} else {
-		printDefaultMethodology()
 	}
 
-	if dotFestival != "" {
-		fmt.Printf("\nSource: %s\n", dotFestival)
-	}
-}
-
-func printDefaultMethodology() {
-	fmt.Print(`1. Goal-Oriented Development
-----------------------------
-
-Everything is organized around achieving a specific goal. A "festival"
-represents the complete journey from problem to solution.
-
-2. Requirements-Driven Implementation
-
--------------------------------------
-CRITICAL: Implementation sequences can ONLY be created AFTER requirements
-are defined. Never guess what to implement.
-
-  Human provides:
-  • Project goals and vision
-  • Requirements and specifications
-  • Architectural decisions
-  • Feedback and iteration guidance
-
-  AI agent creates:
-  • Structured sequences from requirements
-  • Detailed task specifications
-  • Implementation code
-  • Progress tracking and documentation
-
-3. Phase Adaptability
-
----------------------
-Phases are guidelines, not rigid requirements. Adapt to your needs.
-
-4. Quality Gates
-
-----------------
-Every implementation sequence ends with testing, review, and iteration tasks.
-Use 'fest task defaults sync' to add these automatically.
-
-5. Step-Based Progress
-
-----------------------
-Think in steps, not time. Track progress by completed tasks, not hours.
-`)
+	// Default: use embedded content
+	fmt.Print("\n")
+	fmt.Print(understand.Load("methodology.txt"))
 }
 
 func printStructure(dotFestival string) {
@@ -337,404 +234,57 @@ For template variables:    fest understand templates
 }
 
 func printScaffoldTree(variant string) {
-	switch variant {
-	case "simple":
-		fmt.Print(`my-festival/
-├── FESTIVAL_OVERVIEW.md              [REQUIRED] Goal and scope
-├── FESTIVAL_RULES.md                 [REQUIRED] Quality standards
-├── TODO.md                           Progress tracking
-│
-├── 001_PLAN/                         3-digit phase prefix
-│   ├── PHASE_GOAL.md                 [REQUIRED] Phase objectives
-│   └── 01_requirements/              2-digit sequence prefix
-│       ├── SEQUENCE_GOAL.md          [REQUIRED] Sequence objectives
-│       └── 01_gather_requirements.md 2-digit task prefix + .md
-│
-└── 002_IMPLEMENT/
-    ├── PHASE_GOAL.md                 [REQUIRED]
-    └── 01_core/
-        ├── SEQUENCE_GOAL.md          [REQUIRED]
-        ├── 01_implement_feature.md
-        └── 02_add_tests.md
-`)
-	case "standard":
-		fmt.Print(`my-festival/
-├── FESTIVAL_OVERVIEW.md              [REQUIRED]
-├── FESTIVAL_RULES.md                 [REQUIRED]
-├── TODO.md
-├── fest.yaml                         Quality gate config
-│
-├── 001_PLAN/
-│   ├── PHASE_GOAL.md                 [REQUIRED]
-│   └── 01_requirements/              (no quality gates - planning)
-│       ├── SEQUENCE_GOAL.md          [REQUIRED]
-│       ├── 01_gather_requirements.md
-│       └── 02_document_specs.md
-│
-├── 002_IMPLEMENT/
-│   ├── PHASE_GOAL.md                 [REQUIRED]
-│   ├── 01_backend/
-│   │   ├── SEQUENCE_GOAL.md          [REQUIRED]
-│   │   ├── 01_create_models.md       ┐
-│   │   ├── 02_implement_api.md       ├── Your tasks
-│   │   ├── 03_testing_and_verify.md  ← QUALITY GATE [REQUIRED]
-│   │   ├── 04_code_review.md         ← QUALITY GATE [REQUIRED]
-│   │   └── 05_review_results_iterate.md ← QUALITY GATE [REQUIRED]
-│   └── 02_frontend/
-│       ├── SEQUENCE_GOAL.md          [REQUIRED]
-│       ├── 01_create_components.md
-│       ├── 02_add_styling.md
-│       ├── 03_testing_and_verify.md  ← QUALITY GATE
-│       ├── 04_code_review.md         ← QUALITY GATE
-│       └── 05_review_results_iterate.md ← QUALITY GATE
-│
-└── 003_REVIEW_AND_UAT/
-    ├── PHASE_GOAL.md                 [REQUIRED]
-    └── 01_final_validation/
-        ├── SEQUENCE_GOAL.md          [REQUIRED]
-        └── 01_user_acceptance_testing.md
-`)
-	case "complex":
-		fmt.Print(`my-festival/
-├── FESTIVAL_OVERVIEW.md              [REQUIRED]
-├── FESTIVAL_RULES.md                 [REQUIRED]
-├── TODO.md
-├── fest.yaml
-│
-├── 001_RESEARCH/                     (no quality gates - research phase)
-│   ├── PHASE_GOAL.md                 [REQUIRED]
-│   └── 01_discovery/
-│       ├── SEQUENCE_GOAL.md          [REQUIRED]
-│       └── [research documents]
-│
-├── 002_PLAN/                         (no quality gates - planning phase)
-│   ├── PHASE_GOAL.md                 [REQUIRED]
-│   ├── 01_requirements/
-│   │   ├── SEQUENCE_GOAL.md          [REQUIRED]
-│   │   └── [requirement docs]
-│   └── 02_architecture/
-│       ├── SEQUENCE_GOAL.md          [REQUIRED]
-│       └── [design docs]
-│
-├── 003_IMPLEMENT_CORE/               (quality gates required)
-│   ├── PHASE_GOAL.md                 [REQUIRED]
-│   ├── 01_foundation/
-│   │   ├── SEQUENCE_GOAL.md          [REQUIRED]
-│   │   ├── [tasks...]
-│   │   └── [quality gates]           ← 3 required tasks
-│   └── 02_data_layer/
-│       ├── SEQUENCE_GOAL.md          [REQUIRED]
-│       ├── [tasks...]
-│       └── [quality gates]           ← 3 required tasks
-│
-├── 004_IMPLEMENT_FEATURES/           (quality gates required)
-│   ├── PHASE_GOAL.md                 [REQUIRED]
-│   ├── 01_feature_a/
-│   │   ├── SEQUENCE_GOAL.md          [REQUIRED]
-│   │   └── [tasks + quality gates]
-│   └── 02_feature_b/
-│       ├── SEQUENCE_GOAL.md          [REQUIRED]
-│       └── [tasks + quality gates]
-│
-└── 005_FINAL_REVIEW/
-    ├── PHASE_GOAL.md                 [REQUIRED]
-    └── 01_integration_testing/
-        ├── SEQUENCE_GOAL.md          [REQUIRED]
-        └── [validation tasks]
-`)
-	}
+	fmt.Print(understand.LoadScaffold(variant))
 }
 
 func printWorkflow(dotFestival string) {
-	fmt.Print(`
-Festival Workflow - Just-in-Time Reading
-========================================
-
-The just-in-time approach preserves context window for actual work.
-
-`)
-
-	// Try to read workflow guidance from .festival/README.md
+	// Hybrid: try .festival/ supplements first, fall back to embedded defaults
 	if dotFestival != "" {
 		readmePath := filepath.Join(dotFestival, "README.md")
+		hasContent := false
+
+		// Check if .festival/ has workflow content
 		if content := extractSection(readmePath, "When to Read What", "### Never Do This"); content != "" {
-			fmt.Println("When to Read What (from .festival/)")
+			fmt.Print("\nFestival Workflow - Just-in-Time Reading\n")
+			fmt.Println("========================================")
+			fmt.Println("\nThe just-in-time approach preserves context window for actual work.")
+			fmt.Println("\nWhen to Read What (from .festival/)")
 			fmt.Println("------------------------------------")
 			fmt.Println(content)
-		} else {
-			printDefaultWorkflowTable()
+			hasContent = true
+
+			if never := extractSection(readmePath, "### Never Do This", "### Always Do This"); never != "" {
+				fmt.Println("\nNEVER Do This")
+				fmt.Println("-------------")
+				fmt.Println(never)
+			}
+
+			if always := extractSection(readmePath, "### Always Do This", "## Quick Navigation"); always != "" {
+				fmt.Println("\nALWAYS Do This")
+				fmt.Println("--------------")
+				fmt.Println(always)
+			}
 		}
 
-		if content := extractSection(readmePath, "### Never Do This", "### Always Do This"); content != "" {
-			fmt.Println("\nNEVER Do This")
-			fmt.Println("-------------")
-			fmt.Println(content)
+		if hasContent {
+			fmt.Printf("\nSource: %s\n", dotFestival)
+			return
 		}
-
-		if content := extractSection(readmePath, "### Always Do This", "## Quick Navigation"); content != "" {
-			fmt.Println("\nALWAYS Do This")
-			fmt.Println("--------------")
-			fmt.Println(content)
-		}
-	} else {
-		printDefaultWorkflowTable()
-		printDefaultWorkflowRules()
 	}
 
-	fmt.Print(`
-
-Execution Pattern
------------------
-
-1. Read FESTIVAL_GOAL.md to understand the objective
-2. Check TODO.md for current status
-3. Navigate to the current phase/sequence
-4. Read ONLY the current task file
-5. Execute the task
-6. Mark complete and move to next
-
-Using fest CLI Efficiently
---------------------------
-
-The CLI is self-documenting. Use --help instead of reading docs:
-
-  fest --help                    # All commands
-  fest create --help             # Create subcommands
-  fest create festival --help    # Specific command details
-  fest task defaults --help      # Quality gate management
-
-JSON output provides structured responses:
-
-  fest create phase --name "IMPLEMENT" --json
-
-`)
-
-	if dotFestival != "" {
-		fmt.Printf("Source: %s\n", dotFestival)
-	}
-}
-
-func printDefaultWorkflowTable() {
-	fmt.Print(`
-Resource              Read When
-  ────────────────────  ─────────────────────────────────────
-  fest understand       Now - provides methodology overview
-  Templates             ONLY when creating that document type
-  Examples              ONLY when stuck or need clarification
-  Agents                ONLY when using that specific agent
-`)
-}
-
-func printDefaultWorkflowRules() {
-	fmt.Print(`
-NEVER Do This
--------------
-
-  ✗ Reading all templates upfront "to understand them"
-  ✗ Loading all agent files at once
-  ✗ Reading examples before trying yourself
-
-ALWAYS Do This
---------------
-
-  ✓ Read templates one at a time as you create documents
-  ✓ Read examples only when stuck
-  ✓ Close files after extracting what you need
-  ✓ Focus context on actual work, not documentation
-`)
+	// Default: use embedded content
+	fmt.Print("\n")
+	fmt.Print(understand.Load("workflow.txt"))
 }
 
 func printRules() {
-	fmt.Print(`
-Festival Structure Rules (MANDATORY)
-====================================
-
-The fest CLI enforces a RIGID structure that enables automation.
-These rules are NOT suggestions - they are requirements.
-
-NAMING CONVENTIONS
-------------------
-
-  Level      Format              Example
-  ─────      ──────              ───────
-  Phase      NNN_PHASE_NAME      001_PLAN, 002_IMPLEMENT, 003_REVIEW
-  Sequence   NN_sequence_name    01_requirements, 02_api, 03_frontend
-  Task       NN_task_name.md     01_design.md, 02_build.md, 03_test.md
-
-  • Phases:    3-digit prefix, UPPERCASE name
-  • Sequences: 2-digit prefix, lowercase name
-  • Tasks:     2-digit prefix, lowercase name, .md extension
-
-REQUIRED FILES
---------------
-
-  Festival Root:
-    FESTIVAL_OVERVIEW.md    [REQUIRED] Project goal, scope, stakeholders
-    FESTIVAL_RULES.md       [REQUIRED] Quality standards and team rules
-    TODO.md                 [Recommended] Progress tracking
-    fest.yaml               [Optional] Quality gate configuration
-
-  Each Phase (NNN_NAME/):
-    PHASE_GOAL.md           [REQUIRED] Phase objectives and evaluation
-
-  Each Sequence (NN_name/):
-    SEQUENCE_GOAL.md        [REQUIRED] Sequence objectives and dependencies
-
-QUALITY GATES
--------------
-
-Every IMPLEMENTATION sequence MUST end with these 3 tasks:
-
-    [your tasks here...]
-    XX_testing_and_verify.md       ← Validates all deliverables
-    XX+1_code_review.md            ← Reviews implementation quality
-    XX+2_review_results_iterate.md ← Addresses review findings
-
-  Use 'fest task defaults sync' to add quality gates automatically.
-
-  Excluded sequences (no quality gates needed):
-    - *_planning, *_research, *_requirements, *_docs
-
-PARALLEL EXECUTION
-------------------
-
-Tasks with the SAME number execute in parallel:
-
-    01_backend.md   ┐
-    01_database.md  ├── Run simultaneously
-    01_frontend.md  ┘
-    02_integrate.md ← Waits for all 01_ tasks to complete
-
-Use this for independent work streams within a sequence.
-
-WHY THIS MATTERS
-----------------
-
-This rigid structure enables:
-  • Automated quality gate insertion via 'fest task defaults sync'
-  • Consistent navigation across all festivals
-  • Parallel task detection and scheduling
-  • Progress tracking and reporting
-  • Template variable auto-computation (parent_phase_id, full_path, etc.)
-
-Run 'fest understand templates' to learn how to pass variables.
-`)
+	fmt.Print("\n")
+	fmt.Print(understand.Load("rules.txt"))
 }
 
 func printTemplates() {
-	fmt.Print(`
-Template Variables (Save Tokens)
-================================
-
-Pass variables to 'fest create' commands to generate pre-filled documents.
-This eliminates post-creation editing and saves significant tokens.
-
-FESTIVAL VARIABLES
-------------------
-
-  fest create festival \
-    --name "auth-system" \
-    --goal "Build OAuth 2.0 authentication" \
-    --json
-
-  Variables available in templates:
-    {{ festival_name }}        → "auth-system"
-    {{ festival_goal }}        → "Build OAuth 2.0 authentication"
-
-PHASE VARIABLES
----------------
-
-  fest create phase \
-    --name "IMPLEMENT" \
-    --json
-
-  Auto-formatting: "implement" → "002_IMPLEMENT"
-
-  Variables available:
-    {{ phase_name }}           → "IMPLEMENT"
-    {{ phase_number }}         → 2
-    {{ phase_id }}             → "002_IMPLEMENT" (auto-computed)
-
-SEQUENCE VARIABLES
-------------------
-
-  fest create sequence \
-    --name "api endpoints" \
-    --json
-
-  Auto-formatting: "api endpoints" → "01_api_endpoints"
-
-  Variables available:
-    {{ sequence_name }}        → "api_endpoints"
-    {{ sequence_number }}      → 1
-    {{ sequence_id }}          → "01_api_endpoints" (auto-computed)
-    {{ parent_phase_id }}      → "002_IMPLEMENT" (auto-computed)
-
-TASK VARIABLES
---------------
-
-  fest create task \
-    --name "login endpoint" \
-    --json
-
-  Auto-formatting: "login endpoint" → "01_login_endpoint.md"
-
-  Variables available:
-    {{ task_name }}            → "login_endpoint"
-    {{ task_number }}          → 1
-    {{ task_id }}              → "01_login_endpoint.md" (auto-computed)
-    {{ parent_sequence_id }}   → "01_api_endpoints" (auto-computed)
-    {{ parent_phase_id }}      → "002_IMPLEMENT" (auto-computed)
-    {{ full_path }}            → "002_IMPLEMENT/01_api_endpoints/01_login_endpoint.md"
-
-AUTO-COMPUTED VARIABLES
------------------------
-
-The template engine auto-computes these (no input needed):
-
-  • phase_id           → "002_IMPLEMENT" (from number + name)
-  • sequence_id        → "01_api_endpoints" (from number + name)
-  • task_id            → "01_login_endpoint.md" (from number + name)
-  • parent_phase_id    → Current phase context
-  • parent_sequence_id → Current sequence context
-  • full_path          → Complete path from festival root
-
-TOKEN SAVINGS
--------------
-
-  Manual approach:
-    1. Read template file            (~200 tokens)
-    2. Understand template format    (~100 tokens)
-    3. Write file with edits         (~200 tokens)
-    Total: ~500 tokens per file
-
-  CLI approach:
-    fest create task --name "X" --json
-    Total: ~50 tokens per file
-
-  Savings: 90% token reduction per file
-
-EXAMPLE: Full Festival Creation
--------------------------------
-
-  # Create festival with goal
-  fest create festival --name "user-auth" --goal "OAuth 2.0 system" --json
-
-  # Create planning phase
-  fest create phase --name "PLAN" --json
-
-  # Create requirements sequence
-  fest create sequence --name "requirements" --json
-
-  # Create tasks
-  fest create task --name "gather requirements" --json
-  fest create task --name "document specs" --json
-
-  # Add quality gates to all implementation sequences
-  fest task defaults sync --approve --json
-
-All generated files are pre-filled with correct structure and variables.
-`)
+	fmt.Print("\n")
+	fmt.Print(understand.Load("templates.txt"))
 }
 
 func printResources(dotFestival string) {

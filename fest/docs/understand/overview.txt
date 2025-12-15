@@ -1,0 +1,35 @@
+Festival Methodology - AI Agent Build System
+=============================================
+
+Festival Methodology is a goal-oriented project management system designed
+for human-AI collaboration and long-running autonomous development cycles.
+
+Core Concepts
+-------------
+
+• Three-level hierarchy: Phases → Sequences → Tasks
+• Requirements-driven: Implementation only after requirements are defined
+• Just-in-time context: Read templates and docs only when needed
+• Quality gates: Every sequence ends with testing, review, iteration
+
+
+Quick Start
+-----------
+
+  fest understand --help        # See all topics
+  fest understand rules         # MANDATORY structure requirements
+  fest understand templates     # Variables that save tokens
+  fest understand structure     # Scaffold examples with annotations
+
+Token-Efficient Workflow
+------------------------
+
+Use the fest CLI instead of manual file creation:
+
+  fest create festival --name "my-project" --goal "Build X" --json
+  fest create phase --name "IMPLEMENT" --json
+  fest create sequence --name "api" --json
+  fest task defaults sync --approve --json   # Add quality gates
+
+Variables are passed to templates - no post-creation editing needed.
+Run 'fest understand templates' to see all available variables.

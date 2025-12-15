@@ -1,0 +1,42 @@
+Festival Methodology - Core Principles
+======================================
+
+1. Goal-Oriented Development
+----------------------------
+
+Everything is organized around achieving a specific goal. A "festival"
+represents the complete journey from problem to solution.
+
+2. Requirements-Driven Implementation
+-------------------------------------
+
+CRITICAL: Implementation sequences can ONLY be created AFTER requirements
+are defined. Never guess what to implement.
+
+  Human provides:
+  • Project goals and vision
+  • Requirements and specifications
+  • Architectural decisions
+  • Feedback and iteration guidance
+
+  AI agent creates:
+  • Structured sequences from requirements
+  • Detailed task specifications
+  • Implementation code
+  • Progress tracking and documentation
+
+3. Phase Adaptability
+---------------------
+
+Phases are guidelines, not rigid requirements. Adapt to your needs.
+
+4. Quality Gates
+----------------
+
+Every implementation sequence ends with testing, review, and iteration tasks.
+Use 'fest task defaults sync' to add these automatically.
+
+5. Step-Based Progress
+----------------------
+
+Think in steps, not time. Track progress by completed tasks, not hours.

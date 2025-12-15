@@ -43,24 +43,24 @@ func NewLoader() Loader {
 
 // Load loads a single template file
 func (l *loaderImpl) Load(path string) (*Template, error) {
-    // Read file
-    file, err := os.Open(path)
-    if err != nil {
-        return nil, fmt.Errorf("failed to open template file %s: %w", path, err)
-    }
-    defer file.Close()
+	// Read file
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open template file %s: %w", path, err)
+	}
+	defer file.Close()
 
-    // Parse frontmatter and content. If YAML frontmatter parsing fails,
-    // fall back to treating the entire file as content without metadata.
-    metadata, content, err := parseFrontmatter(file)
-    if err != nil {
-        // Tolerant fallback for non‑YAML frontmatter: load full file content
-        b, rerr := os.ReadFile(path)
-        if rerr != nil {
-            return nil, fmt.Errorf("failed to read template %s: %w", path, err)
-        }
-        return &Template{Path: path, Metadata: nil, Content: string(b)}, nil
-    }
+	// Parse frontmatter and content. If YAML frontmatter parsing fails,
+	// fall back to treating the entire file as content without metadata.
+	metadata, content, err := parseFrontmatter(file)
+	if err != nil {
+		// Tolerant fallback for non‑YAML frontmatter: load full file content
+		b, rerr := os.ReadFile(path)
+		if rerr != nil {
+			return nil, fmt.Errorf("failed to read template %s: %w", path, err)
+		}
+		return &Template{Path: path, Metadata: nil, Content: string(b)}, nil
+	}
 
 	t := &Template{
 		Path:     path,
@@ -118,43 +118,43 @@ func (l *loaderImpl) LoadAll(dir string) ([]*Template, error) {
 
 // parseFrontmatter parses YAML frontmatter from a markdown file
 func parseFrontmatter(file *os.File) (*Metadata, string, error) {
-    scanner := bufio.NewScanner(file)
-    var frontmatterLines []string
-    var contentLines []string
-    inFrontmatter := false
-    frontmatterFound := false
+	scanner := bufio.NewScanner(file)
+	var frontmatterLines []string
+	var contentLines []string
+	inFrontmatter := false
+	frontmatterFound := false
 
-    for scanner.Scan() {
-        raw := scanner.Text()
-        // Trim BOM (if present) and surrounding whitespace for delimiter checks
-        line := strings.TrimSpace(strings.TrimPrefix(raw, "\uFEFF"))
+	for scanner.Scan() {
+		raw := scanner.Text()
+		// Trim BOM (if present) and surrounding whitespace for delimiter checks
+		line := strings.TrimSpace(strings.TrimPrefix(raw, "\uFEFF"))
 
-        // Check for frontmatter delimiter
-        if line == "---" {
-            if !frontmatterFound {
-                // First delimiter - start of frontmatter
-                inFrontmatter = true
-                frontmatterFound = true
-                continue
-            } else if inFrontmatter {
-                // Second delimiter - end of frontmatter
-                inFrontmatter = false
-                continue
-            }
-        }
+		// Check for frontmatter delimiter
+		if line == "---" {
+			if !frontmatterFound {
+				// First delimiter - start of frontmatter
+				inFrontmatter = true
+				frontmatterFound = true
+				continue
+			} else if inFrontmatter {
+				// Second delimiter - end of frontmatter
+				inFrontmatter = false
+				continue
+			}
+		}
 
-        // Collect lines
-        if inFrontmatter {
-            // Use the raw line content for YAML (preserve spacing)
-            frontmatterLines = append(frontmatterLines, raw)
-        } else if frontmatterFound {
-            // After frontmatter ends, collect content
-            contentLines = append(contentLines, raw)
-        } else {
-            // No frontmatter - treat as content
-            contentLines = append(contentLines, raw)
-        }
-    }
+		// Collect lines
+		if inFrontmatter {
+			// Use the raw line content for YAML (preserve spacing)
+			frontmatterLines = append(frontmatterLines, raw)
+		} else if frontmatterFound {
+			// After frontmatter ends, collect content
+			contentLines = append(contentLines, raw)
+		} else {
+			// No frontmatter - treat as content
+			contentLines = append(contentLines, raw)
+		}
+	}
 
 	if err := scanner.Err(); err != nil {
 		return nil, "", fmt.Errorf("error reading file: %w", err)

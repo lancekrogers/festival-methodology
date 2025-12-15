@@ -1,0 +1,35 @@
+my-festival/
+├── FESTIVAL_OVERVIEW.md              [REQUIRED]
+├── FESTIVAL_RULES.md                 [REQUIRED]
+├── TODO.md
+├── fest.yaml                         Quality gate config
+│
+├── 001_PLAN/
+│   ├── PHASE_GOAL.md                 [REQUIRED]
+│   └── 01_requirements/              (no quality gates - planning)
+│       ├── SEQUENCE_GOAL.md          [REQUIRED]
+│       ├── 01_gather_requirements.md
+│       └── 02_document_specs.md
+│
+├── 002_IMPLEMENT/
+│   ├── PHASE_GOAL.md                 [REQUIRED]
+│   ├── 01_backend/
+│   │   ├── SEQUENCE_GOAL.md          [REQUIRED]
+│   │   ├── 01_create_models.md       ┐
+│   │   ├── 02_implement_api.md       ├── Your tasks
+│   │   ├── 03_testing_and_verify.md  ← QUALITY GATE [REQUIRED]
+│   │   ├── 04_code_review.md         ← QUALITY GATE [REQUIRED]
+│   │   └── 05_review_results_iterate.md ← QUALITY GATE [REQUIRED]
+│   └── 02_frontend/
+│       ├── SEQUENCE_GOAL.md          [REQUIRED]
+│       ├── 01_create_components.md
+│       ├── 02_add_styling.md
+│       ├── 03_testing_and_verify.md  ← QUALITY GATE
+│       ├── 04_code_review.md         ← QUALITY GATE
+│       └── 05_review_results_iterate.md ← QUALITY GATE
+│
+└── 003_REVIEW_AND_UAT/
+    ├── PHASE_GOAL.md                 [REQUIRED]
+    └── 01_final_validation/
+        ├── SEQUENCE_GOAL.md          [REQUIRED]
+        └── 01_user_acceptance_testing.md

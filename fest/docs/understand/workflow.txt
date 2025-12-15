@@ -1,0 +1,53 @@
+Festival Workflow - Just-in-Time Reading
+========================================
+
+The just-in-time approach preserves context window for actual work.
+
+When to Read What
+-----------------
+
+  Resource              Read When
+  ────────────────────  ─────────────────────────────────────
+  fest understand       Now - provides methodology overview
+  Templates             ONLY when creating that document type
+  Examples              ONLY when stuck or need clarification
+  Agents                ONLY when using that specific agent
+
+NEVER Do This
+-------------
+
+  ✗ Reading all templates upfront "to understand them"
+  ✗ Loading all agent files at once
+  ✗ Reading examples before trying yourself
+
+ALWAYS Do This
+--------------
+
+  ✓ Read templates one at a time as you create documents
+  ✓ Read examples only when stuck
+  ✓ Close files after extracting what you need
+  ✓ Focus context on actual work, not documentation
+
+Execution Pattern
+-----------------
+
+1. Read FESTIVAL_GOAL.md to understand the objective
+2. Check TODO.md for current status
+3. Navigate to the current phase/sequence
+4. Read ONLY the current task file
+5. Execute the task
+6. Mark complete and move to next
+
+Using fest CLI Efficiently
+--------------------------
+
+The CLI is self-documenting. Use --help instead of reading docs:
+
+  fest --help                    # All commands
+  fest create --help             # Create subcommands
+  fest create festival --help    # Specific command details
+  fest task defaults --help      # Quality gate management
+
+JSON output provides structured responses:
+
+  fest create phase --name "IMPLEMENT" --json
