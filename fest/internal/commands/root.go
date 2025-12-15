@@ -41,7 +41,12 @@ func init() {
 	// Enforce being inside a festivals/ tree for most commands
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		// Allow root (help/version), init, sync, count, and understand to run anywhere
+		// Also allow subcommands of understand (rules, templates, etc.)
 		if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "sync" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" || cmd.Name() == "understand" {
+			return nil
+		}
+		// Check if parent is understand (for subcommands like rules, templates)
+		if cmd.Parent() != nil && cmd.Parent().Name() == "understand" {
 			return nil
 		}
 		cwd, _ := os.Getwd()

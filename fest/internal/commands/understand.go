@@ -11,10 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewUnderstandCommand creates the understand command group
+// NewUnderstandCommand creates the understand command group with subcommands
 func NewUnderstandCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "understand [topic]",
+		Use:   "understand",
 		Short: "Learn Festival Methodology",
 		Long: `Learn about Festival Methodology - a goal-oriented project management
 system designed for AI agent development workflows.
@@ -23,57 +23,88 @@ The understand command helps you grasp the methodology so you know
 WHEN and WHY to use specific approaches. For command usage, use --help.
 
 Content is pulled from your local .festival/ directory when available,
-ensuring you see the current methodology design and any customizations.
-
-Topics:
-  methodology   Core principles and philosophy
-  structure     Three-level hierarchy (Phases → Sequences → Tasks)
-  workflow      Just-in-time reading and execution patterns
-  resources     What's in the .festival/ directory`,
-		Example: `  # Overview of Festival Methodology
-  fest understand
-
-# Learn core principles
-
-  fest understand methodology
-
-# Understand the three-level hierarchy
-
-  fest understand structure
-
-# Learn the just-in-time workflow
-
-  fest understand workflow
-
-# See available resources
-
-  fest understand resources`,
+ensuring you see the current methodology design and any customizations.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			dotFestival := findDotFestivalDir()
-
-			if len(args) == 0 {
-				printOverview(dotFestival)
-				return
-			}
-
-			topic := strings.ToLower(args[0])
-			switch topic {
-			case "methodology":
-				printMethodology(dotFestival)
-			case "structure":
-				printStructure(dotFestival)
-			case "workflow":
-				printWorkflow(dotFestival)
-			case "resources":
-				printResources(dotFestival)
-			default:
-				fmt.Printf("Unknown topic: %s\n\n", topic)
-				fmt.Println("Available topics: methodology, structure, workflow, resources")
-			}
+			printOverview(dotFestival)
 		},
 	}
 
+	// Add subcommands
+	cmd.AddCommand(newUnderstandMethodologyCmd())
+	cmd.AddCommand(newUnderstandStructureCmd())
+	cmd.AddCommand(newUnderstandWorkflowCmd())
+	cmd.AddCommand(newUnderstandResourcesCmd())
+	cmd.AddCommand(newUnderstandRulesCmd())
+	cmd.AddCommand(newUnderstandTemplatesCmd())
+
 	return cmd
+}
+
+func newUnderstandMethodologyCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "methodology",
+		Short: "Core principles and philosophy",
+		Long:  `Learn the core principles of Festival Methodology including goal-oriented development, requirements-driven implementation, and quality gates.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			printMethodology(findDotFestivalDir())
+		},
+	}
+}
+
+func newUnderstandStructureCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "structure",
+		Short: "Three-level hierarchy with scaffold examples",
+		Long:  `Understand the Phases → Sequences → Tasks hierarchy with visual scaffold examples for simple, standard, and complex festivals.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			printStructure(findDotFestivalDir())
+		},
+	}
+}
+
+func newUnderstandWorkflowCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "workflow",
+		Short: "Just-in-time reading and execution patterns",
+		Long:  `Learn the just-in-time approach to reading templates and documentation, preserving context for actual work.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			printWorkflow(findDotFestivalDir())
+		},
+	}
+}
+
+func newUnderstandResourcesCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "resources",
+		Short: "What's in the .festival/ directory",
+		Long:  `List the templates, agents, and examples available in your .festival/ directory.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			printResources(findDotFestivalDir())
+		},
+	}
+}
+
+func newUnderstandRulesCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "rules",
+		Short: "MANDATORY structure rules for automation",
+		Long:  `Learn the RIGID structure requirements that enable Festival automation: naming conventions, required files, quality gates, and parallel execution.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			printRules()
+		},
+	}
+}
+
+func newUnderstandTemplatesCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "templates",
+		Short: "Template variables that save tokens",
+		Long:  `Learn how to pass variables to fest create commands to generate pre-filled documents, minimizing post-creation editing and saving tokens.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			printTemplates()
+		},
+	}
 }
 
 func printOverview(dotFestival string) {
@@ -102,30 +133,23 @@ for human-AI collaboration and long-running autonomous development cycles.
 Quick Start
 -----------
 
-1. Run 'fest understand methodology' to learn the principles
-2. Run 'fest understand structure' to understand the hierarchy
-3. Run 'fest understand workflow' to learn execution patterns
-4. Use 'fest create festival --json' to scaffold a new festival
+  fest understand --help        # See all topics
+  fest understand rules         # MANDATORY structure requirements
+  fest understand templates     # Variables that save tokens
+  fest understand structure     # Scaffold examples with annotations
 
 Token-Efficient Workflow
 ------------------------
 
 Use the fest CLI instead of manual file creation:
 
-  fest create festival --name "my-project" --json
+  fest create festival --name "my-project" --goal "Build X" --json
   fest create phase --name "IMPLEMENT" --json
   fest create sequence --name "api" --json
-  fest task defaults sync --approve --json
+  fest task defaults sync --approve --json   # Add quality gates
 
-Each command is self-documenting. Use --help for details.
-
-Learn More
-----------
-
-  fest understand methodology   # Core principles
-  fest understand structure     # Three-level hierarchy
-  fest understand workflow      # Just-in-time patterns
-  fest understand resources     # What's in .festival/
+Variables are passed to templates - no post-creation editing needed.
+Run 'fest understand templates' to see all available variables.
 
 `)
 
@@ -286,12 +310,12 @@ Scaffold: Complex Multi-Phase Festival
 
 	fmt.Print(`
 
-Naming Conventions
-------------------
+Naming Conventions (MANDATORY)
+------------------------------
 
-  Phases:     3-digit prefix → 001_PLAN, 002_IMPLEMENT, 003_REVIEW
-  Sequences:  2-digit prefix → 01_requirements, 02_api, 03_frontend
-  Tasks:      2-digit prefix → 01_design_schema.md, 02_implement_models.md
+  Phases:     NNN_PHASE_NAME      3-digit, UPPERCASE
+  Sequences:  NN_sequence_name    2-digit, lowercase
+  Tasks:      NN_task_name.md     2-digit, lowercase, .md extension
 
 Parallel Execution
 ------------------
@@ -299,13 +323,16 @@ Parallel Execution
 Tasks with the same number execute in parallel:
 
   01_frontend_setup.md  ┐
-  01_backend_setup.md   ├── Can run simultaneously
+  01_backend_setup.md   ├── Run simultaneously
   01_database_setup.md  ┘
+  02_integration.md     ← Waits for all 01_ tasks
 
+For detailed requirements: fest understand rules
+For template variables:    fest understand templates
 `)
 
 	if dotFestival != "" {
-		fmt.Printf("Source: %s\n", dotFestival)
+		fmt.Printf("\nSource: %s\n", dotFestival)
 	}
 }
 
@@ -313,98 +340,106 @@ func printScaffoldTree(variant string) {
 	switch variant {
 	case "simple":
 		fmt.Print(`my-festival/
-├── FESTIVAL_OVERVIEW.md
-├── FESTIVAL_GOAL.md
-├── TODO.md
+├── FESTIVAL_OVERVIEW.md              [REQUIRED] Goal and scope
+├── FESTIVAL_RULES.md                 [REQUIRED] Quality standards
+├── TODO.md                           Progress tracking
 │
-├── 001_PLAN/
-│   ├── PHASE_GOAL.md
-│   └── 01_requirements/
-│       ├── SEQUENCE_GOAL.md
-│       └── 01_gather_requirements.md
+├── 001_PLAN/                         3-digit phase prefix
+│   ├── PHASE_GOAL.md                 [REQUIRED] Phase objectives
+│   └── 01_requirements/              2-digit sequence prefix
+│       ├── SEQUENCE_GOAL.md          [REQUIRED] Sequence objectives
+│       └── 01_gather_requirements.md 2-digit task prefix + .md
 │
 └── 002_IMPLEMENT/
-    ├── PHASE_GOAL.md
+    ├── PHASE_GOAL.md                 [REQUIRED]
     └── 01_core/
-        ├── SEQUENCE_GOAL.md
+        ├── SEQUENCE_GOAL.md          [REQUIRED]
         ├── 01_implement_feature.md
         └── 02_add_tests.md
 `)
 	case "standard":
 		fmt.Print(`my-festival/
-├── FESTIVAL_OVERVIEW.md
-├── FESTIVAL_GOAL.md
+├── FESTIVAL_OVERVIEW.md              [REQUIRED]
+├── FESTIVAL_RULES.md                 [REQUIRED]
 ├── TODO.md
-├── fest.yaml                         ← Quality gate config
+├── fest.yaml                         Quality gate config
 │
 ├── 001_PLAN/
-│   ├── PHASE_GOAL.md
-│   └── 01_requirements/
-│       ├── SEQUENCE_GOAL.md
+│   ├── PHASE_GOAL.md                 [REQUIRED]
+│   └── 01_requirements/              (no quality gates - planning)
+│       ├── SEQUENCE_GOAL.md          [REQUIRED]
 │       ├── 01_gather_requirements.md
 │       └── 02_document_specs.md
 │
 ├── 002_IMPLEMENT/
-│   ├── PHASE_GOAL.md
+│   ├── PHASE_GOAL.md                 [REQUIRED]
 │   ├── 01_backend/
-│   │   ├── SEQUENCE_GOAL.md
-│   │   ├── 01_create_models.md
-│   │   ├── 02_implement_api.md
-│   │   ├── 03_testing_and_verify.md  ← Quality gate
-│   │   ├── 04_code_review.md         ← Quality gate
-│   │   └── 05_review_results_iterate.md ← Quality gate
+│   │   ├── SEQUENCE_GOAL.md          [REQUIRED]
+│   │   ├── 01_create_models.md       ┐
+│   │   ├── 02_implement_api.md       ├── Your tasks
+│   │   ├── 03_testing_and_verify.md  ← QUALITY GATE [REQUIRED]
+│   │   ├── 04_code_review.md         ← QUALITY GATE [REQUIRED]
+│   │   └── 05_review_results_iterate.md ← QUALITY GATE [REQUIRED]
 │   └── 02_frontend/
-│       ├── SEQUENCE_GOAL.md
+│       ├── SEQUENCE_GOAL.md          [REQUIRED]
 │       ├── 01_create_components.md
 │       ├── 02_add_styling.md
-│       ├── 03_testing_and_verify.md
-│       ├── 04_code_review.md
-│       └── 05_review_results_iterate.md
+│       ├── 03_testing_and_verify.md  ← QUALITY GATE
+│       ├── 04_code_review.md         ← QUALITY GATE
+│       └── 05_review_results_iterate.md ← QUALITY GATE
 │
 └── 003_REVIEW_AND_UAT/
-    ├── PHASE_GOAL.md
+    ├── PHASE_GOAL.md                 [REQUIRED]
     └── 01_final_validation/
-        ├── SEQUENCE_GOAL.md
+        ├── SEQUENCE_GOAL.md          [REQUIRED]
         └── 01_user_acceptance_testing.md
 `)
 	case "complex":
 		fmt.Print(`my-festival/
-├── FESTIVAL_OVERVIEW.md
-├── FESTIVAL_GOAL.md
+├── FESTIVAL_OVERVIEW.md              [REQUIRED]
+├── FESTIVAL_RULES.md                 [REQUIRED]
 ├── TODO.md
 ├── fest.yaml
 │
-├── 001_RESEARCH/
-│   ├── PHASE_GOAL.md
+├── 001_RESEARCH/                     (no quality gates - research phase)
+│   ├── PHASE_GOAL.md                 [REQUIRED]
 │   └── 01_discovery/
+│       ├── SEQUENCE_GOAL.md          [REQUIRED]
 │       └── [research documents]
 │
-├── 002_PLAN/
-│   ├── PHASE_GOAL.md
+├── 002_PLAN/                         (no quality gates - planning phase)
+│   ├── PHASE_GOAL.md                 [REQUIRED]
 │   ├── 01_requirements/
+│   │   ├── SEQUENCE_GOAL.md          [REQUIRED]
 │   │   └── [requirement docs]
 │   └── 02_architecture/
+│       ├── SEQUENCE_GOAL.md          [REQUIRED]
 │       └── [design docs]
 │
-├── 003_IMPLEMENT_CORE/
-│   ├── PHASE_GOAL.md
+├── 003_IMPLEMENT_CORE/               (quality gates required)
+│   ├── PHASE_GOAL.md                 [REQUIRED]
 │   ├── 01_foundation/
+│   │   ├── SEQUENCE_GOAL.md          [REQUIRED]
 │   │   ├── [tasks...]
-│   │   └── [quality gates]
+│   │   └── [quality gates]           ← 3 required tasks
 │   └── 02_data_layer/
+│       ├── SEQUENCE_GOAL.md          [REQUIRED]
 │       ├── [tasks...]
-│       └── [quality gates]
+│       └── [quality gates]           ← 3 required tasks
 │
-├── 004_IMPLEMENT_FEATURES/
-│   ├── PHASE_GOAL.md
+├── 004_IMPLEMENT_FEATURES/           (quality gates required)
+│   ├── PHASE_GOAL.md                 [REQUIRED]
 │   ├── 01_feature_a/
+│   │   ├── SEQUENCE_GOAL.md          [REQUIRED]
 │   │   └── [tasks + quality gates]
 │   └── 02_feature_b/
+│       ├── SEQUENCE_GOAL.md          [REQUIRED]
 │       └── [tasks + quality gates]
 │
 └── 005_FINAL_REVIEW/
-    ├── PHASE_GOAL.md
+    ├── PHASE_GOAL.md                 [REQUIRED]
     └── 01_integration_testing/
+        ├── SEQUENCE_GOAL.md          [REQUIRED]
         └── [validation tasks]
 `)
 	}
@@ -506,6 +541,199 @@ ALWAYS Do This
   ✓ Read examples only when stuck
   ✓ Close files after extracting what you need
   ✓ Focus context on actual work, not documentation
+`)
+}
+
+func printRules() {
+	fmt.Print(`
+Festival Structure Rules (MANDATORY)
+====================================
+
+The fest CLI enforces a RIGID structure that enables automation.
+These rules are NOT suggestions - they are requirements.
+
+NAMING CONVENTIONS
+------------------
+
+  Level      Format              Example
+  ─────      ──────              ───────
+  Phase      NNN_PHASE_NAME      001_PLAN, 002_IMPLEMENT, 003_REVIEW
+  Sequence   NN_sequence_name    01_requirements, 02_api, 03_frontend
+  Task       NN_task_name.md     01_design.md, 02_build.md, 03_test.md
+
+  • Phases:    3-digit prefix, UPPERCASE name
+  • Sequences: 2-digit prefix, lowercase name
+  • Tasks:     2-digit prefix, lowercase name, .md extension
+
+REQUIRED FILES
+--------------
+
+  Festival Root:
+    FESTIVAL_OVERVIEW.md    [REQUIRED] Project goal, scope, stakeholders
+    FESTIVAL_RULES.md       [REQUIRED] Quality standards and team rules
+    TODO.md                 [Recommended] Progress tracking
+    fest.yaml               [Optional] Quality gate configuration
+
+  Each Phase (NNN_NAME/):
+    PHASE_GOAL.md           [REQUIRED] Phase objectives and evaluation
+
+  Each Sequence (NN_name/):
+    SEQUENCE_GOAL.md        [REQUIRED] Sequence objectives and dependencies
+
+QUALITY GATES
+-------------
+
+Every IMPLEMENTATION sequence MUST end with these 3 tasks:
+
+    [your tasks here...]
+    XX_testing_and_verify.md       ← Validates all deliverables
+    XX+1_code_review.md            ← Reviews implementation quality
+    XX+2_review_results_iterate.md ← Addresses review findings
+
+  Use 'fest task defaults sync' to add quality gates automatically.
+
+  Excluded sequences (no quality gates needed):
+    - *_planning, *_research, *_requirements, *_docs
+
+PARALLEL EXECUTION
+------------------
+
+Tasks with the SAME number execute in parallel:
+
+    01_backend.md   ┐
+    01_database.md  ├── Run simultaneously
+    01_frontend.md  ┘
+    02_integrate.md ← Waits for all 01_ tasks to complete
+
+Use this for independent work streams within a sequence.
+
+WHY THIS MATTERS
+----------------
+
+This rigid structure enables:
+  • Automated quality gate insertion via 'fest task defaults sync'
+  • Consistent navigation across all festivals
+  • Parallel task detection and scheduling
+  • Progress tracking and reporting
+  • Template variable auto-computation (parent_phase_id, full_path, etc.)
+
+Run 'fest understand templates' to learn how to pass variables.
+`)
+}
+
+func printTemplates() {
+	fmt.Print(`
+Template Variables (Save Tokens)
+================================
+
+Pass variables to 'fest create' commands to generate pre-filled documents.
+This eliminates post-creation editing and saves significant tokens.
+
+FESTIVAL VARIABLES
+------------------
+
+  fest create festival \
+    --name "auth-system" \
+    --goal "Build OAuth 2.0 authentication" \
+    --json
+
+  Variables available in templates:
+    {{ festival_name }}        → "auth-system"
+    {{ festival_goal }}        → "Build OAuth 2.0 authentication"
+
+PHASE VARIABLES
+---------------
+
+  fest create phase \
+    --name "IMPLEMENT" \
+    --json
+
+  Auto-formatting: "implement" → "002_IMPLEMENT"
+
+  Variables available:
+    {{ phase_name }}           → "IMPLEMENT"
+    {{ phase_number }}         → 2
+    {{ phase_id }}             → "002_IMPLEMENT" (auto-computed)
+
+SEQUENCE VARIABLES
+------------------
+
+  fest create sequence \
+    --name "api endpoints" \
+    --json
+
+  Auto-formatting: "api endpoints" → "01_api_endpoints"
+
+  Variables available:
+    {{ sequence_name }}        → "api_endpoints"
+    {{ sequence_number }}      → 1
+    {{ sequence_id }}          → "01_api_endpoints" (auto-computed)
+    {{ parent_phase_id }}      → "002_IMPLEMENT" (auto-computed)
+
+TASK VARIABLES
+--------------
+
+  fest create task \
+    --name "login endpoint" \
+    --json
+
+  Auto-formatting: "login endpoint" → "01_login_endpoint.md"
+
+  Variables available:
+    {{ task_name }}            → "login_endpoint"
+    {{ task_number }}          → 1
+    {{ task_id }}              → "01_login_endpoint.md" (auto-computed)
+    {{ parent_sequence_id }}   → "01_api_endpoints" (auto-computed)
+    {{ parent_phase_id }}      → "002_IMPLEMENT" (auto-computed)
+    {{ full_path }}            → "002_IMPLEMENT/01_api_endpoints/01_login_endpoint.md"
+
+AUTO-COMPUTED VARIABLES
+-----------------------
+
+The template engine auto-computes these (no input needed):
+
+  • phase_id           → "002_IMPLEMENT" (from number + name)
+  • sequence_id        → "01_api_endpoints" (from number + name)
+  • task_id            → "01_login_endpoint.md" (from number + name)
+  • parent_phase_id    → Current phase context
+  • parent_sequence_id → Current sequence context
+  • full_path          → Complete path from festival root
+
+TOKEN SAVINGS
+-------------
+
+  Manual approach:
+    1. Read template file            (~200 tokens)
+    2. Understand template format    (~100 tokens)
+    3. Write file with edits         (~200 tokens)
+    Total: ~500 tokens per file
+
+  CLI approach:
+    fest create task --name "X" --json
+    Total: ~50 tokens per file
+
+  Savings: 90% token reduction per file
+
+EXAMPLE: Full Festival Creation
+-------------------------------
+
+  # Create festival with goal
+  fest create festival --name "user-auth" --goal "OAuth 2.0 system" --json
+
+  # Create planning phase
+  fest create phase --name "PLAN" --json
+
+  # Create requirements sequence
+  fest create sequence --name "requirements" --json
+
+  # Create tasks
+  fest create task --name "gather requirements" --json
+  fest create task --name "document specs" --json
+
+  # Add quality gates to all implementation sequences
+  fest task defaults sync --approve --json
+
+All generated files are pre-filled with correct structure and variables.
 `)
 }
 
