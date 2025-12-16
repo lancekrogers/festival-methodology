@@ -1,20 +1,80 @@
 #!/usr/bin/env just --justfile
 # fest CLI build and development tasks
 
-# Module imports
-mod build '.justfiles/build.just'
-mod test '.justfiles/test.just'
-mod release '.justfiles/release.just'
-mod quality '.justfiles/quality.just'
-mod install '.justfiles/install.just'
-mod run '.justfiles/run.just'
+# Configuration
+binary_name := "fest"
+main_path := "cmd/fest/main.go"
+bin_dir := "bin"
+gobin := env_var_or_default("GOBIN", `go env GOPATH` + "/bin")
 
-# Show available commands (default)
+# Modules (for variants and specialized commands)
+mod xbuild '.justfiles/build.just'
+mod xtest '.justfiles/test.just'
+mod release '.justfiles/release.just'
+
 [private]
 @default:
     @just --list --unsorted
 
-# Run all tests and build
+# Run tests and build
 all:
-    just test test
-    just build build
+    just test
+    just build
+
+# Build fest binary
+build:
+    go build -ldflags '-s -w' -o {{bin_dir}}/{{binary_name}} {{main_path}}
+
+# Run tests with verbose output
+test:
+    go test -v ./...
+
+# Format Go code
+fmt:
+    go fmt ./...
+
+# Run go vet
+vet:
+    go vet ./...
+
+# Run formatting and vetting
+lint: fmt vet
+    @echo "Linting complete"
+
+# Clean build artifacts
+clean:
+    go clean
+    rm -f {{bin_dir}}/{{binary_name}}*
+    rm -f coverage.out coverage.html
+
+# Update and tidy dependencies
+deps:
+    go get -u ./...
+    go mod tidy
+
+# Install fest to $GOBIN
+install:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    just build
+    echo "Installing fest..."
+    mkdir -p {{gobin}}
+    cp bin/{{binary_name}} {{gobin}}/{{binary_name}}
+    if [[ "$(uname)" == "Darwin" ]]; then
+        echo "Signing fest binary for macOS..."
+        codesign --force --sign - {{gobin}}/{{binary_name}} 2>/dev/null || \
+        echo "Warning: Could not sign binary (non-fatal)"
+    fi
+    echo "fest installed to {{gobin}}/{{binary_name}}"
+
+# Uninstall fest from $GOBIN
+uninstall:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Uninstalling fest..."
+    if [ -f {{gobin}}/{{binary_name}} ]; then
+        rm {{gobin}}/{{binary_name}}
+        echo "fest uninstalled from {{gobin}}"
+    else
+        echo "fest not found in {{gobin}}"
+    fi

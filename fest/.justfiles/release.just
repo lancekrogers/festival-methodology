@@ -1,42 +1,38 @@
-# Release recipes for fest CLI
-
-# Set working directory to project root
-set working-directory := '..'
-
-# Configuration
+# Release recipes
+root := source_directory() / ".."
 binary_name := "fest"
 main_path := "cmd/fest/main.go"
 bin_dir := "bin"
 
 [private]
-@default:
-    @echo "Release Commands"
+default:
     @just --list --unsorted --justfile {{source_file()}}
 
-# Build for macOS Intel (private helper)
+# Build for macOS Intel
 [private]
 build-darwin:
-    GOOS=darwin GOARCH=amd64 go build -ldflags '-s -w' -o {{bin_dir}}/{{binary_name}}-darwin-amd64 {{main_path}}
+    cd {{root}} && GOOS=darwin GOARCH=amd64 go build -ldflags '-s -w' -o {{bin_dir}}/{{binary_name}}-darwin-amd64 {{main_path}}
 
-# Build for macOS Apple Silicon (private helper)
+# Build for macOS Apple Silicon
 [private]
 build-darwin-arm64:
-    GOOS=darwin GOARCH=arm64 go build -ldflags '-s -w' -o {{bin_dir}}/{{binary_name}}-darwin-arm64 {{main_path}}
+    cd {{root}} && GOOS=darwin GOARCH=arm64 go build -ldflags '-s -w' -o {{bin_dir}}/{{binary_name}}-darwin-arm64 {{main_path}}
 
-# Build for Linux AMD64 (private helper)
+# Build for Linux AMD64
 [private]
 build-linux:
-    GOOS=linux GOARCH=amd64 go build -ldflags '-s -w' -o {{bin_dir}}/{{binary_name}}-linux-amd64 {{main_path}}
+    cd {{root}} && GOOS=linux GOARCH=amd64 go build -ldflags '-s -w' -o {{bin_dir}}/{{binary_name}}-linux-amd64 {{main_path}}
 
-# Build for Windows AMD64 (private helper)
+# Build for Windows AMD64
 [private]
 build-windows:
-    GOOS=windows GOARCH=amd64 go build -ldflags '-s -w' -o {{bin_dir}}/{{binary_name}}-windows-amd64.exe {{main_path}}
+    cd {{root}} && GOOS=windows GOARCH=amd64 go build -ldflags '-s -w' -o {{bin_dir}}/{{binary_name}}-windows-amd64.exe {{main_path}}
 
 # Sign macOS release binaries
-sign-release: build-darwin build-darwin-arm64
+sign: build-darwin build-darwin-arm64
     #!/usr/bin/env bash
     set -euo pipefail
+    cd {{root}}
     echo "Signing macOS release binaries..."
     if [ -f ./scripts/sign-macos.sh ]; then
         ./scripts/sign-macos.sh {{bin_dir}}/{{binary_name}}-darwin-amd64
@@ -48,9 +44,10 @@ sign-release: build-darwin build-darwin-arm64
     fi
 
 # Create macOS release packages
-release-darwin: build-darwin sign-release
+darwin: build-darwin sign
     #!/usr/bin/env bash
     set -euo pipefail
+    cd {{root}}
     echo "Creating macOS release package..."
     mkdir -p dist
     tar -czf dist/{{binary_name}}-darwin-amd64.tar.gz -C {{bin_dir}} {{binary_name}}-darwin-amd64
@@ -58,24 +55,27 @@ release-darwin: build-darwin sign-release
     echo "Release packages created in dist/"
 
 # Create Linux release package
-release-linux: build-linux
+linux: build-linux
     #!/usr/bin/env bash
     set -euo pipefail
+    cd {{root}}
     echo "Creating Linux release package..."
     mkdir -p dist
     tar -czf dist/{{binary_name}}-linux-amd64.tar.gz -C {{bin_dir}} {{binary_name}}-linux-amd64
 
 # Create Windows release package
-release-windows: build-windows
+windows: build-windows
     #!/usr/bin/env bash
     set -euo pipefail
+    cd {{root}}
     echo "Creating Windows release package..."
     mkdir -p dist
     cd {{bin_dir}} && zip -q ../dist/{{binary_name}}-windows-amd64.zip {{binary_name}}-windows-amd64.exe
 
 # Create all release packages
-release: release-darwin release-linux release-windows
+release: darwin linux windows
     #!/usr/bin/env bash
     set -euo pipefail
+    cd {{root}}
     echo "All release packages created in dist/"
     ls -la dist/

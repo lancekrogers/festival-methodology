@@ -5,7 +5,7 @@ main_path := "cmd/fest/main.go"
 bin_dir := "bin"
 
 [private]
-@default:
+default:
     @just --list --unsorted --justfile {{source_file()}}
 
 # Build fest binary

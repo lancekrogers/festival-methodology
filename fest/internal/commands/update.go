@@ -106,6 +106,19 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 	// Categorize files
 	changes := categorizeChanges(storedChecksums, currentChecksums)
 
+	// Filter unchanged files to only those that exist in source
+	// (handles case where files were removed from upstream methodology)
+	validUnchanged := []string{}
+	for _, file := range changes.unchanged {
+		srcPath := filepath.Join(sourceDir, file)
+		if fileops.Exists(srcPath) {
+			validUnchanged = append(validUnchanged, file)
+		} else if verbose {
+			display.Warning("Skipping %s (removed from source)", file)
+		}
+	}
+	changes.unchanged = validUnchanged
+
 	// Show summary
 	display.Info("\nFile status:")
 	display.Info("  Unchanged: %d files (safe to update)", len(changes.unchanged))
