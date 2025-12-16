@@ -69,6 +69,7 @@ func init() {
 	rootCmd.AddCommand(NewUpdateCommand())
 	rootCmd.AddCommand(NewCountCommand())
 	rootCmd.AddCommand(NewRenumberCommand())
+	rootCmd.AddCommand(NewReorderCommand())
 	rootCmd.AddCommand(NewInsertCommand())
 	rootCmd.AddCommand(NewRemoveCommand())
 	// Headless-first creation commands
