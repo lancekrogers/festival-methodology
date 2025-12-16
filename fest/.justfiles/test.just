@@ -1,15 +1,20 @@
 # Test recipes
-root := source_directory() / ".."
+root := justfile_directory()
 binary_name := "fest"
 main_path := "cmd/fest/main.go"
 bin_dir := "bin"
 
+# Show available test commands (default)
 [private]
 default:
     @just --list --unsorted --justfile {{source_file()}}
 
-# Run tests with verbose output
+# Run all tests
 test:
+    cd {{root}} && go test -v ./...
+
+# Run unit tests only
+unit:
     cd {{root}} && go test -v ./...
 
 # Run tests with coverage report

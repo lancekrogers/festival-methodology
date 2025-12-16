@@ -7,9 +7,9 @@ main_path := "cmd/fest/main.go"
 bin_dir := "bin"
 gobin := env_var_or_default("GOBIN", `go env GOPATH` + "/bin")
 
-# Modules (for variants and specialized commands)
+# Modules
 mod xbuild '.justfiles/build.just'
-mod xtest '.justfiles/test.just'
+mod test '.justfiles/test.just'
 mod release '.justfiles/release.just'
 
 [private]
@@ -18,16 +18,12 @@ mod release '.justfiles/release.just'
 
 # Run tests and build
 all:
-    just test
+    just test test
     just build
 
 # Build fest binary
 build:
     go build -ldflags '-s -w' -o {{bin_dir}}/{{binary_name}} {{main_path}}
-
-# Run tests with verbose output
-test:
-    go test -v ./...
 
 # Format Go code
 fmt:

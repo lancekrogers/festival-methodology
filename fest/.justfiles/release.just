@@ -1,9 +1,10 @@
 # Release recipes
-root := source_directory() / ".."
+root := justfile_directory()
 binary_name := "fest"
 main_path := "cmd/fest/main.go"
 bin_dir := "bin"
 
+# Show available release commands (default)
 [private]
 default:
     @just --list --unsorted --justfile {{source_file()}}
