@@ -397,6 +397,37 @@ func (tc *TestContainer) Cleanup() {
  }
 }
 
+// ListDirectories lists directories in a path (sorted by name)
+func (tc *TestContainer) ListDirectories(path string) ([]string, error) {
+ exitCode, reader, err := tc.container.Exec(tc.ctx, []string{
+  "sh", "-c",
+  fmt.Sprintf("ls -d %s/*/ 2>/dev/null | sort", path),
+ })
+ if err != nil {
+  return nil, fmt.Errorf("failed to list directories: %w", err)
+ }
+
+ if exitCode != 0 {
+  return nil, nil // No directories found
+ }
+
+ output, err := io.ReadAll(reader)
+ if err != nil {
+  return nil, fmt.Errorf("failed to read output: %w", err)
+ }
+
+ var dirs []string
+ for _, line := range strings.Split(strings.TrimSpace(string(output)), "\n") {
+  if line != "" {
+   // Remove trailing slash and get base name
+   line = strings.TrimSuffix(line, "/")
+   dirs = append(dirs, filepath.Base(line))
+  }
+ }
+
+ return dirs, nil
+}
+
 // ValidateSnapshot compares actual state with expected state
 func ValidateSnapshot(t *testing.T, actual, expected*FileSystemState) {
  // Check directories

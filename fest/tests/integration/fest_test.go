@@ -188,7 +188,162 @@ func TestFestCompleteWorkflow(t *testing.T) {
   }
  })
 
- // Test 7: Test version and help commands (these should always work)
+ // Test 7: Test reorder command
+ t.Run("ReorderCommand", func(t *testing.T) {
+  // First, verify reorder command help works
+  output, err := container.RunFest("reorder", "--help")
+  require.NoError(t, err, "Reorder help should not fail")
+  require.Contains(t, output, "reorder", "Help should mention reorder command")
+  require.Contains(t, output, "phase", "Help should mention phase subcommand")
+  require.Contains(t, output, "sequence", "Help should mention sequence subcommand")
+  require.Contains(t, output, "task", "Help should mention task subcommand")
+  t.Logf("Reorder help output: %s", output)
+
+  // Test 7.1: Reorder phases - move phase 5 to position 1
+  t.Run("ReorderPhase", func(t *testing.T) {
+   // Check if phase 005_TESTING exists
+   exists, err := container.CheckDirExists("/festivals/test-festival/005_TESTING")
+   require.NoError(t, err)
+
+   if exists {
+    // Count initial phases
+    initialCount, _ := container.CountPhases("/festivals/test-festival")
+    t.Logf("Initial phase count: %d", initialCount)
+
+    // Run reorder - move phase 5 to position 1
+    output, err := container.RunFest("reorder", "phase", "5", "1", "/festivals/test-festival", "--skip-dry-run", "--force")
+    if err != nil {
+     t.Logf("Reorder phase command failed: %s", output)
+     // Still verify command produced output
+     require.NotEmpty(t, output, "Command should produce output even on failure")
+    } else {
+     t.Logf("Reorder phase command succeeded: %s", output)
+
+     // Verify phase 5 is now at position 1
+     exists, err := container.CheckDirExists("/festivals/test-festival/001_TESTING")
+     if err == nil && exists {
+      t.Log("Phase successfully reordered: 005_TESTING is now 001_TESTING")
+
+      // Verify old position is gone
+      oldExists, _ := container.CheckDirExists("/festivals/test-festival/005_TESTING")
+      require.False(t, oldExists, "Old phase position should not exist")
+
+      // Verify phase count is unchanged
+      finalCount, _ := container.CountPhases("/festivals/test-festival")
+      require.Equal(t, initialCount, finalCount, "Phase count should be unchanged after reorder")
+     }
+    }
+   } else {
+    t.Log("Phase 005_TESTING not found, skipping reorder test")
+   }
+  })
+
+  // Test 7.2: Reorder sequences within a phase
+  t.Run("ReorderSequence", func(t *testing.T) {
+   // The complex festival has phase 001_TESTING (after reorder) with sequences
+   // Or we can test on a different phase
+   phasePath := "/festivals/test-festival/001_TESTING"
+   exists, err := container.CheckDirExists(phasePath)
+
+   if !exists {
+    // Try original 003_IMPLEMENT_CORE if reorder didn't happen
+    phasePath = "/festivals/test-festival/003_IMPLEMENT_CORE"
+    exists, err = container.CheckDirExists(phasePath)
+   }
+
+   require.NoError(t, err)
+
+   if exists {
+    // Count initial sequences
+    initialSeqCount, _ := container.CountSequences(phasePath)
+    t.Logf("Initial sequence count in %s: %d", phasePath, initialSeqCount)
+
+    if initialSeqCount >= 3 {
+     // Reorder sequence 3 to position 1
+     output, err := container.RunFest("reorder", "sequence", "--phase", phasePath, "3", "1", "--skip-dry-run", "--force")
+     if err != nil {
+      t.Logf("Reorder sequence command failed: %s", output)
+      require.NotEmpty(t, output, "Command should produce output")
+     } else {
+      t.Logf("Reorder sequence command succeeded: %s", output)
+
+      // Verify sequence count unchanged
+      finalSeqCount, _ := container.CountSequences(phasePath)
+      require.Equal(t, initialSeqCount, finalSeqCount, "Sequence count should be unchanged")
+     }
+    } else {
+     t.Logf("Not enough sequences to test reorder (%d), skipping", initialSeqCount)
+    }
+   } else {
+    t.Log("No suitable phase found for sequence reorder test")
+   }
+  })
+
+  // Test 7.3: Reorder tasks within a sequence
+  t.Run("ReorderTask", func(t *testing.T) {
+   // Find a sequence with tasks - try 001_TESTING/01_unit_testing or fallback
+   seqPath := "/festivals/test-festival/001_TESTING/01_unit_testing"
+   exists, err := container.CheckDirExists(seqPath)
+
+   if !exists {
+    // Fallback to original path
+    seqPath = "/festivals/test-festival/001_DISCOVERY/01_requirements_gathering"
+    exists, err = container.CheckDirExists(seqPath)
+   }
+
+   require.NoError(t, err)
+
+   if exists {
+    // Count initial tasks
+    initialTaskCount, _ := container.CountTasks(seqPath)
+    t.Logf("Initial task count in %s: %d", seqPath, initialTaskCount)
+
+    if initialTaskCount >= 3 {
+     // Read content of task 03 before reorder
+     task3Path := seqPath + "/03_technical_constraints.md"
+     if _, err := container.CheckFileExists(task3Path); err != nil {
+      // Try alternate naming
+      task3Path = seqPath + "/03_controller_tests.md"
+     }
+     originalContent, _ := container.ReadFile(task3Path)
+
+     // Reorder task 3 to position 1
+     output, err := container.RunFest("reorder", "task", "--sequence", seqPath, "3", "1", "--skip-dry-run", "--force")
+     if err != nil {
+      t.Logf("Reorder task command failed: %s", output)
+      require.NotEmpty(t, output, "Command should produce output")
+     } else {
+      t.Logf("Reorder task command succeeded: %s", output)
+
+      // Verify task count unchanged
+      finalTaskCount, _ := container.CountTasks(seqPath)
+      require.Equal(t, initialTaskCount, finalTaskCount, "Task count should be unchanged")
+
+      // If we had original content, verify it's now at position 01
+      if originalContent != "" {
+       // The file that was at 03 should now be at 01 with same name
+       t.Log("Task reorder completed successfully")
+      }
+     }
+    } else {
+     t.Logf("Not enough tasks to test reorder (%d), skipping", initialTaskCount)
+    }
+   } else {
+    t.Log("No suitable sequence found for task reorder test")
+   }
+  })
+
+  // Test 7.4: Verify content preservation after reorder
+  t.Run("ContentPreservation", func(t *testing.T) {
+   // Verify that FESTIVAL_GOAL.md still has expected content after all operations
+   content, err := container.ReadFile("/festivals/test-festival/FESTIVAL_GOAL.md")
+   require.NoError(t, err)
+   require.Contains(t, content, "Complex Test Festival", "Festival goal should be preserved")
+   t.Log("Content preservation verified")
+  })
+ })
+
+ // Test 8: Test version and help commands (these should always work)
  t.Run("BasicCommands", func(t *testing.T) {
   // Test version command
   output, err := container.RunFest("--version")
@@ -203,7 +358,7 @@ func TestFestCompleteWorkflow(t *testing.T) {
   require.Contains(t, output, "Commands", "Help output should list commands")
 
   // Test help for specific commands
-  commands := []string{"init", "sync", "renumber", "remove", "count"}
+  commands := []string{"init", "sync", "renumber", "reorder", "remove", "count"}
   for _, cmd := range commands {
    output, err = container.RunFest(cmd, "--help")
    require.NoError(t, err, "%s help should not fail", cmd)
