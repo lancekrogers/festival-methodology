@@ -187,6 +187,11 @@ func (u *Updater) UpdateFile(relPath string) error {
 	srcPath := filepath.Join(u.sourceDir, relPath)
 	dstPath := filepath.Join(u.targetDir, relPath)
 
+	// Check if source file exists
+	if !Exists(srcPath) {
+		return fmt.Errorf("source file does not exist: %s", srcPath)
+	}
+
 	// Get source file info
 	srcInfo, err := os.Stat(srcPath)
 	if err != nil {

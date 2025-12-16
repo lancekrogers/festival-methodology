@@ -187,7 +187,7 @@ func parseRepoURL(url string) (owner, repo string, err error) {
 // getFilesFromGitHub fetches the file list from GitHub API
 func (d *Downloader) getFilesFromGitHub(owner, repo string) ([]string, error) {
 	// Build API URL
-	apiURL := fmt.Sprintf("<https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1>", owner, repo, d.branch)
+	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1", owner, repo, d.branch)
 
 	// Make API request
 	resp, err := d.client.Get(apiURL)
@@ -229,7 +229,7 @@ func (d *Downloader) getFilesFromGitHub(owner, repo string) ([]string, error) {
 // getFilesWithSHA fetches the file list with SHA hashes from GitHub API
 func (d *Downloader) getFilesWithSHA(owner, repo string) (map[string]string, error) {
 	// Build API URL
-	apiURL := fmt.Sprintf("<https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1>", owner, repo, d.branch)
+	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1", owner, repo, d.branch)
 
 	// Make API request
 	resp, err := d.client.Get(apiURL)

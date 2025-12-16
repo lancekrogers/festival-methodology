@@ -1,7 +1,7 @@
 # Quality and maintenance recipes for fest CLI
 
 # Set working directory to project root
-set working-directory := '..'
+set working-directory := justfile_directory()
 
 # Configuration
 binary_name := "fest"
