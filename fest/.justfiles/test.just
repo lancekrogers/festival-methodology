@@ -1,5 +1,4 @@
 # Test recipes
-root := justfile_directory()
 binary_name := "fest"
 main_path := "cmd/fest/main.go"
 bin_dir := "bin"
@@ -9,27 +8,27 @@ bin_dir := "bin"
 default:
     @just --list --unsorted --justfile {{source_file()}}
 
-# Run all tests
-test:
-    cd {{root}} && go test -v ./...
-
 # Run unit tests only
+[no-cd]
 unit:
-    cd {{root}} && go test -v ./...
+    go test -v ./...
 
 # Run tests with coverage report
+[no-cd]
 coverage:
-    cd {{root}} && go test -v -cover ./...
+    go test -v -cover ./...
 
 # Generate HTML coverage report
+[no-cd]
 coverage-html:
-    cd {{root}} && go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html
+    go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html
 
 # Build Linux binary for container testing
-[private]
+[private, no-cd]
 build-test-binary:
-    cd {{root}} && GOOS=linux GOARCH=amd64 go build -ldflags '-s -w' -o {{bin_dir}}/linux/{{binary_name}} {{main_path}}
+    GOOS=linux GOARCH=amd64 go build -ldflags '-s -w' -o {{bin_dir}}/linux/{{binary_name}} {{main_path}}
 
 # Run integration tests
+[no-cd]
 integration: build-test-binary
-    cd {{root}} && go test -v -tags=integration -timeout 10m ./tests/integration/...
+    go test -v -tags=integration -timeout 10m ./tests/integration/...
