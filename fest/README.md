@@ -47,6 +47,37 @@ go get github.com/charmbracelet/huh@latest github.com/charmbracelet/lipgloss@lat
 go build -tags charm -o fest cmd/fest/main.go
 ```
 
+### Navigation
+
+Navigate to your festivals directory from anywhere:
+
+```bash
+# One-time setup - add to ~/.zshrc or ~/.bashrc:
+eval "$(fest shell-init zsh)"
+```
+
+Then use `fgo` to navigate:
+
+```bash
+fgo              # Go to festivals root
+fgo 2            # Go to phase 002
+fgo 2/1          # Go to phase 2, sequence 1
+fgo active       # Go to active directory
+```
+
+Without shell integration, use command substitution:
+
+```bash
+cd $(fest go)
+cd $(fest go 2)
+```
+
+Register a workspace for cross-project navigation:
+
+```bash
+fest init --register /path/to/project/festivals
+```
+
 ### Initialize a new festival directory
 
 ```bash
