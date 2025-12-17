@@ -103,9 +103,11 @@ What do you need to create?
 ## Template Quick Reference
 
 ### FESTIVAL_OVERVIEW_TEMPLATE.md
+
 **Creates:** `FESTIVAL_OVERVIEW.md` in your festival root
 
 **Key Sections:**
+
 - Project Goal (one clear sentence)
 - Success Criteria (measurable outcomes)
 - Problem Statement (current vs desired state)
@@ -113,6 +115,7 @@ What do you need to create?
 - High-Level Phases (initial structure)
 
 **Example Output:**
+
 ```markdown
 # Festival Overview: User Authentication System
 
@@ -127,9 +130,11 @@ social auth, and role-based access control.
 ```
 
 ### COMMON_INTERFACES_TEMPLATE.md
+
 **Creates:** `COMMON_INTERFACES.md` in your festival root
 
 **Key Sections:**
+
 - API Endpoints (REST/GraphQL/RPC)
 - Data Models (schemas, types)
 - Function Signatures (public interfaces)
@@ -139,9 +144,11 @@ social auth, and role-based access control.
 **Critical:** Complete this BEFORE implementation begins!
 
 ### FESTIVAL_RULES_TEMPLATE.md
+
 **Creates:** `FESTIVAL_RULES.md` in your festival root
 
 **Key Sections:**
+
 - Code Standards (style, patterns)
 - Quality Gates (coverage, performance)
 - Security Requirements (auth, encryption)
@@ -151,6 +158,7 @@ social auth, and role-based access control.
 ### TASK_TEMPLATE.md vs TASK_TEMPLATE_SIMPLE.md
 
 **Full Template Includes:**
+
 - Objective & Context
 - Requirements & Deliverables
 - Pre-Task Checklist
@@ -162,18 +170,21 @@ social auth, and role-based access control.
 - Good vs Bad Examples
 
 **Simple Template Includes:**
+
 - Objective
 - Requirements (checklist)
 - Implementation Steps (brief)
 - Definition of Done
 
 **Choose Simple When:**
+
 - Task is well-understood
 - Team has done similar work
 - Risk is low
 - Goal progression needs rapid steps
 
 **Choose Full When:**
+
 - Task is complex or novel
 - Multiple people involved
 - High risk or critical path
@@ -182,6 +193,7 @@ social auth, and role-based access control.
 ### Progress Tracking Templates
 
 **Markdown Format (FESTIVAL_TODO_TEMPLATE.md):**
+
 ```markdown
 ## Phase 001_PLAN [████████░░] 80%
 ### 01_requirements [✅] Complete
@@ -193,6 +205,7 @@ social auth, and role-based access control.
 ```
 
 **YAML Format (FESTIVAL_TODO_TEMPLATE.yaml):**
+
 ```yaml
 phases:
   - id: "001_PLAN"
@@ -211,6 +224,7 @@ phases:
 **CRITICAL**: All setup patterns assume either completed planning or external requirements from human. Never create implementation sequences without requirements.
 
 ### Quick Setup Path (Requirements Available)
+
 **Use when:** Human has provided specific requirements or external planning documents
 
 1. `FESTIVAL_QUICKSTART_TEMPLATE.md` → Structure provided requirements
@@ -222,6 +236,7 @@ phases:
 **Complexity:** Minimal setup steps | **Best for:** Teams with clear requirements
 
 ### Planning-First Path (Requirements Needed)
+
 **Use when:** Human has project vision but needs collaborative requirements gathering
 
 1. `FESTIVAL_OVERVIEW_TEMPLATE.md` → Capture vision and goals
@@ -235,6 +250,7 @@ phases:
 **Complexity:** Comprehensive planning steps + implementation structuring | **Best for:** Projects needing requirements discovery
 
 ### Iterative Setup Path (Evolving Requirements)
+
 **Use when:** Human has initial requirements but expects them to evolve
 
 1. `FESTIVAL_QUICKSTART_TEMPLATE.md` → Structure initial requirements
@@ -249,6 +265,7 @@ phases:
 ### Usage Patterns
 
 ### Pattern 2: Quick Task Creation
+
 1. Assess complexity
 2. Choose template (simple vs full)
 3. Fill required sections
@@ -256,6 +273,7 @@ phases:
 5. Update TODO.md
 
 ### Pattern 3: Multi-System Development (Extension)
+
 1. Complete Phase 001 planning
 2. Activate Interface Planning Extension
 3. Use interface planning templates extensively
@@ -315,6 +333,7 @@ A: Absolutely! Share them with the community.
 ## Template Step Complexity
 
 **Relative complexity for template completion:**
+
 - Festival Overview: Moderate complexity - defines project context and goals
 - Common Interfaces: Higher complexity - requires architectural thinking  
 - Task (Simple): Low complexity - straightforward task definition

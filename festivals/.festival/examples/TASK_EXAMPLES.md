@@ -17,6 +17,7 @@ This document provides concrete examples of well-written festival tasks that lea
 ## Good vs Bad Task Examples
 
 ### ❌ BAD: Abstract and Generic
+
 ```markdown
 # Task: 01_user_management.md
 ## Objective
@@ -28,6 +29,7 @@ Implement user management functionality
 ```
 
 ### ✅ GOOD: Concrete and Specific
+
 ```markdown
 # Task: 01_create_user_table_and_model.md
 ## Objective
@@ -53,6 +55,7 @@ Create PostgreSQL user table and Sequelize model with email/password authenticat
 ## Database Tasks
 
 ### Example 1: PostgreSQL Table Creation
+
 ```markdown
 # Task: 01_create_posts_table.md
 
@@ -78,6 +81,7 @@ CREATE INDEX idx_posts_created_at ON posts(created_at DESC);
 ```
 
 ## Commands to Execute
+
 ```bash
 psql -d myapp_dev -f migrations/001_create_posts.sql
 npm run db:seed -- --file seeds/posts.js
@@ -85,9 +89,11 @@ npm test -- tests/models/post.test.js
 ```
 
 ## Deliverables
+
 - [ ] `migrations/001_create_posts.sql` file
 - [ ] `seeds/posts.js` with sample data
 - [ ] Updated `models/Post.js` Sequelize model
+
 ```
 
 ### Example 2: MongoDB Collection Setup
@@ -126,11 +132,13 @@ db.users.createIndex({ createdAt: 1 });
 ```
 
 ## Commands to Execute
+
 ```bash
 mongosh myapp_dev --eval "load('scripts/setup_users_collection.js')"
 node scripts/seed_users.js
 npm test -- tests/models/user.integration.test.js
 ```
+
 ```
 
 ---
@@ -188,6 +196,7 @@ router.post('/', validateRegistration, async (req, res) => {
 ```
 
 ### 2. Create Validation Middleware
+
 ```javascript
 // middleware/validation.js
 const { body } = require('express-validator');
@@ -201,6 +210,7 @@ const validateRegistration = [
 ```
 
 ## Testing Commands
+
 ```bash
 # Test the endpoint
 curl -X POST http://localhost:3000/api/users \
@@ -217,9 +227,11 @@ npm test -- tests/routes/users.test.js
 ```
 
 ## Deliverables
+
 - [ ] `routes/users.js` with POST endpoint
 - [ ] `middleware/validation.js` with registration validation
 - [ ] `tests/routes/users.test.js` with endpoint tests
+
 ```
 
 ### Example 4: GraphQL Resolver
@@ -266,6 +278,7 @@ type AuthPayload {
 ```
 
 ### 2. Implement Resolvers
+
 ```javascript
 // resolvers/user.js
 const bcrypt = require('bcrypt');
@@ -294,6 +307,7 @@ const userMutations = {
 ```
 
 ## Testing Commands
+
 ```bash
 # Test GraphQL mutation
 curl -X POST http://localhost:4000/graphql \
@@ -304,6 +318,7 @@ curl -X POST http://localhost:4000/graphql \
 
 npm test -- tests/resolvers/user.test.js
 ```
+
 ```
 
 ---
@@ -404,6 +419,7 @@ export default LoginForm;
 ```
 
 ### 2. Create Styling
+
 ```css
 /* components/LoginForm.css */
 .login-form {
@@ -444,6 +460,7 @@ export default LoginForm;
 ```
 
 ## Testing Commands
+
 ```bash
 # Run component tests
 npm test -- LoginForm.test.jsx
@@ -456,10 +473,12 @@ npm start
 ```
 
 ## Deliverables
+
 - [ ] `components/LoginForm.jsx` component
 - [ ] `components/LoginForm.css` styling
 - [ ] `components/__tests__/LoginForm.test.jsx` test file
 - [ ] `components/LoginForm.stories.jsx` Storybook story
+
 ```
 
 ---
@@ -513,6 +532,7 @@ CMD ["npm", "start"]
 ```
 
 ### 2. Create .dockerignore
+
 ```
 node_modules
 npm-debug.log
@@ -527,6 +547,7 @@ dist
 ```
 
 ### 3. Create docker-compose.yml
+
 ```yaml
 version: '3.8'
 
@@ -560,6 +581,7 @@ volumes:
 ```
 
 ## Commands to Execute
+
 ```bash
 # Build image
 docker build -t myapp:latest .
@@ -575,10 +597,12 @@ docker-compose exec app npm test
 ```
 
 ## Deliverables
+
 - [ ] `Dockerfile` with multi-stage build
 - [ ] `.dockerignore` file
 - [ ] `docker-compose.yml` for development
 - [ ] `docker-compose.prod.yml` for production
+
 ```
 
 ### Example 7: CI/CD Pipeline
@@ -687,6 +711,7 @@ jobs:
 ```
 
 ## Commands to Test Locally
+
 ```bash
 # Install act (GitHub Actions local runner)
 brew install act  # or curl https://raw.githubusercontent.com/nektos/act/master/install.sh | bash
@@ -699,9 +724,11 @@ act push -j build
 ```
 
 ## Deliverables
+
 - [ ] `.github/workflows/ci.yml` pipeline file
 - [ ] Updated `package.json` with lint and type-check scripts
 - [ ] `codecov.yml` configuration file
+
 ```
 
 ---
@@ -815,6 +842,7 @@ describe('UserService', () => {
 ```
 
 ### 2. Create Integration Test
+
 ```javascript
 // tests/integration/user.integration.test.js
 const request = require('supertest');
@@ -855,6 +883,7 @@ describe('User Integration Tests', () => {
 ```
 
 ## Commands to Execute
+
 ```bash
 # Run unit tests
 npm test -- tests/services/UserService.test.js
@@ -870,10 +899,12 @@ npm test -- --watch
 ```
 
 ## Deliverables
+
 - [ ] `tests/services/UserService.test.js` unit test file
 - [ ] `tests/integration/user.integration.test.js` integration tests
 - [ ] Updated `jest.config.js` configuration
 - [ ] Mock data factories in `tests/factories/`
+
 ```
 
 ---
@@ -933,12 +964,15 @@ When adding new examples to this document, use this structure:
 ```
 
 ## Commands to Execute
+
 ```bash
 [Exact commands to run]
 ```
 
 ## Deliverables
+
 - [ ] [Specific file or output that will be created]
+
 ```
 ```
 

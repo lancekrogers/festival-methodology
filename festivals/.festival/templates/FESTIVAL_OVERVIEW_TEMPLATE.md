@@ -28,6 +28,7 @@ modified: '2025-09-06'
 - [ ] **User Success**: [User experience goals met]
 
 **Example Success Criteria:**
+
 - [ ] Users can register, login, and logout with email/password
 - [ ] Google and GitHub social authentication work seamlessly
 - [ ] Role-based permissions (user/admin) control access properly
@@ -46,6 +47,7 @@ modified: '2025-09-06'
 **Business Impact**: [How this affects business goals and operations]
 
 **Example Problem Statement:**
+
 ```
 Current State: Our web application has no user authentication, so all users see the same content and we can't personalize experiences or restrict access to sensitive features.
 
@@ -71,22 +73,26 @@ Business Impact: We can gather user analytics, offer premium features, and compl
 ## Scope & Constraints
 
 ### In Scope
+
 - [List specific features and functionality to be built]
 - [Include technical components and integrations]
 - [Specify quality and performance requirements]
 
 ### Out of Scope  
+
 - [List what will NOT be included in this festival]
 - [Identify future enhancements or separate projects]
 - [Clarify boundaries to prevent scope creep]
 
 ### Constraints
+
 - **Technical**: [Technology limitations, existing systems, architectural constraints]
 - **Timeline**: [Key dates, dependencies, external deadlines]
 - **Resources**: [Team size, budget, skill limitations]
 - **Business**: [Regulatory requirements, business policy constraints]
 
 **Example Scope:**
+
 ```
 In Scope:
 - Email/password registration and login
@@ -112,9 +118,11 @@ Constraints:
 ## Festival Structure Overview
 
 ### Phase 001: PLAN
+
 **Objective**: Complete requirements analysis and system architecture planning
 
 **Key Sequences**:
+
 - Requirements analysis and user story definition
 - Technical architecture design and database planning
 - Security architecture and compliance planning
@@ -122,9 +130,11 @@ Constraints:
 **Deliverables**: Requirements specification, architecture documentation, technology decisions
 
 ### Phase 002: DEFINE_INTERFACES ⭐ CRITICAL PHASE
+
 **Objective**: Define and finalize all system interfaces before implementation begins
 
 **Key Sequences**:
+
 - API contract definition (authentication endpoints, user management APIs)
 - Database schema design and relationships
 - Frontend component interface specifications
@@ -135,9 +145,11 @@ Constraints:
 **Critical Success Factor**: NO Phase 003 work begins until ALL interfaces are FINALIZED
 
 ### Phase 003: IMPLEMENT  
+
 **Objective**: Build the authentication system according to finalized interface contracts
 
 **Key Sequences**:
+
 - Backend authentication services implementation
 - Frontend authentication UI and state management
 - Database implementation and migration scripts
@@ -146,9 +158,11 @@ Constraints:
 **Deliverables**: Working authentication system, comprehensive test suite
 
 ### Phase 004: REVIEW_AND_UAT
+
 **Objective**: Validate system meets requirements through user acceptance testing
 
 **Key Sequences**:
+
 - User acceptance testing with real users
 - Security audit and penetration testing
 - Performance testing and optimization
@@ -159,18 +173,22 @@ Constraints:
 ## Key Dependencies
 
 ### Internal Dependencies
+
 - [Systems, teams, or resources within organization that this festival depends on]
 - [Other projects or initiatives that must complete first]
 
 ### External Dependencies  
+
 - [Third-party services, vendors, or external systems required]
 - [Regulatory approvals or legal reviews needed]
 
 ### Critical Path Items
+
 - [Dependencies that could block or delay the entire festival]
 - [High-risk items requiring early attention]
 
 **Example Dependencies:**
+
 ```
 Internal Dependencies:
 - Database infrastructure team must provision PostgreSQL instance
@@ -201,16 +219,19 @@ Critical Path Items:
 ## Communication Plan
 
 ### Regular Updates
+
 - **Daily**: [Who gets what updates, through what channels]
 - **Weekly**: [Status reports, stakeholder communication]
 - **Phase Transitions**: [Milestone communication, approval processes]
 
 ### Decision Making
+
 - **Technical Decisions**: [Who makes architectural and implementation decisions]
 - **Business Decisions**: [Who approves scope or requirement changes]
 - **Escalation Path**: [How issues get elevated to management]
 
 ### Documentation Standards
+
 - **Code Documentation**: [Standards for code comments, API docs]
 - **Decision Records**: [How architectural decisions are documented]
 - **Progress Tracking**: [How completion and issues are tracked]
@@ -218,7 +239,9 @@ Critical Path Items:
 ## Quality Standards
 
 ### Definition of Done
+
 A task is complete only when:
+
 - [ ] All specified deliverables are produced and tested
 - [ ] Code review completed and approved
 - [ ] Unit tests written and passing
@@ -228,7 +251,9 @@ A task is complete only when:
 - [ ] Performance impact assessed
 
 ### Acceptance Criteria
+
 Each user story/requirement must have:
+
 - Clear, testable acceptance criteria
 - Security considerations addressed
 - Performance requirements specified
@@ -236,6 +261,7 @@ Each user story/requirement must have:
 - User experience requirements
 
 ### Quality Gates
+
 - **Phase 001 → 002**: Architecture review, requirements sign-off
 - **Phase 002 → 003**: Interface finalization, stakeholder approval  
 - **Phase 003 → 004**: Implementation complete, automated tests passing
@@ -254,16 +280,19 @@ This festival follows the Festival Methodology principles:
 ## Notes
 
 ### Assumptions Made
+
 - [List key assumptions about requirements, technology, or resources]
 - [Assumptions about user behavior or business processes]
 - [Technical assumptions about existing systems]
 
 ### Open Questions  
+
 - [Questions that need answers before or during festival execution]
 - [Decisions that are deferred to later phases]
 - [Areas where more research or investigation is needed]
 
 ### Learning Objectives
+
 - [What the team expects to learn during this festival]
 - [Skills or knowledge that will be developed]
 - [Process improvements to experiment with]

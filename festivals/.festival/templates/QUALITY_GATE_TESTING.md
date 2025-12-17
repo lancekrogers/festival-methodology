@@ -36,6 +36,7 @@ npm test{{ end }}
 ```
 
 **Verify:**
+
 - [ ] All new/modified code has test coverage
 - [ ] Tests are meaningful (not just coverage padding)
 - [ ] Test names describe what they verify
@@ -48,6 +49,7 @@ make test-integration
 ```
 
 **Verify:**
+
 - [ ] Components work together correctly
 - [ ] External integrations function properly
 - [ ] Data flows correctly through the system
@@ -63,6 +65,7 @@ Walk through each requirement from the sequence:
 ## Coverage Requirements
 
 {{ if .Customizations.coverage_threshold }}
+
 - Minimum coverage: {{ .Customizations.coverage_threshold }}%
 {{ else }}
 - Minimum coverage: 80% for new code
@@ -95,6 +98,7 @@ Document any test gaps, flaky tests, or areas needing future attention here.
 ---
 
 **Test Results Summary:**
+
 - Unit tests: [ ] Pass / [ ] Fail
 - Integration tests: [ ] Pass / [ ] Fail
 - Manual tests: [ ] Pass / [ ] Fail

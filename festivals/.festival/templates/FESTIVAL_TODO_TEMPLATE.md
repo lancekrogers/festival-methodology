@@ -10,12 +10,14 @@ description: Unified project tracking template with checkboxes for manual progre
 # Festival TODO - Unified Project Tracking
 
 ## Festival: [FESTIVAL_NAME]
+
 **Goal**: [Primary objective in one clear sentence]  
 **Status**: [Planning | Active | Review | Complete]  
 **Started**: [YYYY-MM-DD]  
 **Target**: [YYYY-MM-DD]
 
 ## Status Legend
+
 - [ ] Not Started
 - [🚧] In Progress  
 - [✅] Completed
@@ -28,12 +30,14 @@ description: Unified project tracking template with checkboxes for manual progre
 ## Festival Progress Overview
 
 ### Phase Completion Status
+
 - [ ] **001_PLAN** - Requirements and Architecture
 - [ ] **002_DEFINE_INTERFACES** - System Contracts (Critical Gate)
 - [ ] **003_IMPLEMENT** - Build Solution
 - [ ] **004_REVIEW_AND_UAT** - User Acceptance
 
 ### Current Work Status
+
 ```
 Active Phase: [PHASE_NAME]
 Active Sequences: [SEQUENCE_NAMES]
@@ -45,19 +49,23 @@ Next Critical Gate: [GATE_DESCRIPTION]
 ---
 
 ## 📋 PHASE 001: PLAN
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 **Purpose**: Define requirements, architecture, and draft initial interfaces
 **Gate Criteria**: Requirements approved, architecture documented, feasibility confirmed
 
 ### Sequence Progress
+
 - [ ] **01_requirements_analysis** (Foundation for all other work)
 - [ ] **02_architecture_design** (System blueprint)  
 - [ ] **03_feasibility_study** (Risk and resource validation)
 
 #### 01_requirements_analysis
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 
 **Tasks**:
+
 - [ ] 01_user_research.md
 - [ ] 01_security_requirements.md *(parallel)*
 - [ ] 02_requirements_spec.md
@@ -66,10 +74,12 @@ Next Critical Gate: [GATE_DESCRIPTION]
 - [ ] 05_review_results_iterate.md
 
 #### 02_architecture_design
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 **Dependencies**: 01_requirements_analysis must be completed
 
 **Tasks**:
+
 - [ ] 01_system_architecture.md
 - [ ] 01_technology_selection.md *(parallel)*
 - [ ] 02_security_architecture.md
@@ -78,10 +88,12 @@ Next Critical Gate: [GATE_DESCRIPTION]
 - [ ] 05_review_results_iterate.md
 
 #### 03_feasibility_study
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 **Dependencies**: 02_architecture_design must be completed
 
 **Tasks**:
+
 - [ ] 01_technical_feasibility.md
 - [ ] 01_resource_assessment.md *(parallel)*
 - [ ] 02_risk_analysis.md
@@ -92,19 +104,23 @@ Next Critical Gate: [GATE_DESCRIPTION]
 ---
 
 ## 🔗 PHASE 002: DEFINE_INTERFACES ⭐ CRITICAL GATE
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 **Purpose**: Lock all system contracts, APIs, and data models before implementation
 **Gate Criteria**: ALL interfaces FINALIZED, stakeholder sign-offs complete, no Phase 003 work until complete
 
 ### Sequence Progress
+
 - [ ] **01_api_contracts** (External system interfaces)
 - [ ] **02_data_schemas** (Data structure contracts)
 - [ ] **03_integration_points** (Service boundaries)
 
 #### 01_api_contracts
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 
 **Tasks**:
+
 - [ ] 01_rest_api_spec.md
 - [ ] 01_graphql_schema.md *(parallel)*
 - [ ] 02_error_handling_spec.md
@@ -113,10 +129,12 @@ Next Critical Gate: [GATE_DESCRIPTION]
 - [ ] 05_review_results_iterate.md
 
 #### 02_data_schemas  
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 **Can run parallel with**: 01_api_contracts
 
 **Tasks**:
+
 - [ ] 01_domain_models.md
 - [ ] 01_database_schema.md *(parallel)*
 - [ ] 02_validation_rules.md
@@ -125,10 +143,12 @@ Next Critical Gate: [GATE_DESCRIPTION]
 - [ ] 05_review_results_iterate.md
 
 #### 03_integration_points
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 **Dependencies**: 01_api_contracts and 02_data_schemas must be completed
 
 **Tasks**:
+
 - [ ] 01_external_services.md
 - [ ] 01_event_contracts.md *(parallel)*
 - [ ] 02_authentication_flow.md
@@ -139,20 +159,24 @@ Next Critical Gate: [GATE_DESCRIPTION]
 ---
 
 ## ⚒️ PHASE 003: IMPLEMENT
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 **Purpose**: Build solution based on locked interfaces with parallel development
 **Gate Criteria**: All implementation complete, automated tests passing, interfaces maintained
 
 ### Sequence Progress
+
 - [ ] **01_backend_foundation** (Core services and data)
 - [ ] **02_frontend_integration** (User interface)
 - [ ] **03_service_integration** (External connections)
 - [ ] **04_performance_optimization** (Scale and efficiency)
 
 #### 01_backend_foundation
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 
 **Tasks**:
+
 - [ ] 01_database_setup.md
 - [ ] 01_api_endpoints.md *(parallel)*
 - [ ] 01_business_logic.md *(parallel)*
@@ -161,10 +185,12 @@ Next Critical Gate: [GATE_DESCRIPTION]
 - [ ] 04_review_results_iterate.md
 
 #### 02_frontend_integration
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 **Can run parallel with**: 01_backend_foundation (thanks to interface contracts)
 
 **Tasks**:
+
 - [ ] 01_ui_components.md
 - [ ] 01_state_management.md *(parallel)*
 - [ ] 02_api_integration.md
@@ -173,10 +199,12 @@ Next Critical Gate: [GATE_DESCRIPTION]
 - [ ] 05_review_results_iterate.md
 
 #### 03_service_integration
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 **Dependencies**: 01_backend_foundation must be completed
 
 **Tasks**:
+
 - [ ] 01_external_apis.md
 - [ ] 01_message_queues.md *(parallel)*
 - [ ] 02_error_handling.md
@@ -185,10 +213,12 @@ Next Critical Gate: [GATE_DESCRIPTION]
 - [ ] 05_review_results_iterate.md
 
 #### 04_performance_optimization
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 **Dependencies**: 01_backend_foundation and 02_frontend_integration completed
 
 **Tasks**:
+
 - [ ] 01_database_optimization.md
 - [ ] 01_caching_strategy.md *(parallel)*
 - [ ] 02_load_testing.md
@@ -198,19 +228,23 @@ Next Critical Gate: [GATE_DESCRIPTION]
 ---
 
 ## 🎯 PHASE 004: REVIEW_AND_UAT
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 **Purpose**: Validate with users and stakeholders, ensure production readiness
 **Gate Criteria**: User acceptance criteria met, stakeholder approval, production ready
 
 ### Sequence Progress
+
 - [ ] **01_user_acceptance_testing** (Real user validation)
 - [ ] **02_stakeholder_review** (Business validation)
 - [ ] **03_production_readiness** (Deployment preparation)
 
 #### 01_user_acceptance_testing
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 
 **Tasks**:
+
 - [ ] 01_uat_planning.md
 - [ ] 01_test_scenarios.md *(parallel)*
 - [ ] 02_user_testing_execution.md
@@ -220,10 +254,12 @@ Next Critical Gate: [GATE_DESCRIPTION]
 - [ ] 06_review_results_iterate.md
 
 #### 02_stakeholder_review
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 **Can run parallel with**: 01_user_acceptance_testing
 
 **Tasks**:
+
 - [ ] 01_business_validation.md
 - [ ] 01_stakeholder_demos.md *(parallel)*
 - [ ] 02_requirements_sign_off.md
@@ -232,10 +268,12 @@ Next Critical Gate: [GATE_DESCRIPTION]
 - [ ] 05_review_results_iterate.md
 
 #### 03_production_readiness
+
 **Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
 **Dependencies**: 01_user_acceptance_testing and 02_stakeholder_review completed
 
 **Tasks**:
+
 - [ ] 01_deployment_checklist.md
 - [ ] 01_monitoring_setup.md *(parallel)*
 - [ ] 02_runbook_creation.md
@@ -247,6 +285,7 @@ Next Critical Gate: [GATE_DESCRIPTION]
 ## 📊 Progress Dashboard
 
 ### Overall Metrics
+
 ```
 Festival Progress: [_______________] 0%
 
@@ -261,6 +300,7 @@ Tasks: 0/72 completed (0%)
 ```
 
 ### Current Sprint Status
+
 ```
 Active Work This Week:
 □ [Task name] - [Owner] - [Due date]
@@ -281,12 +321,14 @@ Blocked/At Risk:
 ## 🚨 Critical Dependencies & Gates
 
 ### Phase Gates (Must Complete Before Next Phase)
+
 1. **001 → 002**: [ ] Requirements documented, [ ] Architecture approved, [ ] Team aligned
 2. **002 → 003**: [ ] ALL interfaces FINALIZED, [ ] Stakeholder sign-offs, [ ] COMMON_INTERFACES.md status = FINALIZED
 3. **003 → 004**: [ ] Implementation complete, [ ] Tests passing, [ ] Integration working
 4. **004 → DONE**: [ ] User acceptance passed, [ ] Production deployment ready
 
 ### External Dependencies
+
 ```
 Waiting For:
 □ [External system/person] - [What needed] - [Expected date]
@@ -301,6 +343,7 @@ Provides To Others:
 ## 🛑 Blockers & Risks
 
 ### Active Blockers
+
 ```
 ❌ BLOCKER_001: [Description]
    Impact: [How this blocks progress]
@@ -314,6 +357,7 @@ Provides To Others:
 ```
 
 ### Risk Register
+
 ```
 🔺 HIGH: [Risk description] - Mitigation: [Strategy]
 🔸 MED:  [Risk description] - Mitigation: [Strategy]  
@@ -325,6 +369,7 @@ Provides To Others:
 ## 📝 Decision Log
 
 ### Recent Decisions
+
 ```
 [YYYY-MM-DD] DECISION: [What was decided]
   Rationale: [Why this decision]
@@ -344,23 +389,27 @@ Provides To Others:
 ### How to Use This Festival TODO System
 
 **1. Daily Updates**
+
 - Update task checkboxes as work progresses: [ ] → [🚧] → [✅]
 - Update sequence status when all tasks in sequence complete
 - Update phase status when all sequences in phase complete
 - Note any blockers immediately with [❌]
 
 **2. Weekly Reviews**
+
 - Review overall progress metrics
 - Update active work section  
 - Assess risks and dependencies
 - Plan next week's focus
 
 **3. Phase Gate Reviews**
+
 - Before moving to next phase, ensure ALL criteria met
 - **Phase 002 → 003 is CRITICAL**: No implementation until interfaces are FINALIZED
 - Document gate decisions in decision log
 
 **4. Status Meanings**
+
 - **Phase Status**: Overall phase health and completion
 - **Sequence Status**: All tasks in sequence completed and reviewed
 - **Task Status**: Individual deliverable completion
@@ -376,6 +425,7 @@ Provides To Others:
 ### Automation Opportunities
 
 This markdown format enables:
+
 - **CI/CD Integration**: Parse checkboxes for automated reporting
 - **Progress Tracking**: Calculate completion percentages
 - **Dependency Management**: Validate prerequisite completion

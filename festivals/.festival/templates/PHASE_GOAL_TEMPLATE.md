@@ -20,16 +20,19 @@ description: Defines phase objective, success criteria, and quality metrics
 The phase goal is achieved when:
 
 ### Required Outcomes
+
 - [ ] **[Outcome 1]**: [Specific, measurable deliverable or milestone]
 - [ ] **[Outcome 2]**: [Specific, measurable deliverable or milestone]
 - [ ] **[Outcome 3]**: [Specific, measurable deliverable or milestone]
 
 ### Quality Metrics
+
 - [ ] **[Metric 1]**: [Quantifiable quality measure with target]
 - [ ] **[Metric 2]**: [Quantifiable quality measure with target]
 - [ ] **[Metric 3]**: [Quantifiable quality measure with target]
 
 ### Validation Gates
+
 - [ ] All sequence goals within this phase achieved
 - [ ] Stakeholder review and approval completed
 - [ ] Documentation updated and complete
@@ -63,6 +66,7 @@ Verify that sequence goals support this phase goal:
 ## Pre-Phase Checklist
 
 Before starting this phase:
+
 - [ ] Previous phase goals fully achieved
 - [ ] Resources and team available
 - [ ] Dependencies resolved
@@ -71,7 +75,9 @@ Before starting this phase:
 ## Evaluation Framework
 
 ### During Execution
+
 Track progress weekly/daily against:
+
 - Sequence completion rate
 - Quality metric trends
 - Risk emergence
@@ -84,21 +90,25 @@ Track progress weekly/daily against:
 **Goal Achievement Score:** [X/Y criteria met]
 
 ### What Worked Well
+
 - [Success factor 1]
 - [Success factor 2]
 - [Success factor 3]
 
 ### What Could Be Improved
+
 - [Improvement area 1]
 - [Improvement area 2]
 - [Improvement area 3]
 
 ### Lessons Learned
+
 - [Key learning 1]
 - [Key learning 2]
 - [Key learning 3]
 
 ### Recommendations for Future Phases
+
 - [Recommendation 1]
 - [Recommendation 2]
 - [Recommendation 3]
@@ -114,6 +124,7 @@ Track progress weekly/daily against:
 ## Usage Guide
 
 This PHASE_GOAL.md file should be:
+
 1. Created at the start of phase planning
 2. Placed in the phase directory (e.g., `001_PLAN/PHASE_GOAL.md`)
 3. Referenced by all sequences within the phase
@@ -121,12 +132,13 @@ This PHASE_GOAL.md file should be:
 5. Completed with assessment after phase completion
 
 The goal serves as:
+
 - North star for all phase activities
 - Evaluation criteria for phase completion
 - Communication tool with stakeholders
 - Learning capture mechanism
 
-### Example (Filled Out):
+### Example (Filled Out)
 
 # Phase Goal: 002_DEFINE_INTERFACES
 
@@ -143,16 +155,19 @@ The goal serves as:
 The phase goal is achieved when:
 
 ### Required Outcomes
+
 - [ ] **API Specification**: All 47 REST endpoints fully documented with OpenAPI
 - [ ] **Data Models**: All 12 data models defined with complete schemas
 - [ ] **Integration Contracts**: All 5 third-party integrations specified
 
 ### Quality Metrics
+
 - [ ] **Completeness**: 100% of identified interfaces have full specifications
 - [ ] **Clarity**: 0 ambiguous interface definitions (validated by review)
 - [ ] **Examples**: Every interface includes at least 2 usage examples
 
 ### Validation Gates
+
 - [ ] All sequence goals within this phase achieved
 - [ ] Technical review with all development teams passed
 - [ ] Stakeholder approval on all public interfaces received

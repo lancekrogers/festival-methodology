@@ -20,16 +20,19 @@ description: Defines sequence objective, deliverables, and quality standards
 The sequence goal is achieved when:
 
 ### Required Deliverables
+
 - [ ] **[Deliverable 1]**: [Specific output or artifact produced]
 - [ ] **[Deliverable 2]**: [Specific output or artifact produced]
 - [ ] **[Deliverable 3]**: [Specific output or artifact produced]
 
 ### Quality Standards
+
 - [ ] **[Standard 1]**: [Quality measure with specific target]
 - [ ] **[Standard 2]**: [Quality measure with specific target]
 - [ ] **[Standard 3]**: [Quality measure with specific target]
 
 ### Completion Criteria
+
 - [ ] All tasks in sequence completed successfully
 - [ ] Quality verification tasks passed
 - [ ] Code review completed and issues addressed
@@ -48,10 +51,12 @@ Verify tasks support this sequence goal:
 ## Dependencies
 
 ### Prerequisites (from other sequences)
+
 - [Sequence X]: [What we need from it]
 - [Sequence Y]: [What we need from it]
 
 ### Provides (to other sequences)
+
 - [What this sequence produces]: Used by [Sequence Z]
 - [What this sequence produces]: Used by [Sequence W]
 
@@ -64,11 +69,13 @@ Verify tasks support this sequence goal:
 ## Progress Tracking
 
 ### Milestones
+
 - [ ] **[Date]**: [Milestone 1 description]
 - [ ] **[Date]**: [Milestone 2 description]
 - [ ] **[Date]**: [Milestone 3 description]
 
 ### Metrics to Monitor
+
 - Task completion rate: [X/Y tasks]
 - Quality gate pass rate: [X%]
 - Blocker resolution time: [X days average]
@@ -76,6 +83,7 @@ Verify tasks support this sequence goal:
 ## Pre-Sequence Checklist
 
 Before starting this sequence:
+
 - [ ] Phase goal understood and aligned
 - [ ] Dependencies from other sequences available
 - [ ] Resources assigned and available
@@ -96,34 +104,41 @@ Before starting this sequence:
 | [Deliverable 3] | ✅/⚠️/❌ | [1-5] | [Assessment notes] |
 
 ### What Worked Well
+
 - [Success factor 1]
 - [Success factor 2]
 
 ### What Could Be Improved
+
 - [Improvement area 1]
 - [Improvement area 2]
 
 ### Impact on Phase Goal
+
 [Description of how well this sequence's completion supported the overall phase goal]
 
 ### Recommendations
+
 - For similar sequences: [Recommendation]
 - For next phase: [Recommendation]
 
 ## Quality Gates
 
 ### Testing and Verification
+
 - [ ] All unit tests pass
 - [ ] Integration tests complete
 - [ ] Performance benchmarks met
 - [ ] Security scan clean
 
 ### Code Review
+
 - [ ] Code review conducted
 - [ ] Review feedback addressed
 - [ ] Standards compliance verified
 
 ### Iteration Decision
+
 - [ ] Need another iteration? [Yes/No]
 - [ ] If yes, new tasks created: [List task numbers]
 
@@ -132,6 +147,7 @@ Before starting this sequence:
 ## Usage Guide
 
 This SEQUENCE_GOAL.md file should be:
+
 1. Created when planning the sequence
 2. Placed in the sequence directory (e.g., `001_PLAN/01_requirements/SEQUENCE_GOAL.md`)
 3. Referenced by all tasks within the sequence
@@ -139,12 +155,13 @@ This SEQUENCE_GOAL.md file should be:
 5. Evaluated upon sequence completion
 
 The goal serves as:
+
 - Clear target for all sequence tasks
 - Success measurement criteria
 - Dependency tracking document
 - Quality assurance checkpoint
 
-### Example (Filled Out):
+### Example (Filled Out)
 
 # Sequence Goal: 02_user_authentication
 
@@ -161,16 +178,19 @@ The goal serves as:
 The sequence goal is achieved when:
 
 ### Required Deliverables
+
 - [ ] **Authentication API**: All 6 auth endpoints implemented and tested
 - [ ] **User Model**: Database model with secure password storage
 - [ ] **JWT System**: Token generation and validation working
 
 ### Quality Standards
+
 - [ ] **Security**: Passes OWASP authentication security checklist
 - [ ] **Performance**: Login response time < 200ms at 95th percentile
 - [ ] **Test Coverage**: Minimum 90% code coverage for auth module
 
 ### Completion Criteria
+
 - [ ] All 8 tasks in sequence completed successfully
 - [ ] Security review passed
 - [ ] Integration tests with frontend successful
@@ -191,9 +211,11 @@ Verify tasks support this sequence goal:
 ## Dependencies
 
 ### Prerequisites (from other sequences)
+
 - 01_database_setup: PostgreSQL connection and migration system
 - 02_api_framework: Express.js setup with middleware
 
 ### Provides (to other sequences)
+
 - Authentication middleware: Used by all protected routes
 - User model: Used by profile, permissions, and audit sequences

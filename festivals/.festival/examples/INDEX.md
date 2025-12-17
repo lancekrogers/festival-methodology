@@ -5,6 +5,7 @@ Learn from concrete implementations and proven patterns.
 ## Available Examples
 
 ### Task Examples
+
 **File:** `TASK_EXAMPLES.md`
 
 Contains 15+ real-world task examples across different domains:
@@ -35,9 +36,11 @@ Contains 15+ real-world task examples across different domains:
    - E2E test configuration
 
 ### Festival TODO Example
+
 **File:** `FESTIVAL_TODO_EXAMPLE.md`
 
 Complete example of festival progress tracking showing:
+
 - All progress states (Not Started, In Progress, Complete, Blocked)
 - Percentage calculations
 - Visual progress indicators
@@ -47,6 +50,7 @@ Complete example of festival progress tracking showing:
 ## Common Festival Patterns
 
 ### Pattern 1: Web Application Festival
+
 ```
 001_PLAN
 ├── 01_requirements_analysis
@@ -74,6 +78,7 @@ Complete example of festival progress tracking showing:
 ```
 
 ### Pattern 2: Microservices Festival
+
 ```
 001_PLAN
 ├── 01_domain_modeling
@@ -101,6 +106,7 @@ Complete example of festival progress tracking showing:
 ```
 
 ### Pattern 3: Data Pipeline Festival
+
 ```
 001_PLAN
 ├── 01_data_requirements
@@ -128,6 +134,7 @@ Complete example of festival progress tracking showing:
 ```
 
 ### Pattern 4: Mobile App Festival
+
 ```
 001_PLAN
 ├── 01_user_research
@@ -157,6 +164,7 @@ Complete example of festival progress tracking showing:
 ## Task Numbering Patterns
 
 ### Sequential Tasks
+
 ```
 01_setup_database.md
 02_create_models.md
@@ -165,6 +173,7 @@ Complete example of festival progress tracking showing:
 ```
 
 ### Parallel Tasks (same number)
+
 ```
 01_frontend_setup.md
 01_backend_setup.md
@@ -173,6 +182,7 @@ Complete example of festival progress tracking showing:
 ```
 
 ### Mixed Pattern
+
 ```
 01_planning.md
 02_design_api.md
@@ -185,7 +195,9 @@ Complete example of festival progress tracking showing:
 ## Quality Gate Examples
 
 ### Standard Quality Sequence
+
 Every sequence should end with:
+
 ```
 XX_testing_and_verify.md
 XX_code_review.md
@@ -193,7 +205,9 @@ XX_review_results_iterate.md
 ```
 
 ### Extended Quality Sequence
+
 For critical features:
+
 ```
 XX_unit_testing.md
 XX_integration_testing.md
@@ -207,6 +221,7 @@ XX_review_results_iterate.md
 ## Interface Definition Examples
 
 ### REST API Interface
+
 ```markdown
 ## POST /api/users/register
 
@@ -220,6 +235,7 @@ XX_review_results_iterate.md
 ```
 
 ### Response
+
 ```json
 {
   "id": "uuid-here",
@@ -230,9 +246,11 @@ XX_review_results_iterate.md
 ```
 
 ### Errors
+
 - 400: Invalid email format
 - 409: Email already exists
 - 422: Password too weak
+
 ```
 
 ### GraphQL Interface
@@ -256,6 +274,7 @@ type Mutation {
 ```
 
 ### Event Interface
+
 ```yaml
 event: user.registered
 version: 1.0.0
@@ -272,6 +291,7 @@ metadata:
 ## Common Task Structures
 
 ### Database Task
+
 ```markdown
 # Task: 01_create_user_table
 
@@ -292,6 +312,7 @@ Create PostgreSQL user table with authentication fields
 ```
 
 ### API Task
+
 ```markdown
 # Task: 02_implement_login_endpoint
 
@@ -312,6 +333,7 @@ Implement POST /api/auth/login endpoint with JWT
 ```
 
 ### Frontend Task
+
 ```markdown
 # Task: 03_create_login_form
 
@@ -334,6 +356,7 @@ Create responsive login form component
 ## Anti-Pattern Examples
 
 ### ❌ BAD: Vague Task
+
 ```markdown
 # Task: implement_authentication
 ## Objective
@@ -341,6 +364,7 @@ Add authentication to the system
 ```
 
 ### ✅ GOOD: Specific Task
+
 ```markdown
 # Task: 01_implement_jwt_authentication
 ## Objective
@@ -348,6 +372,7 @@ Implement JWT-based authentication with refresh tokens for REST API
 ```
 
 ### ❌ BAD: Missing Dependencies
+
 ```markdown
 Tasks:
 - 01_create_frontend
@@ -356,6 +381,7 @@ Tasks:
 ```
 
 ### ✅ GOOD: Clear Dependencies
+
 ```markdown
 Tasks:
 - 01_define_api_contract
@@ -367,18 +393,21 @@ Tasks:
 ## Real-World Adaptations
 
 ### Startup/MVP Festival
+
 - Lean Phase 001 (1-2 sequences)
 - Focus on Phase 002 interfaces
 - Rapid Phase 003 with basics
 - Minimal Phase 004
 
 ### Enterprise Festival
+
 - Extensive Phase 001 (compliance, security)
 - Detailed Phase 002 (governance review)
 - Parallel Phase 003 (multiple teams)
 - Comprehensive Phase 004 (audits)
 
 ### Open Source Festival
+
 - Community-driven Phase 001
 - Public Phase 002 (RFC process)
 - Contributor Phase 003
@@ -387,12 +416,14 @@ Tasks:
 ## Learning Resources
 
 ### From Examples
+
 1. Start with `TASK_EXAMPLES.md` for task writing
 2. Review `FESTIVAL_TODO_EXAMPLE.md` for tracking
 3. Study patterns above for structure
 4. Adapt to your specific needs
 
 ### Best Practices Derived
+
 - Number tasks to show dependencies
 - Define interfaces completely before coding
 - Include quality gates in every sequence
@@ -411,6 +442,7 @@ Have a great festival pattern? Share it!
 ## Summary
 
 These examples demonstrate:
+
 - Proper three-level hierarchy
 - Interface-first development
 - Quality gate integration

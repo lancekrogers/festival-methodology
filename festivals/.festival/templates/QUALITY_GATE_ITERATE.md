@@ -35,10 +35,12 @@ Address all findings from code review and testing, iterate until the sequence me
 ### Round 1
 
 **Changes Made:**
+
 - [ ] [Change 1 description]
 - [ ] [Change 2 description]
 
 **Verification:**
+
 - [ ] Tests re-run and pass
 - [ ] Linting passes
 - [ ] Changes reviewed
@@ -46,9 +48,11 @@ Address all findings from code review and testing, iterate until the sequence me
 ### Round 2 (if needed)
 
 **Changes Made:**
+
 - [ ] [Change 1 description]
 
 **Verification:**
+
 - [ ] Tests re-run and pass
 - [ ] Linting passes
 - [ ] Changes reviewed
@@ -93,6 +97,7 @@ Document patterns or issues to avoid in future sequences:
 **Sequence Complete:** [ ] Yes / [ ] No
 
 **Final Status:**
+
 - Tests: [ ] All Pass
 - Review: [ ] Approved
 - Quality: [ ] Meets Standards

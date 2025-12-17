@@ -13,9 +13,11 @@ modified: '2025-09-12'
 > **For Experienced Users**: This template provides minimal setup for teams familiar with Festival Methodology. For first-time users, use FESTIVAL_OVERVIEW_TEMPLATE.md instead.
 
 ## Project Goal
+
 [ONE clear sentence describing what this festival will accomplish]
 
 ## Success Criteria
+
 - [ ] [Primary functional outcome]
 - [ ] [Quality/performance requirement]  
 - [ ] [Business/user value delivered]
@@ -25,6 +27,7 @@ modified: '2025-09-12'
 **Phase Type:** [Simple | Multiple Implementation | Research First | Custom]
 
 **Phases (add as needed):**
+
 - **001_[NAME]**: [Brief objective - planning/research phases may just be documents]
 - **002_[NAME]**: [Brief objective - implementation phases need sequences/tasks]
 - **003_[NAME]**: [Brief objective - add more implementation phases as needed]
@@ -35,23 +38,27 @@ modified: '2025-09-12'
 **Only needed for projects with multiple interacting systems:**
 
 ### API Contracts
+
 - [Interface 1]: [Brief description] (optional)
 - [Interface 2]: [Brief description] (optional)
 
 ### Data Contracts
+
 - [Data structure 1]: [Brief description] (optional)
 - [Data structure 2]: [Brief description] (optional)
 
 ### Component Interfaces
+
 - [Component 1]: [Brief description]
 - [Component 2]: [Brief description]
 
 ## Quality Standards
 
 **This festival follows:**
+
 - [ ] [Code standard reference]
 - [ ] [Testing requirement]
-- [ ] [Security requirement] 
+- [ ] [Security requirement]
 - [ ] [Performance requirement]
 
 **Quality Gates:** Standard testing/review/iteration tasks included in all implementation sequences.
@@ -59,6 +66,7 @@ modified: '2025-09-12'
 ## High-Risk Areas
 
 **Pay special attention to:**
+
 - [Risk 1 and mitigation]
 - [Risk 2 and mitigation]
 - [Integration point that needs careful coordination]
@@ -66,14 +74,14 @@ modified: '2025-09-12'
 ## Dependencies & Constraints
 
 **External Dependencies:**
-- [Dependency 1]: [Impact/timeline]
-- [Dependency 2]: [Impact/timeline]
 
 **Technical Constraints:**
+
 - [Constraint 1]: [How it affects the approach]
 - [Constraint 2]: [How it affects the approach]
 
 **Team Constraints:**
+
 - Team size: [number]
 - Key skills: [critical skills needed]
 - Timeline: [key milestones]
@@ -81,20 +89,24 @@ modified: '2025-09-12'
 ## Sequence Planning Notes
 
 **Parallel Work Opportunities:**
+
 - After Phase [X] completion: [List sequences that can run in parallel]
 - [Interface Y] enables: [List dependent work that can start]
 
 **Critical Path:**
+
 - [Sequence that blocks other work]
 - [Dependency that could delay the project]
 
 ## Stakeholders
 
 **Key Decision Makers:**
+
 - [Name/Role]: [What they need to approve]
 - [Name/Role]: [What they need to approve]
 
 **Primary Users:**
+
 - [User type]: [Their main need/concern]
 - [User type]: [Their main need/concern]
 
@@ -129,18 +141,21 @@ modified: '2025-09-12'
 ## Template Usage Notes
 
 **Use this template when:**
+
 - Team is familiar with Festival Methodology
 - Project requirements are already clear
 - Time is a constraint for setup
 - You need minimal documentation overhead
 
 **Upgrade to full templates when:**
+
 - Stakeholders need detailed documentation
 - Team members are new to Festival Methodology  
 - Project has complex compliance requirements
 - Multiple teams need coordination
 
 **Customization Tips:**
+
 - Remove sections that don't apply to your project
 - Add domain-specific sections as needed
 - Adjust quality standards to match project risk

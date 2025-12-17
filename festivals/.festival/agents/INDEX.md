@@ -7,6 +7,7 @@ Specialized AI agents for Festival Methodology workflow management.
 Festival Methodology includes three specialized agents that work together to ensure successful project execution:
 
 **Agent Workflow:**
+
 ```
 Planning Agent → Creates Festival Structure
      ↓
@@ -20,15 +21,18 @@ Feedback Loop → Back to Planning
 ## Agent Catalog
 
 ### 🔵 festival_planning_agent
+
 **Purpose:** Create comprehensive festival plans through structured interviews
 
 **Trigger Conditions:**
+
 - Starting a new project
 - Converting existing project to festival methodology
 - Major scope expansion requiring restructuring
 - Creating a new major feature as sub-festival
 
 **Key Capabilities:**
+
 - Conducts systematic requirements discovery
 - Creates three-level hierarchy (Phases → Sequences → Tasks)
 - Generates all festival documentation
@@ -36,6 +40,7 @@ Feedback Loop → Back to Planning
 - Plans quality gates and verification
 
 **Sample Prompts:**
+
 ```
 "Use the festival planning agent to help me create a festival for a user authentication system"
 
@@ -45,6 +50,7 @@ Feedback Loop → Back to Planning
 ```
 
 **Output:**
+
 - Complete festival directory structure
 - FESTIVAL_OVERVIEW.md with goals and success criteria
 - Initial phase and sequence planning
@@ -54,9 +60,11 @@ Feedback Loop → Back to Planning
 ---
 
 ### 🟢 festival_review_agent
+
 **Purpose:** Validate festival structure and ensure methodology compliance
 
 **Trigger Conditions:**
+
 - Before transitioning between phases
 - After major festival structure changes
 - Weekly/sprint review checkpoints
@@ -64,6 +72,7 @@ Feedback Loop → Back to Planning
 - Post-completion assessment
 
 **Key Capabilities:**
+
 - Validates three-level hierarchy compliance
 - Checks interface definition completeness
 - Ensures quality gates are present
@@ -72,6 +81,7 @@ Feedback Loop → Back to Planning
 - Suggests structural improvements
 
 **Sample Prompts:**
+
 ```
 "Use the review agent to validate my festival structure before we start Phase 003"
 
@@ -81,6 +91,7 @@ Feedback Loop → Back to Planning
 ```
 
 **Output:**
+
 - Compliance report with specific issues
 - Recommendations for improvement
 - Risk assessment for methodology violations
@@ -90,9 +101,11 @@ Feedback Loop → Back to Planning
 ---
 
 ### 🔴 festival_methodology_manager
+
 **Purpose:** Enforce methodology principles during active execution
 
 **Trigger Conditions:**
+
 - Daily during active development
 - When methodology drift detected
 - Team confusion about process
@@ -100,6 +113,7 @@ Feedback Loop → Back to Planning
 - Quality problems emerging
 
 **Key Capabilities:**
+
 - Real-time methodology enforcement
 - Process drift prevention
 - Team guidance and correction
@@ -108,6 +122,7 @@ Feedback Loop → Back to Planning
 - Parallel work coordination
 
 **Sample Prompts:**
+
 ```
 "Use the methodology manager to help us get back on track - we're starting to skip quality gates"
 
@@ -117,6 +132,7 @@ Feedback Loop → Back to Planning
 ```
 
 **Output:**
+
 - Specific corrective actions
 - Process realignment plan
 - Team guidance documentation
@@ -126,6 +142,7 @@ Feedback Loop → Back to Planning
 ## Agent Collaboration Patterns
 
 ### Pattern 1: New Festival Creation
+
 ```
 1. Planning Agent → Creates initial structure
 2. Review Agent → Validates structure
@@ -134,6 +151,7 @@ Feedback Loop → Back to Planning
 ```
 
 ### Pattern 2: Methodology Rescue
+
 ```
 1. Manager Agent → Identifies drift/problems
 2. Review Agent → Comprehensive assessment
@@ -142,6 +160,7 @@ Feedback Loop → Back to Planning
 ```
 
 ### Pattern 3: Phase Transition
+
 ```
 1. Review Agent → Phase completion check
 2. Planning Agent → Next phase detail planning
@@ -153,6 +172,7 @@ Feedback Loop → Back to Planning
 ### With Claude Code
 
 **Loading an Agent:**
+
 ```
 You: Please load the festival planning agent to help me create a new project
 
@@ -160,6 +180,7 @@ Claude: [Reads festival_planning_agent.md and begins structured interview]
 ```
 
 **Sequential Agent Use:**
+
 ```
 You: First use the planning agent to create structure, then the review agent to validate
 
@@ -167,6 +188,7 @@ Claude: [Executes agents in sequence with handoff between them]
 ```
 
 **Parallel Insights:**
+
 ```
 You: Get perspectives from both review and manager agents on our current state
 
@@ -189,18 +211,21 @@ Agents are markdown files with clear instructions. Any AI assistant can:
 Each agent can be customized for your specific needs:
 
 **Domain Specialization:**
+
 ```markdown
 Add to planning agent:
 "Additional expertise in [fintech/healthcare/gaming] requirements"
 ```
 
 **Team Structure:**
+
 ```markdown
 Add to manager agent:
 "Coordinate with [QA team/DevOps/Product] using [specific process]"
 ```
 
 **Tool Integration:**
+
 ```markdown
 Add to review agent:
 "Generate reports compatible with [JIRA/Linear/Asana]"
@@ -237,6 +262,7 @@ Your outputs:
 ## Agent Effectiveness Metrics
 
 ### Planning Agent Success Indicators
+
 - ✅ Clear three-level hierarchy created
 - ✅ All interfaces defined before implementation
 - ✅ Quality gates at every sequence
@@ -244,6 +270,7 @@ Your outputs:
 - ✅ Parallel work opportunities identified
 
 ### Review Agent Success Indicators
+
 - ✅ Methodology violations caught early
 - ✅ Structure improvements suggested
 - ✅ Quality issues identified
@@ -251,6 +278,7 @@ Your outputs:
 - ✅ Risk assessment accurate
 
 ### Manager Agent Success Indicators
+
 - ✅ Process drift prevented
 - ✅ Team stays on methodology
 - ✅ Integration issues avoided
@@ -260,23 +288,29 @@ Your outputs:
 ## Common Agent Scenarios
 
 ### Scenario 1: "Our project is off track"
+
 **Use:** Manager Agent first (diagnosis), then Review Agent (assessment), then Planning Agent (restructure)
 
 ### Scenario 2: "Starting a greenfield project"
+
 **Use:** Planning Agent (full structure), then Review Agent (validation)
 
 ### Scenario 3: "Ready to start coding"
+
 **Use:** Review Agent (interface completeness check), then Manager Agent (execution guidance)
 
 ### Scenario 4: "Inheriting an existing project"
+
 **Use:** Review Agent (current state), Planning Agent (retrofit to festival), Manager Agent (transition)
 
 ### Scenario 5: "Scope changed significantly"
+
 **Use:** Planning Agent (restructure), Review Agent (validate changes), Manager Agent (coordinate transition)
 
 ## Agent Limitations
 
 ### What Agents DON'T Do
+
 - ❌ Write actual code
 - ❌ Make business decisions
 - ❌ Replace human judgment
@@ -284,6 +318,7 @@ Your outputs:
 - ❌ Estimate timelines (use steps, not time)
 
 ### When NOT to Use Agents
+
 - Simple, single-task work
 - Well-understood, routine tasks
 - Emergency hotfixes
@@ -313,6 +348,7 @@ Agents improve through:
 ## Integration Examples
 
 ### Example 1: CI/CD Integration
+
 ```yaml
 # .github/workflows/festival-review.yml
 - name: Festival Review Check
@@ -324,6 +360,7 @@ Agents improve through:
 ```
 
 ### Example 2: Daily Standup Integration
+
 ```
 Team: "What should we focus on today?"
 Run: Manager agent for daily priorities
@@ -331,6 +368,7 @@ Output: Specific tasks maintaining methodology
 ```
 
 ### Example 3: Sprint Planning
+
 ```
 Team: "Planning next sprint"
 Run: Planning agent for sequence detail
