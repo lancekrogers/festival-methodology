@@ -13,13 +13,89 @@ Core Concepts
 • Quality gates: Every sequence ends with testing, review, iteration
 
 
-Quick Start
------------
+Festival Structure (CRITICAL - Follow This Exactly)
+---------------------------------------------------
 
-  fest understand --help        # See all topics
-  fest understand rules         # MANDATORY structure requirements
-  fest understand templates     # Variables that save tokens
-  fest understand structure     # Scaffold examples with annotations
+my-festival/
+├── FESTIVAL_OVERVIEW.md              [REQUIRED] Festival goal and success criteria
+├── FESTIVAL_RULES.md                 [REQUIRED] Quality standards
+├── CONTEXT.md                        Decisions, rationale, discoveries
+├── STATUS_UPDATE.md                  Current progress tracking
+├── TODO.md                           Task checklist
+├── fest.yaml                         Quality gate config
+│
+├── 001_PLAN/
+│   ├── PHASE_GOAL.md                 [REQUIRED]
+│   ├── 01_requirements/
+│   │   ├── SEQUENCE_GOAL.md          [REQUIRED]
+│   │   ├── 01_analyze_use_cases.md
+│   │   ├── 02_define_specifications.md
+│   │   ├── 03_document_constraints.md
+│   │   └── results/                  Output artifacts
+│   │       └── requirements_spec.md
+│   └── 02_architecture/
+│       ├── SEQUENCE_GOAL.md          [REQUIRED]
+│       ├── 01_project_structure.md
+│       ├── 02_dependency_selection.md
+│       ├── 03_data_flow_design.md
+│       └── results/
+│           └── architecture_decision_record.md
+│
+├── 002_IMPLEMENT/
+│   ├── PHASE_GOAL.md                 [REQUIRED]
+│   ├── IMPLEMENTATION_SPEC.md        Optional phase-level spec
+│   ├── 01_core_infrastructure/
+│   │   ├── SEQUENCE_GOAL.md          [REQUIRED]
+│   │   ├── 01_project_setup.md
+│   │   ├── 02_database_schema.md
+│   │   ├── 03_api_endpoints.md
+│   │   ├── 04_testing_and_verify.md  ← QUALITY GATE [REQUIRED]
+│   │   ├── 05_code_review.md         ← QUALITY GATE [REQUIRED]
+│   │   ├── 06_review_results_iterate.md ← QUALITY GATE [REQUIRED]
+│   │   └── results/
+│   │       ├── testing_results.md
+│   │       └── code_review_findings.md
+│   └── 02_feature_implementation/
+│       ├── SEQUENCE_GOAL.md          [REQUIRED]
+│       ├── 01_user_authentication.md
+│       ├── 02_data_processing.md
+│       ├── 03_ui_components.md
+│       ├── 04_testing_and_verify.md  ← QUALITY GATE
+│       ├── 05_code_review.md         ← QUALITY GATE
+│       ├── 06_review_results_iterate.md ← QUALITY GATE
+│       └── results/
+│
+└── 003_REVIEW_AND_UAT/
+    ├── PHASE_GOAL.md                 [REQUIRED]
+    ├── ACCEPTANCE_CRITERIA.md
+    └── 01_final_validation/
+        ├── SEQUENCE_GOAL.md          [REQUIRED]
+        ├── 01_integration_testing.md
+        ├── 02_user_acceptance_testing.md
+        ├── 03_documentation_review.md
+        └── results/
+            └── uat_sign_off.md
+
+
+Naming Conventions (MANDATORY)
+------------------------------
+
+  Phases:     NNN_PHASE_NAME      3-digit prefix, UPPERCASE (001_PLAN)
+  Sequences:  NN_sequence_name    2-digit prefix, lowercase (01_requirements)
+  Tasks:      NN_task_name.md     2-digit prefix, lowercase, .md extension
+
+
+Quality Gates (REQUIRED for Implementation Sequences)
+-----------------------------------------------------
+
+Every implementation sequence MUST end with these three tasks:
+
+  XX_testing_and_verify.md      Verify functionality works
+  XX_code_review.md             Review code quality
+  XX_review_results_iterate.md  Address findings
+
+Example: If your last implementation task is 03_*, quality gates are 04_, 05_, 06_
+
 
 Token-Efficient Workflow
 ------------------------
@@ -32,4 +108,11 @@ Use the fest CLI instead of manual file creation:
   fest task defaults sync --approve --json   # Add quality gates
 
 Variables are passed to templates - no post-creation editing needed.
-Run 'fest understand templates' to see all available variables.
+
+
+More Information
+----------------
+
+  fest understand rules         # MANDATORY structure requirements
+  fest understand templates     # Variables that save tokens
+  fest understand structure     # More scaffold examples
