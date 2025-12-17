@@ -40,9 +40,9 @@ func Execute() error {
 func init() {
 	// Enforce being inside a festivals/ tree for most commands
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-		// Allow root (help/version), init, sync, count, go, and understand to run anywhere
+		// Allow root (help/version), init, sync, count, go, shell-init, and understand to run anywhere
 		// Also allow subcommands of understand (rules, templates, etc.)
-		if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "sync" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" || cmd.Name() == "go" || cmd.Name() == "understand" {
+		if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "sync" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" || cmd.Name() == "go" || cmd.Name() == "shell-init" || cmd.Name() == "understand" {
 			return nil
 		}
 		// Check if parent is understand (for subcommands like rules, templates)
@@ -94,4 +94,7 @@ func init() {
 
 	// Navigation command
 	rootCmd.AddCommand(NewGoCommand())
+
+	// Shell integration command
+	rootCmd.AddCommand(NewShellInitCommand())
 }

@@ -28,10 +28,20 @@ func NewGoCommand() *cobra.Command {
 The go command finds the festivals/ directory that has been registered
 as your active workspace using 'fest init --register'.
 
-Use with shell integration:
-  cd $(fest go)              Navigate to festivals root
-  cd $(fest go 002)          Navigate to phase 002
-  cd $(fest go active/name)  Navigate to specific festival
+NOTE: This command prints the path. To actually change directories,
+set up shell integration (one-time):
+
+  # Add to ~/.zshrc or ~/.bashrc:
+  eval "$(fest shell-init zsh)"
+
+Then use 'fgo' to navigate:
+  fgo              Navigate to festivals root
+  fgo 002          Navigate to phase 002
+  fgo 2/1          Navigate to phase 2, sequence 1
+
+Without shell integration, use command substitution:
+  cd $(fest go)
+  cd $(fest go 002)
 
 If no registered festivals are found, falls back to nearest festivals/.`,
 		Args: cobra.MaximumNArgs(1),

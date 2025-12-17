@@ -18,7 +18,8 @@ mod release '.justfiles/release.just'
 
 # Run tests and build
 all:
-    just test test
+    just test unit
+    just test integration
     just build
 
 # Build fest binary
