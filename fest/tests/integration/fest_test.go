@@ -89,7 +89,8 @@ func TestFestCompleteWorkflow(t *testing.T) {
    require.Equal(t, 0, exitCode, "Failed to remove directory")
 
    // Run renumber command - test that it at least executes
-   output, err := container.RunFest("renumber", "phase", "002", "--path", "/festivals/test-festival")
+   // renumber sequence requires --phase flag
+   output, err := container.RunFest("renumber", "sequence", "--phase", "/festivals/test-festival/002_DESIGN")
 
    // Log the result whether it succeeds or fails
    if err != nil {
@@ -124,7 +125,8 @@ func TestFestCompleteWorkflow(t *testing.T) {
 
   if exists {
    // Try to remove the sequence
-   output, err := container.RunFest("remove", "sequence", "--phase", "003", "--sequence", "02", "--path", "/festivals/test-festival")
+   // remove sequence takes --phase flag with phase name/path and sequence number as argument
+   output, err := container.RunFest("remove", "sequence", "--phase", "/festivals/test-festival/003_IMPLEMENT_CORE", "02")
 
    if err != nil {
     t.Logf("Remove sequence command failed (may not be implemented): %s", output)
@@ -159,7 +161,8 @@ func TestFestCompleteWorkflow(t *testing.T) {
    initialCount, _ := container.CountPhases("/festivals/test-festival")
 
    // Try to remove the phase
-   output, err := container.RunFest("remove", "phase", "004", "--path", "/festivals/test-festival")
+   // remove phase takes the phase number or path as an argument
+   output, err := container.RunFest("remove", "phase", "/festivals/test-festival/004_IMPLEMENT_FEATURES")
 
    if err != nil {
     t.Logf("Remove phase command failed (may not be implemented): %s", output)
