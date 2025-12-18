@@ -38,8 +38,29 @@ ensuring you see the current methodology design and any customizations.`,
 	cmd.AddCommand(newUnderstandResourcesCmd())
 	cmd.AddCommand(newUnderstandRulesCmd())
 	cmd.AddCommand(newUnderstandTemplatesCmd())
+	cmd.AddCommand(newUnderstandTasksCmd())
 
 	return cmd
+}
+
+func newUnderstandTasksCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "tasks",
+		Short: "When and how to create task files (CRITICAL)",
+		Long: `Learn when to create task files vs. goal documents.
+
+THIS IS THE MOST COMMON MISTAKE: Creating sequences with only
+SEQUENCE_GOAL.md but no task files.
+
+  Goals define WHAT to achieve.
+  Tasks define HOW to execute.
+
+AI agents EXECUTE TASK FILES. Without them, agents know the
+objective but don't know what specific work to perform.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			printTasks()
+		},
+	}
 }
 
 func newUnderstandMethodologyCmd() *cobra.Command {
@@ -285,6 +306,11 @@ func printRules() {
 func printTemplates() {
 	fmt.Print("\n")
 	fmt.Print(understand.Load("templates.txt"))
+}
+
+func printTasks() {
+	fmt.Print("\n")
+	fmt.Print(understand.Load("tasks.txt"))
 }
 
 func printResources(dotFestival string) {

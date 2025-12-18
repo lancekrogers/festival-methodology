@@ -37,6 +37,34 @@ func NewCreateSequenceCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "sequence",
 		Short: "Insert a new sequence and render its goal file",
+		Long: `Create a new sequence directory with SEQUENCE_GOAL.md.
+
+IMPORTANT: After creating a sequence, you must also create TASK FILES.
+The SEQUENCE_GOAL.md defines WHAT to achieve, but AI agents need task
+files to know HOW to execute. See 'fest understand tasks'.
+
+TEMPLATE VARIABLES (automatically set):
+  {{ sequence_name }}        Name of the sequence
+  {{ sequence_number }}      Sequential number (01, 02, ...)
+  {{ sequence_id }}          Full ID (e.g., "01_api_endpoints")
+  {{ parent_phase_id }}      Parent phase ID
+
+EXAMPLES:
+  # Create sequence in current phase
+  fest create sequence --name "api endpoints" --json
+
+  # Create sequence at specific position
+  fest create sequence --name "frontend" --after 2 --json
+
+NEXT STEPS after creating a sequence:
+  # Add task files (required for implementation sequences)
+  fest create task --name "design" --json
+  fest create task --name "implement" --json
+
+  # Add quality gates
+  fest task defaults sync --approve --json
+
+Run 'fest validate tasks' to verify task files exist.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flags().NFlag() == 0 {
 				return StartCreateSequenceTUI()

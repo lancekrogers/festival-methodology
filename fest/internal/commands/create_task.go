@@ -37,6 +37,31 @@ func NewCreateTaskCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "task",
 		Short: "Insert a new task file in a sequence",
+		Long: `Create a new task file with automatic numbering and template rendering.
+
+IMPORTANT: AI agents execute TASK FILES, not goals. If your sequences only
+have SEQUENCE_GOAL.md without task files, agents won't know HOW to execute.
+
+TEMPLATE VARIABLES (automatically set from --name):
+  {{ task_name }}            Name of the task
+  {{ task_number }}          Sequential number (01, 02, ...)
+  {{ task_id }}              Full filename (e.g., "01_design.md")
+  {{ parent_sequence_id }}   Parent sequence ID
+  {{ parent_phase_id }}      Parent phase ID
+  {{ full_path }}            Complete path from festival root
+
+EXAMPLES:
+  # Create task in current sequence
+  fest create task --name "design endpoints" --json
+
+  # Create task at specific position
+  fest create task --name "validation" --after 2 --json
+
+  # Create task in specific sequence
+  fest create task --name "setup" --path ./002_IMPLEMENT/01_api --json
+
+Run 'fest understand tasks' for detailed guidance on task file creation.
+Run 'fest validate tasks' to verify task files exist in implementation sequences.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flags().NFlag() == 0 {
 				return StartCreateTaskTUI()

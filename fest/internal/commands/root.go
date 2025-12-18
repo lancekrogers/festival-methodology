@@ -43,13 +43,13 @@ func init() {
 
 	// Enforce being inside a festivals/ tree for most commands
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-		// Allow root (help/version), init, sync, count, go, shell-init, understand, config, extension, and index to run anywhere
-		// Also allow subcommands of understand, config, extension, index, remove, renumber, and reorder
-		if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "sync" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" || cmd.Name() == "go" || cmd.Name() == "shell-init" || cmd.Name() == "understand" || cmd.Name() == "config" || cmd.Name() == "extension" || cmd.Name() == "index" || cmd.Name() == "remove" || cmd.Name() == "renumber" || cmd.Name() == "reorder" {
+		// Allow root (help/version), init, sync, count, go, shell-init, understand, config, extension, index, and validate to run anywhere
+		// Also allow subcommands of understand, config, extension, index, remove, renumber, reorder, and validate
+		if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "sync" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" || cmd.Name() == "go" || cmd.Name() == "shell-init" || cmd.Name() == "understand" || cmd.Name() == "config" || cmd.Name() == "extension" || cmd.Name() == "index" || cmd.Name() == "remove" || cmd.Name() == "renumber" || cmd.Name() == "reorder" || cmd.Name() == "validate" {
 			return nil
 		}
-		// Check if parent is understand, config, extension, index, remove, renumber, or reorder (for subcommands)
-		if cmd.Parent() != nil && (cmd.Parent().Name() == "understand" || cmd.Parent().Name() == "config" || cmd.Parent().Name() == "extension" || cmd.Parent().Name() == "index" || cmd.Parent().Name() == "remove" || cmd.Parent().Name() == "renumber" || cmd.Parent().Name() == "reorder") {
+		// Check if parent is understand, config, extension, index, remove, renumber, reorder, or validate (for subcommands)
+		if cmd.Parent() != nil && (cmd.Parent().Name() == "understand" || cmd.Parent().Name() == "config" || cmd.Parent().Name() == "extension" || cmd.Parent().Name() == "index" || cmd.Parent().Name() == "remove" || cmd.Parent().Name() == "renumber" || cmd.Parent().Name() == "reorder" || cmd.Parent().Name() == "validate") {
 			return nil
 		}
 		cwd, _ := os.Getwd()
@@ -94,6 +94,9 @@ func init() {
 
 	// Methodology learning command
 	rootCmd.AddCommand(NewUnderstandCommand())
+
+	// Validation command
+	rootCmd.AddCommand(NewValidateCommand())
 
 	// Navigation command
 	rootCmd.AddCommand(NewGoCommand())
