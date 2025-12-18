@@ -739,7 +739,15 @@ func validateQualityGatesChecks(festivalPath string, result *ValidationResult, a
 		gateIDs[gate.ID] = true
 	}
 
+	// Phase name patterns that don't require quality gates
+	nonImplPhasePatterns := []string{"PLAN", "DESIGN", "REVIEW", "UAT", "FINALIZE", "DOCS", "RESEARCH"}
+
 	for _, phase := range phases {
+		// Skip non-implementation phases entirely
+		if isNonImplementationPhase(phase.Name, nonImplPhasePatterns) {
+			continue
+		}
+
 		sequences, _ := parser.ParseSequences(phase.Path)
 		for _, seq := range sequences {
 			// Check if this is an implementation sequence
@@ -824,6 +832,17 @@ func validateTemplateMarkers(festivalPath string, result *ValidationResult) {
 
 		return nil
 	})
+}
+
+// isNonImplementationPhase checks if a phase is for planning/review rather than implementation
+func isNonImplementationPhase(phaseName string, patterns []string) bool {
+	upperName := strings.ToUpper(phaseName)
+	for _, pattern := range patterns {
+		if strings.Contains(upperName, pattern) {
+			return true
+		}
+	}
+	return false
 }
 
 // isExcludedSequence checks if a sequence name matches exclusion patterns

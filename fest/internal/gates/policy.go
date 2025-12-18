@@ -86,11 +86,20 @@ func DefaultPolicy() *GatePolicy {
 			},
 		},
 		ExcludePatterns: []string{
+			// Common planning/documentation patterns
 			"*_planning",
 			"*_research",
 			"*_requirements",
 			"*_docs",
 			"*_design",
+			// Additional patterns for scope/review work
+			"*_scope",
+			"*_validation",
+			"*_signoff",
+			"*_review",
+			"*_analysis",
+			"*_assessment",
+			"*_discovery",
 		},
 	}
 }
