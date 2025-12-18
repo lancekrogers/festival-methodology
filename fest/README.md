@@ -13,6 +13,11 @@ A minimal CLI tool for managing Festival Methodology files, providing safe initi
 - **Element Manipulation**: Insert, remove, and reorder festival elements with automatic renumbering
 - **Configurable**: Flexible configuration via JSON config file
 - **Colored Output**: Clear, colored terminal output for better visibility
+- **Config Repos**: Manage private configuration repositories for templates, policies, and extensions
+- **Plugin System**: Extend fest with custom commands via external executables
+- **Extension System**: Load methodology extensions from project, user, or built-in sources
+- **Quality Gates**: Configurable quality gate policies with phase-level overrides
+- **Festival Index**: Generate machine-readable indices for tool integration
 
 ## Installation
 
@@ -295,6 +300,267 @@ When using `--cost`, the tool estimates API costs for popular models:
 - **Table format** (default): Human-readable table with all metrics
 - **JSON format** (`--json`): Machine-readable for scripting and automation
 
+## Config Repositories
+
+Config repos allow you to maintain private templates, policies, and extensions in a separate repository:
+
+```bash
+# Add a config repo (git URL or local path)
+fest config add my-config https://github.com/user/my-fest-config
+fest config add local-config /path/to/local/config
+
+# Sync all config repos (pull latest)
+fest config sync
+
+# Sync a specific repo
+fest config sync my-config
+
+# Set active config repo
+fest config use my-config
+
+# Show current active config
+fest config show
+
+# List all config repos
+fest config list
+```
+
+### Config Repo Structure
+
+```
+my-fest-config/
+├── festivals/                    # Overrides for .festival/ structure
+│   └── .festival/
+│       ├── templates/            # Custom templates
+│       ├── extensions/           # Custom extensions
+│       └── agents/               # Custom agents
+└── user/                         # User-specific customizations
+    ├── config.yaml               # User settings
+    └── policies/                 # Quality gate policies
+        └── gates/
+            ├── default.yml       # Default gates
+            └── variants/         # Named variants
+                ├── backend.yml
+                └── frontend.yml
+```
+
+### Precedence Rules
+
+1. **Project-local**: `.festival/` in current festival
+2. **User-level**: Active config repo's `festivals/.festival/`
+3. **Built-in**: Default templates from fest installation
+
+## Quality Gates
+
+Quality gates are tasks automatically appended to implementation sequences:
+
+```bash
+# Show resolved quality gates
+fest task defaults show
+
+# Show gates for a specific phase
+fest task defaults show --phase 002_IMPLEMENT
+
+# Sync gates to sequences
+fest task defaults sync
+
+# Sync with a specific policy variant
+fest task defaults sync --policy backend
+```
+
+### Gate Policy Format
+
+Create policies in `policies/gates/default.yml`:
+
+```yaml
+version: 1
+name: default
+
+append:
+  - id: testing_and_verify
+    template: QUALITY_GATE_TESTING
+    enabled: true
+  - id: code_review
+    template: QUALITY_GATE_REVIEW
+    enabled: true
+  - id: review_results_iterate
+    template: QUALITY_GATE_ITERATE
+    enabled: true
+
+exclude_patterns:
+  - "*_planning"
+  - "*_research"
+  - "*_docs"
+```
+
+### Phase Overrides
+
+Add `.fest.gates.yml` to a phase for phase-specific modifications:
+
+```yaml
+ops:
+  - add:
+      step:
+        id: security_review
+        template: SECURITY_REVIEW
+      after: code_review
+
+  - remove:
+      id: review_results_iterate
+```
+
+## Plugin System
+
+Extend fest with custom commands via external executables:
+
+### Plugin Discovery
+
+Plugins are discovered from:
+1. Config repo `user/plugins/bin/` directory
+2. System PATH (executables named `fest-*`)
+
+### Plugin Manifest
+
+Document plugins in `user/plugins/manifest.yml`:
+
+```yaml
+version: 1
+plugins:
+  - command: "export jira"
+    exec: "fest-export-jira"
+    summary: "Export festival to Jira"
+    description: |
+      Converts festival structure to Jira artifacts.
+    when_to_use:
+      - "Festival needs Jira tracking"
+    examples:
+      - "fest export jira --phase 002"
+```
+
+### Using Plugins
+
+```bash
+# Execute a plugin
+fest export jira --phase 002
+
+# Alternative hyphenated form
+fest export-jira --phase 002
+
+# View available plugins
+fest understand plugins
+```
+
+## Extension System
+
+Extensions provide reusable methodology components:
+
+```bash
+# List all loaded extensions
+fest extension list
+
+# Show extension details
+fest extension info my-extension
+
+# Filter by source
+fest extension list --source project
+fest extension list --source user
+
+# Filter by type
+fest extension list --type workflow
+```
+
+### Extension Sources
+
+Extensions are loaded from (in precedence order):
+1. **Project**: `.festival/extensions/` in current festival
+2. **User**: Config repo `festivals/.festival/extensions/`
+3. **Built-in**: Default extensions from fest installation
+
+### Extension Manifest
+
+Create `extension.yml` in your extension directory:
+
+```yaml
+name: my-workflow
+version: "1.0.0"
+description: Custom workflow for my team
+author: Your Name
+type: workflow
+tags:
+  - automation
+  - ci-cd
+files:
+  - path: README.md
+    description: Documentation
+  - path: templates/
+    description: Workflow templates
+```
+
+## Festival Index
+
+Generate machine-readable indices for tool integration:
+
+```bash
+# Generate index for current festival
+fest index write
+
+# Generate index for specific festival
+fest index write /path/to/festival
+
+# Write to custom location
+fest index write --output custom/index.json
+
+# Validate index against filesystem
+fest index validate
+
+# Show index contents
+fest index show
+
+# Show as JSON
+fest index show --json
+```
+
+### Index Schema
+
+The index file (`.festival/index.json`) provides:
+
+```json
+{
+  "fest_spec": 1,
+  "festival_id": "my-festival",
+  "generated_at": "2025-12-17T10:30:00Z",
+  "phases": [
+    {
+      "phase_id": "001_DESIGN",
+      "path": "001_DESIGN",
+      "goal_file": "PHASE_GOAL.md",
+      "sequences": [
+        {
+          "sequence_id": "01_requirements",
+          "path": "001_DESIGN/01_requirements",
+          "goal_file": "SEQUENCE_GOAL.md",
+          "tasks": [
+            {
+              "task_id": "01_gather.md",
+              "path": "001_DESIGN/01_requirements/01_gather.md",
+              "managed": false
+            }
+          ],
+          "managed_gates": []
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Validation
+
+The validator checks:
+- All indexed entries exist on disk
+- Files on disk that aren't in the index
+- Missing goal files (warnings)
+
 ## Environment Variables
 
 - `FEST_CONFIG_DIR`: Override default config directory
@@ -344,6 +610,30 @@ When using `--cost`, the tool estimates API costs for popular models:
 - `--cost`: Include cost estimates
 - `--chars-per-token`: Characters per token ratio (default: 4.0)
 - `--words-per-token`: Words per token ratio (default: 0.75)
+
+#### config
+
+- `add <name> <source>`: Add a config repo (git URL or local path)
+- `sync [name]`: Sync config repos (pull latest)
+- `use <name>`: Set active config repo
+- `show`: Show current active config
+- `list`: List all config repos
+
+#### extension
+
+- `list`: List all loaded extensions
+- `info <name>`: Show extension details
+- `--source`: Filter by source (project, user, builtin)
+- `--type`: Filter by type (workflow, template, agent)
+
+#### index
+
+- `write [path]`: Generate festival index
+- `validate [path]`: Validate index against filesystem
+- `show [path]`: Show index contents
+- `--output`: Output path for write command
+- `--index`: Index file path for validate command
+- `--json`: Output as JSON for show command
 
 ## Development
 

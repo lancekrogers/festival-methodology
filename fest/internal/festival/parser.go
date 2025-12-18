@@ -339,3 +339,31 @@ func ParseTaskNumber(name string) int {
 	}
 	return num
 }
+
+// ParsePhaseNumber extracts the phase number from a phase directory name
+func ParsePhaseNumber(name string) int {
+	pattern := regexp.MustCompile(`^(\d{3})_`)
+	matches := pattern.FindStringSubmatch(name)
+	if matches == nil {
+		return 0
+	}
+	num, err := strconv.Atoi(matches[1])
+	if err != nil {
+		return 0
+	}
+	return num
+}
+
+// ParseSequenceNumber extracts the sequence number from a sequence directory name
+func ParseSequenceNumber(name string) int {
+	pattern := regexp.MustCompile(`^(\d{2})_`)
+	matches := pattern.FindStringSubmatch(name)
+	if matches == nil {
+		return 0
+	}
+	num, err := strconv.Atoi(matches[1])
+	if err != nil {
+		return 0
+	}
+	return num
+}
