@@ -15,7 +15,7 @@ import (
 
 type createTaskOptions struct {
 	after      int
-	name       string
+	names      []string
 	path       string
 	varsFile   string
 	jsonOutput bool
@@ -37,10 +37,13 @@ func NewCreateTaskCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "task",
 		Short: "Insert a new task file in a sequence",
-		Long: `Create a new task file with automatic numbering and template rendering.
+		Long: `Create new task file(s) with automatic numbering and template rendering.
 
 IMPORTANT: AI agents execute TASK FILES, not goals. If your sequences only
 have SEQUENCE_GOAL.md without task files, agents won't know HOW to execute.
+
+BATCH CREATION: Use multiple --name flags to create sequential tasks at once.
+This avoids the common mistake of all tasks getting numbered 01_.
 
 TEMPLATE VARIABLES (automatically set from --name):
   {{ task_name }}            Name of the task
@@ -51,11 +54,16 @@ TEMPLATE VARIABLES (automatically set from --name):
   {{ full_path }}            Complete path from festival root
 
 EXAMPLES:
-  # Create task in current sequence
+  # Create single task in current sequence
   fest create task --name "design endpoints" --json
 
-  # Create task at specific position
-  fest create task --name "validation" --after 2 --json
+  # Create multiple tasks at once (sequential numbering)
+  fest create task --name "requirements" --name "design" --name "implement"
+  # Creates: 01_requirements.md, 02_design.md, 03_implement.md
+
+  # Create tasks starting after position 2
+  fest create task --after 2 --name "new step" --name "another step"
+  # Creates: 03_new_step.md, 04_another_step.md
 
   # Create task in specific sequence
   fest create task --name "setup" --path ./002_IMPLEMENT/01_api --json
@@ -66,14 +74,20 @@ Run 'fest validate tasks' to verify task files exist in implementation sequences
 			if cmd.Flags().NFlag() == 0 {
 				return StartCreateTaskTUI()
 			}
-			if strings.TrimSpace(opts.name) == "" {
+			if len(opts.names) == 0 {
 				return fmt.Errorf("--name is required (or run without flags to open TUI)")
+			}
+			// Validate all names are non-empty
+			for _, name := range opts.names {
+				if strings.TrimSpace(name) == "" {
+					return fmt.Errorf("task names cannot be empty")
+				}
 			}
 			return runCreateTask(opts)
 		},
 	}
 	cmd.Flags().IntVar(&opts.after, "after", 0, "Insert after this number (0 inserts at beginning)")
-	cmd.Flags().StringVar(&opts.name, "name", "", "Task name (required)")
+	cmd.Flags().StringSliceVar(&opts.names, "name", nil, "Task name(s) - can be specified multiple times for batch creation")
 	cmd.Flags().StringVar(&opts.path, "path", ".", "Path to sequence directory (directory containing numbered task files)")
 	cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON vars for rendering")
 	cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
@@ -95,18 +109,7 @@ func runCreateTask(opts *createTaskOptions) error {
 		return emitCreateTaskError(opts, fmt.Errorf("invalid path: %w", err))
 	}
 
-	// Insert task
-	ren := festival.NewRenumberer(festival.RenumberOptions{AutoApprove: true, Quiet: true})
-	if err := ren.InsertTask(absPath, opts.after, opts.name); err != nil {
-		return emitCreateTaskError(opts, fmt.Errorf("failed to insert task: %w", err))
-	}
-
-	// Compute new task id
-	newNumber := opts.after + 1
-	taskID := tpl.FormatTaskID(newNumber, opts.name)
-	taskPath := filepath.Join(absPath, taskID)
-
-	// Load vars
+	// Load vars once for all tasks
 	vars := map[string]interface{}{}
 	if strings.TrimSpace(opts.varsFile) != "" {
 		v, err := loadVarsFile(opts.varsFile)
@@ -116,66 +119,107 @@ func runCreateTask(opts *createTaskOptions) error {
 		vars = v
 	}
 
-	// Build context for task
-	ctx := tpl.NewContext()
-	ctx.SetTask(newNumber, opts.name)
-	for k, v := range vars {
-		ctx.SetCustom(k, v)
-	}
-
-	// Render or copy TASK template
+	// Load template catalog once
 	catalog, _ := tpl.LoadCatalog(tmplRoot)
 	mgr := tpl.NewManager()
-	var content string
-	var renderErr error
-	if catalog != nil {
-		content, renderErr = mgr.RenderByID(catalog, "TASK", ctx)
-	}
-	if renderErr != nil || content == "" {
-		// Fall back to default filename
-		tpath := filepath.Join(tmplRoot, "TASK_TEMPLATE.md")
-		if _, err := os.Stat(tpath); err == nil {
-			loader := tpl.NewLoader()
-			t, err := loader.Load(tpath)
-			if err != nil {
-				return emitCreateTaskError(opts, fmt.Errorf("failed to load task template: %w", err))
-			}
-			// Render if it appears templated; else copy
-			if strings.Contains(t.Content, "{{") {
-				out, err := mgr.Render(t, ctx)
+	loader := tpl.NewLoader()
+
+	// Track all created tasks for output
+	var createdTasks []map[string]interface{}
+	var createdPaths []string
+	currentAfter := opts.after
+
+	// Create each task sequentially
+	for _, name := range opts.names {
+		// Insert task at current position
+		ren := festival.NewRenumberer(festival.RenumberOptions{AutoApprove: true, Quiet: true})
+		if err := ren.InsertTask(absPath, currentAfter, name); err != nil {
+			return emitCreateTaskError(opts, fmt.Errorf("failed to insert task %q: %w", name, err))
+		}
+
+		// Compute new task id
+		newNumber := currentAfter + 1
+		taskID := tpl.FormatTaskID(newNumber, name)
+		taskPath := filepath.Join(absPath, taskID)
+
+		// Build context for this task
+		ctx := tpl.NewContext()
+		ctx.SetTask(newNumber, name)
+		for k, v := range vars {
+			ctx.SetCustom(k, v)
+		}
+
+		// Render or copy TASK template
+		var content string
+		var renderErr error
+		if catalog != nil {
+			content, renderErr = mgr.RenderByID(catalog, "TASK", ctx)
+		}
+		if renderErr != nil || content == "" {
+			// Fall back to default filename
+			tpath := filepath.Join(tmplRoot, "TASK_TEMPLATE.md")
+			if _, err := os.Stat(tpath); err == nil {
+				t, err := loader.Load(tpath)
 				if err != nil {
-					return emitCreateTaskError(opts, fmt.Errorf("failed to render task: %w", err))
+					return emitCreateTaskError(opts, fmt.Errorf("failed to load task template: %w", err))
 				}
-				content = out
-			} else {
-				content = t.Content
+				// Render if it appears templated; else copy
+				if strings.Contains(t.Content, "{{") {
+					out, err := mgr.Render(t, ctx)
+					if err != nil {
+						return emitCreateTaskError(opts, fmt.Errorf("failed to render task: %w", err))
+					}
+					content = out
+				} else {
+					content = t.Content
+				}
 			}
 		}
+
+		// Write task file (the file was created by InsertTask, but we need to write content)
+		if content != "" {
+			if err := os.WriteFile(taskPath, []byte(content), 0644); err != nil {
+				return emitCreateTaskError(opts, fmt.Errorf("failed to write task: %w", err))
+			}
+		}
+
+		// Track created task
+		createdTasks = append(createdTasks, map[string]interface{}{
+			"number": newNumber,
+			"id":     taskID,
+			"name":   name,
+		})
+		createdPaths = append(createdPaths, taskPath)
+
+		// Increment position for next task
+		currentAfter = newNumber
 	}
 
-	// Write task file (the file was created by InsertTask, but we need to write content)
-	if content != "" {
-		if err := os.WriteFile(taskPath, []byte(content), 0644); err != nil {
-			return emitCreateTaskError(opts, fmt.Errorf("failed to write task: %w", err))
+	// Output results
+	if opts.jsonOutput {
+		result := createTaskResult{
+			OK:       true,
+			Action:   "create_task",
+			Created:  createdPaths,
+			Renumber: []string{},
+		}
+		// For single task, use Task field for backward compatibility
+		if len(createdTasks) == 1 {
+			result.Task = createdTasks[0]
+		}
+		return emitCreateTaskJSON(opts, result)
+	}
+
+	// Human-readable output
+	if len(createdTasks) == 1 {
+		display.Success("Created task: %s", createdTasks[0]["id"])
+		display.Info("  • %s", createdPaths[0])
+	} else {
+		display.Success("Created %d tasks:", len(createdTasks))
+		for i, task := range createdTasks {
+			display.Info("  • %s (%s)", task["id"], createdPaths[i])
 		}
 	}
-
-	if opts.jsonOutput {
-		return emitCreateTaskJSON(opts, createTaskResult{
-			OK:     true,
-			Action: "create_task",
-			Task: map[string]interface{}{
-				"number": newNumber,
-				"id":     taskID,
-				"name":   opts.name,
-			},
-			Created:  []string{taskPath},
-			Renumber: []string{},
-		})
-	}
-
-	display.Success("Created task: %s", taskID)
-	display.Info("  • %s", taskPath)
 	return nil
 }
 

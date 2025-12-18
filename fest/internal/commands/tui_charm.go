@@ -651,7 +651,7 @@ func charmCreateTask() error {
 		}
 		resolvedSeq = rs
 	}
-	opts := &createTaskOptions{after: after, name: name, path: fallbackDot(resolvedSeq), varsFile: varsFile}
+	opts := &createTaskOptions{after: after, names: []string{name}, path: fallbackDot(resolvedSeq), varsFile: varsFile}
 	return runCreateTask(opts)
 }
 

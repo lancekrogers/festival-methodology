@@ -280,6 +280,17 @@ func resolveFestivalPath(pathArg string) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("invalid path: %w", err)
 		}
+
+		// Check if path exists
+		if !validateDirExists(absPath) {
+			return "", fmt.Errorf("path does not exist: %s", absPath)
+		}
+
+		// Check if it's a festival directory
+		if !isFestivalDir(absPath) {
+			return "", fmt.Errorf("path is not a festival directory: %s\n  (expected FESTIVAL_OVERVIEW.md or phase directories like 001_PHASE_NAME)", absPath)
+		}
+
 		return absPath, nil
 	}
 
@@ -301,11 +312,15 @@ func resolveFestivalPath(pathArg string) (string, error) {
 		rel, _ := filepath.Rel(root, cwd)
 		parts := strings.Split(rel, string(filepath.Separator))
 		if len(parts) >= 2 && parts[0] == "active" {
-			return filepath.Join(root, parts[0], parts[1]), nil
+			festivalPath := filepath.Join(root, parts[0], parts[1])
+			if isFestivalDir(festivalPath) {
+				return festivalPath, nil
+			}
 		}
 	}
 
-	return cwd, nil
+	// Not in a festival - provide helpful error
+	return "", fmt.Errorf("not inside a festival directory\n  Run from inside a festival, or provide a path: fest validate /path/to/festival")
 }
 
 // isFestivalDir checks if a directory appears to be a festival root
