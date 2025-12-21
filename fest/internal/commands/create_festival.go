@@ -152,6 +152,9 @@ func runCreateFestival(opts *createFestivalOptions) error {
 				"dest": destCategory,
 			},
 			Created: created,
+			Warnings: []string{
+				"Next: Create phases with 'fest create phase --name PHASE_NAME'",
+			},
 		})
 	}
 
@@ -159,6 +162,11 @@ func runCreateFestival(opts *createFestivalOptions) error {
 	for _, p := range created {
 		display.Info("  • %s", p)
 	}
+	fmt.Println()
+	fmt.Println("   Next steps:")
+	fmt.Println("   1. cd", destDir)
+	fmt.Println("   2. fest create phase --name \"PLAN\"")
+	fmt.Println("   3. fest create phase --name \"IMPLEMENT\"")
 	return nil
 }
 

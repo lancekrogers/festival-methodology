@@ -20,10 +20,10 @@ const (
 
 // GateTask represents a quality gate task definition
 type GateTask struct {
-	ID           string            `yaml:"id" json:"id"`
-	Template     string            `yaml:"template" json:"template"`
-	Name         string            `yaml:"name,omitempty" json:"name,omitempty"`
-	Enabled      bool              `yaml:"enabled" json:"enabled"`
+	ID             string         `yaml:"id" json:"id"`
+	Template       string         `yaml:"template" json:"template"`
+	Name           string         `yaml:"name,omitempty" json:"name,omitempty"`
+	Enabled        bool           `yaml:"enabled" json:"enabled"`
 	Customizations map[string]any `yaml:"customizations,omitempty" json:"customizations,omitempty"`
 }
 
@@ -44,9 +44,9 @@ type GateOperation struct {
 
 // GateAddOp represents an add operation
 type GateAddOp struct {
-	Task  GateTask `yaml:"task" json:"task"`
-	After string   `yaml:"after,omitempty" json:"after,omitempty"`   // Insert after this task ID
-	Before string  `yaml:"before,omitempty" json:"before,omitempty"` // Insert before this task ID
+	Task   GateTask `yaml:"task" json:"task"`
+	After  string   `yaml:"after,omitempty" json:"after,omitempty"`   // Insert after this task ID
+	Before string   `yaml:"before,omitempty" json:"before,omitempty"` // Insert before this task ID
 }
 
 // GateRemoveOp represents a remove operation
@@ -62,8 +62,8 @@ type PhaseOverride struct {
 // DefaultPolicy returns the built-in default policy
 func DefaultPolicy() *GatePolicy {
 	return &GatePolicy{
-		Version: 1,
-		Name:    DefaultPolicyName,
+		Version:     1,
+		Name:        DefaultPolicyName,
 		Description: "Default quality gates: testing, code review, and iteration",
 		Append: []GateTask{
 			{

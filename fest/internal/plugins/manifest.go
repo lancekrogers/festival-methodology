@@ -15,9 +15,9 @@ const (
 
 // Plugin represents a plugin definition in the manifest
 type Plugin struct {
-	Command     string   `yaml:"command" json:"command"`         // e.g., "export jira"
-	Exec        string   `yaml:"exec" json:"exec"`               // e.g., "fest-export-jira"
-	Summary     string   `yaml:"summary" json:"summary"`         // Short description
+	Command     string   `yaml:"command" json:"command"`                             // e.g., "export jira"
+	Exec        string   `yaml:"exec" json:"exec"`                                   // e.g., "fest-export-jira"
+	Summary     string   `yaml:"summary" json:"summary"`                             // Short description
 	Description string   `yaml:"description,omitempty" json:"description,omitempty"` // Long description
 	WhenToUse   []string `yaml:"when_to_use,omitempty" json:"when_to_use,omitempty"` // Usage hints
 	Examples    []string `yaml:"examples,omitempty" json:"examples,omitempty"`       // Example commands

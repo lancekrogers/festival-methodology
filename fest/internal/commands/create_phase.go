@@ -153,11 +153,19 @@ func runCreatePhase(opts *createPhaseOptions) error {
 			},
 			Created:  []string{goalPath},
 			Renumber: []string{},
+			Warnings: []string{
+				"Next: Create sequences with 'fest create sequence --name SEQUENCE_NAME'",
+			},
 		})
 	}
 
 	display.Success("Created phase: %s", phaseID)
-	display.Info("  • %s", goalPath)
+	display.Info("  └── %s", "PHASE_GOAL.md")
+	fmt.Println()
+	fmt.Println("   Next steps:")
+	fmt.Println("   1. cd", phaseDir)
+	fmt.Println("   2. fest create sequence --name \"requirements\"")
+	fmt.Println("   3. fest create sequence --name \"implementation\"")
 	return nil
 }
 

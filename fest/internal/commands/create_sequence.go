@@ -168,7 +168,7 @@ func runCreateSequence(opts *createSequenceOptions) error {
 	}
 
 	if opts.jsonOutput {
-		return emitCreateSequenceJSON(opts, createSequenceResult{
+		result := createSequenceResult{
 			OK:     true,
 			Action: "create_sequence",
 			Sequence: map[string]interface{}{
@@ -178,11 +178,24 @@ func runCreateSequence(opts *createSequenceOptions) error {
 			},
 			Created:  []string{goalPath},
 			Renumber: []string{},
-		})
+			Warnings: []string{
+				"Sequences need task files for AI execution. Goals define WHAT, tasks define HOW.",
+				"Create tasks with: fest create task --name \"...\"",
+				"Learn more: fest understand tasks",
+			},
+		}
+		return emitCreateSequenceJSON(opts, result)
 	}
 
 	display.Success("Created sequence: %s", seqID)
-	display.Info("  • %s", goalPath)
+	display.Info("  └── %s", "SEQUENCE_GOAL.md")
+	fmt.Println()
+	display.Warning("REMINDER: Sequences need task files for AI execution!")
+	fmt.Println("   Goals define WHAT → Tasks define HOW")
+	fmt.Println()
+	fmt.Println("   Next steps:")
+	fmt.Println("   1. Create tasks: fest create task --name \"design\"")
+	fmt.Println("   2. Learn more:   fest understand tasks")
 	return nil
 }
 

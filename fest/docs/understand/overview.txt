@@ -4,6 +4,22 @@ Festival Methodology - AI Agent Build System
 Festival Methodology is a goal-oriented project management system designed
 for human-AI collaboration and long-running autonomous development cycles.
 
+
+CRITICAL: Tasks vs Goals (Most Common Mistake)
+----------------------------------------------
+
+  SEQUENCE_GOAL.md  → Defines the objective (WHAT)
+  01_design.md      → Task file (HOW) ← AI executes THESE
+  02_implement.md   → Task file (HOW) ← AI executes THESE
+
+WITHOUT TASK FILES, AI knows the goal but not what work to do!
+
+  ✗ WRONG: Sequence with only SEQUENCE_GOAL.md
+  ✓ RIGHT: Sequence with SEQUENCE_GOAL.md + task files (01_*.md, 02_*.md, ...)
+
+For details: fest understand tasks
+
+
 Core Concepts
 -------------
 

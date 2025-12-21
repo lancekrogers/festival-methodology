@@ -548,11 +548,11 @@ func runValidateChecklist(opts *validateOptions) error {
 	}
 
 	result := &ValidationResult{
-		OK:       true,
-		Action:   "validate_checklist",
-		Festival: filepath.Base(festivalPath),
-		Valid:    true,
-		Issues:   []ValidationIssue{},
+		OK:        true,
+		Action:    "validate_checklist",
+		Festival:  filepath.Base(festivalPath),
+		Valid:     true,
+		Issues:    []ValidationIssue{},
 		Checklist: &Checklist{},
 	}
 

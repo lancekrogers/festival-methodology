@@ -213,13 +213,17 @@ func runCreateTask(opts *createTaskOptions) error {
 	// Human-readable output
 	if len(createdTasks) == 1 {
 		display.Success("Created task: %s", createdTasks[0]["id"])
-		display.Info("  • %s", createdPaths[0])
+		display.Info("  └── %s", createdPaths[0])
 	} else {
 		display.Success("Created %d tasks:", len(createdTasks))
-		for i, task := range createdTasks {
-			display.Info("  • %s (%s)", task["id"], createdPaths[i])
+		for _, task := range createdTasks {
+			display.Info("  └── %s", task["id"])
 		}
 	}
+	fmt.Println()
+	fmt.Println("   Next steps:")
+	fmt.Println("   • Add more tasks: fest create task --name \"next_step\"")
+	fmt.Println("   • Add quality gates: fest task defaults sync --approve")
 	return nil
 }
 

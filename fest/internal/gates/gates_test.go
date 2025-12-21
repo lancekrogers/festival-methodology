@@ -82,7 +82,7 @@ func TestApplyPhaseOverride_Add(t *testing.T) {
 		Ops: []GateOperation{
 			{
 				Add: &GateAddOp{
-					Task: GateTask{ID: "new_task", Enabled: true},
+					Task:  GateTask{ID: "new_task", Enabled: true},
 					After: "task1",
 				},
 			},

@@ -35,14 +35,20 @@ ensuring you see the current methodology design and any customizations.`,
 		},
 	}
 
-	// Add subcommands
+	// Add subcommands - ordered by importance
+	// CRITICAL commands first
+	cmd.AddCommand(newUnderstandTasksCmd())     // Most common mistake
+	cmd.AddCommand(newUnderstandStructureCmd()) // Core hierarchy
+	cmd.AddCommand(newUnderstandRulesCmd())     // Mandatory rules
+	cmd.AddCommand(newUnderstandChecklistCmd()) // Quick validation
+
+	// Learning commands
 	cmd.AddCommand(newUnderstandMethodologyCmd())
-	cmd.AddCommand(newUnderstandStructureCmd())
 	cmd.AddCommand(newUnderstandWorkflowCmd())
-	cmd.AddCommand(newUnderstandResourcesCmd())
-	cmd.AddCommand(newUnderstandRulesCmd())
 	cmd.AddCommand(newUnderstandTemplatesCmd())
-	cmd.AddCommand(newUnderstandTasksCmd())
+	cmd.AddCommand(newUnderstandResourcesCmd())
+
+	// Extension/plugin discovery
 	cmd.AddCommand(newUnderstandGatesCmd())
 	cmd.AddCommand(newUnderstandPluginsCmd())
 	cmd.AddCommand(newUnderstandExtensionsCmd())
@@ -134,6 +140,73 @@ func newUnderstandTemplatesCmd() *cobra.Command {
 			printTemplates()
 		},
 	}
+}
+
+func newUnderstandChecklistCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "checklist",
+		Short: "Quick festival validation checklist",
+		Long: `Show a quick checklist for validating your festival structure.
+
+This is a quick reference. For full validation, run 'fest validate checklist'.
+
+Checklist:
+  1. FESTIVAL_OVERVIEW.md exists and is filled out
+  2. Each phase has PHASE_GOAL.md
+  3. Each sequence has SEQUENCE_GOAL.md
+  4. Implementation sequences have TASK FILES (not just goals!)
+  5. Quality gates present in implementation sequences
+  6. No unfilled template markers ([FILL:], {{ }})`,
+		Run: func(cmd *cobra.Command, args []string) {
+			printChecklist()
+		},
+	}
+}
+
+func printChecklist() {
+	fmt.Print(`
+Festival Validation Checklist
+=============================
+
+Before executing a festival, verify:
+
+  ✓ Festival Level
+    □ FESTIVAL_OVERVIEW.md exists and defines goals
+    □ FESTIVAL_RULES.md exists with quality standards
+
+  ✓ Phase Level
+    □ Each phase has PHASE_GOAL.md
+    □ Phases are numbered correctly (001_, 002_, ...)
+
+  ✓ Sequence Level
+    □ Each sequence has SEQUENCE_GOAL.md
+    □ Sequences are numbered correctly (01_, 02_, ...)
+
+  ✗ CRITICAL: Task Files
+    □ Implementation sequences have TASK FILES
+    □ Not just SEQUENCE_GOAL.md - actual task files!
+    □ Goals define WHAT; tasks define HOW
+    □ AI agents execute TASK FILES
+
+  ✓ Quality Gates
+    □ Implementation sequences end with quality gates
+    □ XX_testing_and_verify.md
+    □ XX_code_review.md
+    □ XX_review_results_iterate.md
+
+  ✓ Templates
+    □ No [FILL:] markers remaining
+    □ No {{ }} template syntax in final docs
+
+
+Quick Validation Commands
+-------------------------
+
+  fest validate                # Full validation
+  fest validate tasks          # Check task files exist
+  fest validate checklist      # Detailed checklist with auto-checks
+
+`)
 }
 
 func printOverview(dotFestival string) {
