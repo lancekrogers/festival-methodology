@@ -290,21 +290,21 @@ Total: 5/13 sequences completed (38%)
 Tasks: 22/72 completed (31%)
 ```
 
-### Current Sprint Status
+### Current Focus
 
 ```
-Active Work This Week:
-🚧 REST API specification - Sarah - 2024-01-18
-🚧 Database schema design - Mike - 2024-01-19
-⚡ GraphQL schema definition - Lisa - 2024-01-20
+Active Steps:
+🚧 REST API specification - Sarah - depends on requirements
+🚧 Database schema design - Mike - depends on domain models
+⚡ GraphQL schema definition - Lisa - ready to start
 
-Completed This Week:
-✅ Domain models specification - Mike - 2024-01-16
-✅ User requirements validation - Sarah - 2024-01-17
+Recently Completed:
+✅ Domain models specification - Mike
+✅ User requirements validation - Sarah
 
 Blocked/At Risk:
-❌ OAuth provider approval - Google/GitHub - Need approvals by 2024-01-22
-🔄 Security architecture review - Security team - Scheduled 2024-01-19
+❌ OAuth provider approval - Google/GitHub - external dependency
+🔄 Security architecture review - Security team - pending review
 ```
 
 ---
@@ -341,20 +341,20 @@ Provides To Others:
 ❌ BLOCKER_001: OAuth provider approvals pending
    Impact: Cannot complete external service integration contracts
    Owner: Sarah (following up daily)
-   ETA: 2024-01-25 (Google), 2024-01-22 (GitHub)
+   Next Step: Submit additional documentation to Google
 
 🔄 BLOCKER_002: Security architecture needs review
    Impact: Cannot finalize authentication flow specifications
    Owner: Security team
-   ETA: 2024-01-19 (review meeting scheduled)
+   Next Step: Security review meeting scheduled
 ```
 
 ### Risk Register
 
 ```
 🔺 HIGH: OAuth approval delays could push Phase 002 completion - Mitigation: Have fallback email-only flow ready
-🔸 MED:  Database performance under load unknown - Mitigation: Include load testing in Phase 003  
-🔹 LOW:  Team capacity during holiday season - Mitigation: Flexible timeline, cross-training
+🔸 MED:  Database performance under load unknown - Mitigation: Include load testing in Phase 003
+🔹 LOW:  Team capacity during holiday season - Mitigation: Cross-training, flexible sequencing
 ```
 
 ---
@@ -393,12 +393,12 @@ Provides To Others:
 - Update phase status when all sequences in phase complete
 - Note any blockers immediately with [❌]
 
-**2. Weekly Reviews**
+**2. Progress Reviews**
 
 - Review overall progress metrics
-- Update active work section  
+- Update active steps section
 - Assess risks and dependencies
-- Plan next week's focus
+- Identify next priority steps
 
 **3. Phase Gate Reviews**
 

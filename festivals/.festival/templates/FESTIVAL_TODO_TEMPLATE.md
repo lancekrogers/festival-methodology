@@ -299,17 +299,17 @@ Total: 0/13 sequences completed (0%)
 Tasks: 0/72 completed (0%)
 ```
 
-### Current Sprint Status
+### Current Focus
 
 ```
-Active Work This Week:
-□ [Task name] - [Owner] - [Due date]
-□ [Task name] - [Owner] - [Due date]
-□ [Task name] - [Owner] - [Due date]
+Active Steps:
+□ [Task name] - [Owner] - [Dependencies]
+□ [Task name] - [Owner] - [Dependencies]
+□ [Task name] - [Owner] - [Dependencies]
 
-Completed This Week:
-✅ [Task name] - [Completed date]
-✅ [Task name] - [Completed date]
+Recently Completed:
+✅ [Task name] - [Owner]
+✅ [Task name] - [Owner]
 
 Blocked/At Risk:
 ❌ [Task name] - [Blocker description]
@@ -348,12 +348,12 @@ Provides To Others:
 ❌ BLOCKER_001: [Description]
    Impact: [How this blocks progress]
    Owner: [Who is resolving]
-   ETA: [Expected resolution]
+   Next Step: [What needs to happen to unblock]
 
 ❌ BLOCKER_002: [Description]
    Impact: [How this blocks progress]
-   Owner: [Who is resolving]  
-   ETA: [Expected resolution]
+   Owner: [Who is resolving]
+   Next Step: [What needs to happen to unblock]
 ```
 
 ### Risk Register
@@ -395,12 +395,12 @@ Provides To Others:
 - Update phase status when all sequences in phase complete
 - Note any blockers immediately with [❌]
 
-**2. Weekly Reviews**
+**2. Progress Reviews**
 
 - Review overall progress metrics
-- Update active work section  
+- Update active steps section
 - Assess risks and dependencies
-- Plan next week's focus
+- Identify next priority steps
 
 **3. Phase Gate Reviews**
 

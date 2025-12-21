@@ -7,7 +7,7 @@ description: Defines phase objective, success criteria, and quality metrics
 
 # Phase Goal: [NNN_PHASE_NAME]
 
-**Phase:** [NNN_PHASE_NAME] | **Status:** [Planning/Active/Complete] | **Created:** [Date] | **Target Completion:** [Date]
+**Phase:** [NNN_PHASE_NAME] | **Status:** [Planning/Active/Complete] | **Sequences:** [X total, Y completed]
 
 ## Phase Objective
 
@@ -76,12 +76,12 @@ Before starting this phase:
 
 ### During Execution
 
-Track progress weekly/daily against:
+Track step completion against:
 
 - Sequence completion rate
 - Quality metric trends
 - Risk emergence
-- Blocker resolution time
+- Active blockers count
 
 ### Post-Completion Assessment
 
@@ -142,7 +142,7 @@ The goal serves as:
 
 # Phase Goal: 002_DEFINE_INTERFACES
 
-**Phase:** 002_DEFINE_INTERFACES | **Status:** Planning | **Created:** 2024-01-15 | **Target Completion:** 2024-01-22
+**Phase:** 002_DEFINE_INTERFACES | **Status:** Planning | **Sequences:** 3 total, 0 completed
 
 ## Phase Objective
 

@@ -140,10 +140,6 @@ node -e "const User = require('./models/User'); console.log('User model loaded')
 - [Related example: See TASK_EXAMPLES.md - Example 1: PostgreSQL Table Creation]
 - [Code reference: `examples/user-auth/models/User.js`]
 
-## Estimated Effort
-
-[Rough estimate in ideal hours/days]
-
 ## Completion Checklist
 
 - [ ] All requirements met

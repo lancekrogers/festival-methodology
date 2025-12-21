@@ -87,7 +87,7 @@ Business Impact: We can gather user analytics, offer premium features, and compl
 ### Constraints
 
 - **Technical**: [Technology limitations, existing systems, architectural constraints]
-- **Timeline**: [Key dates, dependencies, external deadlines]
+- **Dependencies**: [Blocking steps, external dependencies, required approvals]
 - **Resources**: [Team size, budget, skill limitations]
 - **Business**: [Regulatory requirements, business policy constraints]
 
@@ -110,7 +110,7 @@ Out of Scope:
 
 Constraints:
 - Technical: Must integrate with existing React frontend and Node.js backend
-- Timeline: Must complete before Q1 product launch (12 weeks)
+- Dependencies: Database setup must complete before backend work; OAuth approvals needed for social auth
 - Resources: 2 full-stack developers, 1 designer, part-time QA
 - Business: Must comply with GDPR and SOC 2 requirements
 ```
@@ -196,7 +196,7 @@ Internal Dependencies:
 - Design system team must provide authentication UI components
 
 External Dependencies:
-- Google OAuth application approval (can take 2-3 weeks)
+- Google OAuth application approval (start early - external process)
 - GitHub OAuth application setup
 - SSL certificate procurement for production environment
 
@@ -220,8 +220,8 @@ Critical Path Items:
 
 ### Regular Updates
 
-- **Daily**: [Who gets what updates, through what channels]
-- **Weekly**: [Status reports, stakeholder communication]
+- **Step Completion**: [Who gets updates when steps complete]
+- **Progress Reviews**: [Status reports, stakeholder communication]
 - **Phase Transitions**: [Milestone communication, approval processes]
 
 ### Decision Making

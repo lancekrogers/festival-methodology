@@ -84,7 +84,7 @@ modified: '2025-09-12'
 
 - Team size: [number]
 - Key skills: [critical skills needed]
-- Timeline: [key milestones]
+- Key dependencies: [blocking steps that must complete first]
 
 ## Sequence Planning Notes
 
@@ -144,7 +144,7 @@ modified: '2025-09-12'
 
 - Team is familiar with Festival Methodology
 - Project requirements are already clear
-- Time is a constraint for setup
+- Quick setup is preferred
 - You need minimal documentation overhead
 
 **Upgrade to full templates when:**

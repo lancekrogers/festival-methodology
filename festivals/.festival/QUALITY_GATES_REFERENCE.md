@@ -255,19 +255,19 @@ Address all findings from testing and code review, iterating until sequence meet
 
 ### Common Iteration Patterns
 
-**Minor Issues (1-2 days):**
+**Minor Issues (1-2 iteration cycles):**
 - Fix bugs found in testing
 - Address code style violations
 - Update documentation gaps
 - Resolve merge conflicts
 
-**Moderate Issues (3-7 days):**
+**Moderate Issues (3-5 iteration cycles):**
 - Performance optimizations
 - Security improvements
 - Architecture adjustments
 - Significant test additions
 
-**Major Issues (1+ weeks):**
+**Major Issues (multiple sequences):**
 - Requirement clarification needed
 - Significant architectural changes
 - Major performance problems

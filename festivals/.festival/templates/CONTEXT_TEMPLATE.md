@@ -68,7 +68,7 @@ This CONTEXT.md file captures key decisions, rationale, and session handoff info
 
 - [Assumption about user behavior]
 - [Assumption about scale]
-- [Assumption about timeline]
+- [Assumption about dependencies]
 
 ### Resource Assumptions
 

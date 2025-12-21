@@ -68,17 +68,17 @@ Verify tasks support this sequence goal:
 
 ## Progress Tracking
 
-### Milestones
+### Step Milestones
 
-- [ ] **[Date]**: [Milestone 1 description]
-- [ ] **[Date]**: [Milestone 2 description]
-- [ ] **[Date]**: [Milestone 3 description]
+- [ ] **Step 1**: [Milestone 1 - key deliverable achieved]
+- [ ] **Step 2**: [Milestone 2 - key deliverable achieved]
+- [ ] **Step 3**: [Milestone 3 - key deliverable achieved]
 
 ### Metrics to Monitor
 
 - Task completion rate: [X/Y tasks]
 - Quality gate pass rate: [X%]
-- Blocker resolution time: [X days average]
+- Active blockers: [X blocking dependencies]
 
 ## Pre-Sequence Checklist
 
