@@ -8,13 +8,20 @@ created: '2025-09-06'
 modified: '2025-09-06'
 ---
 
-# Festival Overview: [Project Name]
+<!--
+TEMPLATE USAGE:
+- All [REPLACE: ...] markers MUST be replaced with actual content
+- Do NOT leave any [REPLACE: ...] markers in the final document
+- Remove this comment block when filling the template
+-->
 
-> 📋 **Important**: Create a separate `FESTIVAL_GOAL.md` file at the festival root using the FESTIVAL_GOAL_TEMPLATE.md for comprehensive goal tracking and evaluation throughout the festival lifecycle.
+# Festival Overview: [REPLACE: Project Name]
+
+> **Important**: Create a separate `FESTIVAL_GOAL.md` file at the festival root using the FESTIVAL_GOAL_TEMPLATE.md for comprehensive goal tracking and evaluation throughout the festival lifecycle.
 
 ## Project Goal
 
-**Primary Objective**: [ONE clear sentence describing what this festival will accomplish]
+**Primary Objective**: [REPLACE: ONE clear sentence describing what this festival will accomplish]
 
 **Example**: "Build a secure user authentication system with email/password login, social authentication, and role-based access control for the web application."
 
@@ -22,10 +29,10 @@ modified: '2025-09-06'
 
 **The festival is successful when:**
 
-- [ ] **Functional Success**: [Specific functional outcomes achieved]
-- [ ] **Quality Success**: [Quality standards met]  
-- [ ] **Business Success**: [Business value delivered]
-- [ ] **User Success**: [User experience goals met]
+- [ ] **Functional Success**: [REPLACE: Specific functional outcomes achieved]
+- [ ] **Quality Success**: [REPLACE: Quality standards met]
+- [ ] **Business Success**: [REPLACE: Business value delivered]
+- [ ] **User Success**: [REPLACE: User experience goals met]
 
 **Example Success Criteria:**
 
@@ -38,13 +45,13 @@ modified: '2025-09-06'
 
 ## Problem Statement
 
-**Current State**: [What exists today and what problems it creates]
+**Current State**: [REPLACE: What exists today and what problems it creates]
 
-**Desired Future State**: [What we want to achieve and why it matters]
+**Desired Future State**: [REPLACE: What we want to achieve and why it matters]
 
-**User Impact**: [How this affects the people who will use the system]
+**User Impact**: [REPLACE: How this affects the people who will use the system]
 
-**Business Impact**: [How this affects business goals and operations]
+**Business Impact**: [REPLACE: How this affects business goals and operations]
 
 **Example Problem Statement:**
 
@@ -62,7 +69,7 @@ Business Impact: We can gather user analytics, offer premium features, and compl
 
 | Stakeholder | Role | Responsibilities | Success Definition |
 |-------------|------|------------------|-------------------|
-| [Name/Role] | [Primary/Secondary/Informed] | [What they do in this festival] | [How they measure success] |
+| [REPLACE: Name/Role] | [REPLACE: Primary/Secondary/Informed] | [REPLACE: What they do in this festival] | [REPLACE: How they measure success] |
 | Product Owner | Primary | Requirements validation, user story approval | Users complete key flows without friction |
 | Engineering Lead | Primary | Architecture decisions, code review | System meets performance and security standards |
 | UX Designer | Secondary | User flow design, interface specifications | Authentication flows are intuitive and accessible |
@@ -74,22 +81,22 @@ Business Impact: We can gather user analytics, offer premium features, and compl
 
 ### In Scope
 
-- [List specific features and functionality to be built]
-- [Include technical components and integrations]
-- [Specify quality and performance requirements]
+- [REPLACE: Specific feature or functionality to be built]
+- [REPLACE: Technical component or integration]
+- [REPLACE: Quality or performance requirement]
 
-### Out of Scope  
+### Out of Scope
 
-- [List what will NOT be included in this festival]
-- [Identify future enhancements or separate projects]
-- [Clarify boundaries to prevent scope creep]
+- [REPLACE: Feature NOT included in this festival]
+- [REPLACE: Future enhancement or separate project]
+- [REPLACE: Boundary to prevent scope creep]
 
 ### Constraints
 
-- **Technical**: [Technology limitations, existing systems, architectural constraints]
-- **Dependencies**: [Blocking steps, external dependencies, required approvals]
-- **Resources**: [Team size, budget, skill limitations]
-- **Business**: [Regulatory requirements, business policy constraints]
+- **Technical**: [REPLACE: Technology limitations, existing systems, architectural constraints]
+- **Dependencies**: [REPLACE: Blocking steps, external dependencies, required approvals]
+- **Resources**: [REPLACE: Team size, budget, skill limitations]
+- **Business**: [REPLACE: Regulatory requirements, business policy constraints]
 
 **Example Scope:**
 
@@ -119,73 +126,70 @@ Constraints:
 
 ### Phase 001: PLAN
 
-**Objective**: Complete requirements analysis and system architecture planning
+**Objective**: [REPLACE: Planning phase objective]
 
 **Key Sequences**:
 
-- Requirements analysis and user story definition
-- Technical architecture design and database planning
-- Security architecture and compliance planning
+- [REPLACE: First sequence description]
+- [REPLACE: Second sequence description]
+- [REPLACE: Third sequence description]
 
-**Deliverables**: Requirements specification, architecture documentation, technology decisions
+**Deliverables**: [REPLACE: Key phase deliverables]
 
-### Phase 002: DEFINE_INTERFACES ⭐ CRITICAL PHASE
+### Phase 002: DEFINE_INTERFACES (CRITICAL PHASE)
 
-**Objective**: Define and finalize all system interfaces before implementation begins
+**Objective**: [REPLACE: Interface definition objective]
 
 **Key Sequences**:
 
-- API contract definition (authentication endpoints, user management APIs)
-- Database schema design and relationships
-- Frontend component interface specifications
-- External service integration contracts (OAuth providers)
+- [REPLACE: API contract definition sequence]
+- [REPLACE: Data schema design sequence]
+- [REPLACE: Component interface sequence]
 
 **Deliverables**: COMMON_INTERFACES.md with FINALIZED status, stakeholder sign-offs
 
 **Critical Success Factor**: NO Phase 003 work begins until ALL interfaces are FINALIZED
 
-### Phase 003: IMPLEMENT  
+### Phase 003: IMPLEMENT
 
-**Objective**: Build the authentication system according to finalized interface contracts
+**Objective**: [REPLACE: Implementation objective]
 
 **Key Sequences**:
 
-- Backend authentication services implementation
-- Frontend authentication UI and state management
-- Database implementation and migration scripts
-- Integration with external OAuth providers
+- [REPLACE: Backend implementation sequence]
+- [REPLACE: Frontend implementation sequence]
+- [REPLACE: Integration sequence]
 
-**Deliverables**: Working authentication system, comprehensive test suite
+**Deliverables**: [REPLACE: Implementation deliverables]
 
 ### Phase 004: REVIEW_AND_UAT
 
-**Objective**: Validate system meets requirements through user acceptance testing
+**Objective**: [REPLACE: Review and UAT objective]
 
 **Key Sequences**:
 
-- User acceptance testing with real users
-- Security audit and penetration testing
-- Performance testing and optimization
-- Stakeholder review and approval
+- [REPLACE: UAT sequence]
+- [REPLACE: Security review sequence]
+- [REPLACE: Stakeholder approval sequence]
 
-**Deliverables**: Approved system ready for production deployment
+**Deliverables**: [REPLACE: Review phase deliverables]
 
 ## Key Dependencies
 
 ### Internal Dependencies
 
-- [Systems, teams, or resources within organization that this festival depends on]
-- [Other projects or initiatives that must complete first]
+- [REPLACE: Internal system, team, or resource dependency]
+- [REPLACE: Other project or initiative that must complete first]
 
-### External Dependencies  
+### External Dependencies
 
-- [Third-party services, vendors, or external systems required]
-- [Regulatory approvals or legal reviews needed]
+- [REPLACE: Third-party service or vendor dependency]
+- [REPLACE: Regulatory approval or legal review needed]
 
 ### Critical Path Items
 
-- [Dependencies that could block or delay the entire festival]
-- [High-risk items requiring early attention]
+- [REPLACE: Dependency that could block the entire festival]
+- [REPLACE: High-risk item requiring early attention]
 
 **Example Dependencies:**
 
@@ -209,8 +213,8 @@ Critical Path Items:
 ## Risk Assessment
 
 | Risk | Probability | Impact | Mitigation Strategy |
-|------|-------------|--------|-------------------|
-| [Risk Description] | [High/Medium/Low] | [High/Medium/Low] | [How to prevent or respond] |
+|------|-------------|--------|---------------------|
+| [REPLACE: Risk description] | [REPLACE: High/Medium/Low] | [REPLACE: High/Medium/Low] | [REPLACE: How to prevent or respond] |
 | OAuth approval delays | Medium | High | Start applications early, have fallback email-only flow |
 | Performance impact on existing system | High | Medium | Load testing in Phase 004, performance monitoring |
 | Security vulnerabilities discovered | Low | High | Security review in Phase 002, penetration testing |
@@ -220,21 +224,21 @@ Critical Path Items:
 
 ### Regular Updates
 
-- **Step Completion**: [Who gets updates when steps complete]
-- **Progress Reviews**: [Status reports, stakeholder communication]
-- **Phase Transitions**: [Milestone communication, approval processes]
+- **Step Completion**: [REPLACE: Who gets updates when steps complete]
+- **Progress Reviews**: [REPLACE: Status reports, stakeholder communication]
+- **Phase Transitions**: [REPLACE: Milestone communication, approval processes]
 
 ### Decision Making
 
-- **Technical Decisions**: [Who makes architectural and implementation decisions]
-- **Business Decisions**: [Who approves scope or requirement changes]
-- **Escalation Path**: [How issues get elevated to management]
+- **Technical Decisions**: [REPLACE: Who makes architectural and implementation decisions]
+- **Business Decisions**: [REPLACE: Who approves scope or requirement changes]
+- **Escalation Path**: [REPLACE: How issues get elevated to management]
 
 ### Documentation Standards
 
-- **Code Documentation**: [Standards for code comments, API docs]
-- **Decision Records**: [How architectural decisions are documented]
-- **Progress Tracking**: [How completion and issues are tracked]
+- **Code Documentation**: [REPLACE: Standards for code comments, API docs]
+- **Decision Records**: [REPLACE: How architectural decisions are documented]
+- **Progress Tracking**: [REPLACE: How completion and issues are tracked]
 
 ## Quality Standards
 
@@ -263,7 +267,7 @@ Each user story/requirement must have:
 ### Quality Gates
 
 - **Phase 001 → 002**: Architecture review, requirements sign-off
-- **Phase 002 → 003**: Interface finalization, stakeholder approval  
+- **Phase 002 → 003**: Interface finalization, stakeholder approval
 - **Phase 003 → 004**: Implementation complete, automated tests passing
 - **Phase 004 → Production**: User acceptance testing passed, security audit complete
 
@@ -271,36 +275,36 @@ Each user story/requirement must have:
 
 This festival follows the Festival Methodology principles:
 
-✅ **Interface-First Development**: Phase 002 defines ALL interfaces before implementation
-✅ **Three-Level Hierarchy**: Phases → Sequences → Tasks with proper numbering
-✅ **Quality Verification**: Testing and review at every sequence level
-✅ **Parallel Development**: Interface contracts enable simultaneous work
-✅ **Step-Based Planning**: Focus on development steps, not time estimates
+- **Interface-First Development**: Phase 002 defines ALL interfaces before implementation
+- **Three-Level Hierarchy**: Phases → Sequences → Tasks with proper numbering
+- **Quality Verification**: Testing and review at every sequence level
+- **Parallel Development**: Interface contracts enable simultaneous work
+- **Step-Based Planning**: Focus on development steps, not time estimates
 
 ## Notes
 
 ### Assumptions Made
 
-- [List key assumptions about requirements, technology, or resources]
-- [Assumptions about user behavior or business processes]
-- [Technical assumptions about existing systems]
+- [REPLACE: Key assumption about requirements, technology, or resources]
+- [REPLACE: Assumption about user behavior or business processes]
+- [REPLACE: Technical assumption about existing systems]
 
-### Open Questions  
+### Open Questions
 
-- [Questions that need answers before or during festival execution]
-- [Decisions that are deferred to later phases]
-- [Areas where more research or investigation is needed]
+- [REPLACE: Question that needs answer before or during festival execution]
+- [REPLACE: Decision deferred to later phases]
+- [REPLACE: Area where more research or investigation is needed]
 
 ### Learning Objectives
 
-- [What the team expects to learn during this festival]
-- [Skills or knowledge that will be developed]
-- [Process improvements to experiment with]
+- [REPLACE: What the team expects to learn during this festival]
+- [REPLACE: Skills or knowledge that will be developed]
+- [REPLACE: Process improvements to experiment with]
 
 ---
 
-**Document Status**: [DRAFT | UNDER_REVIEW | APPROVED]
-**Last Updated**: [Date]
-**Next Review**: [Date]
+**Document Status**: [REPLACE: DRAFT | UNDER_REVIEW | APPROVED]
+**Last Updated**: [REPLACE: Date]
+**Next Review**: [REPLACE: Date]
 
 **Festival Planning Agent**: This overview should be created during festival planning and approved by all stakeholders before Phase 001 begins. It serves as the foundation for all festival work and should be referenced throughout execution to ensure alignment with original goals.

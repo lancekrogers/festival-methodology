@@ -8,30 +8,37 @@ created: '2025-09-12'
 modified: '2025-09-12'
 ---
 
-# Festival Quickstart: [Project Name]
+<!--
+TEMPLATE USAGE:
+- All [REPLACE: ...] markers MUST be replaced with actual content
+- Do NOT leave any [REPLACE: ...] markers in the final document
+- Remove this comment block when filling the template
+-->
+
+# Festival Quickstart: [REPLACE: Project Name]
 
 > **For Experienced Users**: This template provides minimal setup for teams familiar with Festival Methodology. For first-time users, use FESTIVAL_OVERVIEW_TEMPLATE.md instead.
 
 ## Project Goal
 
-[ONE clear sentence describing what this festival will accomplish]
+[REPLACE: ONE clear sentence describing what this festival will accomplish]
 
 ## Success Criteria
 
-- [ ] [Primary functional outcome]
-- [ ] [Quality/performance requirement]  
-- [ ] [Business/user value delivered]
+- [ ] [REPLACE: Primary functional outcome]
+- [ ] [REPLACE: Quality/performance requirement]
+- [ ] [REPLACE: Business/user value delivered]
 
 ## Phase Structure
 
-**Phase Type:** [Simple | Multiple Implementation | Research First | Custom]
+**Phase Type:** [REPLACE: Simple | Multiple Implementation | Research First | Custom]
 
 **Phases (add as needed):**
 
-- **001_[NAME]**: [Brief objective - planning/research phases may just be documents]
-- **002_[NAME]**: [Brief objective - implementation phases need sequences/tasks]
-- **003_[NAME]**: [Brief objective - add more implementation phases as needed]
-- **[Additional]**: [Add phases as requirements emerge]
+- **001_[REPLACE: PHASE_NAME]**: [REPLACE: Brief objective - planning/research phases may just be documents]
+- **002_[REPLACE: PHASE_NAME]**: [REPLACE: Brief objective - implementation phases need sequences/tasks]
+- **003_[REPLACE: PHASE_NAME]**: [REPLACE: Brief objective - add more implementation phases as needed]
+- **[REPLACE: Additional phases]**: [REPLACE: Add phases as requirements emerge]
 
 ## Key Interfaces & Contracts (If Multi-System)
 
@@ -39,27 +46,27 @@ modified: '2025-09-12'
 
 ### API Contracts
 
-- [Interface 1]: [Brief description] (optional)
-- [Interface 2]: [Brief description] (optional)
+- [REPLACE: Interface 1]: [REPLACE: Brief description] (optional)
+- [REPLACE: Interface 2]: [REPLACE: Brief description] (optional)
 
 ### Data Contracts
 
-- [Data structure 1]: [Brief description] (optional)
-- [Data structure 2]: [Brief description] (optional)
+- [REPLACE: Data structure 1]: [REPLACE: Brief description] (optional)
+- [REPLACE: Data structure 2]: [REPLACE: Brief description] (optional)
 
 ### Component Interfaces
 
-- [Component 1]: [Brief description]
-- [Component 2]: [Brief description]
+- [REPLACE: Component 1]: [REPLACE: Brief description]
+- [REPLACE: Component 2]: [REPLACE: Brief description]
 
 ## Quality Standards
 
 **This festival follows:**
 
-- [ ] [Code standard reference]
-- [ ] [Testing requirement]
-- [ ] [Security requirement]
-- [ ] [Performance requirement]
+- [ ] [REPLACE: Code standard reference]
+- [ ] [REPLACE: Testing requirement]
+- [ ] [REPLACE: Security requirement]
+- [ ] [REPLACE: Performance requirement]
 
 **Quality Gates:** Standard testing/review/iteration tasks included in all implementation sequences.
 
@@ -67,48 +74,50 @@ modified: '2025-09-12'
 
 **Pay special attention to:**
 
-- [Risk 1 and mitigation]
-- [Risk 2 and mitigation]
-- [Integration point that needs careful coordination]
+- [REPLACE: Risk 1 and mitigation]
+- [REPLACE: Risk 2 and mitigation]
+- [REPLACE: Integration point that needs careful coordination]
 
 ## Dependencies & Constraints
 
 **External Dependencies:**
 
+- [REPLACE: External dependency description]
+
 **Technical Constraints:**
 
-- [Constraint 1]: [How it affects the approach]
-- [Constraint 2]: [How it affects the approach]
+- [REPLACE: Constraint 1]: [REPLACE: How it affects the approach]
+- [REPLACE: Constraint 2]: [REPLACE: How it affects the approach]
 
 **Team Constraints:**
 
-- Team size: [number]
-- Key skills: [critical skills needed]
-- Key dependencies: [blocking steps that must complete first]
+- Team size: [REPLACE: number]
+- Key skills: [REPLACE: critical skills needed]
+- Key dependencies: [REPLACE: blocking steps that must complete first]
 
 ## Sequence Planning Notes
 
 **Parallel Work Opportunities:**
 
-- After Phase [X] completion: [List sequences that can run in parallel]
-- [Interface Y] enables: [List dependent work that can start]
+- After Phase [REPLACE: X] completion: [REPLACE: List sequences that can run in parallel]
+- [REPLACE: Interface Y] enables: [REPLACE: List dependent work that can start]
 
 **Critical Path:**
 
-- [Sequence that blocks other work]
-- [Dependency that could delay the project]
+- [REPLACE: Sequence that blocks other work]
+- [REPLACE: Dependency that could delay the project]
 
 ## Stakeholders
 
 **Key Decision Makers:**
 
-- [Name/Role]: [What they need to approve]
-- [Name/Role]: [What they need to approve]
+- [REPLACE: Name/Role]: [REPLACE: What they need to approve]
+- [REPLACE: Name/Role]: [REPLACE: What they need to approve]
 
 **Primary Users:**
 
-- [User type]: [Their main need/concern]
-- [User type]: [Their main need/concern]
+- [REPLACE: User type]: [REPLACE: Their main need/concern]
+- [REPLACE: User type]: [REPLACE: Their main need/concern]
 
 ## Quick Setup Checklist
 
@@ -150,7 +159,7 @@ modified: '2025-09-12'
 **Upgrade to full templates when:**
 
 - Stakeholders need detailed documentation
-- Team members are new to Festival Methodology  
+- Team members are new to Festival Methodology
 - Project has complex compliance requirements
 - Multiple teams need coordination
 

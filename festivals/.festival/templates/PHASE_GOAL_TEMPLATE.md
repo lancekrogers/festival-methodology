@@ -5,15 +5,22 @@ aliases:
 description: Defines phase objective, success criteria, and quality metrics
 ---
 
-# Phase Goal: [NNN_PHASE_NAME]
+<!--
+TEMPLATE USAGE:
+- All [REPLACE: ...] markers MUST be replaced with actual content
+- Do NOT leave any [REPLACE: ...] markers in the final document
+- Remove this comment block when filling the template
+-->
 
-**Phase:** [NNN_PHASE_NAME] | **Status:** [Planning/Active/Complete] | **Sequences:** [X total, Y completed]
+# Phase Goal: [REPLACE: Phase name like 002_IMPLEMENT]
+
+**Phase:** [REPLACE: Phase ID] | **Status:** [REPLACE: Planning/Active/Complete] | **Sequences:** [REPLACE: X total, Y completed]
 
 ## Phase Objective
 
-**Primary Goal:** [One clear sentence stating what this phase must accomplish]
+**Primary Goal:** [REPLACE: One clear sentence stating what this phase must accomplish]
 
-**Context:** [Why this phase is critical to the festival's success and how it enables subsequent phases]
+**Context:** [REPLACE: Why this phase is critical to the festival's success and how it enables subsequent phases]
 
 ## Success Criteria
 
@@ -21,15 +28,15 @@ The phase goal is achieved when:
 
 ### Required Outcomes
 
-- [ ] **[Outcome 1]**: [Specific, measurable deliverable or milestone]
-- [ ] **[Outcome 2]**: [Specific, measurable deliverable or milestone]
-- [ ] **[Outcome 3]**: [Specific, measurable deliverable or milestone]
+- [ ] **[REPLACE: Outcome name]**: [REPLACE: Specific, measurable deliverable or milestone]
+- [ ] **[REPLACE: Outcome name]**: [REPLACE: Specific, measurable deliverable or milestone]
+- [ ] **[REPLACE: Outcome name]**: [REPLACE: Specific, measurable deliverable or milestone]
 
 ### Quality Metrics
 
-- [ ] **[Metric 1]**: [Quantifiable quality measure with target]
-- [ ] **[Metric 2]**: [Quantifiable quality measure with target]
-- [ ] **[Metric 3]**: [Quantifiable quality measure with target]
+- [ ] **[REPLACE: Metric name]**: [REPLACE: Quantifiable quality measure with target]
+- [ ] **[REPLACE: Metric name]**: [REPLACE: Quantifiable quality measure with target]
+- [ ] **[REPLACE: Metric name]**: [REPLACE: Quantifiable quality measure with target]
 
 ### Validation Gates
 
@@ -41,27 +48,27 @@ The phase goal is achieved when:
 ## Key Deliverables
 
 | Deliverable | Description | Acceptance Criteria |
-|-------------|-------------|-------------------|
-| [Deliverable 1] | [What it is] | [How to verify completion] |
-| [Deliverable 2] | [What it is] | [How to verify completion] |
-| [Deliverable 3] | [What it is] | [How to verify completion] |
+|-------------|-------------|---------------------|
+| [REPLACE: Deliverable name] | [REPLACE: What it is] | [REPLACE: How to verify completion] |
+| [REPLACE: Deliverable name] | [REPLACE: What it is] | [REPLACE: How to verify completion] |
+| [REPLACE: Deliverable name] | [REPLACE: What it is] | [REPLACE: How to verify completion] |
 
 ## Risk Factors
 
 | Risk | Impact on Goal | Mitigation Strategy |
-|------|---------------|-------------------|
-| [Risk 1] | [How it affects phase goal] | [Prevention/response plan] |
-| [Risk 2] | [How it affects phase goal] | [Prevention/response plan] |
+|------|----------------|---------------------|
+| [REPLACE: Risk description] | [REPLACE: How it affects phase goal] | [REPLACE: Prevention/response plan] |
+| [REPLACE: Risk description] | [REPLACE: How it affects phase goal] | [REPLACE: Prevention/response plan] |
 
 ## Sequence Goal Alignment
 
 Verify that sequence goals support this phase goal:
 
 | Sequence | Sequence Goal | Contribution to Phase Goal |
-|----------|--------------|---------------------------|
-| [01_sequence] | [Brief goal statement] | [How it helps achieve phase goal] |
-| [02_sequence] | [Brief goal statement] | [How it helps achieve phase goal] |
-| [03_sequence] | [Brief goal statement] | [How it helps achieve phase goal] |
+|----------|---------------|----------------------------|
+| [REPLACE: 01_sequence] | [REPLACE: Brief goal statement] | [REPLACE: How it helps achieve phase goal] |
+| [REPLACE: 02_sequence] | [REPLACE: Brief goal statement] | [REPLACE: How it helps achieve phase goal] |
+| [REPLACE: 03_sequence] | [REPLACE: Brief goal statement] | [REPLACE: How it helps achieve phase goal] |
 
 ## Pre-Phase Checklist
 
@@ -85,39 +92,39 @@ Track step completion against:
 
 ### Post-Completion Assessment
 
-**Date Completed:** [Date]
+**Date Completed:** [REPLACE: Date when phase was completed]
 
-**Goal Achievement Score:** [X/Y criteria met]
+**Goal Achievement Score:** [REPLACE: X/Y criteria met]
 
 ### What Worked Well
 
-- [Success factor 1]
-- [Success factor 2]
-- [Success factor 3]
+- [REPLACE: Success factor]
+- [REPLACE: Success factor]
+- [REPLACE: Success factor]
 
 ### What Could Be Improved
 
-- [Improvement area 1]
-- [Improvement area 2]
-- [Improvement area 3]
+- [REPLACE: Improvement area]
+- [REPLACE: Improvement area]
+- [REPLACE: Improvement area]
 
 ### Lessons Learned
 
-- [Key learning 1]
-- [Key learning 2]
-- [Key learning 3]
+- [REPLACE: Key learning]
+- [REPLACE: Key learning]
+- [REPLACE: Key learning]
 
 ### Recommendations for Future Phases
 
-- [Recommendation 1]
-- [Recommendation 2]
-- [Recommendation 3]
+- [REPLACE: Recommendation]
+- [REPLACE: Recommendation]
+- [REPLACE: Recommendation]
 
 ## Stakeholder Sign-off
 
 | Stakeholder | Role | Sign-off Date | Notes |
 |-------------|------|---------------|-------|
-| [Name] | [Role] | [Date] | [Any conditions or notes] |
+| [REPLACE: Name] | [REPLACE: Role] | [REPLACE: Date] | [REPLACE: Any conditions or notes] |
 
 ---
 
@@ -176,7 +183,7 @@ The phase goal is achieved when:
 ## Key Deliverables
 
 | Deliverable | Description | Acceptance Criteria |
-|-------------|-------------|-------------------|
+|-------------|-------------|---------------------|
 | API Documentation | Complete OpenAPI 3.0 specification | Validates without errors, includes all endpoints |
 | Data Model Schemas | JSON Schema definitions for all models | All required fields defined, relationships clear |
 | Integration Specs | Third-party API usage documentation | Authentication, rate limits, error handling defined |
@@ -184,7 +191,7 @@ The phase goal is achieved when:
 ## Risk Factors
 
 | Risk | Impact on Goal | Mitigation Strategy |
-|------|---------------|-------------------|
+|------|----------------|---------------------|
 | Incomplete requirements | Missing interfaces discovered later | Multiple review cycles with stakeholders |
 | Changing requirements | Interface rework during implementation | Lock interfaces with formal change process |
 
@@ -193,7 +200,7 @@ The phase goal is achieved when:
 Verify that sequence goals support this phase goal:
 
 | Sequence | Sequence Goal | Contribution to Phase Goal |
-|----------|--------------|---------------------------|
+|----------|---------------|----------------------------|
 | 01_api_design | Define all REST API endpoints | Provides 60% of interface definitions |
 | 02_data_models | Define all data structures | Provides 30% of interface definitions |
 | 03_integration_contracts | Define external integrations | Provides 10% of interface definitions |

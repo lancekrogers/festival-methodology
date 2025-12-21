@@ -7,23 +7,30 @@ aliases:
 description: Unified project tracking template with checkboxes for manual progress tracking
 ---
 
+<!--
+TEMPLATE USAGE:
+- All [REPLACE: ...] markers MUST be replaced with actual content
+- Do NOT leave any [REPLACE: ...] markers in the final document
+- Remove this comment block when filling the template
+-->
+
 # Festival TODO - Unified Project Tracking
 
-## Festival: [FESTIVAL_NAME]
+## Festival: [REPLACE: Festival Name]
 
-**Goal**: [Primary objective in one clear sentence]  
-**Status**: [Planning | Active | Review | Complete]  
-**Started**: [YYYY-MM-DD]  
-**Target**: [YYYY-MM-DD]
+**Goal**: [REPLACE: Primary objective in one clear sentence]
+**Status**: [REPLACE: Planning | Active | Review | Complete]
+**Started**: [REPLACE: YYYY-MM-DD]
+**Target**: [REPLACE: YYYY-MM-DD]
 
 ## Status Legend
 
 - [ ] Not Started
-- [🚧] In Progress  
-- [✅] Completed
-- [❌] Blocked
-- [🔄] Needs Review
-- [⚡] Ready (dependencies met)
+- [x] In Progress
+- [x] Completed
+- [x] Blocked
+- [x] Needs Review
+- [x] Ready (dependencies met)
 
 ---
 
@@ -39,30 +46,30 @@ description: Unified project tracking template with checkboxes for manual progre
 ### Current Work Status
 
 ```
-Active Phase: [PHASE_NAME]
-Active Sequences: [SEQUENCE_NAMES]
-Active Tasks: [TASK_NAMES]
-Blockers: [LIST_BLOCKERS]
-Next Critical Gate: [GATE_DESCRIPTION]
+Active Phase: [REPLACE: Phase name]
+Active Sequences: [REPLACE: Sequence names]
+Active Tasks: [REPLACE: Task names]
+Blockers: [REPLACE: List blockers or None]
+Next Critical Gate: [REPLACE: Gate description]
 ```
 
 ---
 
-## 📋 PHASE 001: PLAN
+## PHASE 001: PLAN
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 **Purpose**: Define requirements, architecture, and draft initial interfaces
 **Gate Criteria**: Requirements approved, architecture documented, feasibility confirmed
 
 ### Sequence Progress
 
 - [ ] **01_requirements_analysis** (Foundation for all other work)
-- [ ] **02_architecture_design** (System blueprint)  
+- [ ] **02_architecture_design** (System blueprint)
 - [ ] **03_feasibility_study** (Risk and resource validation)
 
 #### 01_requirements_analysis
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 
 **Tasks**:
 
@@ -75,7 +82,7 @@ Next Critical Gate: [GATE_DESCRIPTION]
 
 #### 02_architecture_design
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 **Dependencies**: 01_requirements_analysis must be completed
 
 **Tasks**:
@@ -89,7 +96,7 @@ Next Critical Gate: [GATE_DESCRIPTION]
 
 #### 03_feasibility_study
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 **Dependencies**: 02_architecture_design must be completed
 
 **Tasks**:
@@ -103,9 +110,9 @@ Next Critical Gate: [GATE_DESCRIPTION]
 
 ---
 
-## 🔗 PHASE 002: DEFINE_INTERFACES ⭐ CRITICAL GATE
+## PHASE 002: DEFINE_INTERFACES (CRITICAL GATE)
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 **Purpose**: Lock all system contracts, APIs, and data models before implementation
 **Gate Criteria**: ALL interfaces FINALIZED, stakeholder sign-offs complete, no Phase 003 work until complete
 
@@ -117,7 +124,7 @@ Next Critical Gate: [GATE_DESCRIPTION]
 
 #### 01_api_contracts
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 
 **Tasks**:
 
@@ -128,9 +135,9 @@ Next Critical Gate: [GATE_DESCRIPTION]
 - [ ] 04_code_review.md
 - [ ] 05_review_results_iterate.md
 
-#### 02_data_schemas  
+#### 02_data_schemas
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 **Can run parallel with**: 01_api_contracts
 
 **Tasks**:
@@ -144,7 +151,7 @@ Next Critical Gate: [GATE_DESCRIPTION]
 
 #### 03_integration_points
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 **Dependencies**: 01_api_contracts and 02_data_schemas must be completed
 
 **Tasks**:
@@ -158,9 +165,9 @@ Next Critical Gate: [GATE_DESCRIPTION]
 
 ---
 
-## ⚒️ PHASE 003: IMPLEMENT
+## PHASE 003: IMPLEMENT
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 **Purpose**: Build solution based on locked interfaces with parallel development
 **Gate Criteria**: All implementation complete, automated tests passing, interfaces maintained
 
@@ -173,7 +180,7 @@ Next Critical Gate: [GATE_DESCRIPTION]
 
 #### 01_backend_foundation
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 
 **Tasks**:
 
@@ -186,7 +193,7 @@ Next Critical Gate: [GATE_DESCRIPTION]
 
 #### 02_frontend_integration
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 **Can run parallel with**: 01_backend_foundation (thanks to interface contracts)
 
 **Tasks**:
@@ -200,7 +207,7 @@ Next Critical Gate: [GATE_DESCRIPTION]
 
 #### 03_service_integration
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 **Dependencies**: 01_backend_foundation must be completed
 
 **Tasks**:
@@ -214,7 +221,7 @@ Next Critical Gate: [GATE_DESCRIPTION]
 
 #### 04_performance_optimization
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 **Dependencies**: 01_backend_foundation and 02_frontend_integration completed
 
 **Tasks**:
@@ -227,9 +234,9 @@ Next Critical Gate: [GATE_DESCRIPTION]
 
 ---
 
-## 🎯 PHASE 004: REVIEW_AND_UAT
+## PHASE 004: REVIEW_AND_UAT
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 **Purpose**: Validate with users and stakeholders, ensure production readiness
 **Gate Criteria**: User acceptance criteria met, stakeholder approval, production ready
 
@@ -241,7 +248,7 @@ Next Critical Gate: [GATE_DESCRIPTION]
 
 #### 01_user_acceptance_testing
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 
 **Tasks**:
 
@@ -255,7 +262,7 @@ Next Critical Gate: [GATE_DESCRIPTION]
 
 #### 02_stakeholder_review
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 **Can run parallel with**: 01_user_acceptance_testing
 
 **Tasks**:
@@ -269,7 +276,7 @@ Next Critical Gate: [GATE_DESCRIPTION]
 
 #### 03_production_readiness
 
-**Status**: [ ] Not Started | [🚧] In Progress | [✅] Completed | [❌] Blocked
+**Status**: [REPLACE: Not Started | In Progress | Completed | Blocked]
 **Dependencies**: 01_user_acceptance_testing and 02_stakeholder_review completed
 
 **Tasks**:
@@ -282,7 +289,7 @@ Next Critical Gate: [GATE_DESCRIPTION]
 
 ---
 
-## 📊 Progress Dashboard
+## Progress Dashboard
 
 ### Overall Metrics
 
@@ -291,7 +298,7 @@ Festival Progress: [_______________] 0%
 
 Phase Breakdown:
 001_PLAN:              [_______________] 0/3 sequences
-002_DEFINE_INTERFACES: [_______________] 0/3 sequences  
+002_DEFINE_INTERFACES: [_______________] 0/3 sequences
 003_IMPLEMENT:         [_______________] 0/4 sequences
 004_REVIEW_AND_UAT:    [_______________] 0/3 sequences
 
@@ -303,22 +310,22 @@ Tasks: 0/72 completed (0%)
 
 ```
 Active Steps:
-□ [Task name] - [Owner] - [Dependencies]
-□ [Task name] - [Owner] - [Dependencies]
-□ [Task name] - [Owner] - [Dependencies]
+[REPLACE: Task name] - [REPLACE: Owner] - [REPLACE: Dependencies]
+[REPLACE: Task name] - [REPLACE: Owner] - [REPLACE: Dependencies]
+[REPLACE: Task name] - [REPLACE: Owner] - [REPLACE: Dependencies]
 
 Recently Completed:
-✅ [Task name] - [Owner]
-✅ [Task name] - [Owner]
+[REPLACE: Task name] - [REPLACE: Owner]
+[REPLACE: Task name] - [REPLACE: Owner]
 
 Blocked/At Risk:
-❌ [Task name] - [Blocker description]
-🔄 [Task name] - [Review needed]
+[REPLACE: Task name] - [REPLACE: Blocker description]
+[REPLACE: Task name] - [REPLACE: Review needed]
 ```
 
 ---
 
-## 🚨 Critical Dependencies & Gates
+## Critical Dependencies & Gates
 
 ### Phase Gates (Must Complete Before Next Phase)
 
@@ -331,69 +338,69 @@ Blocked/At Risk:
 
 ```
 Waiting For:
-□ [External system/person] - [What needed] - [Expected date]
-□ [External system/person] - [What needed] - [Expected date]
+[REPLACE: External system/person] - [REPLACE: What needed] - [REPLACE: Priority]
+[REPLACE: External system/person] - [REPLACE: What needed] - [REPLACE: Priority]
 
 Provides To Others:
-□ [System/person] depends on our [deliverable] - [Their deadline]
+[REPLACE: System/person] depends on our [REPLACE: deliverable] - [REPLACE: Status]
 ```
 
 ---
 
-## 🛑 Blockers & Risks
+## Blockers & Risks
 
 ### Active Blockers
 
 ```
-❌ BLOCKER_001: [Description]
-   Impact: [How this blocks progress]
-   Owner: [Who is resolving]
-   Next Step: [What needs to happen to unblock]
+BLOCKER_001: [REPLACE: Description]
+   Impact: [REPLACE: How this blocks progress]
+   Owner: [REPLACE: Who is resolving]
+   Next Step: [REPLACE: What needs to happen to unblock]
 
-❌ BLOCKER_002: [Description]
-   Impact: [How this blocks progress]
-   Owner: [Who is resolving]
-   Next Step: [What needs to happen to unblock]
+BLOCKER_002: [REPLACE: Description]
+   Impact: [REPLACE: How this blocks progress]
+   Owner: [REPLACE: Who is resolving]
+   Next Step: [REPLACE: What needs to happen to unblock]
 ```
 
 ### Risk Register
 
 ```
-🔺 HIGH: [Risk description] - Mitigation: [Strategy]
-🔸 MED:  [Risk description] - Mitigation: [Strategy]  
-🔹 LOW:  [Risk description] - Mitigation: [Strategy]
+HIGH: [REPLACE: Risk description] - Mitigation: [REPLACE: Strategy]
+MED:  [REPLACE: Risk description] - Mitigation: [REPLACE: Strategy]
+LOW:  [REPLACE: Risk description] - Mitigation: [REPLACE: Strategy]
 ```
 
 ---
 
-## 📝 Decision Log
+## Decision Log
 
 ### Recent Decisions
 
 ```
-[YYYY-MM-DD] DECISION: [What was decided]
-  Rationale: [Why this decision]
-  Impact: [How this affects festival]
-  Made by: [Person/Agent]
+[REPLACE: YYYY-MM-DD] DECISION: [REPLACE: What was decided]
+  Rationale: [REPLACE: Why this decision]
+  Impact: [REPLACE: How this affects festival]
+  Made by: [REPLACE: Person/Agent]
 
-[YYYY-MM-DD] DECISION: [What was decided]
-  Rationale: [Why this decision]
-  Impact: [How this affects festival]
-  Made by: [Person/Agent]
+[REPLACE: YYYY-MM-DD] DECISION: [REPLACE: What was decided]
+  Rationale: [REPLACE: Why this decision]
+  Impact: [REPLACE: How this affects festival]
+  Made by: [REPLACE: Person/Agent]
 ```
 
 ---
 
-## 🎯 Usage Instructions
+## Usage Instructions
 
 ### How to Use This Festival TODO System
 
 **1. Daily Updates**
 
-- Update task checkboxes as work progresses: [ ] → [🚧] → [✅]
+- Update task checkboxes as work progresses: [ ] → [x] In Progress → [x] Completed
 - Update sequence status when all tasks in sequence complete
 - Update phase status when all sequences in phase complete
-- Note any blockers immediately with [❌]
+- Note any blockers immediately with [x] Blocked
 
 **2. Progress Reviews**
 
@@ -416,11 +423,11 @@ Provides To Others:
 
 ### Methodology Reminders
 
-✅ **Interface-First**: Phase 002 gates all implementation  
-✅ **Parallel Work**: Tasks with same numbers (01_, 01_) can run simultaneously  
-✅ **Quality Gates**: Every sequence ends with test → review → iterate  
-✅ **Step-Based Progress**: Track completed items, not time  
-✅ **Three-Level Tracking**: Phase → Sequence → Task status all matter
+- **Interface-First**: Phase 002 gates all implementation
+- **Parallel Work**: Tasks with same numbers (01_, 01_) can run simultaneously
+- **Quality Gates**: Every sequence ends with test → review → iterate
+- **Step-Based Progress**: Track completed items, not time
+- **Three-Level Tracking**: Phase → Sequence → Task status all matter
 
 ### Automation Opportunities
 
@@ -434,8 +441,8 @@ This markdown format enables:
 
 ---
 
-**Last Updated**: [YYYY-MM-DD HH:MM]  
-**Updated By**: [Agent/User Name]  
-**Next Review**: [YYYY-MM-DD]
+**Last Updated**: [REPLACE: YYYY-MM-DD HH:MM]
+**Updated By**: [REPLACE: Agent/User Name]
+**Next Review**: [REPLACE: YYYY-MM-DD]
 
 **Festival Methodology Compliance**: This TODO system implements the three-level hierarchy (Phases → Sequences → Tasks) with proper gate controls and interface-first development principles.

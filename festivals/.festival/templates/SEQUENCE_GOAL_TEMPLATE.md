@@ -5,15 +5,22 @@ aliases:
 description: Defines sequence objective, deliverables, and quality standards
 ---
 
-# Sequence Goal: [NN_sequence_name]
+<!--
+TEMPLATE USAGE:
+- All [REPLACE: ...] markers MUST be replaced with actual content
+- Do NOT leave any [REPLACE: ...] markers in the final document
+- Remove this comment block when filling the template
+-->
 
-**Sequence:** [NN_sequence_name] | **Phase:** [NNN_PHASE_NAME] | **Status:** [Planning/Active/Complete] | **Created:** [Date]
+# Sequence Goal: [REPLACE: NN_sequence_name like 02_user_authentication]
+
+**Sequence:** [REPLACE: NN_sequence_name] | **Phase:** [REPLACE: NNN_PHASE_NAME] | **Status:** [REPLACE: Planning/Active/Complete] | **Created:** [REPLACE: Date]
 
 ## Sequence Objective
 
-**Primary Goal:** [One clear sentence stating what this sequence must accomplish]
+**Primary Goal:** [REPLACE: One clear sentence stating what this sequence must accomplish]
 
-**Contribution to Phase Goal:** [How achieving this sequence goal directly supports the phase goal]
+**Contribution to Phase Goal:** [REPLACE: How achieving this sequence goal directly supports the phase goal]
 
 ## Success Criteria
 
@@ -21,15 +28,15 @@ The sequence goal is achieved when:
 
 ### Required Deliverables
 
-- [ ] **[Deliverable 1]**: [Specific output or artifact produced]
-- [ ] **[Deliverable 2]**: [Specific output or artifact produced]
-- [ ] **[Deliverable 3]**: [Specific output or artifact produced]
+- [ ] **[REPLACE: Deliverable name]**: [REPLACE: Specific output or artifact produced]
+- [ ] **[REPLACE: Deliverable name]**: [REPLACE: Specific output or artifact produced]
+- [ ] **[REPLACE: Deliverable name]**: [REPLACE: Specific output or artifact produced]
 
 ### Quality Standards
 
-- [ ] **[Standard 1]**: [Quality measure with specific target]
-- [ ] **[Standard 2]**: [Quality measure with specific target]
-- [ ] **[Standard 3]**: [Quality measure with specific target]
+- [ ] **[REPLACE: Standard name]**: [REPLACE: Quality measure with specific target]
+- [ ] **[REPLACE: Standard name]**: [REPLACE: Quality measure with specific target]
+- [ ] **[REPLACE: Standard name]**: [REPLACE: Quality measure with specific target]
 
 ### Completion Criteria
 
@@ -43,42 +50,42 @@ The sequence goal is achieved when:
 Verify tasks support this sequence goal:
 
 | Task | Task Objective | Contribution to Sequence Goal |
-|------|---------------|------------------------------|
-| [01_task] | [Brief objective] | [How it helps achieve sequence goal] |
-| [02_task] | [Brief objective] | [How it helps achieve sequence goal] |
-| [03_task] | [Brief objective] | [How it helps achieve sequence goal] |
+|------|----------------|-------------------------------|
+| [REPLACE: 01_task] | [REPLACE: Brief objective] | [REPLACE: How it helps achieve sequence goal] |
+| [REPLACE: 02_task] | [REPLACE: Brief objective] | [REPLACE: How it helps achieve sequence goal] |
+| [REPLACE: 03_task] | [REPLACE: Brief objective] | [REPLACE: How it helps achieve sequence goal] |
 
 ## Dependencies
 
 ### Prerequisites (from other sequences)
 
-- [Sequence X]: [What we need from it]
-- [Sequence Y]: [What we need from it]
+- [REPLACE: Sequence X]: [REPLACE: What we need from it]
+- [REPLACE: Sequence Y]: [REPLACE: What we need from it]
 
 ### Provides (to other sequences)
 
-- [What this sequence produces]: Used by [Sequence Z]
-- [What this sequence produces]: Used by [Sequence W]
+- [REPLACE: What this sequence produces]: Used by [REPLACE: Sequence Z]
+- [REPLACE: What this sequence produces]: Used by [REPLACE: Sequence W]
 
 ## Risk Assessment
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
-| [Risk description] | Low/Med/High | Low/Med/High | [Prevention strategy] |
+| [REPLACE: Risk description] | [REPLACE: Low/Med/High] | [REPLACE: Low/Med/High] | [REPLACE: Prevention strategy] |
 
 ## Progress Tracking
 
 ### Step Milestones
 
-- [ ] **Step 1**: [Milestone 1 - key deliverable achieved]
-- [ ] **Step 2**: [Milestone 2 - key deliverable achieved]
-- [ ] **Step 3**: [Milestone 3 - key deliverable achieved]
+- [ ] **Step 1**: [REPLACE: Key deliverable achieved]
+- [ ] **Step 2**: [REPLACE: Key deliverable achieved]
+- [ ] **Step 3**: [REPLACE: Key deliverable achieved]
 
 ### Metrics to Monitor
 
-- Task completion rate: [X/Y tasks]
-- Quality gate pass rate: [X%]
-- Active blockers: [X blocking dependencies]
+- Task completion rate: [REPLACE: X/Y tasks]
+- Quality gate pass rate: [REPLACE: X%]
+- Active blockers: [REPLACE: X blocking dependencies]
 
 ## Pre-Sequence Checklist
 
@@ -91,36 +98,36 @@ Before starting this sequence:
 
 ## Post-Completion Evaluation
 
-**Date Completed:** [Date]
+**Date Completed:** [REPLACE: Date]
 
-**Goal Achievement:** [Fully Achieved/Partially Achieved/Not Achieved]
+**Goal Achievement:** [REPLACE: Fully Achieved/Partially Achieved/Not Achieved]
 
 ### Deliverables Assessment
 
 | Deliverable | Status | Quality Score | Notes |
-|-------------|--------|--------------|-------|
-| [Deliverable 1] | ✅/⚠️/❌ | [1-5] | [Assessment notes] |
-| [Deliverable 2] | ✅/⚠️/❌ | [1-5] | [Assessment notes] |
-| [Deliverable 3] | ✅/⚠️/❌ | [1-5] | [Assessment notes] |
+|-------------|--------|---------------|-------|
+| [REPLACE: Deliverable 1] | [REPLACE: Status emoji] | [REPLACE: 1-5] | [REPLACE: Assessment notes] |
+| [REPLACE: Deliverable 2] | [REPLACE: Status emoji] | [REPLACE: 1-5] | [REPLACE: Assessment notes] |
+| [REPLACE: Deliverable 3] | [REPLACE: Status emoji] | [REPLACE: 1-5] | [REPLACE: Assessment notes] |
 
 ### What Worked Well
 
-- [Success factor 1]
-- [Success factor 2]
+- [REPLACE: Success factor]
+- [REPLACE: Success factor]
 
 ### What Could Be Improved
 
-- [Improvement area 1]
-- [Improvement area 2]
+- [REPLACE: Improvement area]
+- [REPLACE: Improvement area]
 
 ### Impact on Phase Goal
 
-[Description of how well this sequence's completion supported the overall phase goal]
+[REPLACE: Description of how well this sequence's completion supported the overall phase goal]
 
 ### Recommendations
 
-- For similar sequences: [Recommendation]
-- For next phase: [Recommendation]
+- For similar sequences: [REPLACE: Recommendation]
+- For next phase: [REPLACE: Recommendation]
 
 ## Quality Gates
 
@@ -139,8 +146,8 @@ Before starting this sequence:
 
 ### Iteration Decision
 
-- [ ] Need another iteration? [Yes/No]
-- [ ] If yes, new tasks created: [List task numbers]
+- [ ] Need another iteration? [REPLACE: Yes/No]
+- [ ] If yes, new tasks created: [REPLACE: List task numbers]
 
 ---
 
@@ -201,7 +208,7 @@ The sequence goal is achieved when:
 Verify tasks support this sequence goal:
 
 | Task | Task Objective | Contribution to Sequence Goal |
-|------|---------------|------------------------------|
+|------|----------------|-------------------------------|
 | 01_create_user_model | Create User database model | Provides data persistence layer |
 | 02_implement_registration | Build registration endpoint | Enables user account creation |
 | 03_implement_login | Build login endpoint | Enables user authentication |
