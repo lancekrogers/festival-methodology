@@ -2,12 +2,37 @@
 package gates
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 )
+
+// HierarchicalPolicyLoader loads effective policies from the hierarchy.
+type HierarchicalPolicyLoader interface {
+	LoadForSequence(ctx context.Context, festivalPath, phasePath, sequencePath string) (*EffectivePolicy, error)
+	LoadForPhase(ctx context.Context, festivalPath, phasePath string) (*EffectivePolicy, error)
+	LoadForFestival(ctx context.Context, festivalPath string) (*EffectivePolicy, error)
+}
+
+// HierarchicalTemplateResolver resolves gate templates from the hierarchy.
+type HierarchicalTemplateResolver interface {
+	Resolve(templateID, festivalPath, phasePath, sequencePath string) (*ResolveResult, error)
+	ResolveForPhase(templateID, festivalPath, phasePath string) (*ResolveResult, error)
+	ResolveForFestival(templateID, festivalPath string) (*ResolveResult, error)
+	ClearCache()
+}
+
+// PolicyRegistrar provides access to named policies.
+type PolicyRegistrar interface {
+	Get(name string) (*PolicyInfo, bool)
+	GetPolicy(name string) (*GatePolicy, error)
+	List() []string
+	ListInfo() []*PolicyInfo
+	Refresh()
+}
 
 const (
 	// PolicyFileName is the name of the gate policy file
