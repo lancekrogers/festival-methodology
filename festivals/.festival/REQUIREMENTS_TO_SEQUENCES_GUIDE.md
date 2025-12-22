@@ -5,6 +5,7 @@ This guide shows how to convert human-provided requirements into logical step pr
 ## Prerequisites
 
 **Before using this guide, ensure you have:**
+
 - Specific requirements or specifications from human
 - Clear deliverables or acceptance criteria
 - Understanding of what needs to be built (not just what might be needed)
@@ -19,6 +20,7 @@ This guide shows how to convert human-provided requirements into logical step pr
 ### Step 1: Analyze Requirements for Goal Achievement
 
 **Good Requirements Look Like:**
+
 ```
 "Build a user authentication system with:
 - Email/password login
@@ -30,6 +32,7 @@ This guide shows how to convert human-provided requirements into logical step pr
 ```
 
 **Bad Requirements Look Like:**
+
 ```
 "We need some kind of user system"
 "Add authentication stuff"  
@@ -41,21 +44,25 @@ This guide shows how to convert human-provided requirements into logical step pr
 From the good example above, identify steps that build toward the goal:
 
 **Step Progression 1: Core Authentication Foundation**
+
 - Login/logout functionality (enables user sessions)
 - Password hashing and validation (secures user credentials)
 - Session management (maintains user state)
 
 **Step Progression 2: Token Management System**
+
 - JWT generation and validation (enables stateless auth)
 - Token refresh mechanism (maintains long-term sessions)
 - Token expiration handling (ensures security)
 
 **Step Progression 3: Security Enhancement Features**
+
 - Rate limiting implementation (prevents abuse)
 - Password reset workflow (enables account recovery)
 - Role-based permissions (controls access)
 
 **Step Progression 4: System Integration**
+
 - Database schema updates (stores auth data)
 - Existing system integration (connects to current architecture)
 - API endpoint creation (enables client interaction)
@@ -95,6 +102,7 @@ Each logical step progression becomes a sequence with 3-6 implementation steps +
 ## Common Requirements Patterns
 
 ### Feature Requirements
+
 ```
 Human: "Add shopping cart functionality with add/remove items, 
 quantity updates, persistent storage, and checkout integration"
@@ -113,6 +121,7 @@ Sequences:
 ```
 
 ### API Requirements
+
 ```
 Human: "Create REST API for blog posts with CRUD operations,
 search functionality, category filtering, and pagination"
@@ -132,6 +141,7 @@ Sequences:
 ```
 
 ### Database Requirements
+
 ```
 Human: "Update database schema for multi-tenant support with
 tenant isolation, data migration, and admin controls"
@@ -158,14 +168,16 @@ Sequences:
 
 ## Quality Principles
 
-### Each Task Should:
+### Each Task Should
+
 - Address a specific part of the requirements
 - Have clear acceptance criteria
 - Produce testable deliverables
 - Include specific commands or steps
 - Define success/failure conditions
 
-### Each Sequence Should:
+### Each Sequence Should
+
 - Implement a cohesive part of the requirements
 - Have 3-6 implementation tasks (plus quality gates)
 - Enable other sequences to work in parallel
@@ -174,12 +186,14 @@ Sequences:
 ## Common Mistakes to Avoid
 
 ### ❌ Creating Sequences Without Requirements
+
 ```
 BAD: Human says "We might need user management"
 AI creates: 01_user_management/ with assumed functionality
 ```
 
 ### ❌ Overly Generic Sequences
+
 ```
 BAD: Requirements specify "JWT with 15min/7day tokens"
 AI creates: 01_authentication.md (too vague)
@@ -192,6 +206,7 @@ GOOD:
 ```
 
 ### ❌ Mixing Unrelated Requirements
+
 ```
 BAD: Human specifies user auth + shopping cart
 AI creates: 01_user_features/ (mixes unrelated functionality)
@@ -200,6 +215,7 @@ GOOD: Separate sequences for auth and cart
 ```
 
 ### ❌ Skipping Quality Gates
+
 ```
 BAD: Only implementation tasks, no testing/review
 
@@ -226,6 +242,7 @@ Before creating sequences, verify:
 If requirements are vague or incomplete:
 
 **Don't guess - Ask:**
+
 ```
 ❌ "I'll create basic user management and you can tell me what to change"
 
@@ -251,6 +268,7 @@ When human provides planning documents:
 ## Integration with Festival Structure
 
 ### Phase-Level Planning
+
 ```
 Human provides: "Build e-commerce platform with user accounts, 
 product catalog, shopping cart, and payment processing"
@@ -261,6 +279,7 @@ Phase Structure:
 ```
 
 ### Sequence Dependencies
+
 ```
 Dependencies from requirements:
 - User authentication must complete before cart (user sessions)
@@ -275,6 +294,7 @@ Parallel Opportunities:
 ## Collaboration Patterns
 
 ### Iterative Refinement
+
 ```
 1. Human provides initial requirements
 2. AI structures into sequences  
@@ -285,6 +305,7 @@ Parallel Opportunities:
 ```
 
 ### Just-in-Time Sequencing
+
 ```
 Don't create all sequences upfront:
 1. Create first sequence from clear requirements
@@ -296,6 +317,7 @@ Don't create all sequences upfront:
 ## Success Metrics
 
 **Good Requirements-to-Sequences Conversion:**
+
 - Human recognizes their requirements in the sequences
 - Each task is actionable and specific
 - Dependencies are clear and logical
@@ -304,6 +326,7 @@ Don't create all sequences upfront:
 - No assumptions about unstated requirements
 
 **Poor Conversion Signs:**
+
 - Human says "That's not what I meant"
 - Tasks are vague or assumptive
 - Sequences don't match stated requirements

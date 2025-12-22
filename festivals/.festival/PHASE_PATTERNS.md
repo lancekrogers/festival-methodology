@@ -5,12 +5,14 @@ This guide provides common step progression patterns for different types of goal
 ## Goal-First Step Progression Principle
 
 **FUNDAMENTAL UNDERSTANDING**: All step progressions in these patterns assume that goal requirements have been defined through:
+
 - Completed planning steps with clear goal deliverables
 - External planning documents provided by human defining goal achievement criteria
 - Specific requirements and specifications for goal achievement from human
 - Clear goal definitions with step completion criteria
 
 **Never create implementation step progressions when:**
+
 - Goal requirements are unclear or undefined
 - Goal planning steps haven't been completed
 - You're guessing what steps might achieve the goal
@@ -28,6 +30,7 @@ This guide provides common step progression patterns for different types of goal
 **Goal progression:** Complete goal achievement from conception to delivery.
 
 **Step sequences per phase:**
+
 - 001_PLAN: 2-3 step sequences (goal requirements, architecture, planning)
 - 002_IMPLEMENT: 3-6 step sequences (backend steps, frontend steps, integration steps)
 - 003_REVIEW_AND_UAT: 2-3 step sequences (validation steps, goal verification, completion steps)
@@ -37,6 +40,7 @@ This guide provides common step progression patterns for different types of goal
 ## Streamlined Patterns
 
 ### Already Planned Project
+
 **Use when:** Human has provided requirements and architecture from external planning.
 
 ```
@@ -47,6 +51,7 @@ This guide provides common step progression patterns for different types of goal
 **Focus:** Structure existing requirements into implementation sequences and validate completion.
 
 ### Simple Enhancement
+
 **Use when:** Adding features to existing systems.
 
 ```
@@ -56,6 +61,7 @@ This guide provides common step progression patterns for different types of goal
 **Minimal approach:** Just enough process for quality work.
 
 ### Bug Fix or Maintenance
+
 **Use when:** Focused problem-solving work.
 
 ```
@@ -67,6 +73,7 @@ This guide provides common step progression patterns for different types of goal
 ## Iterative Development Patterns
 
 ### Multi-Stage Implementation
+
 **Use when:** Large systems need staged rollout.
 
 ```
@@ -79,6 +86,7 @@ This guide provides common step progression patterns for different types of goal
 **Approach:** Build foundation first, then layer features and polish.
 
 ### MVP + Enhancement Pattern
+
 **Use when:** Need to get something working quickly, then improve.
 
 ```
@@ -90,6 +98,7 @@ This guide provides common step progression patterns for different types of goal
 **Risk:** Technical debt if MVP shortcuts aren't addressed.
 
 ### Feature Wave Pattern
+
 **Use when:** Multiple related features need coordinated development.
 
 ```
@@ -104,6 +113,7 @@ This guide provides common step progression patterns for different types of goal
 ## Research and Exploration Patterns
 
 ### Research-Heavy Project
+
 **Use when:** Significant unknowns need exploration before building.
 
 ```
@@ -115,6 +125,7 @@ This guide provides common step progression patterns for different types of goal
 **Decision points:** Each phase includes go/no-go evaluation.
 
 ### Technology Evaluation
+
 **Use when:** Choosing between technology options.
 
 ```
@@ -126,6 +137,7 @@ This guide provides common step progression patterns for different types of goal
 **Evidence-based:** Decisions backed by working prototypes.
 
 ### Innovation/Experiment
+
 **Use when:** Building something genuinely new.
 
 ```
@@ -139,6 +151,7 @@ This guide provides common step progression patterns for different types of goal
 ## Specialized Domain Patterns
 
 ### Data/Analytics Project
+
 **Use when:** Building data pipelines or analytics systems.
 
 ```
@@ -150,6 +163,7 @@ This guide provides common step progression patterns for different types of goal
 **Quality gates:** Validation at every stage.
 
 ### Infrastructure/DevOps
+
 **Use when:** Building or migrating infrastructure.
 
 ```
@@ -161,6 +175,7 @@ This guide provides common step progression patterns for different types of goal
 **Incremental:** Migrate services in stages.
 
 ### Mobile App Development
+
 **Use when:** Building native or cross-platform mobile apps.
 
 ```
@@ -173,6 +188,7 @@ This guide provides common step progression patterns for different types of goal
 **Testing emphasis:** Device and OS variation testing.
 
 ### API Development
+
 **Use when:** Building services for other developers.
 
 ```
@@ -188,6 +204,7 @@ This guide provides common step progression patterns for different types of goal
 ## Hybrid and Custom Patterns
 
 ### Legacy Migration
+
 **Use when:** Moving from old systems to new ones.
 
 ```
@@ -199,6 +216,7 @@ This guide provides common step progression patterns for different types of goal
 **Data integrity:** Special focus on data migration validation.
 
 ### Compliance/Security Project
+
 **Use when:** Meeting regulatory or security requirements.
 
 ```
@@ -210,6 +228,7 @@ This guide provides common step progression patterns for different types of goal
 **External validation:** Third-party testing and certification.
 
 ### Integration Project
+
 **Use when:** Connecting multiple existing systems.
 
 ```
@@ -223,45 +242,53 @@ This guide provides common step progression patterns for different types of goal
 ## Phase Naming Conventions
 
 ### Technical Naming (Recommended)
+
 - Use descriptive names that indicate the type of work
 - `001_RESEARCH`, `002_PROTOTYPE`, `003_IMPLEMENT_CORE`
 - Clear to technical teams
 
 ### Business Naming
+
 - Use business terminology for stakeholder communication  
 - `001_DISCOVERY`, `002_DESIGN`, `003_BUILD`, `004_LAUNCH`
 - Easier for non-technical stakeholders
 
 ### Domain-Specific Naming
+
 - Adapt to your industry or problem domain
 - Healthcare: `001_REQUIREMENTS_ANALYSIS`, `002_CLINICAL_VALIDATION`
 - Finance: `001_RISK_ASSESSMENT`, `002_COMPLIANCE_REVIEW`
 
 ## Phase Selection Guidelines
 
-### Ask These Questions:
+### Ask These Questions
 
 **Planning Status:**
+
 - Have requirements been gathered elsewhere?
 - Is the architecture already defined?
 - Do you have existing documentation?
 
 **Project Complexity:**
+
 - Is this greenfield or brownfield development?
 - How many systems are involved?
 - What's the technical risk level?
 
 **Team Context:**
+
 - How experienced is the team with this technology?
 - Are team members co-located or distributed?
 - What's the team size and skill composition?
 
 **Timeline Constraints:**
+
 - Are there fixed deadlines?
 - Is this time-boxed or quality-driven?
 - What's the risk tolerance for delays?
 
 **Integration Needs:**
+
 - How many external systems are involved?
 - Are there data migration requirements?
 - What's the deployment complexity?
@@ -269,6 +296,7 @@ This guide provides common step progression patterns for different types of goal
 ## Customization Guidelines
 
 ### Adapting Existing Patterns
+
 1. **Start with closest match** to your situation
 2. **Add phases** for significant work not covered
 3. **Remove phases** that don't apply to your project
@@ -276,6 +304,7 @@ This guide provides common step progression patterns for different types of goal
 5. **Reorder phases** if dependencies require it
 
 ### Creating New Patterns
+
 1. **Map your actual work** - what really needs to happen?
 2. **Identify dependencies** - what must happen in sequence?
 3. **Find parallel opportunities** - what can happen simultaneously?
@@ -283,6 +312,7 @@ This guide provides common step progression patterns for different types of goal
 5. **Test with your team** - does the structure make sense?
 
 ### Red Flags - When Your Phases Need Work
+
 - Single sequence per phase (phases too granular)
 - More than 8 sequences per phase (phases too broad)  
 - No clear dependencies between phases (arbitrary grouping)
@@ -292,6 +322,7 @@ This guide provides common step progression patterns for different types of goal
 ## Examples of Good vs Bad Phase Design
 
 ### ❌ Bad: Arbitrary Grouping
+
 ```
 001_SETUP
 ├── 01_create_repo/
@@ -303,9 +334,11 @@ This guide provides common step progression patterns for different types of goal
 ├── 02_backend/
 └── 03_testing/
 ```
+
 **Problems:** Unrelated work grouped together, no logical progression.
 
 ### ✅ Good: Logical Progression
+
 ```
 001_PLAN
 ├── 01_user_research/
@@ -322,11 +355,13 @@ This guide provides common step progression patterns for different types of goal
 ├── 02_stakeholder_review/
 └── 03_deployment_readiness/
 ```
+
 **Benefits:** Clear progression, organized implementation, logical groupings with validation.
 
 ## Integration with Festival Goals
 
 Each phase should have:
+
 - **Clear objectives** defined in PHASE_GOAL.md
 - **Success criteria** that align with festival goals
 - **Entry criteria** (what must be done to start)

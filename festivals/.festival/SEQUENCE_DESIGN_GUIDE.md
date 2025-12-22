@@ -8,26 +8,30 @@ This guide helps you create effective sequences that group related tasks into lo
 
 **FUNDAMENTAL PRINCIPLE**: Sequences are created FROM requirements, not TO discover requirements.
 
-### ✅ Create Sequences When:
+### ✅ Create Sequences When
+
 - Human has provided specific requirements or specifications
 - Planning phase has been completed with clear deliverables
 - External planning documents define what needs to be built
 - Human explicitly requests implementation of specific functionality
 - You have concrete user stories or technical specifications to implement
 
-### ❌ NEVER Create Sequences When:
+### ❌ NEVER Create Sequences When
+
 - No requirements have been provided
 - Planning phase hasn't been completed or provided deliverables
 - You are guessing what might need to be implemented
 - Making assumptions about user needs
 - Requirements are vague or undefined
 
-### Requirements-Driven Workflow:
+### Requirements-Driven Workflow
+
 ```
 Requirements/Specifications → Structure into Sequences → Create Tasks → Execute
 ```
 
 **Not:**
+
 ```
 ❌ Guess what's needed → Create sequences → Hope they're right
 ```
@@ -35,6 +39,7 @@ Requirements/Specifications → Structure into Sequences → Create Tasks → Ex
 ## What Makes a Good Sequence
 
 ### Size Guidelines
+
 - **3-6 tasks** is the ideal range
 - **2 tasks** minimum (plus quality gates)
 - **8 tasks** maximum before breaking into multiple sequences
@@ -42,6 +47,7 @@ Requirements/Specifications → Structure into Sequences → Create Tasks → Ex
 ### Content Guidelines
 
 **Good Sequence Criteria:**
+
 - Tasks build on each other logically
 - Tasks share common setup, dependencies, or domain knowledge
 - Work forms a cohesive unit (e.g., "user authentication", "payment processing")
@@ -52,6 +58,7 @@ Requirements/Specifications → Structure into Sequences → Create Tasks → Ex
 ## Sequence Anti-Patterns to Avoid
 
 ### ❌ Single Task Per Sequence
+
 ```
 BAD:
 01_user_model/
@@ -65,6 +72,7 @@ BAD:
 ```
 
 **Fix:** Combine related tasks into logical sequences
+
 ```
 GOOD:
 01_user_authentication/
@@ -77,6 +85,7 @@ GOOD:
 ```
 
 ### ❌ Arbitrarily Grouped Tasks
+
 ```
 BAD:
 01_mixed_work/
@@ -87,6 +96,7 @@ BAD:
 ```
 
 **Fix:** Group by logical domain/system
+
 ```
 GOOD:
 01_database_setup/
@@ -101,6 +111,7 @@ GOOD:
 ```
 
 ### ❌ Overly Large Sequences
+
 ```
 BAD:
 01_complete_user_system/
@@ -118,6 +129,7 @@ BAD:
 ```
 
 **Fix:** Break into focused sequences
+
 ```
 GOOD:
 01_user_foundation/
@@ -151,6 +163,7 @@ XX_review_results_iterate.md  ← Address findings and iterate if needed
 ### Quality Gate Templates
 
 **Testing and Verify Task:**
+
 ```markdown
 # Task: 05_testing_and_verify.md
 
@@ -166,6 +179,7 @@ Verify that all sequence deliverables work as specified
 ```
 
 **Code Review Task:**
+
 ```markdown
 # Task: 06_code_review.md
 
@@ -181,6 +195,7 @@ Review code quality, standards compliance, and architecture
 ```
 
 **Review Results and Iteration Task:**
+
 ```markdown
 # Task: 07_review_results_iterate.md
 
@@ -198,6 +213,7 @@ Address review findings and iterate until acceptance criteria met
 ## Common Sequence Patterns
 
 ### Database Sequence Pattern
+
 ```
 01_database_setup/
 ├── 01_schema_design.md
@@ -209,6 +225,7 @@ Address review findings and iterate until acceptance criteria met
 ```
 
 ### API Development Pattern
+
 ```
 01_user_api/
 ├── 01_endpoint_design.md
@@ -222,6 +239,7 @@ Address review findings and iterate until acceptance criteria met
 ```
 
 ### Frontend Component Pattern
+
 ```
 01_login_component/
 ├── 01_component_structure.md
@@ -234,6 +252,7 @@ Address review findings and iterate until acceptance criteria met
 ```
 
 ### DevOps/Infrastructure Pattern
+
 ```
 01_deployment_setup/
 ├── 01_environment_config.md
@@ -257,14 +276,16 @@ Before creating a sequence, verify:
 
 ## Sequence vs Single Task Decision
 
-### Create a Sequence When:
+### Create a Sequence When
+
 - You have multiple related subtasks
 - Tasks share common setup or knowledge domain
 - Work benefits from being done by same person/agent
 - Tasks build on each other
 - Quality gates apply to the group of work
 
-### Create a Single Task When:
+### Create a Single Task When
+
 - Work is atomic and self-contained
 - No natural subtasks emerge
 - Can be completed in one focused session
@@ -274,14 +295,17 @@ Before creating a sequence, verify:
 ## Integration with Festival Structure
 
 ### Within Phases
+
 ### Sequences by Phase Type
 
 **Planning/Research Phases (Often Unstructured):**
+
 - May just contain documents and findings
 - Add sequences only if deep planning requires structure
 - Example: Just README.md with requirements, no sequences needed
 
 **Implementation Phases (Must Be Structured):**
+
 - ALWAYS have sequences and tasks for AI execution
 - Examples for 002_IMPLEMENT_CORE:
   - 01_backend_foundation/
@@ -293,12 +317,15 @@ Before creating a sequence, verify:
   - 03_notification_system/
 
 **Validation Phases:**
+
 - 01_user_acceptance_testing/
 - 02_performance_validation/
 - 03_deployment_preparation/
 
 ### Cross-Sequence Dependencies
+
 Use clear numbering to indicate dependencies:
+
 - `01_foundation/` must complete before `02_features/`
 - Tasks with same numbers can run in parallel
 - Document dependencies in sequence README files
@@ -306,6 +333,7 @@ Use clear numbering to indicate dependencies:
 ## Tools and Automation
 
 ### Progress Tracking
+
 Update your FESTIVAL_TODO.md as sequences complete:
 
 ```markdown
@@ -329,7 +357,9 @@ Update your FESTIVAL_TODO.md as sequences complete:
 ```
 
 ### Quality Metrics
+
 Track sequence success:
+
 - Average tasks per sequence (target: 3-6)
 - Quality gate completion rate (target: 100%)
 - Rework rate after review (target: <20%)
@@ -338,21 +368,25 @@ Track sequence success:
 ## Troubleshooting
 
 ### "My sequences feel arbitrary"
+
 - Focus on user stories or system components
 - Group tasks that share the same knowledge domain
 - Ensure tasks build on each other logically
 
 ### "Too many single-task sequences"
+
 - Look for related work that can be combined
 - Consider if work is actually a single larger task
 - Group by technical domain (database, API, UI)
 
 ### "Sequences are too large"
+
 - Break by feature boundaries
 - Separate setup/core/advanced functionality
 - Use dependency relationships to split
 
 ### "Quality gates feel repetitive"
+
 - Customize for each sequence's domain
 - Include sequence-specific validation
 - Focus on the unique risks of that work

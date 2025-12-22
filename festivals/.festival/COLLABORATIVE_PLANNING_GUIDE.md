@@ -14,6 +14,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 ### Human Responsibilities
 
 **Goal and Step Definition:**
+
 - Define clear, achievable goals and success criteria
 - Specify requirements for goal achievement
 - Make architectural and technology decisions
@@ -21,6 +22,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 - Provide context for goal importance and constraints
 
 **Step Validation:**
+
 - Document what needs to be achieved
 - Provide acceptance criteria for goal completion
 - Share external planning documents with step information
@@ -28,6 +30,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 - Validate proposed step progressions
 
 **Goal Progress Guidance:**
+
 - Review AI-generated step progression structures
 - Approve or refine logical step sequences
 - Guide step priorities for optimal goal achievement
@@ -37,6 +40,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 ### AI Agent Responsibilities
 
 **Step Structure and Progression:**
+
 - Convert goal requirements into logical step sequences
 - Break down complex goals into manageable step progressions
 - Organize steps for parallel execution toward goal achievement
@@ -44,6 +48,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 - Maintain goal progression documentation
 
 **Step-Based Planning:**
+
 - Create specific step specifications with completion criteria
 - Define step dependencies and prerequisites
 - Identify logical step order and parallel opportunities
@@ -51,6 +56,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 - Generate step tracking and progress documentation
 
 **Goal-Oriented Execution:**
+
 - Execute implementation steps autonomously at unprecedented speed
 - Document step completion and progress toward goals
 - Request clarification when step requirements are unclear
@@ -62,6 +68,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 ### Workflow 1: External Planning Available
 
 **Human provides complete requirements:**
+
 ```
 1. Human: "I have complete specifications for user authentication system"
 2. Human: Shares planning documents with specific requirements
@@ -75,6 +82,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 ### Workflow 2: Planning Phase Needed
 
 **Requirements need to be gathered:**
+
 ```
 1. Human: "I want to build a user management system"
 2. AI: "Let's plan this together. What specific functionality do you need?"
@@ -88,6 +96,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 ### Workflow 3: Iterative Development  
 
 **Requirements evolve during implementation:**
+
 ```
 1. Human: Provides initial requirements
 2. AI: Creates first implementation sequences
@@ -102,6 +111,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 ### What Humans Should Decide
 
 **Never delegate these to AI agents:**
+
 - Overall project vision and goals
 - Business requirements and priorities  
 - User experience decisions
@@ -113,6 +123,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 ### What AI Agents Should Structure
 
 **Humans should provide requirements, AI should structure:**
+
 - Task breakdown and sequencing
 - Implementation order and dependencies
 - Parallel execution opportunities
@@ -123,6 +134,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 ### Shared Decision Areas
 
 **Collaborative decisions:**
+
 - Festival phase organization
 - Sequence design and boundaries
 - Task granularity and detail level
@@ -134,6 +146,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 ### Effective Human Communication
 
 **Good Requirements Communication:**
+
 ```
 ✅ "Build JWT authentication with 15-minute access tokens and 7-day refresh tokens. 
    Users login with email/password. Include rate limiting at 5 attempts per minute.
@@ -141,6 +154,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 ```
 
 **Poor Requirements Communication:**
+
 ```
 ❌ "Add some authentication"
 ❌ "Make it secure"  
@@ -148,6 +162,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 ```
 
 **Good Feedback Communication:**
+
 ```
 ✅ "The user authentication sequence looks good, but break task 3 into separate 
    password hashing and validation tasks"
@@ -159,6 +174,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 ### Effective AI Communication
 
 **Good AI Response to Requirements:**
+
 ```
 ✅ "Based on your JWT requirements, I'll create two sequences:
 
@@ -170,6 +186,7 @@ Festival Methodology is NOT traditional project management focused on time and s
 ```
 
 **Poor AI Response:**
+
 ```
 ❌ "I'll create a user system with what I think you need"
 ❌ "Let me design the authentication architecture for you"
@@ -179,9 +196,11 @@ Festival Methodology is NOT traditional project management focused on time and s
 ## Common Collaboration Anti-Patterns
 
 ### ❌ AI Over-Reach
+
 **Problem:** AI agent tries to make business or architectural decisions
 
 **Example:**
+
 ```
 Human: "Add user authentication"
 AI: "I'll design a microservices architecture with OAuth2, Redis sessions, 
@@ -191,9 +210,11 @@ AI: "I'll design a microservices architecture with OAuth2, Redis sessions,
 **Solution:** AI should ask for requirements, not make architectural assumptions
 
 ### ❌ Human Under-Specification  
+
 **Problem:** Human provides insufficient requirements and expects AI to fill gaps
 
 **Example:**
+
 ```
 Human: "Build an e-commerce site"
 AI: "What specific functionality do you need?"
@@ -203,9 +224,11 @@ Human: "Just the standard stuff, you figure it out"
 **Solution:** Human should provide specific requirements, AI should ask clarifying questions
 
 ### ❌ Premature Implementation
+
 **Problem:** Starting implementation before requirements are clear
 
 **Example:**
+
 ```
 Human: "I'm thinking about user management"
 AI: Creates implementation sequences immediately
@@ -214,9 +237,11 @@ AI: Creates implementation sequences immediately
 **Solution:** Define requirements first, then structure implementation
 
 ### ❌ Scope Drift
+
 **Problem:** Requirements change without festival structure updates
 
 **Example:**
+
 ```
 Midway through implementation:
 Human: "Oh, we also need admin controls and audit logging"
@@ -230,6 +255,7 @@ Human: "Oh, we also need admin controls and audit logging"
 ### Example 1: E-commerce Platform
 
 **Human Input:**
+
 ```
 "Build e-commerce platform with:
 - Product catalog with categories, search, filtering
@@ -240,6 +266,7 @@ Human: "Oh, we also need admin controls and audit logging"
 ```
 
 **AI Structure:**
+
 ```
 Festival: E-commerce Platform
 ├── 001_DEFINE_INTERFACES
@@ -265,6 +292,7 @@ Festival: E-commerce Platform
 ```
 
 **Collaborative Refinement:**
+
 ```
 Human: "Actually, let's do user accounts first - cart needs user sessions"
 AI: "Updating sequence order: Users → Catalog → Cart → Payments → Admin"

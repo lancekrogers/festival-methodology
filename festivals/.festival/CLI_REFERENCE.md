@@ -53,6 +53,7 @@ fest create festival --name "auth-system" --goal "Build authentication" --json
 ```
 
 **Flags:**
+
 - `--name` (required): Festival name
 - `--goal`: Festival goal/description
 - `--tags`: Comma-separated tags
@@ -60,6 +61,7 @@ fest create festival --name "auth-system" --goal "Build authentication" --json
 - `--vars-file`: JSON file with template variables
 
 **Output:**
+
 ```json
 {
   "ok": true,
@@ -87,12 +89,14 @@ fest create phase --name "IMPLEMENT" --json
 ```
 
 **Flags:**
+
 - `--name` (required): Phase name (e.g., PLAN, IMPLEMENT, REVIEW)
 - `--type`: Phase type (planning or implementation)
 - `--after`: Insert after phase number (default: append)
 - `--path`: Festival path (default: current directory)
 
 **Output:**
+
 ```json
 {
   "ok": true,
@@ -116,11 +120,13 @@ fest create sequence --name "api-development" --json
 ```
 
 **Flags:**
+
 - `--name` (required): Sequence name
 - `--after`: Insert after sequence number (default: append)
 - `--path`: Phase path (default: current directory)
 
 **Output:**
+
 ```json
 {
   "ok": true,
@@ -143,11 +149,13 @@ fest create task --name "create-endpoints" --json
 ```
 
 **Flags:**
+
 - `--name` (required): Task name
 - `--after`: Insert after task number (default: append)
 - `--path`: Sequence path (default: current directory)
 
 **Output:**
+
 ```json
 {
   "ok": true,
@@ -180,6 +188,7 @@ fest task defaults sync --approve --force --json
 ```
 
 **Flags:**
+
 - `--path`: Festival root (default: current directory)
 - `--dry-run`: Preview changes without applying (DEFAULT)
 - `--approve`: Actually apply changes
@@ -188,6 +197,7 @@ fest task defaults sync --approve --force --json
 - `--verbose`: Show detailed logging
 
 **Output:**
+
 ```json
 {
   "ok": true,
@@ -222,6 +232,7 @@ fest task defaults add --sequence ./002_IMPLEMENT/01_api --approve --json
 ```
 
 **Flags:**
+
 - `--sequence` (required): Path to target sequence
 - `--dry-run`: Preview only (DEFAULT)
 - `--approve`: Apply changes
@@ -235,6 +246,7 @@ fest task defaults show --json
 ```
 
 **Output:**
+
 ```json
 {
   "ok": true,
@@ -277,6 +289,7 @@ fest renumber task ./my-festival/002_IMPLEMENT/01_api --skip-dry-run
 ```
 
 **Flags:**
+
 - `--dry-run`: Preview changes (default: true)
 - `--skip-dry-run`: Apply changes
 - `--backup`: Create backup before changes
@@ -304,6 +317,7 @@ fest remove sequence --number 1 --path ./my-festival/002_IMPLEMENT --skip-dry-ru
 ```
 
 **Flags:**
+
 - `--dry-run`: Preview only (default: true)
 - `--force`: Skip confirmation
 - `--backup`: Create backup
@@ -343,6 +357,7 @@ fest count --json ./my-festival
 ```
 
 **Flags:**
+
 - `--recursive`, `-d`: Scan directories
 - `--cost`: Show cost estimates
 - `--all`: Show all tokenizer results
@@ -469,6 +484,7 @@ All errors return JSON with `ok: false`:
 ```
 
 Common errors:
+
 - `festival not found`: Not in a festivals/ directory
 - `phase not found`: Path doesn't point to a phase
 - `template not found`: Invalid template ID

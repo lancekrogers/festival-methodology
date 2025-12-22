@@ -29,12 +29,14 @@ Festival methodology is a **collaborative, step-oriented planning approach** bet
 ### Why Steps, Not Time?
 
 Traditional project management focuses on:
+
 - Time estimates and schedules
 - Duration-based planning
 - Timeline management
 - Resource allocation over time
 
 Festival Methodology focuses on:
+
 - **Logical steps toward goal achievement**
 - **Completion criteria for each step**
 - **Dependencies between steps**
@@ -55,6 +57,7 @@ AI-human collaboration operates at unprecedented efficiency levels that make tra
 **CRITICAL UNDERSTANDING**: Festival Methodology is NOT about AI agents pre-planning entire projects. It's about **human-AI collaboration** where:
 
 ### Human Responsibilities
+
 - Provide project goals and requirements
 - Define success criteria and constraints
 - Make architectural and design decisions
@@ -62,6 +65,7 @@ AI-human collaboration operates at unprecedented efficiency levels that make tra
 - Guide iteration and adaptation
 
 ### AI Agent Responsibilities  
+
 - Identify logical steps needed to achieve goals
 - Structure requirements into executable step sequences
 - Create detailed task specifications with completion criteria
@@ -72,12 +76,14 @@ AI-human collaboration operates at unprecedented efficiency levels that make tra
 ### The Planning-Implementation Boundary
 
 **Planning Steps (Optional):**
+
 - May be completed before festival creation
 - May be first step in festival progression
 - May be provided as external documentation
 - Results in clear requirements for implementation steps
 
 **Implementation Steps:**
+
 - Can ONLY be created after requirements are defined
 - Are added one logical step at a time based on requirements
 - Follow goal progression logic, not time schedules
@@ -88,12 +94,14 @@ AI-human collaboration operates at unprecedented efficiency levels that make tra
 ### Phase Types and Structure
 
 **Planning/Research Phases (Unstructured):**
+
 - Used for requirements gathering, research, and documentation
 - Often just contain documents, findings, and specifications
 - No need for sequences and tasks unless deep planning requires it
 - Examples: 001_RESEARCH, 001_PLAN, 001_REQUIREMENTS
 
 **Implementation Phases (Structured):**
+
 - MUST have sequences and tasks for AI agent execution
 - This is where agents work autonomously for long periods
 - Add as many implementation phases as needed
@@ -112,12 +120,14 @@ AI-human collaboration operates at unprecedented efficiency levels that make tra
 **WHEN TO CREATE SEQUENCES:**
 
 ✅ **Create sequences when:**
+
 - Human provides specific requirements or specifications
 - Planning phase has been completed with clear deliverables
 - External planning documents define what needs to be built
 - Human explicitly asks for implementation of specific functionality
 
 ❌ **DO NOT create sequences when:**
+
 - No requirements have been provided
 - Planning phase hasn't been completed
 - Guessing what might need to be implemented
@@ -126,6 +136,7 @@ AI-human collaboration operates at unprecedented efficiency levels that make tra
 ### Sequence Design Guidelines
 
 **Good Sequences** contain 3-6 related tasks that:
+
 - Build on each other logically
 - Share common setup or dependencies  
 - Form a cohesive unit of work (e.g., "user authentication", "API endpoints")
@@ -133,6 +144,7 @@ AI-human collaboration operates at unprecedented efficiency levels that make tra
 - Are derived from specific requirements or specifications
 
 **Avoid These Sequence Anti-Patterns:**
+
 - Single task per sequence (make it a standalone task instead)
 - Unrelated tasks grouped arbitrarily
 - Sequences with >8 tasks (break into multiple sequences)
@@ -140,6 +152,7 @@ AI-human collaboration operates at unprecedented efficiency levels that make tra
 - **Creating sequences without requirements** (the biggest anti-pattern)
 
 **Example Good Sequence:**
+
 ```
 01_user_authentication/
 ├── 01_create_user_model.md

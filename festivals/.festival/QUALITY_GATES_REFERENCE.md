@@ -15,6 +15,7 @@ XX_review_results_iterate.md  ← Address findings and iterate until acceptable
 ## Why Quality Gates Matter
 
 **Without Quality Gates:**
+
 - Bugs compound across sequences
 - Code quality degrades over time
 - Standards drift as team members interpret them differently
@@ -22,6 +23,7 @@ XX_review_results_iterate.md  ← Address findings and iterate until acceptable
 - Technical debt accumulates unchecked
 
 **With Quality Gates:**
+
 - Issues caught early when they're cheaper to fix
 - Consistent quality standards maintained
 - Knowledge shared through reviews
@@ -31,9 +33,11 @@ XX_review_results_iterate.md  ← Address findings and iterate until acceptable
 ## Task 1: Testing and Verify
 
 ### Purpose
+
 Verify that all sequence deliverables work as specified and meet functional requirements.
 
 ### Standard Template
+
 ```markdown
 # Task: XX_testing_and_verify.md
 
@@ -79,6 +83,7 @@ Verify that all sequence deliverables work as specified and meet quality standar
 ### Domain-Specific Testing
 
 **Backend API Testing:**
+
 ```markdown
 ## Additional Requirements
 - [ ] API endpoints respond correctly to valid requests
@@ -89,6 +94,7 @@ Verify that all sequence deliverables work as specified and meet quality standar
 ```
 
 **Frontend Component Testing:**
+
 ```markdown
 ## Additional Requirements  
 - [ ] Component renders correctly in target browsers
@@ -99,6 +105,7 @@ Verify that all sequence deliverables work as specified and meet quality standar
 ```
 
 **Database Schema Testing:**
+
 ```markdown
 ## Additional Requirements
 - [ ] Migrations run successfully on clean database
@@ -109,6 +116,7 @@ Verify that all sequence deliverables work as specified and meet quality standar
 ```
 
 **DevOps/Infrastructure Testing:**
+
 ```markdown
 ## Additional Requirements
 - [ ] Deployment process completes successfully
@@ -121,9 +129,11 @@ Verify that all sequence deliverables work as specified and meet quality standar
 ## Task 2: Code Review
 
 ### Purpose
+
 Review code quality, architecture alignment, and standards compliance before finalizing the sequence.
 
 ### Standard Template
+
 ```markdown
 # Task: XX_code_review.md
 
@@ -176,24 +186,28 @@ Review all code and deliverables for quality, standards compliance, and architec
 **What to Look For:**
 
 **Code Quality:**
+
 - Clear variable and function names
 - Appropriate code organization and structure
 - Consistent formatting and style
 - Elimination of dead or commented-out code
 
 **Security:**
+
 - No hardcoded secrets or credentials  
 - Input validation on all external data
 - Proper authentication/authorization
 - Safe handling of sensitive data
 
 **Performance:**
+
 - Efficient algorithms for data processing
 - Proper resource cleanup (memory, connections, etc.)
 - Appropriate caching strategies
 - Database query optimization
 
 **Maintainability:**
+
 - Code is self-documenting where possible
 - Complex logic has explanatory comments
 - Dependencies are minimal and justified
@@ -202,9 +216,11 @@ Review all code and deliverables for quality, standards compliance, and architec
 ## Task 3: Review Results and Iterate
 
 ### Purpose
+
 Address all findings from testing and code review, iterating until work meets acceptance criteria.
 
 ### Standard Template
+
 ```markdown
 # Task: XX_review_results_iterate.md
 
@@ -256,18 +272,21 @@ Address all findings from testing and code review, iterating until sequence meet
 ### Common Iteration Patterns
 
 **Minor Issues (1-2 iteration cycles):**
+
 - Fix bugs found in testing
 - Address code style violations
 - Update documentation gaps
 - Resolve merge conflicts
 
 **Moderate Issues (3-5 iteration cycles):**
+
 - Performance optimizations
 - Security improvements
 - Architecture adjustments
 - Significant test additions
 
 **Major Issues (multiple sequences):**
+
 - Requirement clarification needed
 - Significant architectural changes
 - Major performance problems
@@ -278,6 +297,7 @@ Address all findings from testing and code review, iterating until sequence meet
 ### By Project Type
 
 **Startup/MVP Projects:**
+
 ```markdown
 ## Streamlined Requirements
 - [ ] Core functionality works
@@ -287,6 +307,7 @@ Address all findings from testing and code review, iterating until sequence meet
 ```
 
 **Enterprise Projects:**
+
 ```markdown  
 ## Comprehensive Requirements
 - [ ] Full test suite passes (90%+ coverage)
@@ -298,6 +319,7 @@ Address all findings from testing and code review, iterating until sequence meet
 ```
 
 **Open Source Projects:**
+
 ```markdown
 ## Community-Focused Requirements
 - [ ] Contribution guidelines followed
@@ -310,17 +332,20 @@ Address all findings from testing and code review, iterating until sequence meet
 ### By Sequence Risk Level
 
 **High-Risk Sequences** (security, data, critical path):
+
 - More thorough testing requirements
 - Additional security validation
 - Performance benchmarking required
 - External review required
 
 **Medium-Risk Sequences** (standard features):
+
 - Standard quality gate requirements
 - Normal test coverage expectations
 - Regular review process
 
 **Low-Risk Sequences** (documentation, styling):
+
 - Streamlined testing requirements
 - Faster review cycle
 - Focus on functionality over performance
@@ -328,6 +353,7 @@ Address all findings from testing and code review, iterating until sequence meet
 ## Integration with Project Standards
 
 ### Link to Festival Rules
+
 Quality gates should reference your project's specific standards:
 
 ```markdown
@@ -341,16 +367,19 @@ Before starting review, confirm adherence to:
 ### Automation Opportunities
 
 **Automated Testing:**
+
 - CI/CD pipeline runs tests automatically
 - Test results posted to pull requests
 - Coverage reports generated automatically
 
 **Automated Code Review:**
+
 - Linting runs on every commit
 - Security scanning integrated into workflow
 - Dependency vulnerability checks
 
 **Automated Quality Metrics:**
+
 - Code quality scores tracked over time
 - Test coverage trending
 - Review cycle time measurement
@@ -358,31 +387,37 @@ Before starting review, confirm adherence to:
 ## Common Anti-Patterns to Avoid
 
 ### ❌ Skip Quality Gates When Under Pressure
+
 **Problem:** "We'll come back and test later"
 **Reality:** Technical debt compounds, bugs become harder to fix
 **Solution:** Streamline quality gates if needed, but never skip them entirely
 
 ### ❌ Generic Quality Gates for All Work
+
 **Problem:** Same requirements for documentation and critical backend services
 **Solution:** Customize requirements based on risk and impact
 
 ### ❌ Quality Gates as Checklist Theater  
+
 **Problem:** Going through motions without finding real issues
 **Solution:** Focus on value - what could actually go wrong?
 
 ### ❌ No Clear Acceptance Criteria
+
 **Problem:** Quality gates drag on without clear completion criteria
 **Solution:** Define specific, measurable acceptance criteria upfront
 
 ## Metrics and Improvement
 
 ### Track These Metrics
+
 - **Defect Escape Rate**: Issues found after sequence completion
 - **Review Cycle Time**: Average time from review start to acceptance
 - **Rework Rate**: Percentage of sequences requiring significant iteration
 - **Quality Gate Completion Rate**: Percentage of sequences with full quality gate completion
 
 ### Continuous Improvement
+
 - Review quality gate effectiveness quarterly
 - Adjust requirements based on defect patterns
 - Streamline processes that don't add value

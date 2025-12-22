@@ -361,4 +361,3 @@ def sync_to_github_issues(repo, todo_data):
 5. **Integrate**: Connect to CI/CD, Slack, or project management tools
 
 **The result**: A pure markdown/YAML project management system that provides complete festival tracking without external dependencies, while enabling powerful automation and integration capabilities.
-
