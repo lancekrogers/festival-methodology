@@ -18,6 +18,29 @@ const (
 	DefaultPolicyName = "default"
 )
 
+// PolicyLevel represents the hierarchical level where a policy is defined
+type PolicyLevel string
+
+const (
+	// PolicyLevelBuiltin is the built-in default level
+	PolicyLevelBuiltin PolicyLevel = "builtin"
+	// PolicyLevelGlobal is the global festivals root level
+	PolicyLevelGlobal PolicyLevel = "global"
+	// PolicyLevelFestival is the festival-specific level
+	PolicyLevelFestival PolicyLevel = "festival"
+	// PolicyLevelPhase is the phase-specific level
+	PolicyLevelPhase PolicyLevel = "phase"
+	// PolicyLevelSequence is the sequence-specific level
+	PolicyLevelSequence PolicyLevel = "sequence"
+)
+
+// PolicySource tracks where a policy or gate originated
+type PolicySource struct {
+	Level PolicyLevel // Hierarchy level where defined
+	Path  string      // File path where defined (empty for builtin)
+	Name  string      // Policy name if from named policy
+}
+
 // GateTask represents a quality gate task definition
 type GateTask struct {
 	ID             string         `yaml:"id" json:"id"`
@@ -25,6 +48,9 @@ type GateTask struct {
 	Name           string         `yaml:"name,omitempty" json:"name,omitempty"`
 	Enabled        bool           `yaml:"enabled" json:"enabled"`
 	Customizations map[string]any `yaml:"customizations,omitempty" json:"customizations,omitempty"`
+	// Hierarchical tracking fields (not serialized)
+	Source  *PolicySource `yaml:"-" json:"-"` // Origin tracking
+	Removed bool          `yaml:"-" json:"-"` // Marked for removal at child level
 }
 
 // GatePolicy represents a complete quality gate policy
@@ -34,6 +60,18 @@ type GatePolicy struct {
 	Description     string     `yaml:"description,omitempty" json:"description,omitempty"`
 	Append          []GateTask `yaml:"append" json:"append"`
 	ExcludePatterns []string   `yaml:"exclude_patterns,omitempty" json:"exclude_patterns,omitempty"`
+	// Hierarchical control fields
+	Inherit *bool         `yaml:"inherit,omitempty" json:"inherit,omitempty"` // nil = true (inherit from parent)
+	Source  *PolicySource `yaml:"-" json:"-"`                                 // Origin tracking
+}
+
+// ShouldInherit returns whether this policy inherits from parent levels.
+// Returns true if Inherit is nil (default) or explicitly true.
+func (p *GatePolicy) ShouldInherit() bool {
+	if p.Inherit == nil {
+		return true
+	}
+	return *p.Inherit
 }
 
 // GateOperation represents a phase-level override operation
