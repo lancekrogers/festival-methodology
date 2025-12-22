@@ -12,10 +12,10 @@ import (
 
 // PolicyInfo describes a named policy
 type PolicyInfo struct {
-	Name        string // Policy name (e.g., "default", "strict")
-	Description string // Human-readable description
-	Source      string // "built-in", "global", "config-repo"
-	Path        string // File path if not built-in
+	Name        string `json:"name"`                  // Policy name (e.g., "default", "strict")
+	Description string `json:"description,omitempty"` // Human-readable description
+	Source      string `json:"source"`                // "built-in", "global", "config-repo"
+	Path        string `json:"path,omitempty"`        // File path if not built-in
 }
 
 // PolicyRegistry manages available named policies
