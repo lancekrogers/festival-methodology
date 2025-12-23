@@ -3,9 +3,9 @@ binary_name := "fest"
 main_path := "cmd/fest/main.go"
 bin_dir := "bin"
 
-# Show available build commands (default)
+# Show available build commands
 [private]
-help:
+default:
     @just --list --unsorted --justfile {{source_file()}}
 
 # Quick development build (no optimization)
@@ -35,6 +35,7 @@ windows:
 
 # Build for all platforms
 all: linux darwin darwin-arm64 windows
+    @echo "✅ All platform builds complete"
 
 # Build Linux binary for container testing
 [no-cd]

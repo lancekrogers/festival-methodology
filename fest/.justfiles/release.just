@@ -77,5 +77,5 @@ windows: build-windows
 release: darwin linux windows
     #!/usr/bin/env bash
     set -euo pipefail
-    echo "All release packages created in dist/"
+    echo "✅ All release packages created in dist/"
     ls -la dist/

@@ -152,7 +152,6 @@ func printGatesShowJSON(cmd *cobra.Command, effective *gates.EffectivePolicy) er
 	return enc.Encode(output)
 }
 
-
 func printGatesShowTable(cmd *cobra.Command, effective *gates.EffectivePolicy, phase, sequence string) error {
 	out := cmd.OutOrStdout()
 

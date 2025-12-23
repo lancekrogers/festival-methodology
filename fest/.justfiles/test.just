@@ -12,6 +12,7 @@ default:
 [no-cd]
 unit:
     go test -v ./...
+    @echo "✅ Unit tests passed"
 
 # Run tests with coverage report
 [no-cd]
@@ -32,3 +33,4 @@ build-test-binary:
 [no-cd]
 integration: build-test-binary
     go test -v -tags=integration -timeout 10m ./tests/integration/...
+    @echo "✅ Integration tests passed"

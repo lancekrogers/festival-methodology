@@ -1,6 +1,8 @@
 #!/usr/bin/env just --justfile
 # fest CLI build and development tasks
 
+set dotenv-load := true
+
 # Configuration
 binary_name := "fest"
 main_path := "cmd/fest/main.go"
@@ -8,13 +10,21 @@ bin_dir := "bin"
 gobin := env_var_or_default("GOBIN", `go env GOPATH` + "/bin")
 
 # Modules
+[doc('Cross-platform builds')]
 mod xbuild '.justfiles/build.just'
+
+[doc('Testing (unit, integration, coverage)')]
 mod test '.justfiles/test.just'
+
+[doc('Release packaging')]
 mod release '.justfiles/release.just'
 
 [private]
-@default:
-    @just --list --unsorted
+default:
+    #!/usr/bin/env bash
+    echo "fest CLI - Festival Methodology Tool"
+    echo ""
+    just --list --unsorted
 
 # Run tests and build
 all:
@@ -36,7 +46,7 @@ vet:
 
 # Run formatting and vetting
 lint: fmt vet
-    @echo "Linting complete"
+    @echo "✅ Linting complete"
 
 # Clean build artifacts
 clean:
@@ -62,7 +72,7 @@ install:
         codesign --force --sign - {{gobin}}/{{binary_name}} 2>/dev/null || \
         echo "Warning: Could not sign binary (non-fatal)"
     fi
-    echo "fest installed to {{gobin}}/{{binary_name}}"
+    echo "✅ fest installed to {{gobin}}/{{binary_name}}"
 
 # Uninstall fest from $GOBIN
 uninstall:
