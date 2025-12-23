@@ -66,6 +66,7 @@ fest create festival --name test --vars-file vars.json
 ```
 
 vars.json:
+
 ```json
 {
   "author": "Team A",
@@ -74,6 +75,7 @@ vars.json:
 ```
 
 Template access:
+
 ```
 Author: {{.Custom.author}}
 Priority: {{.Custom.priority}}
@@ -121,6 +123,7 @@ Content here...
 ### ID Resolution
 
 Templates can be referenced by:
+
 1. `template_id` field
 2. `id` field (fallback)
 3. Any value in `aliases` array

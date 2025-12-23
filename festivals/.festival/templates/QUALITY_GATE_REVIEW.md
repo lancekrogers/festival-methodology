@@ -34,24 +34,7 @@ Review all code changes in this sequence for quality, correctness, and adherence
 
 ### Standards Compliance
 
-{{ if .Customizations.lint_command }}
-
-```bash
-{{ .Customizations.lint_command }}
-```
-
-{{ else }}
-
-```bash
-# Run linting
-make lint
-# or
-golangci-lint run
-# or
-npm run lint
-```
-
-{{ end }}
+[REPLACE: Run your project's lint command]
 
 - [ ] Linting passes without warnings
 - [ ] Formatting is consistent

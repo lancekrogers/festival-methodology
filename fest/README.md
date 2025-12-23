@@ -416,6 +416,7 @@ Extend fest with custom commands via external executables:
 ### Plugin Discovery
 
 Plugins are discovered from:
+
 1. Config repo `user/plugins/bin/` directory
 2. System PATH (executables named `fest-*`)
 
@@ -472,6 +473,7 @@ fest extension list --type workflow
 ### Extension Sources
 
 Extensions are loaded from (in precedence order):
+
 1. **Project**: `.festival/extensions/` in current festival
 2. **User**: Config repo `festivals/.festival/extensions/`
 3. **Built-in**: Default extensions from fest installation
@@ -557,6 +559,7 @@ The index file (`.festival/index.json`) provides:
 ### Validation
 
 The validator checks:
+
 - All indexed entries exist on disk
 - Files on disk that aren't in the index
 - Missing goal files (warnings)

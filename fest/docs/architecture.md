@@ -183,6 +183,7 @@ commands/create_phase.go
 ### Error Package (`internal/errors`)
 
 Provides structured errors with:
+
 - **Code**: Categorization (`NOT_FOUND`, `VALIDATION`, `IO`, etc.)
 - **Op**: Operation name for stack context
 - **Fields**: Key-value metadata
@@ -269,6 +270,7 @@ type Validator interface {
 ```
 
 Implementations:
+
 - `StructureValidator` - Directory naming conventions
 - `CompletenessValidator` - Required files present
 - `TemplateValidator` - No unfilled template markers
@@ -347,6 +349,7 @@ festivals/
 ## Build Information
 
 Build-time variables injected via `-ldflags`:
+
 - `Version`: Semantic version
 - `BuildTime`: Build timestamp
 - `GitCommit`: Git commit hash

@@ -146,6 +146,7 @@ return fmt.Errorf("festival not found: %s", festivalPath)
 ```
 
 Error codes:
+
 - `NOT_FOUND` - Resource doesn't exist
 - `VALIDATION` - Input validation failure
 - `IO` - File system error
@@ -324,6 +325,7 @@ Follow conventional commit format:
 ```
 
 Types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `refactor`: Code restructuring
@@ -332,6 +334,7 @@ Types:
 - `chore`: Maintenance tasks
 
 Examples:
+
 ```
 feat: add gates validate subcommand
 

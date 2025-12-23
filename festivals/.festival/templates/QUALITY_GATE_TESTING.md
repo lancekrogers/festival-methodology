@@ -26,14 +26,7 @@ Verify all functionality implemented in this sequence works correctly through co
 
 ### Unit Tests
 
-```bash
-{{ if .Customizations.test_command }}{{ .Customizations.test_command }}{{ else }}# Run unit tests
-make test
-# or
-go test ./...
-# or
-npm test{{ end }}
-```
+[REPLACE: Run your project's test command]
 
 **Verify:**
 
@@ -43,10 +36,7 @@ npm test{{ end }}
 
 ### Integration Tests
 
-```bash
-# Run integration tests
-make test-integration
-```
+[REPLACE: Run your project's integration test command]
 
 **Verify:**
 
@@ -64,17 +54,9 @@ Walk through each requirement from the sequence:
 
 ## Coverage Requirements
 
-{{ if .Customizations.coverage_threshold }}
+- Minimum coverage: [REPLACE: coverage threshold, e.g., 80%] for new code
 
-- Minimum coverage: {{ .Customizations.coverage_threshold }}%
-{{ else }}
-- Minimum coverage: 80% for new code
-{{ end }}
-
-```bash
-# Generate coverage report
-make coverage
-```
+[REPLACE: Run your project's coverage command]
 
 ## Error Handling Verification
 

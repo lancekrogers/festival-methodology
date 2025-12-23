@@ -7,9 +7,6 @@ tags: []
 created: "2025-08-26"
 modified: "2025-08-26"
 autonomy_level: [high|medium|low]
-# high: Agent can complete independently
-# medium: May need clarification on edge cases
-# low: Expect human collaboration
 ---
 
 <!--
@@ -19,18 +16,13 @@ TEMPLATE USAGE:
 - Remove this comment block when filling the template
 -->
 
-# Task: [REPLACE: N_Task_Name like 01_create_user_model]
+# Task: [REPLACE: NN_task_name]
 
-> **Task Number**: [REPLACE: N where N indicates execution order] **Parallel Execution**:
-> [REPLACE: Yes/No - if yes, list other tasks with same number] **Dependencies**: [REPLACE: List
-> any tasks that must complete before this one] **Autonomy Level**: [REPLACE: high|medium|low]
+> **Task Number**: [REPLACE: NN] | **Parallel Execution**: [REPLACE: Yes/No] | **Dependencies**: [REPLACE: Prior tasks] | **Autonomy Level**: [REPLACE: high|medium|low]
 
 ## Objective
 
-[REPLACE: ONE CLEAR SENTENCE about what will be accomplished with specific deliverables]
-
-**Example**: "Create PostgreSQL user table and Sequelize model with email/password authentication fields"
-**Not**: "Implement user management functionality"
+[REPLACE: One clear sentence describing what will be accomplished with specific deliverables]
 
 ## Rules Compliance
 
@@ -38,7 +30,6 @@ Before starting this task, review FESTIVAL_RULES.md, particularly:
 
 - [REPLACE: Relevant section 1]
 - [REPLACE: Relevant section 2]
-- [REPLACE: Relevant section 3]
 
 ## Context
 
@@ -46,34 +37,15 @@ Before starting this task, review FESTIVAL_RULES.md, particularly:
 
 ## Requirements
 
-**Use specific, testable requirements with exact names and implementations:**
-
-- [ ] [REPLACE: Create specific file with exact name like `models/User.js`]
-- [ ] [REPLACE: Implement specific function like `validateEmail()` with regex pattern]
-- [ ] [REPLACE: Add specific database field like `password_hash VARCHAR(255)`]
-
-**Example**:
-
-- [ ] Create `users` table with id, email, password_hash, created_at, updated_at fields
-- [ ] Create `models/User.js` with Sequelize model definition and email validation
-- [ ] Add bcrypt password hashing with salt rounds = 12
-- [ ] Create migration file `migrations/001_create_users.js`
+- [ ] [REPLACE: Specific requirement 1]
+- [ ] [REPLACE: Specific requirement 2]
+- [ ] [REPLACE: Specific requirement 3]
 
 ## Deliverables
 
-**List exact files, functions, and outputs that will be created:**
-
-- [REPLACE: Specific file path like `src/models/User.js`]
-- [REPLACE: Specific function like `User.authenticate(email, password)`]
-- [REPLACE: Specific test file like `tests/models/User.test.js`]
-- [REPLACE: Configuration change like Add bcrypt to package.json dependencies]
-
-**Example**:
-
-- `models/User.js` - Sequelize model with email validation and password hashing
-- `migrations/001_create_users.js` - Database migration file
-- `tests/models/User.test.js` - Unit tests covering authentication and validation
-- Updated `package.json` with bcrypt dependency
+- [REPLACE: Specific file or artifact 1]
+- [REPLACE: Specific file or artifact 2]
+- [REPLACE: Specific file or artifact 3]
 
 ## Definition of Done
 
@@ -86,66 +58,30 @@ Before starting this task, review FESTIVAL_RULES.md, particularly:
 - [ ] Read FESTIVAL_RULES.md completely
 - [ ] Understand task requirements
 - [ ] Review existing code/content and patterns
-- [ ] Identify dependencies based on task numbering
-- [ ] Verify all lower-numbered tasks in sequence are complete
+- [ ] Verify dependencies are complete
 - [ ] Plan approach
 
 ## Implementation Steps
 
-**Provide numbered, actionable steps with exact commands and code:**
+### 1. [REPLACE: Step Title]
 
-### 1. [REPLACE: First Step Title]
+[REPLACE: Step description and actions]
 
-```bash
-# Exact commands to run
-npm install bcrypt sequelize
-```
+### 2. [REPLACE: Step Title]
 
-### 2. [REPLACE: Second Step Title]
+[REPLACE: Step description and actions]
 
-```javascript
-// Actual code to implement
-const bcrypt = require("bcrypt");
-const { DataTypes } = require("sequelize");
-```
+### 3. [REPLACE: Step Title]
 
-### 3. [REPLACE: Third Step Title]
-
-```sql
--- SQL to execute
-CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
-  email VARCHAR(255) UNIQUE NOT NULL
-);
-```
+[REPLACE: Step description and actions]
 
 ## Technical Notes
 
-[REPLACE: Any technical considerations, constraints, or important information]
+[REPLACE: Technical considerations, constraints, or important information]
 
-## Testing Commands
+## Testing
 
-**Provide specific commands to test the implementation:**
-
-```bash
-# Run migrations
-npx sequelize-cli db:migrate
-
-# Run tests
-npm test -- tests/models/User.test.js
-
-# Test manually
-node -e "const User = require('./models/User'); console.log('User model loaded');"
-```
-
-## Resources
-
-**Link to specific documentation and examples:**
-
-- [Sequelize Model Documentation](https://sequelize.org/docs/v6/core-concepts/model-basics/)
-- [bcrypt npm package](https://www.npmjs.com/package/bcrypt)
-- [REPLACE: Related example reference]
-- [REPLACE: Code reference]
+[REPLACE: How to verify the implementation works correctly]
 
 ## Completion Checklist
 
@@ -153,55 +89,8 @@ node -e "const User = require('./models/User'); console.log('User model loaded')
 - [ ] Tests pass (if applicable)
 - [ ] Documentation updated
 - [ ] Quality standards met
-- [ ] Security considered (if applicable)
-- [ ] Performance assessed (if applicable)
-- [ ] Rules compliance verified
 - [ ] Self-review completed
-
-## Good vs Bad Examples
-
-### BAD - Abstract and Vague
-
-```markdown
-Objective: Set up user authentication
-Requirements:
-
-- [ ] Create user system
-- [ ] Add login functionality
-- [ ] Handle passwords securely
-```
-
-### GOOD - Specific and Actionable
-
-```markdown
-Objective: Create User model with bcrypt authentication and email validation
-Requirements:
-
-- [ ] Create `models/User.js` with Sequelize model
-- [ ] Implement `User.authenticate(email, password)` method
-- [ ] Add email validation with regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-- [ ] Hash passwords with bcrypt salt rounds = 12
-```
 
 ## Notes
 
-**Reference TASK_EXAMPLES.md for 15+ concrete examples of well-written tasks across different domains (database, API, frontend, DevOps, testing).**
-
-[REPLACE: Any additional information, assumptions, or considerations]
-
-## For Verification Tasks (testing_and_verify, code_review)
-
-### Testing Results Location
-
-- Place all testing results in: `./results/testing_results_[timestamp].md`
-
-### Code Review Results Location
-
-- Place all review documents in: `./results/code_review_[timestamp].md`
-
-### Iteration Tasks
-
-- When creating `review_results_update_tasks_iterate_if_needed.md`:
-  - Review all documents in `./results/` directory
-  - Create new numbered tasks if iteration is needed
-  - Document decision to proceed or iterate
+[REPLACE: Additional information, assumptions, or considerations]

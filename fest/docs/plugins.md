@@ -35,6 +35,7 @@ fest-<name>             # Single command
 ```
 
 Examples:
+
 ```
 fest-export-jira        # Command: "export jira"
 fest-import-confluence  # Command: "import confluence"
@@ -122,11 +123,13 @@ chmod +x fest-export-jira
 #### Step 3: Install
 
 Option A: Add to PATH
+
 ```bash
 mv fest-export-jira /usr/local/bin/
 ```
 
 Option B: Add to config repo
+
 ```bash
 mv fest-export-jira ~/.config/fest-repos/default/plugins/bin/
 ```
