@@ -3,3 +3,5 @@ bin/*
 # Test coverage files
 coverage.out
 *.coverprofile
+
+.gocache/
