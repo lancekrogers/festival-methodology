@@ -63,7 +63,7 @@ integration-raw:
     echo "Building Linux binary..."
     GOOS=linux GOARCH=amd64 go build -ldflags '-s -w' -o bin/linux/fest ./cmd/fest
     echo "Running integration tests..."
-    go test -v -tags=integration -timeout 5m ./tests/integration/...
+    DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock" TESTCONTAINERS_RYUK_DISABLED=true go test -v -tags=integration -timeout 5m ./tests/integration/...
 
 # Run all tests directly (fallback)
 [no-cd]
