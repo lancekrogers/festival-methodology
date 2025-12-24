@@ -620,7 +620,7 @@ func runValidateChecklist(opts *validateOptions) error {
 }
 
 func runValidateOrdering(opts *validateOptions) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	festivalPath, err := resolveFestivalPath(opts.path)
 	if err != nil {

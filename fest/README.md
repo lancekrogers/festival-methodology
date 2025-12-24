@@ -96,36 +96,36 @@ fest init /path/to/project
 fest init --yes
 ```
 
-### Sync templates from GitHub
+### System maintenance commands
+
+These commands maintain the fest tool itself (templates, configuration) - NOT your festival content.
 
 ```bash
-# Sync using default repository
-fest sync
+# Sync templates from GitHub (default repository)
+fest system sync
 
 # Sync from specific repository
-fest sync --source github.com/user/repo --branch main
+fest system sync --source github.com/user/repo --branch main
 
 # Force overwrite existing cache
-fest sync --force
+fest system sync --force
 ```
 
-### Update festival files
-
 ```bash
-# Interactive update (default)
-fest update
+# Interactive update of .festival/ methodology files (default)
+fest system update
 
 # Preview changes without modifying files
-fest update --dry-run
+fest system update --dry-run
 
 # Update only unchanged files, skip modified
-fest update --no-interactive
+fest system update --no-interactive
 
 # Create backup before updating
-fest update --backup
+fest system update --backup
 
 # Show diffs for modified files
-fest update --diff
+fest system update --diff
 ```
 
 ### Count tokens in files

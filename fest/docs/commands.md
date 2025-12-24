@@ -589,19 +589,60 @@ fest init --register                 # Also register workspace
 
 ---
 
-### fest sync
+## System Commands
 
-Download latest templates from GitHub.
+These commands maintain the fest tool itself (templates, configuration) - NOT your festival content.
+
+### fest system
+
+Parent command for system maintenance operations.
 
 ```
-fest sync [flags]
+fest system [command]
+```
+
+#### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `sync` | Download latest templates from GitHub |
+| `update` | Update .festival/ methodology files from templates |
+
+---
+
+### fest system sync
+
+Download latest fest templates from GitHub to local cache.
+
+```
+fest system sync [flags]
 ```
 
 #### Examples
 
 ```bash
-fest sync                            # Download latest templates
-fest sync --verbose                  # Show detailed progress
+fest system sync                     # Download latest templates
+fest system sync --verbose           # Show detailed progress
+fest system sync --force             # Overwrite existing cache
+```
+
+---
+
+### fest system update
+
+Update .festival/ methodology files from cached templates.
+
+```
+fest system update [flags]
+```
+
+#### Examples
+
+```bash
+fest system update                   # Interactive update
+fest system update --dry-run         # Preview changes
+fest system update --no-interactive  # Skip modified files
+fest system update --backup          # Create backup first
 ```
 
 ---
