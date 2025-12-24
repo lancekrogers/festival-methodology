@@ -1,6 +1,7 @@
 package fileops
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,7 +19,12 @@ type WalkResult struct {
 
 // WalkDirectory recursively walks a directory, respecting .gitignore files
 // and filtering out binary files
-func WalkDirectory(rootPath string) (*WalkResult, error) {
+func WalkDirectory(ctx context.Context, rootPath string) (*WalkResult, error) {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	result := &WalkResult{
 		Files: []string{},
 	}
@@ -35,6 +41,11 @@ func WalkDirectory(rootPath string) (*WalkResult, error) {
 
 	// Walk the directory tree
 	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
+		// Check context on each iteration
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
+
 		if err != nil {
 			return err
 		}
@@ -87,10 +98,20 @@ func WalkDirectory(rootPath string) (*WalkResult, error) {
 }
 
 // AggregateFileContents reads all files and returns combined content
-func AggregateFileContents(files []string) ([]byte, error) {
+func AggregateFileContents(ctx context.Context, files []string) ([]byte, error) {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	var totalContent []byte
 
 	for _, file := range files {
+		// Check context on each iteration
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
+
 		content, err := os.ReadFile(file)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read file %s: %w", file, err)

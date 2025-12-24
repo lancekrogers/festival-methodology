@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -46,7 +47,7 @@ When counting a directory with --recursive, the command:
   fest count -r --json ./project   # Directory with JSON output`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runCount(args[0], opts)
+			return runCount(cmd.Context(), args[0], opts)
 		},
 	}
 
@@ -63,7 +64,7 @@ When counting a directory with --recursive, the command:
 	return cmd
 }
 
-func runCount(path string, opts *countOptions) error {
+func runCount(ctx context.Context, path string, opts *countOptions) error {
 	// Create UI handler
 	display := ui.New(noColor, verbose)
 
@@ -84,7 +85,7 @@ func runCount(path string, opts *countOptions) error {
 		}
 
 		// Walk directory and collect files
-		walkResult, err := fileops.WalkDirectory(path)
+		walkResult, err := fileops.WalkDirectory(ctx, path)
 		if err != nil {
 			return fmt.Errorf("failed to walk directory: %w", err)
 		}
@@ -99,7 +100,7 @@ func runCount(path string, opts *countOptions) error {
 		}
 
 		// Aggregate all file contents
-		content, err = fileops.AggregateFileContents(walkResult.Files)
+		content, err = fileops.AggregateFileContents(ctx, walkResult.Files)
 		if err != nil {
 			return fmt.Errorf("failed to read files: %w", err)
 		}

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -32,10 +33,11 @@ func TestDefaultConfig(t *testing.T) {
 }
 
 func TestLoadNonExisting(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "non-existing.json")
 
-	cfg, err := Load(configPath)
+	cfg, err := Load(ctx, configPath)
 	if err != nil {
 		t.Fatalf("Load failed for non-existing file: %v", err)
 	}
@@ -48,6 +50,7 @@ func TestLoadNonExisting(t *testing.T) {
 }
 
 func TestSaveAndLoad(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 	os.Setenv("FEST_CONFIG_DIR", tmpDir)
 	defer os.Unsetenv("FEST_CONFIG_DIR")
@@ -80,12 +83,12 @@ func TestSaveAndLoad(t *testing.T) {
 	}
 
 	// Save config
-	if err := Save(original); err != nil {
+	if err := Save(ctx, original); err != nil {
 		t.Fatalf("Save failed: %v", err)
 	}
 
 	// Load config
-	loaded, err := Load("")
+	loaded, err := Load(ctx, "")
 	if err != nil {
 		t.Fatalf("Load failed: %v", err)
 	}

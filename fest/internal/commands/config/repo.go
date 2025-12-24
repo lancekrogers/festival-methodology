@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -45,23 +46,23 @@ For local paths, a symlink will be created instead.`,
   fest config add work git@github.com:company/fest-templates.git`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runConfigAdd(args[0], args[1])
+			return runConfigAdd(cmd.Context(), args[0], args[1])
 		},
 	}
 	return cmd
 }
 
-func runConfigAdd(name, source string) error {
+func runConfigAdd(ctx context.Context, name, source string) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
-	rm, err := config.NewRepoManager()
+	rm, err := config.NewRepoManager(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to initialize repo manager: %w", err)
 	}
 
 	display.Info("Adding config repo '%s' from %s...", name, source)
 
-	repo, err := rm.Add(name, source)
+	repo, err := rm.Add(ctx, name, source)
 	if err != nil {
 		return err
 	}
@@ -88,25 +89,25 @@ If no name is provided, syncs all configured repos.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
-				return runConfigSync(args[0])
+				return runConfigSync(cmd.Context(), args[0])
 			}
-			return runConfigSyncAll()
+			return runConfigSyncAll(cmd.Context())
 		},
 	}
 	return cmd
 }
 
-func runConfigSync(name string) error {
+func runConfigSync(ctx context.Context, name string) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
-	rm, err := config.NewRepoManager()
+	rm, err := config.NewRepoManager(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to initialize repo manager: %w", err)
 	}
 
 	display.Info("Syncing config repo '%s'...", name)
 
-	if err := rm.Sync(name); err != nil {
+	if err := rm.Sync(ctx, name); err != nil {
 		return err
 	}
 
@@ -114,10 +115,10 @@ func runConfigSync(name string) error {
 	return nil
 }
 
-func runConfigSyncAll() error {
+func runConfigSyncAll(ctx context.Context) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
-	rm, err := config.NewRepoManager()
+	rm, err := config.NewRepoManager(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to initialize repo manager: %w", err)
 	}
@@ -130,7 +131,7 @@ func runConfigSyncAll() error {
 
 	display.Info("Syncing %d config repo(s)...", len(repos))
 
-	if err := rm.SyncAll(); err != nil {
+	if err := rm.SyncAll(ctx); err != nil {
 		return err
 	}
 
@@ -150,21 +151,21 @@ contents are used for templates, policies, plugins, and extensions.`,
   fest config use work`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runConfigUse(args[0])
+			return runConfigUse(cmd.Context(), args[0])
 		},
 	}
 	return cmd
 }
 
-func runConfigUse(name string) error {
+func runConfigUse(ctx context.Context, name string) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
-	rm, err := config.NewRepoManager()
+	rm, err := config.NewRepoManager(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to initialize repo manager: %w", err)
 	}
 
-	if err := rm.Use(name); err != nil {
+	if err := rm.Use(ctx, name); err != nil {
 		return err
 	}
 
@@ -182,7 +183,7 @@ func newConfigShowCommand() *cobra.Command {
 		Long:  `Show the currently active configuration repository and its details.`,
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runConfigShow(jsonOutput)
+			return runConfigShow(cmd.Context(), jsonOutput)
 		},
 	}
 
@@ -190,10 +191,10 @@ func newConfigShowCommand() *cobra.Command {
 	return cmd
 }
 
-func runConfigShow(jsonOutput bool) error {
+func runConfigShow(ctx context.Context, jsonOutput bool) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
-	rm, err := config.NewRepoManager()
+	rm, err := config.NewRepoManager(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to initialize repo manager: %w", err)
 	}
@@ -250,7 +251,7 @@ func newConfigListCommand() *cobra.Command {
 		Long:  `List all configured configuration repositories.`,
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runConfigList(jsonOutput)
+			return runConfigList(cmd.Context(), jsonOutput)
 		},
 	}
 
@@ -258,10 +259,10 @@ func newConfigListCommand() *cobra.Command {
 	return cmd
 }
 
-func runConfigList(jsonOutput bool) error {
+func runConfigList(ctx context.Context, jsonOutput bool) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
-	rm, err := config.NewRepoManager()
+	rm, err := config.NewRepoManager(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to initialize repo manager: %w", err)
 	}
@@ -322,7 +323,7 @@ For local symlinks, this only removes the symlink (not the original directory).`
 		Example: `  fest config remove myconfig`,
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runConfigRemove(args[0], force)
+			return runConfigRemove(cmd.Context(), args[0], force)
 		},
 	}
 
@@ -330,10 +331,10 @@ For local symlinks, this only removes the symlink (not the original directory).`
 	return cmd
 }
 
-func runConfigRemove(name string, force bool) error {
+func runConfigRemove(ctx context.Context, name string, force bool) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
-	rm, err := config.NewRepoManager()
+	rm, err := config.NewRepoManager(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to initialize repo manager: %w", err)
 	}
@@ -353,7 +354,7 @@ func runConfigRemove(name string, force bool) error {
 		}
 	}
 
-	if err := rm.Remove(name); err != nil {
+	if err := rm.Remove(ctx, name); err != nil {
 		return err
 	}
 

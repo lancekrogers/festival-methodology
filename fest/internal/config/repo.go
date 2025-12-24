@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -49,7 +50,11 @@ func RepoManifestPath() string {
 }
 
 // LoadRepoManifest loads the repo manifest from disk
-func LoadRepoManifest() (*ConfigRepoManifest, error) {
+func LoadRepoManifest(ctx context.Context) (*ConfigRepoManifest, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	manifestPath := RepoManifestPath()
 
 	// Return empty manifest if file doesn't exist
@@ -74,7 +79,11 @@ func LoadRepoManifest() (*ConfigRepoManifest, error) {
 }
 
 // SaveRepoManifest saves the repo manifest to disk
-func SaveRepoManifest(manifest *ConfigRepoManifest) error {
+func SaveRepoManifest(ctx context.Context, manifest *ConfigRepoManifest) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	configDir := ConfigDir()
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)

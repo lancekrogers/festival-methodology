@@ -1,6 +1,7 @@
 package system
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -50,7 +51,7 @@ Your actual festivals (phases, sequences, tasks) are never modified by this comm
 			if len(args) > 0 {
 				targetPath = args[0]
 			}
-			return runUpdate(targetPath, opts)
+			return runUpdate(cmd.Context(), targetPath, opts)
 		},
 	}
 
@@ -64,7 +65,7 @@ Your actual festivals (phases, sequences, tasks) are never modified by this comm
 	return cmd
 }
 
-func runUpdate(targetPath string, opts *updateOptions) error {
+func runUpdate(ctx context.Context, targetPath string, opts *updateOptions) error {
 	// Create UI handler
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
@@ -90,7 +91,7 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 		return fmt.Errorf("no checksum file found. Run 'fest init' first")
 	}
 
-	storedChecksums, err := fileops.LoadChecksums(checksumFile)
+	storedChecksums, err := fileops.LoadChecksums(ctx, checksumFile)
 	if err != nil {
 		return fmt.Errorf("failed to load checksums: %w", err)
 	}
@@ -104,7 +105,7 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 	display.Info("Analyzing .festival methodology files...")
 
 	// Calculate current checksums for the .festival directory only
-	currentChecksums, err := fileops.GenerateChecksums(festivalDir)
+	currentChecksums, err := fileops.GenerateChecksums(ctx, festivalDir)
 	if err != nil {
 		return fmt.Errorf("failed to generate checksums: %w", err)
 	}
@@ -142,7 +143,7 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 	if opts.backup {
 		backupDir := filepath.Join(festivalDir, ".fest-backup", timeStamp())
 		display.Info("\nCreating backup at %s...", backupDir)
-		if err := fileops.CreateBackup(festivalDir, backupDir); err != nil {
+		if err := fileops.CreateBackup(ctx, festivalDir, backupDir); err != nil {
 			return fmt.Errorf("failed to create backup: %w", err)
 		}
 	}
@@ -157,7 +158,7 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 		if shared.IsVerbose() {
 			display.Info("Updating %s...", file)
 		}
-		if err := updater.UpdateFile(file); err != nil {
+		if err := updater.UpdateFile(ctx, file); err != nil {
 			display.Warning("Failed to update %s: %v", file, err)
 		} else {
 			updatedFiles = append(updatedFiles, file)
@@ -169,7 +170,7 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 	for _, file := range changes.modified {
 		if opts.force || acceptAll {
 			// Force update or accept all
-			if err := updater.UpdateFile(file); err != nil {
+			if err := updater.UpdateFile(ctx, file); err != nil {
 				display.Warning("Failed to update %s: %v", file, err)
 			} else {
 				updatedFiles = append(updatedFiles, file)
@@ -179,7 +180,7 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 			action := promptForFile(display, file)
 			switch action {
 			case "yes":
-				if err := updater.UpdateFile(file); err != nil {
+				if err := updater.UpdateFile(ctx, file); err != nil {
 					display.Warning("Failed to update %s: %v", file, err)
 				} else {
 					updatedFiles = append(updatedFiles, file)
@@ -188,7 +189,7 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 				skippedFiles = append(skippedFiles, file)
 			case "all":
 				acceptAll = true
-				if err := updater.UpdateFile(file); err != nil {
+				if err := updater.UpdateFile(ctx, file); err != nil {
 					display.Warning("Failed to update %s: %v", file, err)
 				} else {
 					updatedFiles = append(updatedFiles, file)
@@ -205,11 +206,11 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 	// Update checksums for updated files
 	if len(updatedFiles) > 0 {
 		display.Info("\nUpdating .festival checksums...")
-		newChecksums, err := fileops.GenerateChecksums(festivalDir)
+		newChecksums, err := fileops.GenerateChecksums(ctx, festivalDir)
 		if err != nil {
 			display.Warning("Failed to update checksums: %v", err)
 		} else {
-			if err := fileops.SaveChecksums(checksumFile, newChecksums); err != nil {
+			if err := fileops.SaveChecksums(ctx, checksumFile, newChecksums); err != nil {
 				display.Warning("Failed to save checksums: %v", err)
 			}
 		}

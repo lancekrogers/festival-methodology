@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -14,8 +15,8 @@ type RepoManager struct {
 }
 
 // NewRepoManager creates a new repo manager
-func NewRepoManager() (*RepoManager, error) {
-	manifest, err := LoadRepoManifest()
+func NewRepoManager(ctx context.Context) (*RepoManager, error) {
+	manifest, err := LoadRepoManifest(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +29,11 @@ func (rm *RepoManager) Manifest() *ConfigRepoManifest {
 }
 
 // Add adds a new config repo (git clone or symlink local path)
-func (rm *RepoManager) Add(name, source string) (*ConfigRepo, error) {
+func (rm *RepoManager) Add(ctx context.Context, name, source string) (*ConfigRepo, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	// Check if name already exists
 	if existing := rm.manifest.GetRepo(name); existing != nil {
 		return nil, fmt.Errorf("config repo '%s' already exists", name)
@@ -44,8 +49,8 @@ func (rm *RepoManager) Add(name, source string) (*ConfigRepo, error) {
 	isGitRepo := IsGitURL(source)
 
 	if isGitRepo {
-		// Git clone
-		cmd := exec.Command("git", "clone", source, localPath)
+		// Git clone with context
+		cmd := exec.CommandContext(ctx, "git", "clone", source, localPath)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
@@ -82,7 +87,7 @@ func (rm *RepoManager) Add(name, source string) (*ConfigRepo, error) {
 	}
 
 	rm.manifest.AddRepo(repo)
-	if err := SaveRepoManifest(rm.manifest); err != nil {
+	if err := SaveRepoManifest(ctx, rm.manifest); err != nil {
 		return nil, err
 	}
 
@@ -90,7 +95,11 @@ func (rm *RepoManager) Add(name, source string) (*ConfigRepo, error) {
 }
 
 // Sync syncs a config repo (git pull for git repos, no-op for local)
-func (rm *RepoManager) Sync(name string) error {
+func (rm *RepoManager) Sync(ctx context.Context, name string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	repo := rm.manifest.GetRepo(name)
 	if repo == nil {
 		return fmt.Errorf("config repo '%s' not found", name)
@@ -100,11 +109,11 @@ func (rm *RepoManager) Sync(name string) error {
 		// Local symlink - nothing to sync
 		repo.LastSync = time.Now().UTC()
 		rm.manifest.AddRepo(*repo)
-		return SaveRepoManifest(rm.manifest)
+		return SaveRepoManifest(ctx, rm.manifest)
 	}
 
-	// Git pull
-	cmd := exec.Command("git", "-C", repo.LocalPath, "pull")
+	// Git pull with context
+	cmd := exec.CommandContext(ctx, "git", "-C", repo.LocalPath, "pull")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
@@ -113,14 +122,21 @@ func (rm *RepoManager) Sync(name string) error {
 
 	repo.LastSync = time.Now().UTC()
 	rm.manifest.AddRepo(*repo)
-	return SaveRepoManifest(rm.manifest)
+	return SaveRepoManifest(ctx, rm.manifest)
 }
 
 // SyncAll syncs all config repos
-func (rm *RepoManager) SyncAll() error {
+func (rm *RepoManager) SyncAll(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	var lastErr error
 	for _, repo := range rm.manifest.Repos {
-		if err := rm.Sync(repo.Name); err != nil {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		if err := rm.Sync(ctx, repo.Name); err != nil {
 			lastErr = err
 		}
 	}
@@ -128,7 +144,11 @@ func (rm *RepoManager) SyncAll() error {
 }
 
 // Use sets a config repo as the active one (creates symlink)
-func (rm *RepoManager) Use(name string) error {
+func (rm *RepoManager) Use(ctx context.Context, name string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	repo := rm.manifest.GetRepo(name)
 	if repo == nil {
 		return fmt.Errorf("config repo '%s' not found", name)
@@ -154,11 +174,15 @@ func (rm *RepoManager) Use(name string) error {
 	}
 
 	rm.manifest.Active = name
-	return SaveRepoManifest(rm.manifest)
+	return SaveRepoManifest(ctx, rm.manifest)
 }
 
 // Remove removes a config repo
-func (rm *RepoManager) Remove(name string) error {
+func (rm *RepoManager) Remove(ctx context.Context, name string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	repo := rm.manifest.GetRepo(name)
 	if repo == nil {
 		return fmt.Errorf("config repo '%s' not found", name)
@@ -188,7 +212,7 @@ func (rm *RepoManager) Remove(name string) error {
 	}
 
 	rm.manifest.RemoveRepo(name)
-	return SaveRepoManifest(rm.manifest)
+	return SaveRepoManifest(ctx, rm.manifest)
 }
 
 // List returns all configured repos

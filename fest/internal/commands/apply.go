@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -42,7 +43,7 @@ func NewApplyCommand() *cobra.Command {
 		Short: "Apply a local template to a destination file (copy or render)",
 		Long:  "Apply a local template (from .festival/templates) to a destination file. Copy if no variables provided; render if variables exist.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return RunApply(opts)
+			return RunApply(cmd.Context(), opts)
 		},
 	}
 
@@ -58,7 +59,7 @@ func NewApplyCommand() *cobra.Command {
 }
 
 // RunApply executes the apply command logic.
-func RunApply(opts *ApplyOptions) error {
+func RunApply(ctx context.Context, opts *ApplyOptions) error {
 	display := ui.New(noColor, verbose)
 	cwd, _ := os.Getwd()
 
@@ -119,10 +120,10 @@ func RunApply(opts *ApplyOptions) error {
 	}
 
 	mode := "copy"
-	// Build context
-	ctx := tpl.NewContext()
+	// Build template context
+	tmplCtx := tpl.NewContext()
 	for k, v := range vars {
-		ctx.SetCustom(k, v)
+		tmplCtx.SetCustom(k, v)
 	}
 
 	// If template has required variables or contains '{{', render; else copy
@@ -134,7 +135,7 @@ func RunApply(opts *ApplyOptions) error {
 		if tmpl.Metadata != nil && len(tmpl.Metadata.RequiredVariables) > 0 {
 			missing := []string{}
 			for _, req := range tmpl.Metadata.RequiredVariables {
-				if _, ok := ctx.Get(req); !ok {
+				if _, ok := tmplCtx.Get(req); !ok {
 					missing = append(missing, req)
 				}
 			}
@@ -150,7 +151,7 @@ func RunApply(opts *ApplyOptions) error {
 				})
 			}
 		}
-		out, err := mgr.Render(tmpl, ctx)
+		out, err := mgr.Render(tmpl, tmplCtx)
 		if err != nil {
 			return emitApplyError(opts, fmt.Errorf("failed to render: %w", err))
 		}
@@ -158,7 +159,7 @@ func RunApply(opts *ApplyOptions) error {
 			return emitApplyError(opts, fmt.Errorf("failed to write destination: %w", err))
 		}
 	} else {
-		if err := fileops.CopyFile(tpath, opts.DestPath); err != nil {
+		if err := fileops.CopyFile(ctx, tpath, opts.DestPath); err != nil {
 			return emitApplyError(opts, fmt.Errorf("failed to copy: %w", err))
 		}
 	}

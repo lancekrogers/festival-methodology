@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -52,7 +53,7 @@ Workspace Registration:
 			if len(args) > 0 {
 				targetPath = args[0]
 			}
-			return RunInit(targetPath, opts)
+			return RunInit(cmd.Context(), targetPath, opts)
 		},
 	}
 
@@ -67,7 +68,7 @@ Workspace Registration:
 }
 
 // RunInit executes the init command logic.
-func RunInit(targetPath string, opts *InitOptions) error {
+func RunInit(ctx context.Context, targetPath string, opts *InitOptions) error {
 	// Create UI handler
 	display := ui.New(noColor, verbose)
 
@@ -123,14 +124,14 @@ func RunInit(targetPath string, opts *InitOptions) error {
 			src := filepath.Join(sourceDir, dir)
 			dst := filepath.Join(festivalPath, dir)
 			if fileops.Exists(src) {
-				if err := copier.CopyDirectory(src, dst); err != nil {
+				if err := copier.CopyDirectory(ctx, src, dst); err != nil {
 					return fmt.Errorf("failed to copy %s: %w", dir, err)
 				}
 			}
 		}
 	} else {
 		// Copy everything
-		if err := copier.CopyDirectory(sourceDir, festivalPath); err != nil {
+		if err := copier.CopyDirectory(ctx, sourceDir, festivalPath); err != nil {
 			return fmt.Errorf("failed to copy festival structure: %w", err)
 		}
 	}
@@ -142,12 +143,12 @@ func RunInit(targetPath string, opts *InitOptions) error {
 
 		// Only checksum the .festival directory
 		festivalMetaDir := filepath.Join(festivalPath, ".festival")
-		checksums, err := fileops.GenerateChecksums(festivalMetaDir)
+		checksums, err := fileops.GenerateChecksums(ctx, festivalMetaDir)
 		if err != nil {
 			return fmt.Errorf("failed to generate checksums: %w", err)
 		}
 
-		if err := fileops.SaveChecksums(checksumFile, checksums); err != nil {
+		if err := fileops.SaveChecksums(ctx, checksumFile, checksums); err != nil {
 			return fmt.Errorf("failed to save checksums: %w", err)
 		}
 

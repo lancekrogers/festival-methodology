@@ -1,6 +1,7 @@
 package system
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -56,6 +57,8 @@ Run this periodically to get the latest methodology templates and documentation.
 }
 
 func runSync(opts *syncOptions) error {
+	ctx := context.Background()
+
 	// Determine target directory
 	targetDir := filepath.Join(config.ConfigDir(), "festivals")
 
@@ -63,7 +66,7 @@ func runSync(opts *syncOptions) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	// Load configuration
-	cfg, err := config.Load(shared.GetConfigFile())
+	cfg, err := config.Load(ctx, shared.GetConfigFile())
 	if err != nil && opts.source == "" {
 		return fmt.Errorf("no config found and no --source specified: %w", err)
 	}
@@ -138,7 +141,7 @@ func runSync(opts *syncOptions) error {
 	// Update config with sync time
 	if cfg != nil {
 		cfg.LastSync = timeNow()
-		if err := config.Save(cfg); err != nil {
+		if err := config.Save(ctx, cfg); err != nil {
 			display.Warning("Failed to update config: %v", err)
 		}
 	}

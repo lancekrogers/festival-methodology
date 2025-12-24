@@ -3,6 +3,7 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -31,13 +32,13 @@ func NewTUICommand() *cobra.Command {
 		Use:   "tui",
 		Short: "Interactive UI (Charm) for festival creation and editing",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runCharmTUI()
+			return runCharmTUI(cmd.Context())
 		},
 	}
 	return cmd
 }
 
-func runCharmTUI() error {
+func runCharmTUI(ctx context.Context) error {
 	// Validate inside festivals workspace; if absent, offer to init
 	cwd, _ := os.Getwd()
 	if _, err := tpl.FindFestivalsRoot(cwd); err != nil {
@@ -51,7 +52,7 @@ func runCharmTUI() error {
 			return err
 		}
 		if initNow {
-			if err := shared.RunInit(".", &shared.InitOpts{}); err != nil {
+			if err := shared.RunInit(ctx, ".", &shared.InitOpts{}); err != nil {
 				return err
 			}
 		} else {
@@ -105,7 +106,7 @@ func runCharmTUI() error {
 				return err
 			}
 		case "festival_goal":
-			if err := charmGenerateFestivalGoal(); err != nil {
+			if err := charmGenerateFestivalGoal(ctx); err != nil {
 				return err
 			}
 		default:
@@ -258,7 +259,7 @@ func charmPlanFestivalWizard() error {
 	return nil
 }
 
-func charmGenerateFestivalGoal() error {
+func charmGenerateFestivalGoal(ctx context.Context) error {
 	cwd, _ := os.Getwd()
 	if _, err := tpl.LocalTemplateRoot(cwd); err != nil {
 		return err
@@ -286,7 +287,7 @@ func charmGenerateFestivalGoal() error {
 		return err
 	}
 	destPath := filepath.Join(festDir, "FESTIVAL_GOAL.md")
-	return shared.RunApply(&shared.ApplyOpts{TemplatePath: "FESTIVAL_GOAL_TEMPLATE.md", DestPath: destPath, VarsFile: varsFile})
+	return shared.RunApply(ctx, &shared.ApplyOpts{TemplatePath: "FESTIVAL_GOAL_TEMPLATE.md", DestPath: destPath, VarsFile: varsFile})
 }
 
 func charmCreatePhase() error {

@@ -1,6 +1,10 @@
 package shared
 
-import "github.com/spf13/cobra"
+import (
+	"context"
+
+	"github.com/spf13/cobra"
+)
 
 // verbose holds the global verbose flag value.
 // This is set by the root command initialization.
@@ -99,7 +103,7 @@ var (
 // These are initialized by the commands package's init() function.
 var (
 	// RunInit executes the init command.
-	RunInit func(path string, opts *InitOpts) error
+	RunInit func(ctx context.Context, path string, opts *InitOpts) error
 
 	// RunCreateFestival executes the create festival command.
 	RunCreateFestival func(opts *CreateFestivalOpts) error
@@ -114,7 +118,7 @@ var (
 	RunCreateTask func(opts *CreateTaskOpts) error
 
 	// RunApply executes the apply command.
-	RunApply func(opts *ApplyOpts) error
+	RunApply func(ctx context.Context, opts *ApplyOpts) error
 )
 
 // SetVerbose sets the global verbose flag value.

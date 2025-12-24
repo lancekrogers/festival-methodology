@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -139,6 +140,7 @@ func TestRepoLocalPath(t *testing.T) {
 }
 
 func TestLoadSaveRepoManifest(t *testing.T) {
+	ctx := context.Background()
 	// Create temp directory
 	tmpDir, err := os.MkdirTemp("", "fest-test-*")
 	if err != nil {
@@ -151,7 +153,7 @@ func TestLoadSaveRepoManifest(t *testing.T) {
 	defer os.Unsetenv("FEST_CONFIG_DIR")
 
 	// Test loading non-existent (should return empty manifest)
-	manifest, err := LoadRepoManifest()
+	manifest, err := LoadRepoManifest(ctx)
 	if err != nil {
 		t.Errorf("LoadRepoManifest: unexpected error %v", err)
 	}
@@ -171,12 +173,12 @@ func TestLoadSaveRepoManifest(t *testing.T) {
 	})
 	manifest.Active = "test"
 
-	if err := SaveRepoManifest(manifest); err != nil {
+	if err := SaveRepoManifest(ctx, manifest); err != nil {
 		t.Errorf("SaveRepoManifest: unexpected error %v", err)
 	}
 
 	// Load again and verify
-	loaded, err := LoadRepoManifest()
+	loaded, err := LoadRepoManifest(ctx)
 	if err != nil {
 		t.Errorf("LoadRepoManifest after save: unexpected error %v", err)
 	}

@@ -1,6 +1,7 @@
 package fileops
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -23,7 +24,12 @@ func NewCopier() *Copier {
 }
 
 // CopyDirectory recursively copies a directory
-func (c *Copier) CopyDirectory(src, dst string) error {
+func (c *Copier) CopyDirectory(ctx context.Context, src, dst string) error {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	// Get source directory info
 	srcInfo, err := os.Stat(src)
 	if err != nil {
@@ -41,6 +47,11 @@ func (c *Copier) CopyDirectory(src, dst string) error {
 
 	// Walk source directory
 	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		// Check context on each iteration
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
+
 		if err != nil {
 			return err
 		}
@@ -76,17 +87,22 @@ func (c *Copier) CopyDirectory(src, dst string) error {
 		}
 
 		// Handle files
-		return c.copyFile(path, dstPath, info.Mode())
+		return c.copyFile(ctx, path, dstPath, info.Mode())
 	})
 }
 
 // CopyFile copies a single file
-func CopyFile(src, dst string) error {
-	return NewCopier().copyFile(src, dst, 0644)
+func CopyFile(ctx context.Context, src, dst string) error {
+	return NewCopier().copyFile(ctx, src, dst, 0644)
 }
 
 // copyFile copies a single file with permissions
-func (c *Copier) copyFile(src, dst string, mode os.FileMode) error {
+func (c *Copier) copyFile(ctx context.Context, src, dst string, mode os.FileMode) error {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	// Open source file
 	srcFile, err := os.Open(src)
 	if err != nil {
@@ -140,7 +156,12 @@ func isHidden(name string) bool {
 }
 
 // CreateBackup creates a backup of the specified directory
-func CreateBackup(src, backupDir string) error {
+func CreateBackup(ctx context.Context, src, backupDir string) error {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	// Create backup directory
 	if err := os.MkdirAll(backupDir, 0755); err != nil {
 		return fmt.Errorf("failed to create backup directory: %w", err)
@@ -148,7 +169,7 @@ func CreateBackup(src, backupDir string) error {
 
 	// Copy directory to backup
 	copier := NewCopier()
-	if err := copier.CopyDirectory(src, backupDir); err != nil {
+	if err := copier.CopyDirectory(ctx, src, backupDir); err != nil {
 		return fmt.Errorf("failed to copy to backup: %w", err)
 	}
 
@@ -183,7 +204,12 @@ func NewUpdater(sourceDir, targetDir string) *Updater {
 }
 
 // UpdateFile updates a single file from source to target
-func (u *Updater) UpdateFile(relPath string) error {
+func (u *Updater) UpdateFile(ctx context.Context, relPath string) error {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	srcPath := filepath.Join(u.sourceDir, relPath)
 	dstPath := filepath.Join(u.targetDir, relPath)
 
@@ -199,7 +225,7 @@ func (u *Updater) UpdateFile(relPath string) error {
 	}
 
 	// Copy file
-	return NewCopier().copyFile(srcPath, dstPath, srcInfo.Mode())
+	return NewCopier().copyFile(ctx, srcPath, dstPath, srcInfo.Mode())
 }
 
 func timeNow() string {

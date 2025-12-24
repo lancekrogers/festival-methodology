@@ -1,12 +1,14 @@
 package fileops
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestCopyFile(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 
 	// Create source file
@@ -18,7 +20,7 @@ func TestCopyFile(t *testing.T) {
 
 	// Copy file
 	dstPath := filepath.Join(tmpDir, "dest.txt")
-	if err := CopyFile(srcPath, dstPath); err != nil {
+	if err := CopyFile(ctx, srcPath, dstPath); err != nil {
 		t.Fatalf("CopyFile failed: %v", err)
 	}
 
@@ -34,6 +36,7 @@ func TestCopyFile(t *testing.T) {
 }
 
 func TestCopyDirectory(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 
 	// Create source directory structure
@@ -58,7 +61,7 @@ func TestCopyDirectory(t *testing.T) {
 	// Copy directory
 	dstDir := filepath.Join(tmpDir, "dest")
 	copier := NewCopier()
-	if err := copier.CopyDirectory(srcDir, dstDir); err != nil {
+	if err := copier.CopyDirectory(ctx, srcDir, dstDir); err != nil {
 		t.Fatalf("CopyDirectory failed: %v", err)
 	}
 
@@ -73,6 +76,24 @@ func TestCopyDirectory(t *testing.T) {
 		if string(content) != expectedContent {
 			t.Errorf("Content mismatch for %s", path)
 		}
+	}
+}
+
+func TestCopyDirectoryCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	tmpDir := t.TempDir()
+	srcDir := filepath.Join(tmpDir, "source")
+	if err := os.MkdirAll(srcDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	dstDir := filepath.Join(tmpDir, "dest")
+	copier := NewCopier()
+	err := copier.CopyDirectory(ctx, srcDir, dstDir)
+	if err == nil {
+		t.Error("Expected error for cancelled context")
 	}
 }
 
@@ -97,6 +118,7 @@ func TestExists(t *testing.T) {
 }
 
 func TestCreateBackup(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 
 	// Create source directory
@@ -113,7 +135,7 @@ func TestCreateBackup(t *testing.T) {
 
 	// Create backup
 	backupDir := filepath.Join(tmpDir, "backup")
-	if err := CreateBackup(srcDir, backupDir); err != nil {
+	if err := CreateBackup(ctx, srcDir, backupDir); err != nil {
 		t.Fatalf("CreateBackup failed: %v", err)
 	}
 
@@ -127,5 +149,22 @@ func TestCreateBackup(t *testing.T) {
 	manifestFile := filepath.Join(backupDir, "manifest.json")
 	if !Exists(manifestFile) {
 		t.Error("Manifest file not created")
+	}
+}
+
+func TestCreateBackupCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	tmpDir := t.TempDir()
+	srcDir := filepath.Join(tmpDir, "source")
+	if err := os.MkdirAll(srcDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	backupDir := filepath.Join(tmpDir, "backup")
+	err := CreateBackup(ctx, srcDir, backupDir)
+	if err == nil {
+		t.Error("Expected error for cancelled context")
 	}
 }

@@ -3,6 +3,7 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -30,13 +31,13 @@ func NewTUICommand() *cobra.Command {
 		Use:   "tui",
 		Short: "Interactive UI for creating festivals, phases, sequences, and tasks",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runTUI()
+			return runTUI(cmd.Context())
 		},
 	}
 	return cmd
 }
 
-func runTUI() error {
+func runTUI(ctx context.Context) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	cwd, _ := os.Getwd()
 
@@ -44,7 +45,7 @@ func runTUI() error {
 	if _, err := tpl.FindFestivalsRoot(cwd); err != nil {
 		display.Warning("No festivals/ directory detected.")
 		if display.Confirm("Initialize a new festival workspace here?") {
-			if err := shared.RunInit(".", &shared.InitOpts{}); err != nil {
+			if err := shared.RunInit(ctx, ".", &shared.InitOpts{}); err != nil {
 				return err
 			}
 		} else {
@@ -85,7 +86,7 @@ func runTUI() error {
 				return err
 			}
 		case 5:
-			if err := tuiGenerateFestivalGoal(display); err != nil {
+			if err := tuiGenerateFestivalGoal(ctx, display); err != nil {
 				return err
 			}
 		default:
@@ -235,7 +236,7 @@ func tuiPlanFestivalWizard(display *ui.UI) error {
 	return nil
 }
 
-func tuiGenerateFestivalGoal(display *ui.UI) error {
+func tuiGenerateFestivalGoal(ctx context.Context, display *ui.UI) error {
 	cwd, _ := os.Getwd()
 	if _, err := tpl.LocalTemplateRoot(cwd); err != nil {
 		return err
@@ -259,7 +260,7 @@ func tuiGenerateFestivalGoal(display *ui.UI) error {
 	}
 	// Use apply to render template to destination
 	destPath := filepath.Join(festDir, "FESTIVAL_GOAL.md")
-	return shared.RunApply(&shared.ApplyOpts{TemplatePath: "FESTIVAL_GOAL_TEMPLATE.md", DestPath: destPath, VarsFile: varsFile})
+	return shared.RunApply(ctx, &shared.ApplyOpts{TemplatePath: "FESTIVAL_GOAL_TEMPLATE.md", DestPath: destPath, VarsFile: varsFile})
 }
 
 func tuiCreatePhase(display *ui.UI) error {

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -72,7 +73,11 @@ func ConfigDir() string {
 }
 
 // Load loads configuration from file
-func Load(customPath string) (*Config, error) {
+func Load(ctx context.Context, customPath string) (*Config, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	configPath := customPath
 	if configPath == "" {
 		configPath = filepath.Join(ConfigDir(), ConfigFileName)
@@ -103,7 +108,11 @@ func Load(customPath string) (*Config, error) {
 }
 
 // Save saves configuration to file
-func Save(cfg *Config) error {
+func Save(ctx context.Context, cfg *Config) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	configDir := ConfigDir()
 	configPath := filepath.Join(configDir, ConfigFileName)
 

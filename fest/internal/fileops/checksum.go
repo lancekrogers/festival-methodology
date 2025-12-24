@@ -1,6 +1,7 @@
 package fileops
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -37,10 +38,20 @@ type ChecksumSource struct {
 }
 
 // GenerateChecksums generates checksums for all files in a directory
-func GenerateChecksums(rootPath string) (map[string]ChecksumEntry, error) {
+func GenerateChecksums(ctx context.Context, rootPath string) (map[string]ChecksumEntry, error) {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	checksums := make(map[string]ChecksumEntry)
 
 	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
+		// Check context on each iteration
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
+
 		if err != nil {
 			return err
 		}
@@ -62,7 +73,7 @@ func GenerateChecksums(rootPath string) (map[string]ChecksumEntry, error) {
 		}
 
 		// Calculate checksum
-		hash, err := calculateFileChecksum(path)
+		hash, err := calculateFileChecksum(ctx, path)
 		if err != nil {
 			return fmt.Errorf("failed to checksum %s: %w", relPath, err)
 		}
@@ -81,7 +92,12 @@ func GenerateChecksums(rootPath string) (map[string]ChecksumEntry, error) {
 }
 
 // LoadChecksums loads checksums from a JSON file
-func LoadChecksums(path string) (map[string]ChecksumEntry, error) {
+func LoadChecksums(ctx context.Context, path string) (map[string]ChecksumEntry, error) {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read checksum file: %w", err)
@@ -101,7 +117,12 @@ func LoadChecksums(path string) (map[string]ChecksumEntry, error) {
 }
 
 // SaveChecksums saves checksums to a JSON file
-func SaveChecksums(path string, checksums map[string]ChecksumEntry) error {
+func SaveChecksums(ctx context.Context, path string, checksums map[string]ChecksumEntry) error {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	checksumData := ChecksumData{
 		Version: "1.0.0",
 		Created: time.Now(),
@@ -155,7 +176,12 @@ func CompareChecksums(stored, current map[string]ChecksumEntry) (unchanged, modi
 }
 
 // calculateFileChecksum calculates SHA256 checksum of a file
-func calculateFileChecksum(path string) (string, error) {
+func calculateFileChecksum(ctx context.Context, path string) (string, error) {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	file, err := os.Open(path)
 	if err != nil {
 		return "", err
@@ -206,8 +232,8 @@ func shouldSkipFile(path, rootPath string) bool {
 }
 
 // VerifyChecksum verifies a file against its stored checksum
-func VerifyChecksum(path string, expected string) (bool, error) {
-	actual, err := calculateFileChecksum(path)
+func VerifyChecksum(ctx context.Context, path string, expected string) (bool, error) {
+	actual, err := calculateFileChecksum(ctx, path)
 	if err != nil {
 		return false, err
 	}

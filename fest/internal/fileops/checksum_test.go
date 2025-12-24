@@ -1,6 +1,7 @@
 package fileops
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -8,6 +9,7 @@ import (
 )
 
 func TestGenerateChecksums(t *testing.T) {
+	ctx := context.Background()
 	// Create temp directory
 	tmpDir := t.TempDir()
 
@@ -30,7 +32,7 @@ func TestGenerateChecksums(t *testing.T) {
 	}
 
 	// Generate checksums
-	checksums, err := GenerateChecksums(tmpDir)
+	checksums, err := GenerateChecksums(ctx, tmpDir)
 	if err != nil {
 		t.Fatalf("GenerateChecksums failed: %v", err)
 	}
@@ -53,7 +55,19 @@ func TestGenerateChecksums(t *testing.T) {
 	}
 }
 
+func TestGenerateChecksumsCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	tmpDir := t.TempDir()
+	_, err := GenerateChecksums(ctx, tmpDir)
+	if err == nil {
+		t.Error("Expected error for cancelled context")
+	}
+}
+
 func TestSaveAndLoadChecksums(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 	checksumFile := filepath.Join(tmpDir, "checksums.json")
 
@@ -74,12 +88,12 @@ func TestSaveAndLoadChecksums(t *testing.T) {
 	}
 
 	// Save checksums
-	if err := SaveChecksums(checksumFile, original); err != nil {
+	if err := SaveChecksums(ctx, checksumFile, original); err != nil {
 		t.Fatalf("SaveChecksums failed: %v", err)
 	}
 
 	// Load checksums
-	loaded, err := LoadChecksums(checksumFile)
+	loaded, err := LoadChecksums(ctx, checksumFile)
 	if err != nil {
 		t.Fatalf("LoadChecksums failed: %v", err)
 	}
@@ -103,6 +117,18 @@ func TestSaveAndLoadChecksums(t *testing.T) {
 				t.Errorf("Original flag mismatch for %s", path)
 			}
 		}
+	}
+}
+
+func TestSaveChecksumsCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	tmpDir := t.TempDir()
+	checksumFile := filepath.Join(tmpDir, "checksums.json")
+	err := SaveChecksums(ctx, checksumFile, map[string]ChecksumEntry{})
+	if err == nil {
+		t.Error("Expected error for cancelled context")
 	}
 }
 
@@ -139,5 +165,43 @@ func TestCompareChecksums(t *testing.T) {
 	// Check deleted
 	if len(deleted) != 1 || deleted[0] != "deleted.txt" {
 		t.Errorf("Unexpected deleted files: %v", deleted)
+	}
+}
+
+func TestVerifyChecksum(t *testing.T) {
+	ctx := context.Background()
+	tmpDir := t.TempDir()
+
+	// Create test file
+	testFile := filepath.Join(tmpDir, "test.txt")
+	content := []byte("test content")
+	if err := os.WriteFile(testFile, content, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Generate the actual checksum
+	checksums, err := GenerateChecksums(ctx, tmpDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedHash := checksums["test.txt"].Hash
+
+	// Verify with correct hash
+	match, err := VerifyChecksum(ctx, testFile, expectedHash)
+	if err != nil {
+		t.Fatalf("VerifyChecksum failed: %v", err)
+	}
+	if !match {
+		t.Error("Expected checksum to match")
+	}
+
+	// Verify with incorrect hash
+	match, err = VerifyChecksum(ctx, testFile, "wrong_hash")
+	if err != nil {
+		t.Fatalf("VerifyChecksum failed: %v", err)
+	}
+	if match {
+		t.Error("Expected checksum not to match")
 	}
 }

@@ -1,6 +1,10 @@
 package commands
 
-import "github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+import (
+	"context"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+)
 
 func init() {
 	// Register command execution hooks so tui package can call them
@@ -15,8 +19,8 @@ func init() {
 
 // Hook implementations that convert shared.XxxOpts to internal XxxOptions
 
-func runInitHook(path string, opts *shared.InitOpts) error {
-	return RunInit(path, &InitOptions{
+func runInitHook(ctx context.Context, path string, opts *shared.InitOpts) error {
+	return RunInit(ctx, path, &InitOptions{
 		From:        opts.From,
 		Minimal:     opts.Minimal,
 		NoChecksums: opts.NoChecksums,
@@ -65,8 +69,8 @@ func runCreateTaskHook(opts *shared.CreateTaskOpts) error {
 	})
 }
 
-func runApplyHook(opts *shared.ApplyOpts) error {
-	return RunApply(&ApplyOptions{
+func runApplyHook(ctx context.Context, opts *shared.ApplyOpts) error {
+	return RunApply(ctx, &ApplyOptions{
 		TemplateID:   opts.TemplateID,
 		TemplatePath: opts.TemplatePath,
 		DestPath:     opts.DestPath,
