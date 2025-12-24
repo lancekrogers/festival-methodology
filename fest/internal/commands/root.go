@@ -9,6 +9,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/navigation"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/structure"
+	understandcmd "github.com/lancekrogers/festival-methodology/fest/internal/commands/understand"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/validation"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
@@ -108,7 +109,7 @@ func init() {
 	rootCmd.AddCommand(NewTaskCommand())
 
 	// Methodology learning command
-	rootCmd.AddCommand(NewUnderstandCommand())
+	rootCmd.AddCommand(understandcmd.NewUnderstandCommand())
 
 	// Validation command
 	rootCmd.AddCommand(validation.NewValidateCommand())
