@@ -10,6 +10,10 @@ var verbose bool
 // This is set by the root command initialization.
 var noColor bool
 
+// configFile holds the path to the config file.
+// This is set by the root command initialization.
+var configFile string
+
 // Option types for command execution.
 // These are defined here so both commands and tui packages can use them
 // without creating import cycles.
@@ -131,4 +135,14 @@ func SetNoColor(v bool) {
 // IsNoColor returns the global no-color flag value.
 func IsNoColor() bool {
 	return noColor
+}
+
+// SetConfigFile sets the global config file path.
+func SetConfigFile(c string) {
+	configFile = c
+}
+
+// GetConfigFile returns the global config file path.
+func GetConfigFile() string {
+	return configFile
 }

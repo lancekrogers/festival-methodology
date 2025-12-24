@@ -1,4 +1,4 @@
-package commands
+package system
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/github"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -28,14 +29,17 @@ func NewSyncCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "sync",
-		Short: "Download latest festival templates from GitHub",
-		Long: `Download the latest festival templates from GitHub to ~/.config/fest/
-		
-This command fetches the complete festivals/ directory structure from the
-configured repository and stores it locally for use with init and update commands.`,
-		Example: `  fest sync                          # Use defaults from config
-  fest sync --source github.com/user/repo  # Sync from specific repo
-  fest sync --force                       # Overwrite existing cache`,
+		Short: "System: Download latest fest templates from GitHub",
+		Long: `Download the latest fest methodology templates from GitHub to ~/.config/fest/
+
+This is a SYSTEM command that maintains fest itself, not your festival content.
+It fetches the complete .festival/ template structure from the configured
+repository and stores it locally for use with 'fest init' and 'fest system update'.
+
+Run this periodically to get the latest methodology templates and documentation.`,
+		Example: `  fest system sync                          # Use defaults from config
+  fest system sync --source github.com/user/repo  # Sync from specific repo
+  fest system sync --force                       # Overwrite existing cache`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runSync(opts)
 		},
@@ -56,10 +60,10 @@ func runSync(opts *syncOptions) error {
 	targetDir := filepath.Join(config.ConfigDir(), "festivals")
 
 	// Create UI handler
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	// Load configuration
-	cfg, err := config.Load(configFile)
+	cfg, err := config.Load(shared.GetConfigFile())
 	if err != nil && opts.source == "" {
 		return fmt.Errorf("no config found and no --source specified: %w", err)
 	}
@@ -96,7 +100,7 @@ func runSync(opts *syncOptions) error {
 		}
 
 		if !hasUpdates {
-			display.Success("Festival templates are up to date!")
+			display.Success("Fest templates are up to date!")
 			return nil
 		}
 
@@ -139,7 +143,7 @@ func runSync(opts *syncOptions) error {
 		}
 	}
 
-	display.Success("Successfully synced festival templates to %s", targetDir)
+	display.Success("Successfully synced fest templates to %s", targetDir)
 	return nil
 }
 

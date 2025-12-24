@@ -62,7 +62,7 @@ func TestFestCompleteWorkflow(t *testing.T) {
  t.Run("Sync", func(t *testing.T) {
   // Sync should work with local filesystem, not just GitHub
   // For now, test that the command at least runs without crashing
-  output, err := container.RunFest("sync", "--dry-run")
+  output, err := container.RunFest("system", "sync", "--dry-run")
   // We expect this might fail since no source is configured, but it shouldn't crash
   if err != nil {
    // Check that it's a known error, not a crash
@@ -361,12 +361,16 @@ func TestFestCompleteWorkflow(t *testing.T) {
   require.Contains(t, output, "Commands", "Help output should list commands")
 
   // Test help for specific commands
-  commands := []string{"init", "sync", "renumber", "reorder", "remove", "count"}
+  commands := []string{"init", "system", "renumber", "reorder", "remove", "count"}
   for _, cmd := range commands {
    output, err = container.RunFest(cmd, "--help")
    require.NoError(t, err, "%s help should not fail", cmd)
    require.Contains(t, output, cmd, "Help should mention the command: %s", cmd)
   }
+  // Test system subcommand help
+  output, err = container.RunFest("system", "sync", "--help")
+  require.NoError(t, err, "system sync help should not fail")
+  require.Contains(t, output, "sync", "Help should mention sync")
  })
 
  // Test 8: Test count command (should work on created festival)
