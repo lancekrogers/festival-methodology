@@ -352,20 +352,24 @@ my-fest-config/
 
 ## Quality Gates
 
-Quality gates are tasks automatically appended to implementation sequences:
+Quality gates are tasks automatically appended to implementation sequences.
+Configuration is merged from fest.yaml defaults and policy file overrides.
 
 ```bash
-# Show resolved quality gates
-fest task defaults show
+# Show merged quality gates with sources
+fest gates show
 
 # Show gates for a specific phase
-fest task defaults show --phase 002_IMPLEMENT
+fest gates show --phase 002_IMPLEMENT
 
-# Sync gates to sequences
-fest task defaults sync
+# Apply gates to sequences (preview)
+fest gates apply
 
-# Sync with a specific policy variant
-fest task defaults sync --policy backend
+# Apply gates (create task files)
+fest gates apply --approve
+
+# Apply to specific sequence
+fest gates apply --sequence 002_IMPLEMENT/01_core --approve
 ```
 
 ### Gate Policy Format

@@ -104,7 +104,7 @@ Use the CLI to create task files efficiently:
 
 Then add quality gates automatically:
 
-  fest task defaults sync --approve --json
+  fest gates apply --approve
 
 
 VALIDATE YOUR STRUCTURE
@@ -139,7 +139,7 @@ COMMON MISTAKES
 
 3. Missing quality gates
    WRONG: Implementation tasks without testing/review
-   FIX: Run 'fest task defaults sync --approve --json'
+   FIX: Run 'fest gates apply --approve'
 
 4. Not filling templates
    WRONG: Task files with [FILL:] markers still present

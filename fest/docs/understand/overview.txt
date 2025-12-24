@@ -121,7 +121,7 @@ Use the fest CLI instead of manual file creation:
   fest create festival --name "my-project" --goal "Build X" --json
   fest create phase --name "IMPLEMENT" --json
   fest create sequence --name "api" --json
-  fest task defaults sync --approve --json   # Add quality gates
+  fest gates apply --approve                 # Add quality gates
 
 Variables are passed to templates - no post-creation editing needed.
 

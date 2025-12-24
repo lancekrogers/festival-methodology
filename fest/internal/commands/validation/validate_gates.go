@@ -122,12 +122,12 @@ func validateQualityGatesChecks(festivalPath string, result *ValidationResult, a
 					Code:        CodeMissingQualityGate,
 					Path:        relPath,
 					Message:     "Implementation sequence missing quality gates",
-					Fix:         "fest task defaults sync --path " + relPath + " --approve --json",
+					Fix:         "fest gates apply --sequence " + relPath + " --approve",
 					AutoFixable: true,
 				})
 
 				if autoFix {
-					// TODO: Call fest task defaults sync
+					// TODO: Call fest gates apply
 					result.FixesApplied = append(result.FixesApplied, FixApplied{
 						Code:   CodeMissingQualityGate,
 						Path:   relPath,

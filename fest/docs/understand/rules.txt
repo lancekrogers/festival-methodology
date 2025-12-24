@@ -42,7 +42,7 @@ Every IMPLEMENTATION sequence MUST end with these 3 tasks:
     XX+1_code_review.md            ← Reviews implementation quality
     XX+2_review_results_iterate.md ← Addresses review findings
 
-  Use 'fest task defaults sync' to add quality gates automatically.
+  Use 'fest gates apply --approve' to add quality gates automatically.
 
   Excluded sequences (no quality gates needed):
     - *_planning, *_research, *_requirements, *_docs
@@ -63,7 +63,7 @@ WHY THIS MATTERS
 ----------------
 
 This rigid structure enables:
-  • Automated quality gate insertion via 'fest task defaults sync'
+  • Automated quality gate insertion via 'fest gates apply'
   • Consistent navigation across all festivals
   • Parallel task detection and scheduling
   • Progress tracking and reporting

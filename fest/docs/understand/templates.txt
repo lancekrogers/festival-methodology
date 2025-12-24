@@ -106,6 +106,6 @@ EXAMPLE: Full Festival Creation
   fest create task --name "document specs" --json
 
   # Add quality gates to all implementation sequences
-  fest task defaults sync --approve --json
+  fest gates apply --approve
 
 All generated files are pre-filled with correct structure and variables.

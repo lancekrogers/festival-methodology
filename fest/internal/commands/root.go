@@ -112,9 +112,6 @@ func init() {
 	createCmd.AddCommand(NewCreateTaskCommand())
 	rootCmd.AddCommand(createCmd)
 
-	// Task management commands
-	rootCmd.AddCommand(NewTaskCommand())
-
 	// Methodology learning command
 	rootCmd.AddCommand(understandcmd.NewUnderstandCommand())
 

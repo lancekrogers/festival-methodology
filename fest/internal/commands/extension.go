@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/extensions"
+	"github.com/lancekrogers/festival-methodology/fest/internal/gates"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
@@ -62,7 +63,7 @@ func runExtensionList(jsonOutput bool, source, extType string) error {
 
 	// Get festival root if available
 	cwd, _ := os.Getwd()
-	festivalRoot, _ := findFestivalRoot(cwd)
+	festivalRoot, _ := gates.FindFestivalRoot(cwd)
 
 	// Load extensions
 	loader := extensions.NewExtensionLoader()
@@ -146,7 +147,7 @@ func runExtensionInfo(name string, jsonOutput bool) error {
 
 	// Get festival root if available
 	cwd, _ := os.Getwd()
-	festivalRoot, _ := findFestivalRoot(cwd)
+	festivalRoot, _ := gates.FindFestivalRoot(cwd)
 
 	// Load extensions
 	loader := extensions.NewExtensionLoader()

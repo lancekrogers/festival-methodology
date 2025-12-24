@@ -249,38 +249,17 @@ fest understand gates                # Quality gate setup
 
 ## Quality Gate Commands
 
-### fest task defaults
-
-Manage quality gate default tasks.
-
-```bash
-fest task defaults [command] [flags]
-```
-
-#### task defaults: Subcommands
-
-| Command | Description |
-|---------|-------------|
-| `show` | Show current `fest.yaml` configuration |
-| `init` | Create a default `fest.yaml` file |
-| `sync` | Sync quality gate tasks to all sequences |
-| `add` | Add quality gate tasks to specific sequence |
-
-#### task defaults: Examples
-
-```bash
-fest task defaults show              # Show configuration
-fest task defaults init              # Create fest.yaml
-fest task defaults sync              # Sync all sequences
-fest task defaults add ./01_api      # Add to specific sequence
-fest task defaults sync --json       # JSON output
-```
-
----
-
 ### fest gates
 
-Manage hierarchical quality gate policies.
+Manage quality gate policies and create gate task files.
+
+Quality gates are validation steps appended to implementation sequences.
+Configuration is merged from multiple sources with precedence:
+1. Built-in defaults
+2. `fest.yaml` `quality_gates.tasks`
+3. Festival-level policy (`.festival/gates.yml`)
+4. Phase-level override (`.fest.gates.yml`)
+5. Sequence-level override (`.fest.gates.yml`)
 
 ```bash
 fest gates [command] [flags]
@@ -290,20 +269,23 @@ fest gates [command] [flags]
 
 | Command | Description |
 |---------|-------------|
+| `show` | Show merged gate policy with sources |
 | `list` | List available named policies |
-| `show` | Show effective gate policy |
-| `apply` | Apply a named gate policy |
-| `init` | Initialize an override file |
+| `apply` | Create quality gate task files in sequences |
+| `init` | Initialize fest.yaml or override file |
 | `validate` | Validate gate configuration |
 
 #### gates: Examples
 
 ```bash
+fest gates show                      # Show merged policy
+fest gates show --json               # JSON output with sources
 fest gates list                      # List all policies
-fest gates list --json               # JSON output
-fest gates show                      # Show effective policy
-fest gates apply minimal             # Apply named policy
-fest gates init                      # Create override file
+fest gates apply                     # Preview gate creation (dry-run)
+fest gates apply --approve           # Create gate task files
+fest gates apply --sequence 002_IMPLEMENT/01_core --approve
+fest gates init                      # Create fest.yaml
+fest gates init --phase 002_IMPLEMENT  # Create phase override
 ```
 
 #### gates: JSON Output

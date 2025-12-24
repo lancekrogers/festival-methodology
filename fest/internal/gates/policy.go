@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"gopkg.in/yaml.v3"
 )
 
@@ -253,4 +254,74 @@ func (p *GatePolicy) Clone() *GatePolicy {
 		}
 	}
 	return clone
+}
+
+// GateTaskFromQualityGateTask converts a config.QualityGateTask to a GateTask.
+// This bridges the fest.yaml configuration with the gates system.
+func GateTaskFromQualityGateTask(qt config.QualityGateTask) GateTask {
+	task := GateTask{
+		ID:       qt.ID,
+		Template: qt.Template,
+		Name:     qt.Name,
+		Enabled:  qt.Enabled,
+	}
+	if qt.Customizations != nil {
+		task.Customizations = make(map[string]any)
+		for k, v := range qt.Customizations {
+			task.Customizations[k] = v
+		}
+	}
+	return task
+}
+
+// LoadGatesFromFestConfig loads gate tasks from a festival's fest.yaml file.
+// Returns the tasks, excluded patterns, and whether quality gates are enabled.
+func LoadGatesFromFestConfig(festivalPath string) ([]GateTask, []string, bool, error) {
+	cfg, err := config.LoadFestivalConfig(festivalPath)
+	if err != nil {
+		return nil, nil, false, fmt.Errorf("failed to load festival config: %w", err)
+	}
+
+	if !cfg.QualityGates.Enabled {
+		return nil, nil, false, nil
+	}
+
+	tasks := make([]GateTask, 0, len(cfg.QualityGates.Tasks))
+	for _, qt := range cfg.QualityGates.Tasks {
+		task := GateTaskFromQualityGateTask(qt)
+		task.Source = &PolicySource{
+			Level: PolicyLevelFestival,
+			Path:  filepath.Join(festivalPath, config.FestivalConfigFileName),
+			Name:  "fest.yaml",
+		}
+		tasks = append(tasks, task)
+	}
+
+	return tasks, cfg.ExcludedPatterns, true, nil
+}
+
+// GatePolicyFromFestConfig creates a GatePolicy from a festival's fest.yaml file.
+// This allows fest.yaml to be treated as a policy source in the hierarchy.
+func GatePolicyFromFestConfig(festivalPath string) (*GatePolicy, error) {
+	tasks, excludePatterns, enabled, err := LoadGatesFromFestConfig(festivalPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if !enabled {
+		return nil, nil
+	}
+
+	return &GatePolicy{
+		Version:         1,
+		Name:            "fest.yaml",
+		Description:     "Quality gates from festival configuration",
+		Append:          tasks,
+		ExcludePatterns: excludePatterns,
+		Source: &PolicySource{
+			Level: PolicyLevelFestival,
+			Path:  filepath.Join(festivalPath, config.FestivalConfigFileName),
+			Name:  "fest.yaml",
+		},
+	}, nil
 }

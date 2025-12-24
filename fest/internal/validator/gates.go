@@ -65,7 +65,7 @@ func ValidateQualityGates(festivalPath string) ([]Issue, error) {
 					Code:        CodeMissingQualityGate,
 					Path:        rel,
 					Message:     "Implementation sequence missing quality gates",
-					Fix:         fmt.Sprintf("fest task defaults sync --path %s --approve --json", rel),
+					Fix:         fmt.Sprintf("fest gates apply --sequence %s --approve", rel),
 					AutoFixable: true,
 				})
 			}

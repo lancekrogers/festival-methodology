@@ -349,7 +349,7 @@ func addSuggestions(result *ValidationResult) {
 	}
 	if hasMissingGates {
 		result.Suggestions = append(result.Suggestions,
-			"Run 'fest task defaults sync --approve' to add quality gates")
+			"Run 'fest gates apply --approve' to add quality gates")
 	}
 	if hasUnfilledTemplates {
 		result.Suggestions = append(result.Suggestions,

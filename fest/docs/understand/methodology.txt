@@ -34,7 +34,7 @@ Phases are guidelines, not rigid requirements. Adapt to your needs.
 ----------------
 
 Every implementation sequence ends with testing, review, and iteration tasks.
-Use 'fest task defaults sync' to add these automatically.
+Use 'fest gates apply --approve' to add these automatically.
 
 5. Step-Based Progress
 ----------------------

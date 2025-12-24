@@ -64,7 +64,7 @@ NEXT STEPS after creating a sequence:
   fest create task --name "implement" --json
 
   # Add quality gates
-  fest task defaults sync --approve --json
+  fest gates apply --approve
 
 Run 'fest validate tasks' to verify task files exist.`,
 		RunE: func(cmd *cobra.Command, args []string) error {

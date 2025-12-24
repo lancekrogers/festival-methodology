@@ -226,7 +226,7 @@ func RunCreateTask(opts *CreateTaskOptions) error {
 	fmt.Println()
 	fmt.Println("   Next steps:")
 	fmt.Println("   • Add more tasks: fest create task --name \"next_step\"")
-	fmt.Println("   • Add quality gates: fest task defaults sync --approve")
+	fmt.Println("   • Add quality gates: fest gates apply --approve")
 	return nil
 }
 

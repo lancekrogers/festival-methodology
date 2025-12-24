@@ -46,7 +46,7 @@ The CLI is self-documenting. Use --help instead of reading docs:
   fest --help                    # All commands
   fest create --help             # Create subcommands
   fest create festival --help    # Specific command details
-  fest task defaults --help      # Quality gate management
+  fest gates --help              # Quality gate management
 
 JSON output provides structured responses:
 

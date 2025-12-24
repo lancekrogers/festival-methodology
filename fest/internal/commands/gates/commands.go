@@ -91,41 +91,47 @@ func runGatesShow(ctx context.Context, cmd *cobra.Command, phase, sequence strin
 		return fmt.Errorf("creating policy registry: %w", err)
 	}
 
-	loader, err := gatescore.NewHierarchicalLoader(festivalsRoot, registry)
+	// Use ConfigMerger to show merged configuration from fest.yaml + policy files
+	merger, err := gatescore.NewConfigMerger(festivalsRoot, registry)
 	if err != nil {
-		return fmt.Errorf("creating hierarchical loader: %w", err)
+		return fmt.Errorf("creating config merger: %w", err)
 	}
 
-	var effective *gatescore.EffectivePolicy
+	opts := gatescore.DefaultMergeOptions()
+	var merged *gatescore.MergedPolicy
 	if sequencePath != "" {
-		effective, err = loader.LoadForSequence(ctx, festivalPath, phasePath, sequencePath)
+		merged, err = merger.MergeForSequence(ctx, festivalPath, phasePath, sequencePath, opts)
 	} else if phasePath != "" {
-		effective, err = loader.LoadForPhase(ctx, festivalPath, phasePath)
+		merged, err = merger.MergeForPhase(ctx, festivalPath, phasePath, opts)
 	} else {
-		effective, err = loader.LoadForFestival(ctx, festivalPath)
+		merged, err = merger.MergeForFestival(ctx, festivalPath, opts)
 	}
 	if err != nil {
-		return fmt.Errorf("loading effective policy: %w", err)
+		return fmt.Errorf("loading merged policy: %w", err)
 	}
 
 	if jsonOutput {
-		return printGatesShowJSON(cmd, effective)
+		return printGatesShowMergedJSON(cmd, merged)
 	}
-	return printGatesShowTable(cmd, effective, phase, sequence)
+	return printGatesShowMergedTable(cmd, merged, phase, sequence)
 }
 
-func printGatesShowJSON(cmd *cobra.Command, effective *gatescore.EffectivePolicy) error {
+func printGatesShowMergedJSON(cmd *cobra.Command, merged *gatescore.MergedPolicy) error {
 	output := struct {
-		Gates   []gateOutput   `json:"gates"`
-		Sources []sourceOutput `json:"sources"`
-		Level   string         `json:"level"`
+		Gates           []gateOutput   `json:"gates"`
+		Sources         []sourceOutput `json:"sources"`
+		Level           string         `json:"level"`
+		FestYAMLEnabled bool           `json:"fest_yaml_enabled"`
+		ExcludePatterns []string       `json:"exclude_patterns,omitempty"`
 	}{
-		Gates:   make([]gateOutput, 0, len(effective.Gates)),
-		Sources: make([]sourceOutput, 0, len(effective.Sources)),
-		Level:   string(effective.Level),
+		Gates:           make([]gateOutput, 0, len(merged.Gates)),
+		Sources:         make([]sourceOutput, 0, len(merged.Sources)),
+		Level:           string(merged.Level),
+		FestYAMLEnabled: merged.FestYAMLEnabled,
+		ExcludePatterns: merged.ExcludePatterns,
 	}
 
-	for _, gate := range effective.Gates {
+	for _, gate := range merged.Gates {
 		g := gateOutput{
 			ID:       gate.ID,
 			Template: gate.Template,
@@ -139,7 +145,7 @@ func printGatesShowJSON(cmd *cobra.Command, effective *gatescore.EffectivePolicy
 		output.Gates = append(output.Gates, g)
 	}
 
-	for _, src := range effective.Sources {
+	for _, src := range merged.Sources {
 		output.Sources = append(output.Sources, sourceOutput{
 			Level: string(src.Level),
 			Path:  src.Path,
@@ -152,7 +158,7 @@ func printGatesShowJSON(cmd *cobra.Command, effective *gatescore.EffectivePolicy
 	return enc.Encode(output)
 }
 
-func printGatesShowTable(cmd *cobra.Command, effective *gatescore.EffectivePolicy, phase, sequence string) error {
+func printGatesShowMergedTable(cmd *cobra.Command, merged *gatescore.MergedPolicy, phase, sequence string) error {
 	out := cmd.OutOrStdout()
 
 	// Header
@@ -162,14 +168,26 @@ func printGatesShowTable(cmd *cobra.Command, effective *gatescore.EffectivePolic
 	} else if phase != "" {
 		location = phase
 	}
-	fmt.Fprintf(out, "Effective gates for %s:\n\n", location)
+	fmt.Fprintf(out, "Merged gates for %s:\n\n", location)
+
+	// Show configuration sources
+	fmt.Fprintf(out, "Configuration sources:\n")
+	for _, src := range merged.Sources {
+		if src.Path != "" {
+			fmt.Fprintf(out, "  [%s] %s\n", src.Level, src.Path)
+		} else {
+			fmt.Fprintf(out, "  [%s] %s\n", src.Level, src.Name)
+		}
+	}
+	fmt.Fprintln(out)
 
 	// Table header
+	fmt.Fprintf(out, "Active gates:\n")
 	fmt.Fprintf(out, "  %-24s %-12s %-30s\n", "Gate", "Source", "Template")
 	fmt.Fprintf(out, "  %-24s %-12s %-30s\n", strings.Repeat("-", 24), strings.Repeat("-", 12), strings.Repeat("-", 30))
 
 	// Gates
-	activeGates := effective.GetActiveGates()
+	activeGates := merged.GetActiveGates()
 	for _, gate := range activeGates {
 		source := "builtin"
 		if gate.Source != nil {
@@ -183,13 +201,26 @@ func printGatesShowTable(cmd *cobra.Command, effective *gatescore.EffectivePolic
 	}
 
 	// Show removed gates if any
-	for _, gate := range effective.Gates {
+	hasRemoved := false
+	for _, gate := range merged.Gates {
 		if gate.Removed {
+			if !hasRemoved {
+				fmt.Fprintf(out, "\nRemoved gates:\n")
+				hasRemoved = true
+			}
 			source := "unknown"
 			if gate.Source != nil {
 				source = string(gate.Source.Level)
 			}
-			fmt.Fprintf(out, "  %-24s [%-10s] (removed)\n", gate.ID, source)
+			fmt.Fprintf(out, "  %-24s [%-10s] (removed at %s level)\n", gate.ID, source, source)
+		}
+	}
+
+	// Show exclude patterns if any
+	if len(merged.ExcludePatterns) > 0 {
+		fmt.Fprintf(out, "\nExclude patterns:\n")
+		for _, pattern := range merged.ExcludePatterns {
+			fmt.Fprintf(out, "  %s\n", pattern)
 		}
 	}
 
