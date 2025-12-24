@@ -13,12 +13,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type applyOptions struct {
-	templateID   string
-	templatePath string
-	destPath     string
-	varsFile     string
-	jsonOutput   bool
+// ApplyOptions holds options for the apply command.
+type ApplyOptions struct {
+	TemplateID   string
+	TemplatePath string
+	DestPath     string
+	VarsFile     string
+	JSONOutput   bool
 }
 
 type applyResult struct {
@@ -34,29 +35,30 @@ type applyResult struct {
 
 // NewApplyCommand creates the 'apply' command (copy-first single template)
 func NewApplyCommand() *cobra.Command {
-	opts := &applyOptions{}
+	opts := &ApplyOptions{}
 
 	cmd := &cobra.Command{
 		Use:   "apply",
 		Short: "Apply a local template to a destination file (copy or render)",
 		Long:  "Apply a local template (from .festival/templates) to a destination file. Copy if no variables provided; render if variables exist.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runApply(opts)
+			return RunApply(opts)
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.templateID, "template-id", "", "Template ID or alias (from frontmatter)")
-	cmd.Flags().StringVar(&opts.templatePath, "template-path", "", "Path to template file (relative to .festival/templates or absolute)")
-	cmd.Flags().StringVar(&opts.destPath, "to", "", "Destination file path (required)")
-	cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON file providing variables for rendering")
-	cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
+	cmd.Flags().StringVar(&opts.TemplateID, "template-id", "", "Template ID or alias (from frontmatter)")
+	cmd.Flags().StringVar(&opts.TemplatePath, "template-path", "", "Path to template file (relative to .festival/templates or absolute)")
+	cmd.Flags().StringVar(&opts.DestPath, "to", "", "Destination file path (required)")
+	cmd.Flags().StringVar(&opts.VarsFile, "vars-file", "", "JSON file providing variables for rendering")
+	cmd.Flags().BoolVar(&opts.JSONOutput, "json", false, "Emit JSON output")
 
 	cmd.MarkFlagRequired("to")
 
 	return cmd
 }
 
-func runApply(opts *applyOptions) error {
+// RunApply executes the apply command logic.
+func RunApply(opts *ApplyOptions) error {
 	display := ui.New(noColor, verbose)
 	cwd, _ := os.Getwd()
 
@@ -68,8 +70,8 @@ func runApply(opts *applyOptions) error {
 
 	// Load vars if provided
 	var vars map[string]interface{}
-	if strings.TrimSpace(opts.varsFile) != "" {
-		v, err := loadVarsFile(opts.varsFile)
+	if strings.TrimSpace(opts.VarsFile) != "" {
+		v, err := loadVarsFile(opts.VarsFile)
 		if err != nil {
 			return emitApplyError(opts, fmt.Errorf("failed to read vars-file: %w", err))
 		}
@@ -79,8 +81,8 @@ func runApply(opts *applyOptions) error {
 	}
 
 	// Locate template path
-	tpath := opts.templatePath
-	tmplID := opts.templateID
+	tpath := opts.TemplatePath
+	tmplID := opts.TemplateID
 	if tpath == "" && tmplID == "" {
 		return emitApplyError(opts, fmt.Errorf("must provide --template-id or --template-path"))
 	}
@@ -104,7 +106,7 @@ func runApply(opts *applyOptions) error {
 	}
 
 	// Ensure destination parent exists
-	if err := os.MkdirAll(filepath.Dir(opts.destPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(opts.DestPath), 0755); err != nil {
 		return emitApplyError(opts, fmt.Errorf("failed to create destination directory: %w", err))
 	}
 
@@ -152,16 +154,16 @@ func runApply(opts *applyOptions) error {
 		if err != nil {
 			return emitApplyError(opts, fmt.Errorf("failed to render: %w", err))
 		}
-		if err := os.WriteFile(opts.destPath, []byte(out), 0644); err != nil {
+		if err := os.WriteFile(opts.DestPath, []byte(out), 0644); err != nil {
 			return emitApplyError(opts, fmt.Errorf("failed to write destination: %w", err))
 		}
 	} else {
-		if err := fileops.CopyFile(tpath, opts.destPath); err != nil {
+		if err := fileops.CopyFile(tpath, opts.DestPath); err != nil {
 			return emitApplyError(opts, fmt.Errorf("failed to copy: %w", err))
 		}
 	}
 
-	if opts.jsonOutput {
+	if opts.JSONOutput {
 		return emitApplyJSON(opts, applyResult{
 			OK:     true,
 			Action: "apply",
@@ -169,17 +171,17 @@ func runApply(opts *applyOptions) error {
 				"id":   tmplID,
 				"path": tpath,
 			},
-			Destination: opts.destPath,
+			Destination: opts.DestPath,
 			Mode:        mode,
 		})
 	}
 
-	display.Success("Applied template → %s (%s)", opts.destPath, mode)
+	display.Success("Applied template → %s (%s)", opts.DestPath, mode)
 	return nil
 }
 
-func emitApplyError(opts *applyOptions, err error) error {
-	if opts.jsonOutput {
+func emitApplyError(opts *ApplyOptions, err error) error {
+	if opts.JSONOutput {
 		_ = emitApplyJSON(opts, applyResult{
 			OK:     false,
 			Action: "apply",
@@ -193,7 +195,7 @@ func emitApplyError(opts *applyOptions, err error) error {
 	return err
 }
 
-func emitApplyJSON(opts *applyOptions, res applyResult) error {
+func emitApplyJSON(opts *ApplyOptions, res applyResult) error {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
 	return enc.Encode(res)

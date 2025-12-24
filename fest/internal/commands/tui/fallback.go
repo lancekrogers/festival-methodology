@@ -1,6 +1,6 @@
 //go:build no_charm
 
-package commands
+package tui
 
 import (
 	"fmt"
@@ -8,10 +8,21 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	// Register TUI hooks with the shared package
+	shared.NewTUICommand = NewTUICommand
+	shared.StartCreateTUI = StartCreateTUI
+	shared.StartCreateFestivalTUI = StartCreateFestivalTUI
+	shared.StartCreatePhaseTUI = StartCreatePhaseTUI
+	shared.StartCreateSequenceTUI = StartCreateSequenceTUI
+	shared.StartCreateTaskTUI = StartCreateTaskTUI
+}
 
 // NewTUICommand launches an interactive text UI for common actions
 func NewTUICommand() *cobra.Command {
@@ -26,14 +37,14 @@ func NewTUICommand() *cobra.Command {
 }
 
 func runTUI() error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	cwd, _ := os.Getwd()
 
 	// Ensure we are inside a festivals workspace; if not, offer to init
 	if _, err := tpl.FindFestivalsRoot(cwd); err != nil {
 		display.Warning("No festivals/ directory detected.")
 		if display.Confirm("Initialize a new festival workspace here?") {
-			if err := runInit(".", &initOptions{}); err != nil {
+			if err := shared.RunInit(".", &shared.InitOpts{}); err != nil {
 				return err
 			}
 		} else {
@@ -138,14 +149,14 @@ func tuiCreateFestival(display *ui.UI) error {
 		return err
 	}
 
-	opts := &createFestivalOptions{
-		name:     name,
-		goal:     goal,
-		tags:     tags,
-		varsFile: varsFile,
-		dest:     dest,
+	opts := &shared.CreateFestivalOpts{
+		Name:     name,
+		Goal:     goal,
+		Tags:     tags,
+		VarsFile: varsFile,
+		Dest:     dest,
 	}
-	return runCreateFestival(opts)
+	return shared.RunCreateFestival(opts)
 }
 
 // Wizard: create festival then optionally add phases
@@ -191,7 +202,7 @@ func tuiPlanFestivalWizard(display *ui.UI) error {
 		return err
 	}
 
-	if err := runCreateFestival(&createFestivalOptions{name: name, goal: goal, tags: tags, varsFile: varsFile, dest: dest}); err != nil {
+	if err := shared.RunCreateFestival(&shared.CreateFestivalOpts{Name: name, Goal: goal, Tags: tags, VarsFile: varsFile, Dest: dest}); err != nil {
 		return err
 	}
 
@@ -213,7 +224,7 @@ func tuiPlanFestivalWizard(display *ui.UI) error {
 			if ptype == "" {
 				ptype = "planning"
 			}
-			if err := runCreatePhase(&createPhaseOptions{after: after, name: pname, phaseType: ptype, path: festivalDir}); err != nil {
+			if err := shared.RunCreatePhase(&shared.CreatePhaseOpts{After: after, Name: pname, PhaseType: ptype, Path: festivalDir}); err != nil {
 				return err
 			}
 			after++
@@ -248,7 +259,7 @@ func tuiGenerateFestivalGoal(display *ui.UI) error {
 	}
 	// Use apply to render template to destination
 	destPath := filepath.Join(festDir, "FESTIVAL_GOAL.md")
-	return runApply(&applyOptions{templatePath: "FESTIVAL_GOAL_TEMPLATE.md", destPath: destPath, varsFile: varsFile})
+	return shared.RunApply(&shared.ApplyOpts{TemplatePath: "FESTIVAL_GOAL_TEMPLATE.md", DestPath: destPath, VarsFile: varsFile})
 }
 
 func tuiCreatePhase(display *ui.UI) error {
@@ -303,14 +314,14 @@ func tuiCreatePhase(display *ui.UI) error {
 		return err
 	}
 
-	opts := &createPhaseOptions{
-		after:     after,
-		name:      name,
-		phaseType: phaseType,
-		path:      path,
-		varsFile:  varsFile,
+	opts := &shared.CreatePhaseOpts{
+		After:     after,
+		Name:      name,
+		PhaseType: phaseType,
+		Path:      path,
+		VarsFile:  varsFile,
 	}
-	return runCreatePhase(opts)
+	return shared.RunCreatePhase(opts)
 }
 
 func tuiCreateSequence(display *ui.UI) error {
@@ -341,7 +352,7 @@ func tuiCreateSequence(display *ui.UI) error {
 				path := strings.TrimSpace(display.PromptDefault("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)", "."))
 				rp, rerr := resolvePhaseDirInput(path, cwd)
 				if rerr != nil {
-					return emitCreateSequenceError(&createSequenceOptions{name: name, path: path}, fmt.Errorf("invalid phase: %w", rerr))
+					return fmt.Errorf("invalid phase: %w", rerr)
 				}
 				resolvedPhase = rp
 			}
@@ -349,7 +360,7 @@ func tuiCreateSequence(display *ui.UI) error {
 			path := strings.TrimSpace(display.PromptDefault("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)", "."))
 			rp, rerr := resolvePhaseDirInput(path, cwd)
 			if rerr != nil {
-				return emitCreateSequenceError(&createSequenceOptions{name: name, path: path}, fmt.Errorf("invalid phase: %w", rerr))
+				return fmt.Errorf("invalid phase: %w", rerr)
 			}
 			resolvedPhase = rp
 		}
@@ -380,13 +391,13 @@ func tuiCreateSequence(display *ui.UI) error {
 		return err
 	}
 
-	opts := &createSequenceOptions{
-		after:    after,
-		name:     name,
-		path:     resolvedPhase,
-		varsFile: varsFile,
+	opts := &shared.CreateSequenceOpts{
+		After:    after,
+		Name:     name,
+		Path:     resolvedPhase,
+		VarsFile: varsFile,
 	}
-	return runCreateSequence(opts)
+	return shared.RunCreateSequence(opts)
 }
 
 func tuiCreateTask(display *ui.UI) error {
@@ -416,7 +427,7 @@ func tuiCreateTask(display *ui.UI) error {
 				path := strings.TrimSpace(display.PromptDefault("Sequence (dir or number, e.g., 01 or 01_requirements)", "."))
 				rs, rerr := resolveSequenceDirInput(path, cwd)
 				if rerr != nil {
-					return emitCreateTaskError(&createTaskOptions{name: name, path: path}, fmt.Errorf("invalid sequence: %w", rerr))
+					return fmt.Errorf("invalid sequence: %w", rerr)
 				}
 				resolvedSeq = rs
 			}
@@ -424,7 +435,7 @@ func tuiCreateTask(display *ui.UI) error {
 			path := strings.TrimSpace(display.PromptDefault("Sequence (dir or number, e.g., 01 or 01_requirements)", "."))
 			rs, rerr := resolveSequenceDirInput(path, cwd)
 			if rerr != nil {
-				return emitCreateTaskError(&createTaskOptions{name: name, path: path}, fmt.Errorf("invalid sequence: %w", rerr))
+				return fmt.Errorf("invalid sequence: %w", rerr)
 			}
 			resolvedSeq = rs
 		}
@@ -442,7 +453,7 @@ func tuiCreateTask(display *ui.UI) error {
 				p := strings.TrimSpace(display.PromptDefault("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)", "."))
 				rp, rerr := resolvePhaseDirInput(p, cwd)
 				if rerr != nil {
-					return emitCreateTaskError(&createTaskOptions{name: name, path: p}, fmt.Errorf("invalid phase: %w", rerr))
+					return fmt.Errorf("invalid phase: %w", rerr)
 				}
 				chosenPhase = rp
 			}
@@ -450,7 +461,7 @@ func tuiCreateTask(display *ui.UI) error {
 			p := strings.TrimSpace(display.PromptDefault("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)", "."))
 			rp, rerr := resolvePhaseDirInput(p, cwd)
 			if rerr != nil {
-				return emitCreateTaskError(&createTaskOptions{name: name, path: p}, fmt.Errorf("invalid phase: %w", rerr))
+				return fmt.Errorf("invalid phase: %w", rerr)
 			}
 			chosenPhase = rp
 		}
@@ -466,7 +477,7 @@ func tuiCreateTask(display *ui.UI) error {
 				s := strings.TrimSpace(display.PromptDefault("Sequence (dir or number, e.g., 01 or 01_requirements)", "."))
 				rs, rerr := resolveSequenceDirInput(s, chosenPhase)
 				if rerr != nil {
-					return emitCreateTaskError(&createTaskOptions{name: name, path: s}, fmt.Errorf("invalid sequence: %w", rerr))
+					return fmt.Errorf("invalid sequence: %w", rerr)
 				}
 				resolvedSeq = rs
 			}
@@ -474,7 +485,7 @@ func tuiCreateTask(display *ui.UI) error {
 			s := strings.TrimSpace(display.PromptDefault("Sequence (dir or number, e.g., 01 or 01_requirements)", "."))
 			rs, rerr := resolveSequenceDirInput(s, chosenPhase)
 			if rerr != nil {
-				return emitCreateTaskError(&createTaskOptions{name: name, path: s}, fmt.Errorf("invalid sequence: %w", rerr))
+				return fmt.Errorf("invalid sequence: %w", rerr)
 			}
 			resolvedSeq = rs
 		}
@@ -506,18 +517,18 @@ func tuiCreateTask(display *ui.UI) error {
 		return err
 	}
 
-	opts := &createTaskOptions{
-		after:    after,
-		name:     name,
-		path:     resolvedSeq,
-		varsFile: varsFile,
+	opts := &shared.CreateTaskOpts{
+		After:    after,
+		Names:    []string{name},
+		Path:     resolvedSeq,
+		VarsFile: varsFile,
 	}
-	return runCreateTask(opts)
+	return shared.RunCreateTask(opts)
 }
 
 // StartCreateTUI shows a create-only menu (fallback implementation)
 func StartCreateTUI() error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	for {
 		choice := display.Choose("Create what?", []string{
 			"Festival",
@@ -553,21 +564,21 @@ func StartCreateTUI() error {
 }
 
 func StartCreateFestivalTUI() error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	return tuiCreateFestival(display)
 }
 
 func StartCreatePhaseTUI() error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	return tuiCreatePhase(display)
 }
 
 func StartCreateSequenceTUI() error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	return tuiCreateSequence(display)
 }
 
 func StartCreateTaskTUI() error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	return tuiCreateTask(display)
 }

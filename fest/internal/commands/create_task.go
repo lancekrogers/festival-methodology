@@ -7,18 +7,20 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
-type createTaskOptions struct {
-	after      int
-	names      []string
-	path       string
-	varsFile   string
-	jsonOutput bool
+// CreateTaskOptions holds options for the create task command.
+type CreateTaskOptions struct {
+	After      int
+	Names      []string
+	Path       string
+	VarsFile   string
+	JSONOutput bool
 }
 
 type createTaskResult struct {
@@ -33,7 +35,7 @@ type createTaskResult struct {
 
 // NewCreateTaskCommand adds 'create task'
 func NewCreateTaskCommand() *cobra.Command {
-	opts := &createTaskOptions{}
+	opts := &CreateTaskOptions{}
 	cmd := &cobra.Command{
 		Use:   "task",
 		Short: "Insert a new task file in a sequence",
@@ -72,29 +74,30 @@ Run 'fest understand tasks' for detailed guidance on task file creation.
 Run 'fest validate tasks' to verify task files exist in implementation sequences.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flags().NFlag() == 0 {
-				return StartCreateTaskTUI()
+				return shared.StartCreateTaskTUI()
 			}
-			if len(opts.names) == 0 {
+			if len(opts.Names) == 0 {
 				return fmt.Errorf("--name is required (or run without flags to open TUI)")
 			}
 			// Validate all names are non-empty
-			for _, name := range opts.names {
+			for _, name := range opts.Names {
 				if strings.TrimSpace(name) == "" {
 					return fmt.Errorf("task names cannot be empty")
 				}
 			}
-			return runCreateTask(opts)
+			return RunCreateTask(opts)
 		},
 	}
-	cmd.Flags().IntVar(&opts.after, "after", 0, "Insert after this number (0 inserts at beginning)")
-	cmd.Flags().StringSliceVar(&opts.names, "name", nil, "Task name(s) - can be specified multiple times for batch creation")
-	cmd.Flags().StringVar(&opts.path, "path", ".", "Path to sequence directory (directory containing numbered task files)")
-	cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON vars for rendering")
-	cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
+	cmd.Flags().IntVar(&opts.After, "after", 0, "Insert after this number (0 inserts at beginning)")
+	cmd.Flags().StringSliceVar(&opts.Names, "name", nil, "Task name(s) - can be specified multiple times for batch creation")
+	cmd.Flags().StringVar(&opts.Path, "path", ".", "Path to sequence directory (directory containing numbered task files)")
+	cmd.Flags().StringVar(&opts.VarsFile, "vars-file", "", "JSON vars for rendering")
+	cmd.Flags().BoolVar(&opts.JSONOutput, "json", false, "Emit JSON output")
 	return cmd
 }
 
-func runCreateTask(opts *createTaskOptions) error {
+// RunCreateTask executes the create task command logic.
+func RunCreateTask(opts *CreateTaskOptions) error {
 	display := ui.New(noColor, verbose)
 	cwd, _ := os.Getwd()
 
@@ -104,15 +107,15 @@ func runCreateTask(opts *createTaskOptions) error {
 		return emitCreateTaskError(opts, err)
 	}
 
-	absPath, err := filepath.Abs(opts.path)
+	absPath, err := filepath.Abs(opts.Path)
 	if err != nil {
 		return emitCreateTaskError(opts, fmt.Errorf("invalid path: %w", err))
 	}
 
 	// Load vars once for all tasks
 	vars := map[string]interface{}{}
-	if strings.TrimSpace(opts.varsFile) != "" {
-		v, err := loadVarsFile(opts.varsFile)
+	if strings.TrimSpace(opts.VarsFile) != "" {
+		v, err := loadVarsFile(opts.VarsFile)
 		if err != nil {
 			return emitCreateTaskError(opts, fmt.Errorf("failed to read vars-file: %w", err))
 		}
@@ -127,10 +130,10 @@ func runCreateTask(opts *createTaskOptions) error {
 	// Track all created tasks for output
 	var createdTasks []map[string]interface{}
 	var createdPaths []string
-	currentAfter := opts.after
+	currentAfter := opts.After
 
 	// Create each task sequentially
-	for _, name := range opts.names {
+	for _, name := range opts.Names {
 		// Insert task at current position
 		ren := festival.NewRenumberer(festival.RenumberOptions{AutoApprove: true, Quiet: true})
 		if err := ren.InsertTask(absPath, currentAfter, name); err != nil {
@@ -196,7 +199,7 @@ func runCreateTask(opts *createTaskOptions) error {
 	}
 
 	// Output results
-	if opts.jsonOutput {
+	if opts.JSONOutput {
 		result := createTaskResult{
 			OK:       true,
 			Action:   "create_task",
@@ -227,8 +230,8 @@ func runCreateTask(opts *createTaskOptions) error {
 	return nil
 }
 
-func emitCreateTaskError(opts *createTaskOptions, err error) error {
-	if opts.jsonOutput {
+func emitCreateTaskError(opts *CreateTaskOptions, err error) error {
+	if opts.JSONOutput {
 		_ = emitCreateTaskJSON(opts, createTaskResult{
 			OK:     false,
 			Action: "create_task",
@@ -242,7 +245,7 @@ func emitCreateTaskError(opts *createTaskOptions, err error) error {
 	return err
 }
 
-func emitCreateTaskJSON(opts *createTaskOptions, res createTaskResult) error {
+func emitCreateTaskJSON(opts *CreateTaskOptions, res createTaskResult) error {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
 	return enc.Encode(res)

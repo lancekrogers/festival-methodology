@@ -13,6 +13,9 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/validation"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
+
+	// Import tui package for its init() side effects (registers hooks)
+	_ "github.com/lancekrogers/festival-methodology/fest/internal/commands/tui"
 )
 
 var (
@@ -84,7 +87,9 @@ func init() {
 	// Add commands
 	rootCmd.AddCommand(NewSyncCommand())
 	rootCmd.AddCommand(NewInitCommand())
-	rootCmd.AddCommand(NewTUICommand())
+	if shared.NewTUICommand != nil {
+		rootCmd.AddCommand(shared.NewTUICommand())
+	}
 	rootCmd.AddCommand(NewUpdateCommand())
 	rootCmd.AddCommand(NewCountCommand())
 	rootCmd.AddCommand(structure.NewRenumberCommand())
@@ -96,7 +101,7 @@ func init() {
 	// Grouped under 'create'
 	createCmd := &cobra.Command{Use: "create", Short: "Create festival elements",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return StartCreateTUI()
+			return shared.StartCreateTUI()
 		},
 	}
 	createCmd.AddCommand(NewCreateFestivalCommand())
