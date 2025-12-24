@@ -1,36 +1,42 @@
 # Test recipes
-binary_name := "fest"
-main_path := "cmd/fest/main.go"
-bin_dir := "bin"
+BUILDTOOL := "go run ./internal/buildutil"
 
-# Show available test commands (default)
+# Show available test commands
 [private]
 default:
     @just --list --unsorted --justfile {{source_file()}}
 
-# Run unit tests only
+# Run all tests (unit + integration) with visual dashboard
+[no-cd]
+all:
+    @{{BUILDTOOL}} all
+
+# Run unit tests with visual dashboard
 [no-cd]
 unit:
-    go test -v ./...
-    @echo "✅ Unit tests passed"
+    @{{BUILDTOOL}} test
 
-# Run tests with coverage report
+# Run unit tests with verbose output
+[no-cd]
+unit-verbose:
+    @{{BUILDTOOL}} -v test
+
+# Run integration tests with visual dashboard
+[no-cd]
+integration:
+    @{{BUILDTOOL}} integration
+
+# Run integration tests with verbose output
+[no-cd]
+integration-verbose:
+    @{{BUILDTOOL}} -v integration
+
+# Run tests with coverage (using go test directly)
 [no-cd]
 coverage:
-    go test -v -cover ./...
+    go test -cover ./...
 
 # Generate HTML coverage report
 [no-cd]
 coverage-html:
     go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html
-
-# Build Linux binary for container testing
-[private, no-cd]
-build-test-binary:
-    GOOS=linux GOARCH=amd64 go build -ldflags '-s -w' -o {{bin_dir}}/linux/{{binary_name}} {{main_path}}
-
-# Run integration tests
-[no-cd]
-integration: build-test-binary
-    go test -v -tags=integration -timeout 10m ./tests/integration/...
-    @echo "✅ Integration tests passed"
