@@ -8,6 +8,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/navigation"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/structure"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/validation"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
 )
@@ -52,8 +53,9 @@ func init() {
 
 	// Enforce being inside a festivals/ tree for most commands
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-		// Sync verbose flag to shared package for subpackages
+		// Sync global flags to shared package for subpackages
 		shared.SetVerbose(verbose)
+		shared.SetNoColor(noColor)
 
 		// Allow root (help/version), init, sync, count, go, shell-init, understand, config, extension, index, gates, and validate to run anywhere
 		// Also allow subcommands of understand, config, extension, index, gates, remove, renumber, reorder, and validate
@@ -108,7 +110,7 @@ func init() {
 	rootCmd.AddCommand(NewUnderstandCommand())
 
 	// Validation command
-	rootCmd.AddCommand(NewValidateCommand())
+	rootCmd.AddCommand(validation.NewValidateCommand())
 
 	// Navigation command
 	rootCmd.AddCommand(navigation.NewGoCommand())
