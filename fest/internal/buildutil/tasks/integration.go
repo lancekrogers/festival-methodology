@@ -30,6 +30,7 @@ type IntegrationResult struct {
 	Duration    time.Duration
 	TestsPassed int
 	TestsFailed int
+	FailedTests []string // Names of failed tests
 }
 
 // Integration runs integration tests
@@ -84,6 +85,7 @@ func Integration(verbose bool) error {
 
 		var pass bool
 		var testsPassed, testsFailed int
+		var failedTests []string
 
 		if verbose {
 			// In verbose mode, show output directly
@@ -181,15 +183,23 @@ func Integration(verbose bool) error {
 					}
 				}
 
-				// Only track top-level tests (not subtests)
-				if event.Test != "" && !strings.Contains(event.Test, "/") {
+				// Track all tests (including subtests for failure reporting)
+				if event.Test != "" {
 					switch event.Action {
 					case "run":
-						currentTest = event.Test
+						if !strings.Contains(event.Test, "/") {
+							currentTest = event.Test
+						}
 					case "pass":
-						testsPassed++
+						if !strings.Contains(event.Test, "/") {
+							testsPassed++
+						}
 					case "fail":
-						testsFailed++
+						// Track all failed tests (including subtests)
+						failedTests = append(failedTests, event.Test)
+						if !strings.Contains(event.Test, "/") {
+							testsFailed++
+						}
 					}
 				}
 				mu.Unlock()
@@ -209,6 +219,7 @@ func Integration(verbose bool) error {
 			Duration:    duration,
 			TestsPassed: testsPassed,
 			TestsFailed: testsFailed,
+			FailedTests: failedTests,
 		})
 
 		if !pass {
@@ -229,30 +240,30 @@ func Integration(verbose bool) error {
 	}
 	totalTests := totalTestsPassed + totalTestsFailed
 
-	// Display summary
-	rows := [][]string{
-		{"Test Suite", "Status", "Time"},
-	}
+	// Display summary - show failed tests as individual rows
+	rows := [][]string{}
+	hasFailures := failures > 0
 
 	for _, r := range results {
-		testCount := r.TestsPassed + r.TestsFailed
-		status := fmt.Sprintf("✓ %d/%d passed", r.TestsPassed, testCount)
-		if !r.Pass {
-			status = fmt.Sprintf("✗ %d/%d failed", r.TestsFailed, testCount)
-		}
-		if ui.ColourEnabled() {
-			if r.Pass {
-				status = ui.Green + status + ui.Reset
-			} else {
-				status = ui.Red + status + ui.Reset
+		if !r.Pass && len(r.FailedTests) > 0 {
+			// Show each failed test as a row
+			for _, testName := range r.FailedTests {
+				status := "✗ FAILED"
+				if ui.ColourEnabled() {
+					status = ui.Red + status + ui.Reset
+				}
+				rows = append(rows, []string{
+					testName,
+					status,
+					"",
+				})
 			}
 		}
+	}
 
-		rows = append(rows, []string{
-			r.Suite,
-			status,
-			fmt.Sprintf("%.2fs", r.Duration.Seconds()),
-		})
+	// Add header only if there are failures to show
+	if hasFailures && len(rows) > 0 {
+		rows = append([][]string{{"Failed Test", "Status", ""}}, rows...)
 	}
 
 	// Add totals row
