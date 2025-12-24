@@ -1,10 +1,11 @@
-package commands
+package config
 
 import (
 	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
@@ -51,7 +52,7 @@ For local paths, a symlink will be created instead.`,
 }
 
 func runConfigAdd(name, source string) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	rm, err := config.NewRepoManager()
 	if err != nil {
@@ -96,7 +97,7 @@ If no name is provided, syncs all configured repos.`,
 }
 
 func runConfigSync(name string) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	rm, err := config.NewRepoManager()
 	if err != nil {
@@ -114,7 +115,7 @@ func runConfigSync(name string) error {
 }
 
 func runConfigSyncAll() error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	rm, err := config.NewRepoManager()
 	if err != nil {
@@ -156,7 +157,7 @@ contents are used for templates, policies, plugins, and extensions.`,
 }
 
 func runConfigUse(name string) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	rm, err := config.NewRepoManager()
 	if err != nil {
@@ -190,7 +191,7 @@ func newConfigShowCommand() *cobra.Command {
 }
 
 func runConfigShow(jsonOutput bool) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	rm, err := config.NewRepoManager()
 	if err != nil {
@@ -258,7 +259,7 @@ func newConfigListCommand() *cobra.Command {
 }
 
 func runConfigList(jsonOutput bool) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	rm, err := config.NewRepoManager()
 	if err != nil {
@@ -330,7 +331,7 @@ For local symlinks, this only removes the symlink (not the original directory).`
 }
 
 func runConfigRemove(name string, force bool) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	rm, err := config.NewRepoManager()
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/gates"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/navigation"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
@@ -116,10 +117,10 @@ func init() {
 	rootCmd.AddCommand(navigation.NewGoCommand())
 
 	// Shell integration command
-	rootCmd.AddCommand(NewShellInitCommand())
+	rootCmd.AddCommand(config.NewShellInitCommand())
 
 	// Config repo management
-	rootCmd.AddCommand(NewConfigCommand())
+	rootCmd.AddCommand(config.NewConfigCommand())
 
 	// Extension management
 	rootCmd.AddCommand(NewExtensionCommand())
