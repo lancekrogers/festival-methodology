@@ -123,13 +123,19 @@ func validateElementOrdering(elements []festival.FestivalElement, parentPath, el
 			if len(missing) == 1 {
 				msg = fmt.Sprintf("%s numbering gap: %s follows %s (missing %s)",
 					elementType, formatNumber(curr, elementType), formatNumber(prev, elementType), formatNumber(missing[0], elementType))
-			} else {
+			} else if len(missing) <= 5 {
+				// Show all missing numbers if 5 or fewer
 				missingStrs := make([]string, len(missing))
 				for i, m := range missing {
 					missingStrs[i] = formatNumber(m, elementType)
 				}
 				msg = fmt.Sprintf("%s numbering gap: %s follows %s (missing %v)",
 					elementType, formatNumber(curr, elementType), formatNumber(prev, elementType), missingStrs)
+			} else {
+				// Show range for large gaps
+				msg = fmt.Sprintf("%s numbering gap: %s follows %s (missing %s-%s, %d total)",
+					elementType, formatNumber(curr, elementType), formatNumber(prev, elementType),
+					formatNumber(missing[0], elementType), formatNumber(missing[len(missing)-1], elementType), len(missing))
 			}
 
 			issues = append(issues, Issue{

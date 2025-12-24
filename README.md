@@ -93,13 +93,13 @@ Based on goal achievement, refine and continue or mark complete.
 
 ## The Three-Level Structure
 
-```
+```text
 Goal: Build E-Commerce Platform
 ├── FESTIVAL_GOAL.md            # Overall success metrics
 ├── Phase 1: Planning
 │   ├── PHASE_GOAL.md           # Planning objectives
 │   └── Sequences with goals
-├── Phase 2: Design  
+├── Phase 2: Design
 │   ├── PHASE_GOAL.md           # Design objectives
 │   └── Sequences with goals
 ├── Phase 3: Implementation
@@ -122,12 +122,14 @@ Festival tasks aren't vague descriptions - they're complete specifications AI ca
 ```markdown
 # Task: 01_implement_user_authentication.md
 
-**Autonomy Level:** high  # Agent can complete independently
+**Autonomy Level:** high # Agent can complete independently
 
 ## Objective
+
 Create JWT-based authentication with email/password login
 
 ## Requirements
+
 - [ ] User registration endpoint
 - [ ] Login with email/password
 - [ ] JWT token generation (15min access, 7day refresh)
@@ -135,6 +137,7 @@ Create JWT-based authentication with email/password login
 - [ ] Rate limiting (5 attempts/minute)
 
 ## Implementation Steps
+
 1. Install dependencies:
    npm install jsonwebtoken bcrypt express-rate-limit
 
@@ -149,12 +152,14 @@ Create JWT-based authentication with email/password login
    - POST /api/auth/logout
 
 ## Validation
+
 - Test registration with: curl -X POST localhost:3000/api/auth/register ...
 - Verify JWT expiration times
 - Check rate limiting blocks after 5 attempts
 - Ensure passwords are hashed, not plain text
 
 ## Deliverables
+
 - [ ] src/routes/auth.js - Authentication endpoints
 - [ ] src/middleware/auth.js - JWT verification
 - [ ] src/models/User.js - User model with password hashing
@@ -231,15 +236,15 @@ Use goal evaluation frameworks to assess progress and determine next steps.
 
 ## Festival vs Other Approaches
 
-| Aspect             | Festival                      | Traditional PM     | Ad-hoc AI          |
-| ------------------ | ----------------------------- | ------------------ | ------------------ |
-| **Focus**          | Goal achievement via tasks    | Task tracking      | Quick answers      |
-| **Task Detail**    | Complete executable specs     | User stories       | Vague prompts      |
-| **Execution Time** | Hours to days                 | Sprint cycles      | Minutes            |
-| **Context**        | Persists in CONTEXT.md        | Meeting notes      | Lost between chats |
-| **AI Autonomy**    | Guided by autonomy levels     | N/A                | Constant prompting |
-| **Collaboration**  | Human-AI task creation        | Human teams        | Human directs      |
-| **Success Metrics**| Built-in evaluation framework | Retrospectives     | Undefined          |
+| Aspect              | Festival                      | Traditional PM | Ad-hoc AI          |
+| ------------------- | ----------------------------- | -------------- | ------------------ |
+| **Focus**           | Goal achievement via tasks    | Task tracking  | Quick answers      |
+| **Task Detail**     | Complete executable specs     | User stories   | Vague prompts      |
+| **Execution Time**  | Hours to days                 | Sprint cycles  | Minutes            |
+| **Context**         | Persists in CONTEXT.md        | Meeting notes  | Lost between chats |
+| **AI Autonomy**     | Guided by autonomy levels     | N/A            | Constant prompting |
+| **Collaboration**   | Human-AI task creation        | Human teams    | Human directs      |
+| **Success Metrics** | Built-in evaluation framework | Retrospectives | Undefined          |
 
 ## Directory Structure
 

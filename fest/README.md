@@ -327,7 +327,7 @@ fest config list
 
 ### Config Repo Structure
 
-```
+```text
 my-fest-config/
 ├── festivals/                    # Overrides for .festival/ structure
 │   └── .festival/

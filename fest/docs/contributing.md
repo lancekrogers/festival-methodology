@@ -29,7 +29,7 @@ just install
 
 ### Directory Structure
 
-```
+```text
 fest/
 ├── cmd/fest/           # Binary entry point
 ├── internal/           # Private packages
@@ -299,7 +299,7 @@ Before submitting a PR, verify:
 - [ ] JSON output uses `internal/response` package
 - [ ] Dependencies injected, not created inline
 
-### Documentation
+### Checklist: Documentation
 
 - [ ] Godoc comments on exported types/functions
 - [ ] Complex logic has inline comments
@@ -318,7 +318,7 @@ Before submitting a PR, verify:
 
 Follow conventional commit format:
 
-```
+```text
 <type>: <description>
 
 [optional body]
@@ -335,7 +335,7 @@ Types:
 
 Examples:
 
-```
+```text
 feat: add gates validate subcommand
 
 fix: handle context cancellation in validator
@@ -357,7 +357,7 @@ test: add context cancellation tests for validator
 
 ---
 
-## Documentation
+## Related Documentation
 
 See these docs for more details:
 
