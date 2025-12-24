@@ -15,6 +15,7 @@ const (
 	CodeNamingConvention   = "naming_convention"
 	CodeUnfilledTemplate   = "unfilled_template"
 	CodeMissingGoal        = "missing_goal"
+	CodeNumberingGap       = "numbering_gap"
 )
 
 // Issue represents a single validation problem

@@ -84,6 +84,47 @@ func ClearProgress() {
 	}
 }
 
+// ProgressWithOutput updates two lines: output line above, progress line below
+func ProgressWithOutput(curr, total int, output, progress string) {
+	screenMutex.Lock()
+	defer screenMutex.Unlock()
+
+	if ColourEnabled() {
+		// Truncate output if too long
+		width := TermWidth()
+		truncatedOutput := strings.TrimSpace(output)
+		maxLen := width - 6 // Account for "  → " prefix and some margin
+		if len(truncatedOutput) > maxLen {
+			truncatedOutput = truncatedOutput[:maxLen-3] + "..."
+		}
+
+		// Move up to output line, clear it, print output
+		// Then move to progress line, clear it, print progress
+		fmt.Printf("\r%s%s  → %s\n\r%s[%d/%d] %s",
+			MoveUp, ClearLine, truncatedOutput,
+			ClearLine, curr, total, progress)
+	} else {
+		// Simple format without ANSI codes - just update progress line
+		fmt.Printf("\r[%d/%d] %s", curr, total, progress)
+	}
+
+	progressMsg = progress
+}
+
+// ClearProgressWithOutput clears the two-line output display
+func ClearProgressWithOutput() {
+	screenMutex.Lock()
+	defer screenMutex.Unlock()
+
+	if ColourEnabled() {
+		// Clear both lines: move up, clear, move down, clear
+		fmt.Printf("%s%s\n%s\n", MoveUp, ClearLine, ClearLine)
+	} else {
+		fmt.Println()
+	}
+	progressMsg = ""
+}
+
 // Task displays a task in progress
 func Task(action, description string) {
 	screenMutex.Lock()

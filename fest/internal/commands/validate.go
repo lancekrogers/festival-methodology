@@ -2,6 +2,7 @@ package commands
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/gates"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
+	"github.com/lancekrogers/festival-methodology/fest/internal/validator"
 	"github.com/spf13/cobra"
 )
 
@@ -31,6 +33,7 @@ const (
 	CodeNamingConvention   = "naming_convention"
 	CodeUnfilledTemplate   = "unfilled_template"
 	CodeMissingGoal        = "missing_goal"
+	CodeNumberingGap       = "numbering_gap"
 )
 
 // ValidationIssue represents a single validation problem
@@ -119,6 +122,7 @@ Use --fix to automatically apply safe fixes (like adding quality gates).`,
 	cmd.AddCommand(newValidateTasksCmd(opts))
 	cmd.AddCommand(newValidateQualityGatesCmd(opts))
 	cmd.AddCommand(newValidateChecklistCmd(opts))
+	cmd.AddCommand(newValidateOrderingCmd(opts))
 
 	return cmd
 }
@@ -273,6 +277,39 @@ Checks (auto-verified where possible):
 	return cmd
 }
 
+func newValidateOrderingCmd(parentOpts *validateOptions) *cobra.Command {
+	opts := &validateOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "ordering [festival-path]",
+		Short: "Validate sequential numbering (gap detection)",
+		Long: `Validate that festival elements are sequentially numbered without gaps.
+
+This checks:
+  • Phases are sequential: 001, 002, 003... (no gaps, must start at 001)
+  • Sequences within each phase: 01, 02, 03... (no gaps, must start at 01)
+  • Tasks within each sequence: 01, 02, 03... (no gaps, must start at 01)
+
+Parallel work (same number) is allowed if items are CONSECUTIVE:
+  VALID:   01_task_a.md, 01_task_b.md, 02_task_c.md
+  INVALID: 01_task_a.md, 02_task_b.md, 01_task_c.md
+
+Gaps break agent execution order - agents rely on sequential numbering
+to determine which phase/sequence/task to work on next.`,
+		Args: cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				opts.path = args[0]
+			}
+			return runValidateOrdering(opts)
+		},
+	}
+
+	cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Output results as JSON")
+
+	return cmd
+}
+
 // resolveFestivalPath resolves the festival root directory
 func resolveFestivalPath(pathArg string) (string, error) {
 	if pathArg != "" {
@@ -379,6 +416,7 @@ func runValidateAll(opts *validateOptions) error {
 	validateTaskFilesChecks(festivalPath, result)
 	validateQualityGatesChecks(festivalPath, result, opts.fix)
 	validateTemplateMarkers(festivalPath, result)
+	validateOrderingChecks(festivalPath, result)
 
 	// Calculate score
 	result.Score = calculateScore(result)
@@ -577,6 +615,48 @@ func runValidateChecklist(opts *validateOptions) error {
 	}
 
 	printChecklistResult(display, result.Checklist)
+	return nil
+}
+
+func runValidateOrdering(opts *validateOptions) error {
+	display := ui.New(noColor, verbose)
+
+	festivalPath, err := resolveFestivalPath(opts.path)
+	if err != nil {
+		return emitValidateError(opts, err)
+	}
+
+	result := &ValidationResult{
+		OK:       true,
+		Action:   "validate_ordering",
+		Festival: filepath.Base(festivalPath),
+		Valid:    true,
+		Issues:   []ValidationIssue{},
+	}
+
+	validateOrderingChecks(festivalPath, result)
+
+	result.Score = calculateScore(result)
+	for _, issue := range result.Issues {
+		if issue.Level == LevelError {
+			result.Valid = false
+			break
+		}
+	}
+
+	if opts.jsonOutput {
+		if !result.Valid {
+			emitValidateJSON(result)
+			return fmt.Errorf("ordering validation failed with %d issue(s)", len(result.Issues))
+		}
+		return emitValidateJSON(result)
+	}
+
+	printValidationSection(display, "ORDERING (Gap Detection)", result.Issues)
+
+	if !result.Valid {
+		return fmt.Errorf("ordering validation failed with %d issue(s)", len(result.Issues))
+	}
 	return nil
 }
 
@@ -834,6 +914,32 @@ func validateTemplateMarkers(festivalPath string, result *ValidationResult) {
 	})
 }
 
+func validateOrderingChecks(festivalPath string, result *ValidationResult) {
+	v := validator.NewOrderingValidator()
+	issues, err := v.Validate(context.Background(), festivalPath)
+	if err != nil {
+		result.Issues = append(result.Issues, ValidationIssue{
+			Level:   LevelError,
+			Code:    "ordering_error",
+			Path:    festivalPath,
+			Message: fmt.Sprintf("Failed to validate ordering: %v", err),
+		})
+		return
+	}
+
+	// Convert validator.Issue to ValidationIssue
+	for _, issue := range issues {
+		result.Issues = append(result.Issues, ValidationIssue{
+			Level:       issue.Level,
+			Code:        issue.Code,
+			Path:        issue.Path,
+			Message:     issue.Message,
+			Fix:         issue.Fix,
+			AutoFixable: issue.AutoFixable,
+		})
+	}
+}
+
 // isNonImplementationPhase checks if a phase is for planning/review rather than implementation
 func isNonImplementationPhase(phaseName string, patterns []string) bool {
 	upperName := strings.ToUpper(phaseName)
@@ -977,6 +1083,7 @@ func addSuggestions(result *ValidationResult) {
 	hasMissingTasks := false
 	hasMissingGates := false
 	hasUnfilledTemplates := false
+	hasNumberingGaps := false
 
 	for _, issue := range result.Issues {
 		switch issue.Code {
@@ -986,6 +1093,8 @@ func addSuggestions(result *ValidationResult) {
 			hasMissingGates = true
 		case CodeUnfilledTemplate:
 			hasUnfilledTemplates = true
+		case CodeNumberingGap:
+			hasNumberingGaps = true
 		}
 	}
 
@@ -1000,6 +1109,10 @@ func addSuggestions(result *ValidationResult) {
 	if hasUnfilledTemplates {
 		result.Suggestions = append(result.Suggestions,
 			"Edit files with [FILL:] markers and replace with actual content")
+	}
+	if hasNumberingGaps {
+		result.Suggestions = append(result.Suggestions,
+			"Run 'fest renumber' to automatically fix numbering gaps")
 	}
 }
 
@@ -1038,12 +1151,14 @@ func printValidationResult(display *ui.UI, festivalPath string, result *Validati
 	taskIssues := filterIssuesByCode(result.Issues, CodeMissingTaskFiles)
 	gateIssues := filterIssuesByCode(result.Issues, CodeMissingQualityGate)
 	templateIssues := filterIssuesByCode(result.Issues, CodeUnfilledTemplate)
+	orderingIssues := filterIssuesByCode(result.Issues, CodeNumberingGap)
 
 	printValidationSection(display, "STRUCTURE", structureIssues)
 	printValidationSection(display, "COMPLETENESS", completenessIssues)
 	printTaskValidationSection(display, taskIssues)
 	printValidationSection(display, "QUALITY GATES", gateIssues)
 	printValidationSection(display, "TEMPLATES", templateIssues)
+	printValidationSection(display, "ORDERING", orderingIssues)
 
 	// Score and summary
 	fmt.Printf("\nScore: %d/100", result.Score)
