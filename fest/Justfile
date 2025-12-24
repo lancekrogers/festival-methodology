@@ -26,12 +26,6 @@ default:
     echo ""
     just --list --unsorted
 
-# Run tests and build
-all:
-    just test unit
-    just test integration
-    just build
-
 # Build fest binary
 build:
     go build -ldflags '-s -w' -o {{bin_dir}}/{{binary_name}} {{main_path}}

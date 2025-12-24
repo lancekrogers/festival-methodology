@@ -3,34 +3,42 @@ binary_name := "fest"
 main_path := "cmd/fest/main.go"
 bin_dir := "bin"
 
-# Show available test commands (default)
+# Show available test commands
 [private]
 default:
     @just --list --unsorted --justfile {{source_file()}}
 
-# Run unit tests only
+# Run all tests (unit + integration)
+[no-cd]
+all: unit integration
+    @echo "✅ All tests passed"
+
+# Run unit tests (quick feedback)
 [no-cd]
 unit:
-    go test -v ./...
-    @echo "✅ Unit tests passed"
+    gotestsum --format pkgname-and-test-fails -- ./...
 
-# Run tests with coverage report
+
+# Run integration tests
+[no-cd]
+integration:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # Build test binary first
+    GOOS=linux GOARCH=amd64 go build -ldflags '-s -w' -o {{bin_dir}}/linux/{{binary_name}} {{main_path}}
+    gotestsum --format pkgname-and-test-fails -- -tags=integration -timeout 10m ./tests/integration/...
+
+# Run tests with coverage
 [no-cd]
 coverage:
-    go test -v -cover ./...
+    gotestsum --format pkgname-and-test-fails -- -cover ./...
 
 # Generate HTML coverage report
 [no-cd]
 coverage-html:
     go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html
 
-# Build Linux binary for container testing
-[private, no-cd]
-build-test-binary:
-    GOOS=linux GOARCH=amd64 go build -ldflags '-s -w' -o {{bin_dir}}/linux/{{binary_name}} {{main_path}}
-
-# Run integration tests
+# Watch mode - rerun tests on file changes
 [no-cd]
-integration: build-test-binary
-    go test -v -tags=integration -timeout 10m ./tests/integration/...
-    @echo "✅ Integration tests passed"
+watch:
+    gotestsum --watch --format pkgname-and-test-fails
