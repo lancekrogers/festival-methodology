@@ -20,12 +20,22 @@ import (
 func NewUnderstandCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "understand",
-		Short: "Learn Festival Methodology",
+		Short: "Learn methodology FIRST - run before executing festival tasks",
 		Long: `Learn about Festival Methodology - a goal-oriented project management
 system designed for AI agent development workflows.
 
-The understand command helps you grasp the methodology so you know
-WHEN and WHY to use specific approaches. For command usage, use --help.
+START HERE if you're new to Festival Methodology:
+  fest understand methodology    Core principles and philosophy
+  fest understand structure      3-level hierarchy explained
+  fest understand tasks          CRITICAL: When to create task files
+
+QUICK REFERENCE:
+  fest understand checklist      Validation checklist before starting
+  fest understand rules          Naming conventions for automation
+  fest understand workflow       Just-in-time reading pattern
+
+The understand command helps you grasp WHEN and WHY to use specific
+approaches. For command syntax, use --help on any command.
 
 Content is pulled from your local .festival/ directory when available,
 ensuring you see the current methodology design and any customizations.`,
@@ -79,8 +89,16 @@ objective but don't know what specific work to perform.`,
 func newUnderstandMethodologyCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "methodology",
-		Short: "Core principles and philosophy",
-		Long:  `Learn the core principles of Festival Methodology including goal-oriented development, requirements-driven implementation, and quality gates.`,
+		Short: "Core principles - START HERE for new agents",
+		Long: `Learn the core principles of Festival Methodology.
+
+This is the STARTING POINT for agents new to Festival Methodology.
+Covers goal-oriented development, requirements-driven implementation,
+and quality gates.
+
+After reading this, proceed to:
+  fest understand structure   - Learn the 3-level hierarchy
+  fest understand tasks       - Learn when to create task files`,
 		Run: func(cmd *cobra.Command, args []string) {
 			printMethodology(findDotFestivalDir())
 		},
@@ -90,8 +108,16 @@ func newUnderstandMethodologyCmd() *cobra.Command {
 func newUnderstandStructureCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "structure",
-		Short: "Three-level hierarchy with scaffold examples",
-		Long:  `Understand the Phases → Sequences → Tasks hierarchy with visual scaffold examples for simple, standard, and complex festivals.`,
+		Short: "3-level hierarchy: Festival → Phase → Sequence → Task",
+		Long: `Understand the Festival Methodology structure.
+
+HIERARCHY:
+  Festival    - A complete project with a goal
+  └─ Phase    - Major milestone (001_PLANNING, 002_IMPLEMENTATION)
+     └─ Sequence - Related tasks grouped together
+        └─ Task   - Individual executable work item
+
+Includes visual scaffold examples for simple, standard, and complex festivals.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			printStructure(findDotFestivalDir())
 		},

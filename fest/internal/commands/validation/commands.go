@@ -85,7 +85,7 @@ func NewValidateCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "validate [festival-path]",
-		Short: "Validate festival methodology compliance",
+		Short: "Check festival structure - find missing task files and issues",
 		Long: `Validate that a festival follows the methodology correctly.
 
 Unlike 'fest index validate' which checks index-to-filesystem sync,
