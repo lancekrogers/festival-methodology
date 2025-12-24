@@ -76,7 +76,7 @@ vars.json:
 
 Template access:
 
-```
+```text
 Author: {{.Custom.author}}
 Priority: {{.Custom.priority}}
 ```
@@ -145,7 +145,7 @@ When rendering templates, fest searches in this order:
 
 Templates are indexed by ID/alias from the `.festival/templates/` directory:
 
-```
+```text
 .festival/
 └── templates/
     ├── TASK_TEMPLATE.md          # template_id: TASK
@@ -263,15 +263,15 @@ Templates use these marker patterns for content that needs filling:
 
 ### FILL Markers
 
-```markdown
+```text
 [FILL: description]
 ```
 
 Indicates content that must be replaced by the user.
 
-### Template Variables
+### Markers: Template Variables
 
-```markdown
+```text
 {{.VariableName}}
 ```
 
@@ -292,7 +292,7 @@ fest validate           # Includes template validation
 
 ### Conditional Content
 
-```markdown
+```text
 {{if .PhaseObjective}}
 ## Objective
 
@@ -302,7 +302,7 @@ fest validate           # Includes template validation
 
 ### Iterating Lists
 
-```markdown
+```text
 ## Dependencies
 
 {{range .SequenceDependencies}}
@@ -312,13 +312,13 @@ fest validate           # Includes template validation
 
 ### Default Values
 
-```markdown
+```text
 Priority: {{if .Custom.priority}}{{.Custom.priority}}{{else}}medium{{end}}
 ```
 
 ### String Manipulation
 
-```markdown
+```text
 # {{.PhaseName | upper}}
 ```
 

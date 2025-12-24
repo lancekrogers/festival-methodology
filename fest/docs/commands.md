@@ -21,11 +21,11 @@ These flags are available on all commands:
 
 Create a new festival scaffold under `festivals/`.
 
-```
+```bash
 fest create festival --name NAME [flags]
 ```
 
-#### Flags
+#### create festival: Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -36,7 +36,7 @@ fest create festival --name NAME [flags]
 | `--vars-file` | | JSON file with variables |
 | `--json` | `false` | Emit JSON output |
 
-#### Examples
+#### create festival: Examples
 
 ```bash
 # Create festival in active/
@@ -49,7 +49,7 @@ fest create festival --name "ui-redesign" --dest planned --goal "Modernize UI co
 fest create festival --name "test" --json
 ```
 
-#### JSON Output
+#### create festival: JSON Output
 
 ```json
 {
@@ -71,11 +71,11 @@ fest create festival --name "test" --json
 
 Insert a new phase into a festival.
 
-```
+```bash
 fest create phase --festival FESTIVAL --name NAME [flags]
 ```
 
-#### Flags
+#### create phase: Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -85,7 +85,7 @@ fest create phase --festival FESTIVAL --name NAME [flags]
 | `--goal` | | Phase goal |
 | `--json` | `false` | Emit JSON output |
 
-#### Examples
+#### create phase: Examples
 
 ```bash
 fest create phase --festival my-fest --name IMPLEMENTATION
@@ -98,11 +98,11 @@ fest create phase --festival ./active/my-fest --name PLANNING --position 1
 
 Insert a new sequence into a phase.
 
-```
+```bash
 fest create sequence --phase PHASE --name NAME [flags]
 ```
 
-#### Flags
+#### create sequence: Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -112,7 +112,7 @@ fest create sequence --phase PHASE --name NAME [flags]
 | `--goal` | | Sequence goal |
 | `--json` | `false` | Emit JSON output |
 
-#### Examples
+#### create sequence: Examples
 
 ```bash
 fest create sequence --phase ./001_PLANNING --name requirements
@@ -125,11 +125,11 @@ fest create sequence --phase ./002_IMPLEMENTATION --name api_layer --position 1
 
 Insert new task file(s) into a sequence.
 
-```
+```bash
 fest create task --sequence SEQUENCE --name NAME [flags]
 ```
 
-#### Flags
+#### create task: Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -139,7 +139,7 @@ fest create task --sequence SEQUENCE --name NAME [flags]
 | `--batch` | `false` | Create multiple tasks from names |
 | `--json` | `false` | Emit JSON output |
 
-#### Examples
+#### create task: Examples
 
 ```bash
 fest create task --sequence ./01_requirements --name gather_specs
@@ -154,18 +154,18 @@ fest create task --sequence ./01_api --name "design,implement,test" --batch
 
 Validate festival methodology compliance.
 
-```
+```bash
 fest validate [festival-path] [flags]
 ```
 
-#### Flags
+#### validate: Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--fix` | `false` | Automatically apply safe fixes |
 | `--json` | `false` | Output results as JSON |
 
-#### Subcommands
+#### validate: Subcommands
 
 | Command | Description |
 |---------|-------------|
@@ -175,7 +175,7 @@ fest validate [festival-path] [flags]
 | `quality-gates` | Validate quality gates exist |
 | `checklist` | Post-completion questionnaire |
 
-#### Examples
+#### validate: Examples
 
 ```bash
 fest validate                        # Validate current festival
@@ -186,7 +186,7 @@ fest validate tasks                  # Only check task files
 fest validate quality-gates --fix    # Add missing quality gates
 ```
 
-#### JSON Output
+#### validate: JSON Output
 
 ```json
 {
@@ -216,11 +216,11 @@ fest validate quality-gates --fix    # Add missing quality gates
 
 Learn Festival Methodology concepts.
 
-```
+```bash
 fest understand [topic] [flags]
 ```
 
-#### Topics
+#### understand: Topics
 
 | Topic | Description |
 |-------|-------------|
@@ -236,7 +236,7 @@ fest understand [topic] [flags]
 | `resources` | What's in `.festival/` |
 | `checklist` | Quick validation checklist |
 
-#### Examples
+#### understand: Examples
 
 ```bash
 fest understand                      # Show all topics
@@ -253,11 +253,11 @@ fest understand gates                # Quality gate setup
 
 Manage quality gate default tasks.
 
-```
+```bash
 fest task defaults [command] [flags]
 ```
 
-#### Subcommands
+#### task defaults: Subcommands
 
 | Command | Description |
 |---------|-------------|
@@ -266,7 +266,7 @@ fest task defaults [command] [flags]
 | `sync` | Sync quality gate tasks to all sequences |
 | `add` | Add quality gate tasks to specific sequence |
 
-#### Examples
+#### task defaults: Examples
 
 ```bash
 fest task defaults show              # Show configuration
@@ -282,11 +282,11 @@ fest task defaults sync --json       # JSON output
 
 Manage hierarchical quality gate policies.
 
-```
+```bash
 fest gates [command] [flags]
 ```
 
-#### Subcommands
+#### gates: Subcommands
 
 | Command | Description |
 |---------|-------------|
@@ -296,7 +296,7 @@ fest gates [command] [flags]
 | `init` | Initialize an override file |
 | `validate` | Validate gate configuration |
 
-#### Examples
+#### gates: Examples
 
 ```bash
 fest gates list                      # List all policies
@@ -306,7 +306,7 @@ fest gates apply minimal             # Apply named policy
 fest gates init                      # Create override file
 ```
 
-#### JSON Output (list)
+#### gates: JSON Output
 
 ```json
 {
@@ -335,11 +335,11 @@ fest gates init                      # Create override file
 
 Navigate to festivals directory.
 
-```
+```bash
 fest go [target] [flags]
 ```
 
-#### Flags
+#### go: Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -347,7 +347,7 @@ fest go [target] [flags]
 | `--all` | `false` | List all registered festivals |
 | `--json` | `false` | Output in JSON format |
 
-#### Shell Integration
+#### go: Shell Integration
 
 Add to `~/.zshrc` or `~/.bashrc`:
 
@@ -363,7 +363,7 @@ fgo 002          # Navigate to phase 002
 fgo 2/1          # Navigate to phase 2, sequence 1
 ```
 
-#### Without Shell Integration
+#### go: Without Shell Integration
 
 ```bash
 cd $(fest go)
@@ -378,11 +378,11 @@ cd $(fest go 002)
 
 Reorder phases, sequences, or tasks.
 
-```
+```bash
 fest reorder [phase|sequence|task] [flags]
 ```
 
-#### Flags
+#### reorder: Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -392,7 +392,7 @@ fest reorder [phase|sequence|task] [flags]
 | `--force` | `false` | Skip confirmation prompts |
 | `--verbose` | `false` | Show detailed output |
 
-#### Examples
+#### reorder: Examples
 
 ```bash
 fest reorder phase --from 3 --to 1           # Move phase 3 to position 1
@@ -407,11 +407,11 @@ fest reorder phase --from 2 --to 1 --skip-dry-run  # Apply immediately
 
 Renumber elements after manual changes.
 
-```
+```bash
 fest renumber [phase|sequence|task] [flags]
 ```
 
-#### Flags
+#### renumber: Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -421,7 +421,7 @@ fest renumber [phase|sequence|task] [flags]
 | `--start` | `1` | Starting number |
 | `--verbose` | `false` | Show detailed output |
 
-#### Examples
+#### renumber: Examples
 
 ```bash
 fest renumber phase                          # Renumber all phases
@@ -436,11 +436,11 @@ fest renumber phase --start 100              # Start from 100
 
 Remove elements and renumber.
 
-```
+```bash
 fest remove [phase|sequence|task] [flags]
 ```
 
-#### Flags
+#### remove: Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -449,7 +449,7 @@ fest remove [phase|sequence|task] [flags]
 | `--backup` | `false` | Create backup before removal |
 | `--verbose` | `false` | Show detailed output |
 
-#### Examples
+#### remove: Examples
 
 ```bash
 fest remove phase 003                        # Remove phase 003
@@ -463,11 +463,11 @@ fest remove task --sequence ./01_api 03      # Remove task 03
 
 Insert elements and renumber.
 
-```
+```bash
 fest insert [phase|sequence|task] [flags]
 ```
 
-#### Flags
+#### insert: Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -475,7 +475,7 @@ fest insert [phase|sequence|task] [flags]
 | `--backup` | `false` | Create backup before changes |
 | `--verbose` | `false` | Show detailed output |
 
-#### Examples
+#### insert: Examples
 
 ```bash
 fest insert phase --name TESTING --at 2
@@ -491,11 +491,11 @@ fest insert task --sequence ./01_api --name validate --at 2
 
 Apply a template to a destination file.
 
-```
+```bash
 fest apply --to DEST [flags]
 ```
 
-#### Flags
+#### apply: Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -505,7 +505,7 @@ fest apply --to DEST [flags]
 | `--vars-file` | | JSON file with variables |
 | `--json` | `false` | Emit JSON output |
 
-#### Examples
+#### apply: Examples
 
 ```bash
 fest apply --template-id TASK --to ./01_new_task.md
@@ -518,11 +518,11 @@ fest apply --template-path ./custom.md --to ./output.md --vars-file vars.json
 
 Count tokens in files or directories.
 
-```
+```bash
 fest count [file|directory] [flags]
 ```
 
-#### Flags
+#### count: Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -535,7 +535,7 @@ fest count [file|directory] [flags]
 | `--chars-per-token` | `4` | Characters per token ratio |
 | `--words-per-token` | `0.75` | Words per token ratio |
 
-#### Examples
+#### count: Examples
 
 ```bash
 fest count document.md               # Count tokens in file
@@ -545,7 +545,7 @@ fest count -r ./src                  # Count directory recursively
 fest count -r --json ./project       # Directory with JSON output
 ```
 
-#### JSON Output
+#### count: JSON Output
 
 ```json
 {
@@ -570,17 +570,17 @@ fest count -r --json ./project       # Directory with JSON output
 
 Initialize a new festivals directory structure.
 
-```
+```bash
 fest init [flags]
 ```
 
-#### Flags
+#### init: Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--register` | `false` | Register as active workspace |
 
-#### Examples
+#### init: Examples
 
 ```bash
 fest init                            # Create festivals/ structure
@@ -597,11 +597,11 @@ These commands maintain the fest tool itself (templates, configuration) - NOT yo
 
 Parent command for system maintenance operations.
 
-```
+```bash
 fest system [command]
 ```
 
-#### Subcommands
+#### system: Subcommands
 
 | Command | Description |
 |---------|-------------|
@@ -614,11 +614,11 @@ fest system [command]
 
 Download latest fest templates from GitHub to local cache.
 
-```
+```bash
 fest system sync [flags]
 ```
 
-#### Examples
+#### system sync: Examples
 
 ```bash
 fest system sync                     # Download latest templates
@@ -632,11 +632,11 @@ fest system sync --force             # Overwrite existing cache
 
 Update .festival/ methodology files from cached templates.
 
-```
+```bash
 fest system update [flags]
 ```
 
-#### Examples
+#### system update: Examples
 
 ```bash
 fest system update                   # Interactive update
@@ -653,11 +653,11 @@ fest system update --backup          # Create backup first
 
 Manage configuration repositories.
 
-```
+```bash
 fest config [command] [flags]
 ```
 
-#### Subcommands
+#### config: Subcommands
 
 | Command | Description |
 |---------|-------------|
@@ -673,11 +673,11 @@ fest config [command] [flags]
 
 Manage methodology extensions.
 
-```
+```bash
 fest extension [command] [flags]
 ```
 
-#### Subcommands
+#### extension: Subcommands
 
 | Command | Description |
 |---------|-------------|
@@ -691,11 +691,11 @@ fest extension [command] [flags]
 
 Manage festival indices for Guild integration.
 
-```
+```bash
 fest index [command] [flags]
 ```
 
-#### Subcommands
+#### index: Subcommands
 
 | Command | Description |
 |---------|-------------|
@@ -710,11 +710,11 @@ fest index [command] [flags]
 
 Launch interactive terminal UI.
 
-```
+```bash
 fest tui [flags]
 ```
 
-#### Examples
+#### tui: Examples
 
 ```bash
 fest tui                             # Launch interactive mode
@@ -729,17 +729,17 @@ fest create                          # Also launches create TUI
 
 Output shell integration code.
 
-```
+```bash
 fest shell-init [shell] [flags]
 ```
 
-#### Supported Shells
+#### shell-init: Supported Shells
 
 - `zsh`
 - `bash`
 - `fish`
 
-#### Setup
+#### shell-init: Setup
 
 ```bash
 # Add to ~/.zshrc

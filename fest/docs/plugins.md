@@ -29,14 +29,14 @@ Plugins are discovered from three sources (in priority order):
 
 Plugin executables must be named with the `fest-` prefix:
 
-```
+```text
 fest-<group>-<name>     # Two-part command
 fest-<name>             # Single command
 ```
 
 Examples:
 
-```
+```text
 fest-export-jira        # Command: "export jira"
 fest-import-confluence  # Command: "import confluence"
 fest-stats              # Command: "stats"
@@ -187,7 +187,7 @@ Higher priority sources override extensions with the same name.
 
 ### Extension Structure
 
-```
+```text
 my-extension/
 ├── extension.yml       # Manifest (optional)
 ├── templates/          # Custom templates
@@ -222,7 +222,7 @@ files:
     type: agent
 ```
 
-### Manifest Fields
+### Extension Manifest Fields
 
 | Field | Required | Description |
 |-------|----------|-------------|
@@ -307,7 +307,7 @@ fest understand extensions
 
 ## Extension Loader API
 
-### Basic Usage
+### Extension Loader: Basic Usage
 
 ```go
 import "github.com/lancekrogers/festival-methodology/fest/internal/extensions"
@@ -345,7 +345,7 @@ files, _ := ext.ListFiles()
 
 ## Plugin Discovery API
 
-### Basic Usage
+### Plugin Discovery: Basic Usage
 
 ```go
 import "github.com/lancekrogers/festival-methodology/fest/internal/plugins"
@@ -376,7 +376,7 @@ err := plugins.Dispatch(plugin, []string{"--project", "PROJ"})
 
 ## Best Practices
 
-### Plugins
+### Best Practices: Plugins
 
 1. **Follow naming conventions**: Use `fest-<group>-<name>` format
 2. **Handle errors gracefully**: Exit with non-zero codes on failure
@@ -384,7 +384,7 @@ err := plugins.Dispatch(plugin, []string{"--project", "PROJ"})
 4. **Use manifest**: Include metadata for better discovery
 5. **Version your plugins**: Track compatibility
 
-### Extensions
+### Best Practices: Extensions
 
 1. **Include manifest**: Always provide `extension.yml`
 2. **Use semantic versioning**: Track changes properly

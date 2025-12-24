@@ -157,7 +157,7 @@ class Fest < Formula
   desc "Festival Methodology CLI tool"
   homepage "https://github.com/festival-methodology/fest"
   version "1.0.0"
-  
+
   if OS.mac? && Hardware::CPU.arm?
     url "https://github.com/festival-methodology/fest/releases/download/v1.0.0/fest-darwin-arm64.tar.gz"
     sha256 "ACTUAL_SHA256_HERE"
@@ -241,8 +241,8 @@ chmod +x fest
 
 | Platform | Architecture | Signing | Distribution |
 |----------|-------------|---------|--------------|
-| macOS | Intel (amd64) | ✅ Ad-hoc / Developer ID | Direct, Homebrew |
-| macOS | Apple Silicon (arm64) | ✅ Ad-hoc / Developer ID | Direct, Homebrew |
+| macOS | Intel (amd64) | Ad-hoc / Developer ID | Direct, Homebrew |
+| macOS | Apple Silicon (arm64) | Ad-hoc / Developer ID | Direct, Homebrew |
 | Linux | amd64 | Optional (GPG) | Direct, Package managers |
 | Windows | amd64 | Optional (Certificate) | Direct, Chocolatey |
 

@@ -4,7 +4,7 @@ This document describes the internal architecture, package structure, and data f
 
 ## Package Dependency Graph
 
-```
+```text
 cmd/fest/
     └── main.go ─────────────────────────────────────┐
                                                      │
@@ -40,53 +40,53 @@ internal/commands/  ◄───────────────────
 
 ### Entry Point
 
-| Package | File | Purpose |
-|---------|------|---------|
+| Package    | File      | Purpose                                        |
+| ---------- | --------- | ---------------------------------------------- |
 | `cmd/fest` | `main.go` | Binary entry point; calls `commands.Execute()` |
 
 ### Command Layer (`internal/commands/`)
 
-| File | LOC | Responsibility |
-|------|-----|----------------|
-| `root.go` | 129 | Cobra root command, CLI flag binding, context injection |
-| `cliconfig.go` | 97 | `CLIConfig` struct, context storage/retrieval |
-| `validate.go` | 634 | Validation command orchestration |
-| `understand.go` | 876 | Methodology learning and explanation |
-| `task_defaults.go` | 743 | Quality gate task management |
-| `tui_charm.go` | 735 | BubbleTea-based interactive UI |
-| `gates.go` | 350 | Gate policy listing and management |
-| `config_repo.go` | 368 | Configuration repository management |
+| File               | LOC | Responsibility                                          |
+| ------------------ | --- | ------------------------------------------------------- |
+| `root.go`          | 129 | Cobra root command, CLI flag binding, context injection |
+| `cliconfig.go`     | 97  | `CLIConfig` struct, context storage/retrieval           |
+| `validate.go`      | 634 | Validation command orchestration                        |
+| `understand.go`    | 876 | Methodology learning and explanation                    |
+| `task_defaults.go` | 743 | Quality gate task management                            |
+| `tui_charm.go`     | 735 | BubbleTea-based interactive UI                          |
+| `gates.go`         | 350 | Gate policy listing and management                      |
+| `config_repo.go`   | 368 | Configuration repository management                     |
 
 ### Domain Logic
 
-| Package | Purpose | Key Types |
-|---------|---------|-----------|
-| `internal/config` | Configuration loading/saving | `Config`, `Repository`, `Behavior` |
-| `internal/template` | Template rendering | `Manager`, `Renderer`, `Loader`, `Context` |
-| `internal/validator` | Festival validation | `Validator` interface, `Issue`, `Result` |
-| `internal/festival` | Festival model and operations | Parser, Renumber, Reorder |
-| `internal/gates` | Quality gate policies | `GatePolicy`, `GateTask`, `PolicyLoader` |
-| `internal/errors` | Structured error types | `Error`, error codes |
-| `internal/response` | JSON output formatting | `Response`, `Emitter`, `Encode()` |
+| Package              | Purpose                       | Key Types                                  |
+| -------------------- | ----------------------------- | ------------------------------------------ |
+| `internal/config`    | Configuration loading/saving  | `Config`, `Repository`, `Behavior`         |
+| `internal/template`  | Template rendering            | `Manager`, `Renderer`, `Loader`, `Context` |
+| `internal/validator` | Festival validation           | `Validator` interface, `Issue`, `Result`   |
+| `internal/festival`  | Festival model and operations | Parser, Renumber, Reorder                  |
+| `internal/gates`     | Quality gate policies         | `GatePolicy`, `GateTask`, `PolicyLoader`   |
+| `internal/errors`    | Structured error types        | `Error`, error codes                       |
+| `internal/response`  | JSON output formatting        | `Response`, `Emitter`, `Encode()`          |
 
 ### Infrastructure
 
-| Package | Purpose |
-|---------|---------|
-| `internal/fileops` | File system operations |
-| `internal/github` | GitHub API integration for downloads |
-| `internal/extensions` | Extension loading and management |
-| `internal/plugins` | Plugin system |
-| `internal/workspace` | Workspace detection and configuration |
-| `internal/index` | Guild integration index generation |
-| `internal/tokens` | Token counting for LLM context |
-| `internal/ui` | Terminal UI utilities |
+| Package               | Purpose                               |
+| --------------------- | ------------------------------------- |
+| `internal/fileops`    | File system operations                |
+| `internal/github`     | GitHub API integration for downloads  |
+| `internal/extensions` | Extension loading and management      |
+| `internal/plugins`    | Plugin system                         |
+| `internal/workspace`  | Workspace detection and configuration |
+| `internal/index`      | Guild integration index generation    |
+| `internal/tokens`     | Token counting for LLM context        |
+| `internal/ui`         | Terminal UI utilities                 |
 
 ## Data Flow
 
 ### Festival Creation
 
-```
+```text
 User: fest create festival --name "my-fest"
          │
          ▼
@@ -109,7 +109,7 @@ User: fest create festival --name "my-fest"
 
 ### Validation Workflow
 
-```
+```text
 User: fest validate --json
          │
          ▼
@@ -135,7 +135,7 @@ User: fest validate --json
 
 ### Template Rendering (with Fallback)
 
-```
+```text
 commands/create_phase.go
          │
          ▼
@@ -157,7 +157,7 @@ commands/create_phase.go
 
 ### Sequence
 
-```
+```text
 1. User invokes command with --config flag (optional)
 2. root.go PersistentPreRunE:
    a. Create CLIConfig with flag values
@@ -203,16 +203,16 @@ if errors.Is(err, errors.ErrCodeNotFound) {
 
 ### Error Codes
 
-| Code | Meaning |
-|------|---------|
-| `NOT_FOUND` | Resource does not exist |
-| `VALIDATION` | Input validation failure |
-| `IO` | File system operation failure |
-| `CONFIG` | Configuration error |
-| `TEMPLATE` | Template rendering failure |
-| `PARSE` | Parsing error |
-| `INTERNAL` | Unexpected internal error |
-| `PERMISSION` | Permission denied |
+| Code         | Meaning                       |
+| ------------ | ----------------------------- |
+| `NOT_FOUND`  | Resource does not exist       |
+| `VALIDATION` | Input validation failure      |
+| `IO`         | File system operation failure |
+| `CONFIG`     | Configuration error           |
+| `TEMPLATE`   | Template rendering failure    |
+| `PARSE`      | Parsing error                 |
+| `INTERNAL`   | Unexpected internal error     |
+| `PERMISSION` | Permission denied             |
 
 ### JSON Error Output
 
@@ -308,7 +308,7 @@ type PolicyRegistrar interface {
 
 ## Directory Structure Requirements
 
-```
+```text
 festivals/
 ├── active/                    # Currently executing festivals
 │   └── my-festival/
@@ -322,7 +322,7 @@ festivals/
 │       └── ...
 ├── completed/
 ├── planned/
-└── archived/
+└── dungeon/
 ```
 
 ### Naming Conventions
@@ -333,11 +333,11 @@ festivals/
 
 ## Testing Strategy
 
-| Test Type | Location | Coverage |
-|-----------|----------|----------|
-| Unit | `*_test.go` alongside code | Response: 94%, Validator: 30% |
-| Integration | `tests/integration/` | Container-based workflow tests |
-| TUI | `*_test.go` using teatest | Interactive UI testing |
+| Test Type   | Location                   | Coverage                       |
+| ----------- | -------------------------- | ------------------------------ |
+| Unit        | `*_test.go` alongside code | Response: 94%, Validator: 30%  |
+| Integration | `tests/integration/`       | Container-based workflow tests |
+| TUI         | `*_test.go` using teatest  | Interactive UI testing         |
 
 ### Test Patterns
 
