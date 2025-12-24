@@ -1,44 +1,42 @@
 # Test recipes
-binary_name := "fest"
-main_path := "cmd/fest/main.go"
-bin_dir := "bin"
+BUILDTOOL := "go run ./internal/buildutil"
 
 # Show available test commands
 [private]
 default:
     @just --list --unsorted --justfile {{source_file()}}
 
-# Run all tests (unit + integration)
+# Run all tests (unit + integration) with visual dashboard
 [no-cd]
-all: unit integration
-    @echo "✅ All tests passed"
+all:
+    @{{BUILDTOOL}} all
 
-# Run unit tests (quick feedback)
+# Run unit tests with visual dashboard
 [no-cd]
 unit:
-    gotestsum --format pkgname-and-test-fails -- ./...
+    @{{BUILDTOOL}} test
 
+# Run unit tests with verbose output
+[no-cd]
+unit-verbose:
+    @{{BUILDTOOL}} -v test
 
-# Run integration tests
+# Run integration tests with visual dashboard
 [no-cd]
 integration:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    # Build test binary first
-    GOOS=linux GOARCH=amd64 go build -ldflags '-s -w' -o {{bin_dir}}/linux/{{binary_name}} {{main_path}}
-    gotestsum --format pkgname-and-test-fails -- -tags=integration -timeout 10m ./tests/integration/...
+    @{{BUILDTOOL}} integration
 
-# Run tests with coverage
+# Run integration tests with verbose output
+[no-cd]
+integration-verbose:
+    @{{BUILDTOOL}} -v integration
+
+# Run tests with coverage (using go test directly)
 [no-cd]
 coverage:
-    gotestsum --format pkgname-and-test-fails -- -cover ./...
+    go test -cover ./...
 
 # Generate HTML coverage report
 [no-cd]
 coverage-html:
     go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html
-
-# Watch mode - rerun tests on file changes
-[no-cd]
-watch:
-    gotestsum --watch --format pkgname-and-test-fails

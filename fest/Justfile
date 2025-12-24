@@ -5,9 +5,9 @@ set dotenv-load := true
 
 # Configuration
 binary_name := "fest"
-main_path := "cmd/fest/main.go"
 bin_dir := "bin"
 gobin := env_var_or_default("GOBIN", `go env GOPATH` + "/bin")
+BUILDTOOL := "go run ./internal/buildutil"
 
 # Modules
 [doc('Cross-platform builds')]
@@ -26,9 +26,13 @@ default:
     echo ""
     just --list --unsorted
 
-# Build fest binary
+# Build fest binary with visual dashboard
 build:
-    go build -ldflags '-s -w' -o {{bin_dir}}/{{binary_name}} {{main_path}}
+    @{{BUILDTOOL}} build
+
+# Build fest binary only (fast, no vet)
+build-only:
+    @{{BUILDTOOL}} build-only
 
 # Format Go code
 fmt:
@@ -42,11 +46,9 @@ vet:
 lint: fmt vet
     @echo "✅ Linting complete"
 
-# Clean build artifacts
+# Clean build artifacts with visual dashboard
 clean:
-    go clean
-    rm -f {{bin_dir}}/{{binary_name}}*
-    rm -f coverage.out coverage.html
+    @{{BUILDTOOL}} clean
 
 # Update and tidy dependencies
 deps:
@@ -57,7 +59,7 @@ deps:
 install:
     #!/usr/bin/env bash
     set -euo pipefail
-    just build
+    just build-only
     echo "Installing fest..."
     mkdir -p {{gobin}}
     cp bin/{{binary_name}} {{gobin}}/{{binary_name}}
