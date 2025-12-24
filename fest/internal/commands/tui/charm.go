@@ -1,6 +1,6 @@
 //go:build !no_charm
 
-package commands
+package tui
 
 import (
 	"fmt"
@@ -10,9 +10,20 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	// Register TUI hooks with the shared package
+	shared.NewTUICommand = NewTUICommand
+	shared.StartCreateTUI = StartCreateTUI
+	shared.StartCreateFestivalTUI = StartCreateFestivalTUI
+	shared.StartCreatePhaseTUI = StartCreatePhaseTUI
+	shared.StartCreateSequenceTUI = StartCreateSequenceTUI
+	shared.StartCreateTaskTUI = StartCreateTaskTUI
+}
 
 // NewTUICommand (charm version) provides a richer interactive UI using Charm libs
 func NewTUICommand() *cobra.Command {
@@ -40,7 +51,7 @@ func runCharmTUI() error {
 			return err
 		}
 		if initNow {
-			if err := runInit(".", &initOptions{}); err != nil {
+			if err := shared.RunInit(".", &shared.InitOpts{}); err != nil {
 				return err
 			}
 		} else {
@@ -152,8 +163,8 @@ func charmCreateFestival() error {
 		return err
 	}
 
-	opts := &createFestivalOptions{name: name, goal: goal, tags: tags, varsFile: varsFile, dest: dest}
-	return runCreateFestival(opts)
+	opts := &shared.CreateFestivalOpts{Name: name, Goal: goal, Tags: tags, VarsFile: varsFile, Dest: dest}
+	return shared.RunCreateFestival(opts)
 }
 
 func charmPlanFestivalWizard() error {
@@ -205,7 +216,7 @@ func charmPlanFestivalWizard() error {
 		return err
 	}
 
-	if err := runCreateFestival(&createFestivalOptions{name: name, goal: goal, tags: tags, varsFile: varsFile, dest: dest}); err != nil {
+	if err := shared.RunCreateFestival(&shared.CreateFestivalOpts{Name: name, Goal: goal, Tags: tags, VarsFile: varsFile, Dest: dest}); err != nil {
 		return err
 	}
 	slug := slugify(name)
@@ -238,7 +249,7 @@ func charmPlanFestivalWizard() error {
 			if err := pf.Run(); err != nil {
 				return err
 			}
-			if err := runCreatePhase(&createPhaseOptions{after: after, name: pname, phaseType: ptype, path: festivalDir}); err != nil {
+			if err := shared.RunCreatePhase(&shared.CreatePhaseOpts{After: after, Name: pname, PhaseType: ptype, Path: festivalDir}); err != nil {
 				return err
 			}
 			after++
@@ -275,7 +286,7 @@ func charmGenerateFestivalGoal() error {
 		return err
 	}
 	destPath := filepath.Join(festDir, "FESTIVAL_GOAL.md")
-	return runApply(&applyOptions{templatePath: "FESTIVAL_GOAL_TEMPLATE.md", destPath: destPath, varsFile: varsFile})
+	return shared.RunApply(&shared.ApplyOpts{TemplatePath: "FESTIVAL_GOAL_TEMPLATE.md", DestPath: destPath, VarsFile: varsFile})
 }
 
 func charmCreatePhase() error {
@@ -345,8 +356,8 @@ func charmCreatePhase() error {
 	if err != nil {
 		return err
 	}
-	opts := &createPhaseOptions{after: after, name: name, phaseType: phaseType, path: fallbackDot(path), varsFile: varsFile}
-	return runCreatePhase(opts)
+	opts := &shared.CreatePhaseOpts{After: after, Name: name, PhaseType: phaseType, Path: fallbackDot(path), VarsFile: varsFile}
+	return shared.RunCreatePhase(opts)
 }
 
 func charmCreateSequence() error {
@@ -476,8 +487,8 @@ func charmCreateSequence() error {
 	if err != nil {
 		return err
 	}
-	opts := &createSequenceOptions{after: after, name: name, path: fallbackDot(resolvedPath), varsFile: varsFile}
-	return runCreateSequence(opts)
+	opts := &shared.CreateSequenceOpts{After: after, Name: name, Path: fallbackDot(resolvedPath), VarsFile: varsFile}
+	return shared.RunCreateSequence(opts)
 }
 
 func charmCreateTask() error {
@@ -651,8 +662,8 @@ func charmCreateTask() error {
 		}
 		resolvedSeq = rs
 	}
-	opts := &createTaskOptions{after: after, names: []string{name}, path: fallbackDot(resolvedSeq), varsFile: varsFile}
-	return runCreateTask(opts)
+	opts := &shared.CreateTaskOpts{After: after, Names: []string{name}, Path: fallbackDot(resolvedSeq), VarsFile: varsFile}
+	return shared.RunCreateTask(opts)
 }
 
 func notEmpty(s string) error {

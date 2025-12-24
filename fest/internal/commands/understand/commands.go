@@ -1,4 +1,4 @@
-package commands
+package understand
 
 import (
 	"bufio"
@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/lancekrogers/festival-methodology/fest/docs/understand"
+	understanddocs "github.com/lancekrogers/festival-methodology/fest/docs/understand"
 	"github.com/lancekrogers/festival-methodology/fest/internal/extensions"
 	"github.com/lancekrogers/festival-methodology/fest/internal/gates"
 	"github.com/lancekrogers/festival-methodology/fest/internal/plugins"
@@ -212,7 +212,7 @@ Quick Validation Commands
 func printOverview(dotFestival string) {
 	// Use embedded overview content
 	fmt.Print("\n")
-	fmt.Print(understand.Load("overview.txt"))
+	fmt.Print(understanddocs.Load("overview.txt"))
 
 	if dotFestival != "" {
 		fmt.Printf("\nSource: %s\n", dotFestival)
@@ -255,7 +255,7 @@ func printMethodology(dotFestival string) {
 
 	// Default: use embedded content
 	fmt.Print("\n")
-	fmt.Print(understand.Load("methodology.txt"))
+	fmt.Print(understanddocs.Load("methodology.txt"))
 }
 
 func printStructure(dotFestival string) {
@@ -335,7 +335,7 @@ For template variables:    fest understand templates
 }
 
 func printScaffoldTree(variant string) {
-	fmt.Print(understand.LoadScaffold(variant))
+	fmt.Print(understanddocs.LoadScaffold(variant))
 }
 
 func printWorkflow(dotFestival string) {
@@ -375,22 +375,22 @@ func printWorkflow(dotFestival string) {
 
 	// Default: use embedded content
 	fmt.Print("\n")
-	fmt.Print(understand.Load("workflow.txt"))
+	fmt.Print(understanddocs.Load("workflow.txt"))
 }
 
 func printRules() {
 	fmt.Print("\n")
-	fmt.Print(understand.Load("rules.txt"))
+	fmt.Print(understanddocs.Load("rules.txt"))
 }
 
 func printTemplates() {
 	fmt.Print("\n")
-	fmt.Print(understand.Load("templates.txt"))
+	fmt.Print(understanddocs.Load("templates.txt"))
 }
 
 func printTasks() {
 	fmt.Print("\n")
-	fmt.Print(understand.Load("tasks.txt"))
+	fmt.Print(understanddocs.Load("tasks.txt"))
 }
 
 func newUnderstandGatesCmd() *cobra.Command {

@@ -7,18 +7,20 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
-type createSequenceOptions struct {
-	after      int
-	name       string
-	path       string
-	varsFile   string
-	jsonOutput bool
+// CreateSequenceOptions holds options for the create sequence command.
+type CreateSequenceOptions struct {
+	After      int
+	Name       string
+	Path       string
+	VarsFile   string
+	JSONOutput bool
 }
 
 type createSequenceResult struct {
@@ -33,7 +35,7 @@ type createSequenceResult struct {
 
 // NewCreateSequenceCommand adds 'create sequence'
 func NewCreateSequenceCommand() *cobra.Command {
-	opts := &createSequenceOptions{}
+	opts := &CreateSequenceOptions{}
 	cmd := &cobra.Command{
 		Use:   "sequence",
 		Short: "Insert a new sequence and render its goal file",
@@ -67,23 +69,24 @@ NEXT STEPS after creating a sequence:
 Run 'fest validate tasks' to verify task files exist.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flags().NFlag() == 0 {
-				return StartCreateSequenceTUI()
+				return shared.StartCreateSequenceTUI()
 			}
-			if strings.TrimSpace(opts.name) == "" {
+			if strings.TrimSpace(opts.Name) == "" {
 				return fmt.Errorf("--name is required (or run without flags to open TUI)")
 			}
-			return runCreateSequence(opts)
+			return RunCreateSequence(opts)
 		},
 	}
-	cmd.Flags().IntVar(&opts.after, "after", 0, "Insert after this number (0 inserts at beginning)")
-	cmd.Flags().StringVar(&opts.name, "name", "", "Sequence name (required)")
-	cmd.Flags().StringVar(&opts.path, "path", ".", "Path to phase directory (directory containing numbered sequences)")
-	cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON vars for rendering")
-	cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
+	cmd.Flags().IntVar(&opts.After, "after", 0, "Insert after this number (0 inserts at beginning)")
+	cmd.Flags().StringVar(&opts.Name, "name", "", "Sequence name (required)")
+	cmd.Flags().StringVar(&opts.Path, "path", ".", "Path to phase directory (directory containing numbered sequences)")
+	cmd.Flags().StringVar(&opts.VarsFile, "vars-file", "", "JSON vars for rendering")
+	cmd.Flags().BoolVar(&opts.JSONOutput, "json", false, "Emit JSON output")
 	return cmd
 }
 
-func runCreateSequence(opts *createSequenceOptions) error {
+// RunCreateSequence executes the create sequence command logic.
+func RunCreateSequence(opts *CreateSequenceOptions) error {
 	display := ui.New(noColor, verbose)
 	cwd, _ := os.Getwd()
 
@@ -93,26 +96,26 @@ func runCreateSequence(opts *createSequenceOptions) error {
 		return emitCreateSequenceError(opts, err)
 	}
 
-	absPath, err := filepath.Abs(opts.path)
+	absPath, err := filepath.Abs(opts.Path)
 	if err != nil {
 		return emitCreateSequenceError(opts, fmt.Errorf("invalid path: %w", err))
 	}
 
 	// Insert sequence
 	ren := festival.NewRenumberer(festival.RenumberOptions{AutoApprove: true, Quiet: true})
-	if err := ren.InsertSequence(absPath, opts.after, opts.name); err != nil {
+	if err := ren.InsertSequence(absPath, opts.After, opts.Name); err != nil {
 		return emitCreateSequenceError(opts, fmt.Errorf("failed to insert sequence: %w", err))
 	}
 
 	// Compute new sequence id
-	newNumber := opts.after + 1
-	seqID := tpl.FormatSequenceID(newNumber, opts.name)
+	newNumber := opts.After + 1
+	seqID := tpl.FormatSequenceID(newNumber, opts.Name)
 	seqDir := filepath.Join(absPath, seqID)
 
 	// Load vars
 	vars := map[string]interface{}{}
-	if strings.TrimSpace(opts.varsFile) != "" {
-		v, err := loadVarsFile(opts.varsFile)
+	if strings.TrimSpace(opts.VarsFile) != "" {
+		v, err := loadVarsFile(opts.VarsFile)
 		if err != nil {
 			return emitCreateSequenceError(opts, fmt.Errorf("failed to read vars-file: %w", err))
 		}
@@ -121,7 +124,7 @@ func runCreateSequence(opts *createSequenceOptions) error {
 
 	// Build context for sequence
 	ctx := tpl.NewContext()
-	ctx.SetSequence(newNumber, opts.name)
+	ctx.SetSequence(newNumber, opts.Name)
 	for k, v := range vars {
 		ctx.SetCustom(k, v)
 	}
@@ -167,14 +170,14 @@ func runCreateSequence(opts *createSequenceOptions) error {
 		}
 	}
 
-	if opts.jsonOutput {
+	if opts.JSONOutput {
 		result := createSequenceResult{
 			OK:     true,
 			Action: "create_sequence",
 			Sequence: map[string]interface{}{
 				"number": newNumber,
 				"id":     seqID,
-				"name":   opts.name,
+				"name":   opts.Name,
 			},
 			Created:  []string{goalPath},
 			Renumber: []string{},
@@ -199,8 +202,8 @@ func runCreateSequence(opts *createSequenceOptions) error {
 	return nil
 }
 
-func emitCreateSequenceError(opts *createSequenceOptions, err error) error {
-	if opts.jsonOutput {
+func emitCreateSequenceError(opts *CreateSequenceOptions, err error) error {
+	if opts.JSONOutput {
 		_ = emitCreateSequenceJSON(opts, createSequenceResult{
 			OK:     false,
 			Action: "create_sequence",
@@ -214,7 +217,7 @@ func emitCreateSequenceError(opts *createSequenceOptions, err error) error {
 	return err
 }
 
-func emitCreateSequenceJSON(opts *createSequenceOptions, res createSequenceResult) error {
+func emitCreateSequenceJSON(opts *CreateSequenceOptions, res createSequenceResult) error {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
 	return enc.Encode(res)

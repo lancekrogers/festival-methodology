@@ -12,18 +12,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type initOptions struct {
-	force       bool
-	from        string
-	minimal     bool
-	noChecksums bool
-	register    bool
-	unregister  bool
+// InitOptions holds options for the init command.
+type InitOptions struct {
+	Force       bool
+	From        string
+	Minimal     bool
+	NoChecksums bool
+	Register    bool
+	Unregister  bool
 }
 
 // NewInitCommand creates the init command
 func NewInitCommand() *cobra.Command {
-	opts := &initOptions{}
+	opts := &InitOptions{}
 
 	cmd := &cobra.Command{
 		Use:   "init [path]",
@@ -51,21 +52,22 @@ Workspace Registration:
 			if len(args) > 0 {
 				targetPath = args[0]
 			}
-			return runInit(targetPath, opts)
+			return RunInit(targetPath, opts)
 		},
 	}
 
-	cmd.Flags().BoolVar(&opts.force, "force", false, "overwrite existing festival directory")
-	cmd.Flags().StringVar(&opts.from, "from", "", "source directory (default: ~/.config/fest)")
-	cmd.Flags().BoolVar(&opts.minimal, "minimal", false, "create minimal structure only")
-	cmd.Flags().BoolVar(&opts.noChecksums, "no-checksums", false, "skip checksum generation")
-	cmd.Flags().BoolVar(&opts.register, "register", false, "register existing festivals as active workspace")
-	cmd.Flags().BoolVar(&opts.unregister, "unregister", false, "remove workspace registration")
+	cmd.Flags().BoolVar(&opts.Force, "force", false, "overwrite existing festival directory")
+	cmd.Flags().StringVar(&opts.From, "from", "", "source directory (default: ~/.config/fest)")
+	cmd.Flags().BoolVar(&opts.Minimal, "minimal", false, "create minimal structure only")
+	cmd.Flags().BoolVar(&opts.NoChecksums, "no-checksums", false, "skip checksum generation")
+	cmd.Flags().BoolVar(&opts.Register, "register", false, "register existing festivals as active workspace")
+	cmd.Flags().BoolVar(&opts.Unregister, "unregister", false, "remove workspace registration")
 
 	return cmd
 }
 
-func runInit(targetPath string, opts *initOptions) error {
+// RunInit executes the init command logic.
+func RunInit(targetPath string, opts *InitOptions) error {
 	// Create UI handler
 	display := ui.New(noColor, verbose)
 
@@ -76,18 +78,18 @@ func runInit(targetPath string, opts *initOptions) error {
 	}
 
 	// Handle --register flag: register existing festivals directory
-	if opts.register {
+	if opts.Register {
 		return runRegister(absPath, display)
 	}
 
 	// Handle --unregister flag: remove workspace marker
-	if opts.unregister {
+	if opts.Unregister {
 		return runUnregister(absPath, display)
 	}
 
 	// Check if festival already exists
 	festivalPath := filepath.Join(absPath, "festivals")
-	if fileops.Exists(festivalPath) && !opts.force {
+	if fileops.Exists(festivalPath) && !opts.Force {
 		if !display.Confirm("Festival directory already exists at %s. Overwrite?", festivalPath) {
 			display.Warning("Initialization cancelled")
 			return nil
@@ -95,7 +97,7 @@ func runInit(targetPath string, opts *initOptions) error {
 	}
 
 	// Determine source directory
-	sourceDir := opts.from
+	sourceDir := opts.From
 	if sourceDir == "" {
 		sourceDir = filepath.Join(config.ConfigDir(), "festivals")
 	}
@@ -114,7 +116,7 @@ func runInit(targetPath string, opts *initOptions) error {
 
 	// Copy structure
 	copier := fileops.NewCopier()
-	if opts.minimal {
+	if opts.Minimal {
 		// Copy only essential directories
 		essentialDirs := []string{".festival", "active", "planned"}
 		for _, dir := range essentialDirs {
@@ -134,7 +136,7 @@ func runInit(targetPath string, opts *initOptions) error {
 	}
 
 	// Generate checksums unless disabled
-	if !opts.noChecksums {
+	if !opts.NoChecksums {
 		display.Info("Generating .festival checksums...")
 		checksumFile := filepath.Join(festivalPath, ".festival", ".fest-checksums.json")
 

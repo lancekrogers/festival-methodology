@@ -1,4 +1,4 @@
-package commands
+package system
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/fileops"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
@@ -28,16 +29,21 @@ func NewUpdateCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "update [path]",
-		Short: "Update festival files from latest templates",
-		Long: `Update festival files from latest templates, preserving user modifications.
-  
-This command compares your festival files with the latest templates and updates
+		Short: "System: Update fest methodology files from templates",
+		Long: `Update the .festival/ methodology files from latest templates.
+
+This is a SYSTEM command that updates fest's methodology files (templates,
+documentation, agents) in your workspace - NOT your festival content.
+
+It compares your .festival/ files with the latest templates and updates
 only the files you haven't modified. For modified files, it will prompt you
-for action unless --no-interactive is specified.`,
-		Example: `  fest update                  # Interactive update
-  fest update --dry-run        # Preview changes
-  fest update --no-interactive # Skip all modified files
-  fest update --backup         # Create backups before updating`,
+for action unless --no-interactive is specified.
+
+Your actual festivals (phases, sequences, tasks) are never modified by this command.`,
+		Example: `  fest system update                  # Interactive update
+  fest system update --dry-run        # Preview changes
+  fest system update --no-interactive # Skip all modified files
+  fest system update --backup         # Create backups before updating`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			targetPath := "."
@@ -60,7 +66,7 @@ for action unless --no-interactive is specified.`,
 
 func runUpdate(targetPath string, opts *updateOptions) error {
 	// Create UI handler
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	// If no-interactive is set, disable interactive
 	if opts.noInteractive {
@@ -92,10 +98,10 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 	// Get source directory (.festival only)
 	sourceDir := filepath.Join(config.ConfigDir(), "festivals", ".festival")
 	if !fileops.Exists(sourceDir) {
-		return fmt.Errorf("no cached .festival templates found. Run 'fest sync' first")
+		return fmt.Errorf("no cached .festival templates found. Run 'fest system sync' first")
 	}
 
-	display.Info("Analyzing .festival files...")
+	display.Info("Analyzing .festival methodology files...")
 
 	// Calculate current checksums for the .festival directory only
 	currentChecksums, err := fileops.GenerateChecksums(festivalDir)
@@ -113,14 +119,14 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 		srcPath := filepath.Join(sourceDir, file)
 		if fileops.Exists(srcPath) {
 			validUnchanged = append(validUnchanged, file)
-		} else if verbose {
+		} else if shared.IsVerbose() {
 			display.Warning("Skipping %s (removed from source)", file)
 		}
 	}
 	changes.unchanged = validUnchanged
 
 	// Show summary
-	display.Info("\nFile status:")
+	display.Info("\nMethodology file status:")
 	display.Info("  Unchanged: %d files (safe to update)", len(changes.unchanged))
 	display.Info("  Modified:  %d files (need decision)", len(changes.modified))
 	display.Info("  New:       %d files (user created, will skip)", len(changes.new))
@@ -148,7 +154,7 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 
 	// Update unchanged files
 	for _, file := range changes.unchanged {
-		if verbose {
+		if shared.IsVerbose() {
 			display.Info("Updating %s...", file)
 		}
 		if err := updater.UpdateFile(file); err != nil {
@@ -210,7 +216,7 @@ func runUpdate(targetPath string, opts *updateOptions) error {
 	}
 
 	// Show summary
-	display.Success("\nUpdate complete:")
+	display.Success("\nMethodology update complete:")
 	display.Info("  Updated: %d files", len(updatedFiles))
 	display.Info("  Skipped: %d files", len(skippedFiles))
 
@@ -279,14 +285,14 @@ func displayChanges(display *ui.UI, changes fileChanges) {
 	if len(changes.unchanged) > 0 {
 		display.Info("\nFiles to update:")
 		for _, file := range changes.unchanged {
-			display.Info("  ✓ %s", file)
+			display.Info("  + %s", file)
 		}
 	}
 
 	if len(changes.modified) > 0 {
 		display.Info("\nModified files (would skip):")
 		for _, file := range changes.modified {
-			display.Info("  ⚠ %s", file)
+			display.Info("  ~ %s", file)
 		}
 	}
 }

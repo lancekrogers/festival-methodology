@@ -1,4 +1,4 @@
-package commands
+package gates
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/lancekrogers/festival-methodology/fest/internal/gates"
+	gatescore "github.com/lancekrogers/festival-methodology/fest/internal/gates"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
 )
@@ -50,7 +50,7 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, policyName, phase, s
 		return fmt.Errorf("finding festivals root: %w", err)
 	}
 
-	registry, err := gates.NewPolicyRegistry(festivalsRoot, getConfigRoot())
+	registry, err := gatescore.NewPolicyRegistry(festivalsRoot, getConfigRoot())
 	if err != nil {
 		return fmt.Errorf("creating policy registry: %w", err)
 	}
@@ -92,7 +92,7 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, policyName, phase, s
 	}
 
 	// Write the override file
-	if err := gates.SavePolicy(overridePath, policy); err != nil {
+	if err := gatescore.SavePolicy(overridePath, policy); err != nil {
 		return fmt.Errorf("saving policy: %w", err)
 	}
 

@@ -5,20 +5,23 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
-type createFestivalOptions struct {
-	name       string
-	goal       string
-	tags       string
-	varsFile   string
-	jsonOutput bool
-	dest       string // "active" or "planned"
+// CreateFestivalOptions holds options for the create festival command.
+type CreateFestivalOptions struct {
+	Name       string
+	Goal       string
+	Tags       string
+	VarsFile   string
+	JSONOutput bool
+	Dest       string // "active" or "planned"
 }
 
 type createFestivalResult struct {
@@ -33,32 +36,33 @@ type createFestivalResult struct {
 
 // NewCreateFestivalCommand adds 'create festival'
 func NewCreateFestivalCommand() *cobra.Command {
-	opts := &createFestivalOptions{}
+	opts := &CreateFestivalOptions{}
 	cmd := &cobra.Command{
 		Use:   "festival",
 		Short: "Create a new festival scaffold under festivals/(active|planned)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no flags were provided, open TUI for this flow
 			if cmd.Flags().NFlag() == 0 {
-				return StartCreateFestivalTUI()
+				return shared.StartCreateFestivalTUI()
 			}
 			// Otherwise, require name and proceed
-			if strings.TrimSpace(opts.name) == "" {
+			if strings.TrimSpace(opts.Name) == "" {
 				return fmt.Errorf("--name is required (or run without flags to open TUI)")
 			}
-			return runCreateFestival(opts)
+			return RunCreateFestival(opts)
 		},
 	}
-	cmd.Flags().StringVar(&opts.name, "name", "", "Festival name (required)")
-	cmd.Flags().StringVar(&opts.goal, "goal", "", "Festival goal")
-	cmd.Flags().StringVar(&opts.tags, "tags", "", "Comma-separated tags")
-	cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON file with variables")
-	cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
-	cmd.Flags().StringVar(&opts.dest, "dest", "active", "Destination under festivals/: active or planned")
+	cmd.Flags().StringVar(&opts.Name, "name", "", "Festival name (required)")
+	cmd.Flags().StringVar(&opts.Goal, "goal", "", "Festival goal")
+	cmd.Flags().StringVar(&opts.Tags, "tags", "", "Comma-separated tags")
+	cmd.Flags().StringVar(&opts.VarsFile, "vars-file", "", "JSON file with variables")
+	cmd.Flags().BoolVar(&opts.JSONOutput, "json", false, "Emit JSON output")
+	cmd.Flags().StringVar(&opts.Dest, "dest", "active", "Destination under festivals/: active or planned")
 	return cmd
 }
 
-func runCreateFestival(opts *createFestivalOptions) error {
+// RunCreateFestival executes the create festival command logic.
+func RunCreateFestival(opts *CreateFestivalOptions) error {
 	display := ui.New(noColor, verbose)
 	cwd, _ := os.Getwd()
 
@@ -74,8 +78,8 @@ func runCreateFestival(opts *createFestivalOptions) error {
 
 	// Load vars
 	vars := map[string]interface{}{}
-	if strings.TrimSpace(opts.varsFile) != "" {
-		v, err := loadVarsFile(opts.varsFile)
+	if strings.TrimSpace(opts.VarsFile) != "" {
+		v, err := loadVarsFile(opts.VarsFile)
 		if err != nil {
 			return emitCreateFestivalError(opts, fmt.Errorf("failed to read vars-file: %w", err))
 		}
@@ -84,14 +88,14 @@ func runCreateFestival(opts *createFestivalOptions) error {
 
 	// Build context
 	ctx := tpl.NewContext()
-	ctx.SetFestival(opts.name, opts.goal, parseTags(opts.tags))
+	ctx.SetFestival(opts.Name, opts.Goal, parseTags(opts.Tags))
 	for k, v := range vars {
 		ctx.SetCustom(k, v)
 	}
 
 	// Destination
-	slug := slugify(opts.name)
-	destCategory := strings.ToLower(strings.TrimSpace(opts.dest))
+	slug := Slugify(opts.Name)
+	destCategory := strings.ToLower(strings.TrimSpace(opts.Dest))
 	if destCategory != "planned" && destCategory != "active" {
 		destCategory = "active"
 	}
@@ -142,12 +146,12 @@ func runCreateFestival(opts *createFestivalOptions) error {
 		created = append(created, outPath)
 	}
 
-	if opts.jsonOutput {
+	if opts.JSONOutput {
 		return emitCreateFestivalJSON(opts, createFestivalResult{
 			OK:     true,
 			Action: "create_festival",
 			Festival: map[string]string{
-				"name": opts.name,
+				"name": opts.Name,
 				"slug": slug,
 				"dest": destCategory,
 			},
@@ -185,8 +189,8 @@ func parseTags(s string) []string {
 	return out
 }
 
-func emitCreateFestivalError(opts *createFestivalOptions, err error) error {
-	if opts.jsonOutput {
+func emitCreateFestivalError(opts *CreateFestivalOptions, err error) error {
+	if opts.JSONOutput {
 		_ = emitCreateFestivalJSON(opts, createFestivalResult{
 			OK:     false,
 			Action: "create_festival",
@@ -200,8 +204,20 @@ func emitCreateFestivalError(opts *createFestivalOptions, err error) error {
 	return err
 }
 
-func emitCreateFestivalJSON(opts *createFestivalOptions, res createFestivalResult) error {
+func emitCreateFestivalJSON(opts *CreateFestivalOptions, res createFestivalResult) error {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
 	return enc.Encode(res)
+}
+
+// Slugify converts a string to a URL-safe slug.
+func Slugify(s string) string {
+	lower := strings.ToLower(strings.TrimSpace(s))
+	re := regexp.MustCompile(`[^a-z0-9]+`)
+	slug := re.ReplaceAllString(lower, "-")
+	slug = strings.Trim(slug, "-")
+	if slug == "" {
+		slug = "festival"
+	}
+	return slug
 }

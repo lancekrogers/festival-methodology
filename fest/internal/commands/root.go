@@ -4,8 +4,19 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/config"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/gates"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/navigation"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/structure"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/system"
+	understandcmd "github.com/lancekrogers/festival-methodology/fest/internal/commands/understand"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/validation"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
+
+	// Import tui package for its init() side effects (registers hooks)
+	_ "github.com/lancekrogers/festival-methodology/fest/internal/commands/tui"
 )
 
 var (
@@ -20,6 +31,11 @@ var (
 	BuildTime = "unknown"
 	GitCommit = "unknown"
 )
+
+// IsVerbose returns the global verbose flag value.
+func IsVerbose() bool {
+	return verbose
+}
 
 var rootCmd = &cobra.Command{
 	Use:   "fest",
@@ -43,13 +59,18 @@ func init() {
 
 	// Enforce being inside a festivals/ tree for most commands
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-		// Allow root (help/version), init, sync, count, go, shell-init, understand, config, extension, index, gates, and validate to run anywhere
-		// Also allow subcommands of understand, config, extension, index, gates, remove, renumber, reorder, and validate
-		if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "sync" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" || cmd.Name() == "go" || cmd.Name() == "shell-init" || cmd.Name() == "understand" || cmd.Name() == "config" || cmd.Name() == "extension" || cmd.Name() == "index" || cmd.Name() == "gates" || cmd.Name() == "remove" || cmd.Name() == "renumber" || cmd.Name() == "reorder" || cmd.Name() == "validate" {
+		// Sync global flags to shared package for subpackages
+		shared.SetVerbose(verbose)
+		shared.SetNoColor(noColor)
+		shared.SetConfigFile(configFile)
+
+		// Allow root (help/version), init, system, count, go, shell-init, understand, config, extension, index, gates, and validate to run anywhere
+		// Also allow subcommands of system, understand, config, extension, index, gates, remove, renumber, reorder, and validate
+		if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "system" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" || cmd.Name() == "go" || cmd.Name() == "shell-init" || cmd.Name() == "understand" || cmd.Name() == "config" || cmd.Name() == "extension" || cmd.Name() == "index" || cmd.Name() == "gates" || cmd.Name() == "remove" || cmd.Name() == "renumber" || cmd.Name() == "reorder" || cmd.Name() == "validate" {
 			return nil
 		}
-		// Check if parent is understand, config, extension, index, gates, remove, renumber, reorder, or validate (for subcommands)
-		if cmd.Parent() != nil && (cmd.Parent().Name() == "understand" || cmd.Parent().Name() == "config" || cmd.Parent().Name() == "extension" || cmd.Parent().Name() == "index" || cmd.Parent().Name() == "gates" || cmd.Parent().Name() == "remove" || cmd.Parent().Name() == "renumber" || cmd.Parent().Name() == "reorder" || cmd.Parent().Name() == "validate") {
+		// Check if parent is system, understand, config, extension, index, gates, remove, renumber, reorder, or validate (for subcommands)
+		if cmd.Parent() != nil && (cmd.Parent().Name() == "system" || cmd.Parent().Name() == "understand" || cmd.Parent().Name() == "config" || cmd.Parent().Name() == "extension" || cmd.Parent().Name() == "index" || cmd.Parent().Name() == "gates" || cmd.Parent().Name() == "remove" || cmd.Parent().Name() == "renumber" || cmd.Parent().Name() == "reorder" || cmd.Parent().Name() == "validate") {
 			return nil
 		}
 		cwd, _ := os.Getwd()
@@ -66,21 +87,23 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logging")
 
 	// Add commands
-	rootCmd.AddCommand(NewSyncCommand())
 	rootCmd.AddCommand(NewInitCommand())
-	rootCmd.AddCommand(NewTUICommand())
-	rootCmd.AddCommand(NewUpdateCommand())
+	if shared.NewTUICommand != nil {
+		rootCmd.AddCommand(shared.NewTUICommand())
+	}
+	// System maintenance commands (sync, update)
+	rootCmd.AddCommand(system.NewSystemCommand())
 	rootCmd.AddCommand(NewCountCommand())
-	rootCmd.AddCommand(NewRenumberCommand())
-	rootCmd.AddCommand(NewReorderCommand())
-	rootCmd.AddCommand(NewInsertCommand())
-	rootCmd.AddCommand(NewRemoveCommand())
+	rootCmd.AddCommand(structure.NewRenumberCommand())
+	rootCmd.AddCommand(structure.NewReorderCommand())
+	rootCmd.AddCommand(structure.NewInsertCommand())
+	rootCmd.AddCommand(structure.NewRemoveCommand())
 	// Headless-first creation commands
 	rootCmd.AddCommand(NewApplyCommand())
 	// Grouped under 'create'
 	createCmd := &cobra.Command{Use: "create", Short: "Create festival elements",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return StartCreateTUI()
+			return shared.StartCreateTUI()
 		},
 	}
 	createCmd.AddCommand(NewCreateFestivalCommand())
@@ -93,26 +116,26 @@ func init() {
 	rootCmd.AddCommand(NewTaskCommand())
 
 	// Methodology learning command
-	rootCmd.AddCommand(NewUnderstandCommand())
+	rootCmd.AddCommand(understandcmd.NewUnderstandCommand())
 
 	// Validation command
-	rootCmd.AddCommand(NewValidateCommand())
+	rootCmd.AddCommand(validation.NewValidateCommand())
 
 	// Navigation command
-	rootCmd.AddCommand(NewGoCommand())
+	rootCmd.AddCommand(navigation.NewGoCommand())
 
 	// Shell integration command
-	rootCmd.AddCommand(NewShellInitCommand())
+	rootCmd.AddCommand(config.NewShellInitCommand())
 
 	// Config repo management
-	rootCmd.AddCommand(NewConfigCommand())
+	rootCmd.AddCommand(config.NewConfigCommand())
 
 	// Extension management
 	rootCmd.AddCommand(NewExtensionCommand())
 
 	// Index generation for Guild integration
-	rootCmd.AddCommand(NewIndexCommand())
+	rootCmd.AddCommand(navigation.NewIndexCommand())
 
 	// Gates policy management
-	rootCmd.AddCommand(NewGatesCommand())
+	rootCmd.AddCommand(gates.NewGatesCommand())
 }

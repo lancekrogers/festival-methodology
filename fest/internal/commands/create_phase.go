@@ -7,19 +7,21 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
-type createPhaseOptions struct {
-	after      int
-	name       string
-	phaseType  string
-	path       string
-	varsFile   string
-	jsonOutput bool
+// CreatePhaseOptions holds options for the create phase command.
+type CreatePhaseOptions struct {
+	After      int
+	Name       string
+	PhaseType  string
+	Path       string
+	VarsFile   string
+	JSONOutput bool
 }
 
 type createPhaseResult struct {
@@ -34,30 +36,31 @@ type createPhaseResult struct {
 
 // NewCreatePhaseCommand adds 'create phase'
 func NewCreatePhaseCommand() *cobra.Command {
-	opts := &createPhaseOptions{}
+	opts := &CreatePhaseOptions{}
 	cmd := &cobra.Command{
 		Use:   "phase",
 		Short: "Insert a new phase and render its goal file",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flags().NFlag() == 0 {
-				return StartCreatePhaseTUI()
+				return shared.StartCreatePhaseTUI()
 			}
-			if strings.TrimSpace(opts.name) == "" {
+			if strings.TrimSpace(opts.Name) == "" {
 				return fmt.Errorf("--name is required (or run without flags to open TUI)")
 			}
-			return runCreatePhase(opts)
+			return RunCreatePhase(opts)
 		},
 	}
-	cmd.Flags().IntVar(&opts.after, "after", 0, "Insert after this number (0 inserts at beginning)")
-	cmd.Flags().StringVar(&opts.name, "name", "", "Phase name (required)")
-	cmd.Flags().StringVar(&opts.phaseType, "type", "planning", "Phase type (planning|implementation|review|deployment)")
-	cmd.Flags().StringVar(&opts.path, "path", ".", "Path to festival root (directory containing numbered phases)")
-	cmd.Flags().StringVar(&opts.varsFile, "vars-file", "", "JSON vars for rendering")
-	cmd.Flags().BoolVar(&opts.jsonOutput, "json", false, "Emit JSON output")
+	cmd.Flags().IntVar(&opts.After, "after", 0, "Insert after this number (0 inserts at beginning)")
+	cmd.Flags().StringVar(&opts.Name, "name", "", "Phase name (required)")
+	cmd.Flags().StringVar(&opts.PhaseType, "type", "planning", "Phase type (planning|implementation|review|deployment)")
+	cmd.Flags().StringVar(&opts.Path, "path", ".", "Path to festival root (directory containing numbered phases)")
+	cmd.Flags().StringVar(&opts.VarsFile, "vars-file", "", "JSON vars for rendering")
+	cmd.Flags().BoolVar(&opts.JSONOutput, "json", false, "Emit JSON output")
 	return cmd
 }
 
-func runCreatePhase(opts *createPhaseOptions) error {
+// RunCreatePhase executes the create phase command logic.
+func RunCreatePhase(opts *CreatePhaseOptions) error {
 	display := ui.New(noColor, verbose)
 	cwd, _ := os.Getwd()
 	// Resolve template root
@@ -66,26 +69,26 @@ func runCreatePhase(opts *createPhaseOptions) error {
 		return emitCreatePhaseError(opts, err)
 	}
 
-	absPath, err := filepath.Abs(opts.path)
+	absPath, err := filepath.Abs(opts.Path)
 	if err != nil {
 		return emitCreatePhaseError(opts, fmt.Errorf("invalid path: %w", err))
 	}
 
 	// Insert phase
 	ren := festival.NewRenumberer(festival.RenumberOptions{AutoApprove: true, Quiet: true})
-	if err := ren.InsertPhase(absPath, opts.after, opts.name); err != nil {
+	if err := ren.InsertPhase(absPath, opts.After, opts.Name); err != nil {
 		return emitCreatePhaseError(opts, fmt.Errorf("failed to insert phase: %w", err))
 	}
 
 	// Compute new phase id
-	newNumber := opts.after + 1
-	phaseID := tpl.FormatPhaseID(newNumber, opts.name)
+	newNumber := opts.After + 1
+	phaseID := tpl.FormatPhaseID(newNumber, opts.Name)
 	phaseDir := filepath.Join(absPath, phaseID)
 
 	// Load vars
 	vars := map[string]interface{}{}
-	if strings.TrimSpace(opts.varsFile) != "" {
-		v, err := loadVarsFile(opts.varsFile)
+	if strings.TrimSpace(opts.VarsFile) != "" {
+		v, err := loadVarsFile(opts.VarsFile)
 		if err != nil {
 			return emitCreatePhaseError(opts, fmt.Errorf("failed to read vars-file: %w", err))
 		}
@@ -94,7 +97,7 @@ func runCreatePhase(opts *createPhaseOptions) error {
 
 	// Build context for phase
 	ctx := tpl.NewContext()
-	ctx.SetPhase(newNumber, opts.name, opts.phaseType)
+	ctx.SetPhase(newNumber, opts.Name, opts.PhaseType)
 	for k, v := range vars {
 		ctx.SetCustom(k, v)
 	}
@@ -141,15 +144,15 @@ func runCreatePhase(opts *createPhaseOptions) error {
 		}
 	}
 
-	if opts.jsonOutput {
+	if opts.JSONOutput {
 		return emitCreatePhaseJSON(opts, createPhaseResult{
 			OK:     true,
 			Action: "create_phase",
 			Phase: map[string]interface{}{
 				"number": newNumber,
 				"id":     phaseID,
-				"name":   opts.name,
-				"type":   opts.phaseType,
+				"name":   opts.Name,
+				"type":   opts.PhaseType,
 			},
 			Created:  []string{goalPath},
 			Renumber: []string{},
@@ -169,8 +172,8 @@ func runCreatePhase(opts *createPhaseOptions) error {
 	return nil
 }
 
-func emitCreatePhaseError(opts *createPhaseOptions, err error) error {
-	if opts.jsonOutput {
+func emitCreatePhaseError(opts *CreatePhaseOptions, err error) error {
+	if opts.JSONOutput {
 		_ = emitCreatePhaseJSON(opts, createPhaseResult{
 			OK:     false,
 			Action: "create_phase",
@@ -184,7 +187,7 @@ func emitCreatePhaseError(opts *createPhaseOptions, err error) error {
 	return err
 }
 
-func emitCreatePhaseJSON(opts *createPhaseOptions, res createPhaseResult) error {
+func emitCreatePhaseJSON(opts *CreatePhaseOptions, res createPhaseResult) error {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
 	return enc.Encode(res)

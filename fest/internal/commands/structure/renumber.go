@@ -1,9 +1,10 @@
-package commands
+package structure
 
 import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	"github.com/spf13/cobra"
 )
@@ -82,7 +83,7 @@ Phases are numbered with 3 digits (001, 002, 003, etc.).`,
 			renumberer := festival.NewRenumberer(festival.RenumberOptions{
 				DryRun:  opts.dryRun,
 				Backup:  opts.backup,
-				Verbose: opts.verbose || verbose,
+				Verbose: opts.verbose || shared.IsVerbose(),
 			})
 
 			// Perform renumbering
@@ -119,7 +120,7 @@ Sequences are numbered with 2 digits (01, 02, 03, etc.).`,
 			renumberer := festival.NewRenumberer(festival.RenumberOptions{
 				DryRun:  opts.dryRun,
 				Backup:  opts.backup,
-				Verbose: opts.verbose || verbose,
+				Verbose: opts.verbose || shared.IsVerbose(),
 			})
 
 			// Perform renumbering
@@ -161,7 +162,7 @@ Parallel tasks (multiple tasks with the same number) are preserved.`,
 			renumberer := festival.NewRenumberer(festival.RenumberOptions{
 				DryRun:  opts.dryRun,
 				Backup:  opts.backup,
-				Verbose: opts.verbose || verbose,
+				Verbose: opts.verbose || shared.IsVerbose(),
 			})
 
 			// Perform renumbering

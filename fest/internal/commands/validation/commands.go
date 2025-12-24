@@ -1,4 +1,4 @@
-package commands
+package validation
 
 import (
 	"bufio"
@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	"github.com/lancekrogers/festival-methodology/fest/internal/gates"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
@@ -395,7 +396,7 @@ func validateDirExists(path string) bool {
 
 // runValidateAll runs all validation checks
 func runValidateAll(opts *validateOptions) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	festivalPath, err := resolveFestivalPath(opts.path)
 	if err != nil {
@@ -442,7 +443,7 @@ func runValidateAll(opts *validateOptions) error {
 }
 
 func runValidateStructure(opts *validateOptions) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	festivalPath, err := resolveFestivalPath(opts.path)
 	if err != nil {
@@ -476,7 +477,7 @@ func runValidateStructure(opts *validateOptions) error {
 }
 
 func runValidateCompleteness(opts *validateOptions) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	festivalPath, err := resolveFestivalPath(opts.path)
 	if err != nil {
@@ -510,7 +511,7 @@ func runValidateCompleteness(opts *validateOptions) error {
 }
 
 func runValidateTasks(opts *validateOptions) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	festivalPath, err := resolveFestivalPath(opts.path)
 	if err != nil {
@@ -544,7 +545,7 @@ func runValidateTasks(opts *validateOptions) error {
 }
 
 func runValidateQualityGates(opts *validateOptions) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	festivalPath, err := resolveFestivalPath(opts.path)
 	if err != nil {
@@ -578,7 +579,7 @@ func runValidateQualityGates(opts *validateOptions) error {
 }
 
 func runValidateChecklist(opts *validateOptions) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	festivalPath, err := resolveFestivalPath(opts.path)
 	if err != nil {
