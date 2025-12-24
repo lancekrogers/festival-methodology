@@ -1,33 +1,31 @@
 package validator
 
 import (
-	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
+	"context"
+	"strings"
 )
 
-// CheckOrderCorrect verifies that phases are in sequential order.
+// CheckOrderCorrect verifies that phases, sequences, and tasks are sequentially numbered.
+// It uses the comprehensive ordering validator to check all levels.
 func CheckOrderCorrect(path string) bool {
-	parser := festival.NewParser()
-	phases, err := parser.ParsePhases(path)
+	return CheckOrderingCorrect(path)
+}
+
+// CheckParallelCorrect verifies parallelization standards.
+// Returns false if there are non-consecutive duplicate numbers.
+func CheckParallelCorrect(path string) bool {
+	issues, err := ValidateOrdering(context.Background(), path)
 	if err != nil {
 		return true // Can't check, assume OK
 	}
 
-	// Check phases are sequential
-	lastNum := 0
-	for _, phase := range phases {
-		if phase.Number < lastNum {
+	// Check if any issues are about non-consecutive duplicates
+	for _, issue := range issues {
+		if issue.Code == CodeNumberingGap &&
+			strings.Contains(issue.Message, "Non-consecutive duplicate") {
 			return false
 		}
-		lastNum = phase.Number
 	}
-
-	return true
-}
-
-// CheckParallelCorrect verifies parallelization standards.
-func CheckParallelCorrect(path string) bool {
-	// For now, always return true - parallel validation is complex
-	// and false positives would be confusing
 	return true
 }
 

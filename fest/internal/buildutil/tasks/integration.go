@@ -2,21 +2,34 @@
 package tasks
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/buildutil/ui"
 )
 
+// integrationTestEvent represents a go test -json output line
+type integrationTestEvent struct {
+	Action  string `json:"Action"`
+	Package string `json:"Package"`
+	Test    string `json:"Test"`
+	Output  string `json:"Output"`
+}
+
 // IntegrationResult tracks integration test results
 type IntegrationResult struct {
-	Suite    string
-	Pass     bool
-	Duration time.Duration
+	Suite       string
+	Pass        bool
+	Duration    time.Duration
+	TestsPassed int
+	TestsFailed int
 }
 
 // Integration runs integration tests
@@ -63,24 +76,139 @@ func Integration(verbose bool) error {
 	// Run each test suite
 	for i, suite := range suites {
 		name := strings.TrimPrefix(suite, "tests/integration/")
-
-		ui.Progress(i+1, total, fmt.Sprintf("Testing %s", name))
-
-		start := time.Now()
-		cmd := exec.Command("go", "test", "-tags", "integration", "-timeout", "2m", "./"+suite)
-
-		if verbose {
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
+		if name == "" {
+			name = "tests/integration"
 		}
 
-		pass := cmd.Run() == nil
+		start := time.Now()
+
+		var pass bool
+		var testsPassed, testsFailed int
+
+		if verbose {
+			// In verbose mode, show output directly
+			cmd := exec.Command("go", "test", "-v", "-tags", "integration", "-timeout", "2m", "./"+suite)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			ui.Progress(i+1, total, fmt.Sprintf("Testing %s", name))
+			pass = cmd.Run() == nil
+		} else {
+			// Run with -json for real-time progress
+			cmd := exec.Command("go", "test", "-json", "-tags", "integration", "-timeout", "2m", "./"+suite)
+			stdout, err := cmd.StdoutPipe()
+			if err != nil {
+				return fmt.Errorf("failed to create stdout pipe: %w", err)
+			}
+
+			if err := cmd.Start(); err != nil {
+				return fmt.Errorf("failed to start test: %w", err)
+			}
+
+			// Track state for progress display
+			var currentTest string
+			var currentOutput string
+			var mu sync.Mutex
+
+			// Spinner characters for visual feedback
+			spinnerChars := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+			spinnerIdx := 0
+
+			// Print initial two lines (will be updated in place)
+			fmt.Println("  → Starting...")
+			fmt.Printf("[%d/%d] ⠋ Starting... 0s", i+1, total)
+
+			// Start a goroutine to update elapsed time
+			done := make(chan bool)
+			go func() {
+				ticker := time.NewTicker(100 * time.Millisecond)
+				defer ticker.Stop()
+				for {
+					select {
+					case <-done:
+						return
+					case <-ticker.C:
+						mu.Lock()
+						elapsed := time.Since(start).Seconds()
+						testName := currentTest
+						output := currentOutput
+						passed := testsPassed
+						failed := testsFailed
+						mu.Unlock()
+
+						// Cycle spinner
+						spinner := spinnerChars[spinnerIdx%len(spinnerChars)]
+						spinnerIdx++
+
+						status := fmt.Sprintf("%d✓", passed)
+						if failed > 0 {
+							status += fmt.Sprintf(" %d✗", failed)
+						}
+
+						var progressLine string
+						if testName != "" {
+							progressLine = fmt.Sprintf("%s %s (%s) %.0fs", spinner, testName, status, elapsed)
+						} else {
+							progressLine = fmt.Sprintf("%s Starting... %.0fs", spinner, elapsed)
+						}
+
+						if output == "" {
+							output = "waiting for output..."
+						}
+						ui.ProgressWithOutput(i+1, total, output, progressLine)
+					}
+				}
+			}()
+
+			// Parse JSON output in real-time
+			scanner := bufio.NewScanner(stdout)
+			for scanner.Scan() {
+				var event integrationTestEvent
+				if err := json.Unmarshal(scanner.Bytes(), &event); err != nil {
+					continue
+				}
+
+				mu.Lock()
+				// Capture output lines (strip newlines for display)
+				if event.Action == "output" && event.Output != "" {
+					trimmed := strings.TrimSpace(event.Output)
+					// Show subtest runs and actual test output (not just framework markers)
+					if strings.HasPrefix(trimmed, "=== RUN") {
+						// Show subtest being run
+						currentOutput = strings.TrimPrefix(trimmed, "=== RUN   ")
+					} else if trimmed != "" && !strings.HasPrefix(trimmed, "---") && !strings.HasPrefix(trimmed, "PASS") && !strings.HasPrefix(trimmed, "FAIL") {
+						// Show actual test output
+						currentOutput = trimmed
+					}
+				}
+
+				// Only track top-level tests (not subtests)
+				if event.Test != "" && !strings.Contains(event.Test, "/") {
+					switch event.Action {
+					case "run":
+						currentTest = event.Test
+					case "pass":
+						testsPassed++
+					case "fail":
+						testsFailed++
+					}
+				}
+				mu.Unlock()
+			}
+
+			close(done)
+			cmd.Wait()
+			pass = testsFailed == 0
+			ui.ClearProgressWithOutput()
+		}
+
 		duration := time.Since(start)
 
 		results = append(results, IntegrationResult{
-			Suite:    name,
-			Pass:     pass,
-			Duration: duration,
+			Suite:       name,
+			Pass:        pass,
+			Duration:    duration,
+			TestsPassed: testsPassed,
+			TestsFailed: testsFailed,
 		})
 
 		if !pass {
@@ -92,13 +220,14 @@ func Integration(verbose bool) error {
 
 	// Calculate totals
 	var totalTime time.Duration
-	passed := 0
+	totalTestsPassed := 0
+	totalTestsFailed := 0
 	for _, r := range results {
 		totalTime += r.Duration
-		if r.Pass {
-			passed++
-		}
+		totalTestsPassed += r.TestsPassed
+		totalTestsFailed += r.TestsFailed
 	}
+	totalTests := totalTestsPassed + totalTestsFailed
 
 	// Display summary
 	rows := [][]string{
@@ -106,9 +235,10 @@ func Integration(verbose bool) error {
 	}
 
 	for _, r := range results {
-		status := "✓ PASS"
+		testCount := r.TestsPassed + r.TestsFailed
+		status := fmt.Sprintf("✓ %d/%d passed", r.TestsPassed, testCount)
 		if !r.Pass {
-			status = "✗ FAIL"
+			status = fmt.Sprintf("✗ %d/%d failed", r.TestsFailed, testCount)
 		}
 		if ui.ColourEnabled() {
 			if r.Pass {
@@ -126,9 +256,9 @@ func Integration(verbose bool) error {
 	}
 
 	// Add totals row
-	totalStatus := fmt.Sprintf("%d/%d passed", passed, len(results))
+	totalStatus := fmt.Sprintf("%d/%d tests passed", totalTestsPassed, totalTests)
 	if ui.ColourEnabled() {
-		if failures > 0 {
+		if totalTestsFailed > 0 {
 			totalStatus = ui.Red + totalStatus + ui.Reset
 		} else {
 			totalStatus = ui.Green + totalStatus + ui.Reset
@@ -136,7 +266,7 @@ func Integration(verbose bool) error {
 	}
 
 	rows = append(rows, []string{
-		"TOTAL",
+		fmt.Sprintf("%d suites", len(results)),
 		totalStatus,
 		fmt.Sprintf("%.2fs", totalTime.Seconds()),
 	})
@@ -144,8 +274,8 @@ func Integration(verbose bool) error {
 	success := failures == 0
 
 	// Use custom status messages for integration test results
-	successMsg := "✓ ALL INTEGRATION TESTS PASSED"
-	failMsg := fmt.Sprintf("✗ %d INTEGRATION TESTS FAILED", failures)
+	successMsg := fmt.Sprintf("✓ ALL %d TESTS PASSED", totalTestsPassed)
+	failMsg := fmt.Sprintf("✗ %d/%d TESTS FAILED", totalTestsFailed, totalTests)
 
 	ui.SummaryCardWithStatus("Integration Test Summary", rows, fmt.Sprintf("%.2fs", totalTime.Seconds()), success, successMsg, failMsg)
 
