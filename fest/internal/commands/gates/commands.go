@@ -1,4 +1,4 @@
-package commands
+package gates
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lancekrogers/festival-methodology/fest/internal/gates"
+	gatescore "github.com/lancekrogers/festival-methodology/fest/internal/gates"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
 )
@@ -86,17 +86,17 @@ func runGatesShow(ctx context.Context, cmd *cobra.Command, phase, sequence strin
 		return fmt.Errorf("resolving paths: %w", err)
 	}
 
-	registry, err := gates.NewPolicyRegistry(festivalsRoot, getConfigRoot())
+	registry, err := gatescore.NewPolicyRegistry(festivalsRoot, getConfigRoot())
 	if err != nil {
 		return fmt.Errorf("creating policy registry: %w", err)
 	}
 
-	loader, err := gates.NewHierarchicalLoader(festivalsRoot, registry)
+	loader, err := gatescore.NewHierarchicalLoader(festivalsRoot, registry)
 	if err != nil {
 		return fmt.Errorf("creating hierarchical loader: %w", err)
 	}
 
-	var effective *gates.EffectivePolicy
+	var effective *gatescore.EffectivePolicy
 	if sequencePath != "" {
 		effective, err = loader.LoadForSequence(ctx, festivalPath, phasePath, sequencePath)
 	} else if phasePath != "" {
@@ -114,7 +114,7 @@ func runGatesShow(ctx context.Context, cmd *cobra.Command, phase, sequence strin
 	return printGatesShowTable(cmd, effective, phase, sequence)
 }
 
-func printGatesShowJSON(cmd *cobra.Command, effective *gates.EffectivePolicy) error {
+func printGatesShowJSON(cmd *cobra.Command, effective *gatescore.EffectivePolicy) error {
 	output := struct {
 		Gates   []gateOutput   `json:"gates"`
 		Sources []sourceOutput `json:"sources"`
@@ -152,7 +152,7 @@ func printGatesShowJSON(cmd *cobra.Command, effective *gates.EffectivePolicy) er
 	return enc.Encode(output)
 }
 
-func printGatesShowTable(cmd *cobra.Command, effective *gates.EffectivePolicy, phase, sequence string) error {
+func printGatesShowTable(cmd *cobra.Command, effective *gatescore.EffectivePolicy, phase, sequence string) error {
 	out := cmd.OutOrStdout()
 
 	// Header
@@ -233,7 +233,7 @@ func runGatesList(ctx context.Context, cmd *cobra.Command, jsonOutput bool) erro
 		return fmt.Errorf("finding festivals root: %w", err)
 	}
 
-	registry, err := gates.NewPolicyRegistry(festivalsRoot, getConfigRoot())
+	registry, err := gatescore.NewPolicyRegistry(festivalsRoot, getConfigRoot())
 	if err != nil {
 		return fmt.Errorf("creating policy registry: %w", err)
 	}
@@ -308,8 +308,8 @@ func runGatesValidate(ctx context.Context, cmd *cobra.Command, fix, jsonOutput b
 			return nil // Skip inaccessible paths
 		}
 
-		if info.Name() == gates.PhaseOverrideFileName {
-			if _, loadErr := gates.LoadPolicy(path); loadErr != nil {
+		if info.Name() == gatescore.PhaseOverrideFileName {
+			if _, loadErr := gatescore.LoadPolicy(path); loadErr != nil {
 				issues = append(issues, validationIssue{
 					Path:     path,
 					Severity: "error",

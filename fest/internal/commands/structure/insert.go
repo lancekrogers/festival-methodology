@@ -1,10 +1,11 @@
-package commands
+package structure
 
 import (
 	"fmt"
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	"github.com/spf13/cobra"
 )
@@ -80,7 +81,7 @@ The new phase will be created with the proper 3-digit numbering format.`,
 			renumberer := festival.NewRenumberer(festival.RenumberOptions{
 				DryRun:  opts.dryRun,
 				Backup:  opts.backup,
-				Verbose: opts.verbose || verbose,
+				Verbose: opts.verbose || shared.IsVerbose(),
 			})
 
 			// Perform insertion
@@ -130,7 +131,7 @@ The new sequence will be created with the proper 2-digit numbering format.`,
 			renumberer := festival.NewRenumberer(festival.RenumberOptions{
 				DryRun:  opts.dryRun,
 				Backup:  opts.backup,
-				Verbose: opts.verbose || verbose,
+				Verbose: opts.verbose || shared.IsVerbose(),
 			})
 
 			// Perform insertion

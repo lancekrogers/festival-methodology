@@ -1,4 +1,4 @@
-package commands
+package gates
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lancekrogers/festival-methodology/fest/internal/gates"
+	gatescore "github.com/lancekrogers/festival-methodology/fest/internal/gates"
 )
 
 // resolvePaths resolves festival, phase, and sequence paths from flags or cwd.
@@ -93,10 +93,10 @@ func getConfigRoot() string {
 // resolveTargetPath determines the target path and override file name.
 func resolveTargetPath(festivalPath, phasePath, sequencePath string) (targetPath, overrideFile string) {
 	if sequencePath != "" {
-		return sequencePath, gates.PhaseOverrideFileName
+		return sequencePath, gatescore.PhaseOverrideFileName
 	}
 	if phasePath != "" {
-		return phasePath, gates.PhaseOverrideFileName
+		return phasePath, gatescore.PhaseOverrideFileName
 	}
 	return festivalPath, filepath.Join(".festival", "gates.yml")
 }

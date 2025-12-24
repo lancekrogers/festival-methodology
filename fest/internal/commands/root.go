@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/gates"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/navigation"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/structure"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
 )
@@ -20,6 +24,11 @@ var (
 	BuildTime = "unknown"
 	GitCommit = "unknown"
 )
+
+// IsVerbose returns the global verbose flag value.
+func IsVerbose() bool {
+	return verbose
+}
 
 var rootCmd = &cobra.Command{
 	Use:   "fest",
@@ -43,6 +52,9 @@ func init() {
 
 	// Enforce being inside a festivals/ tree for most commands
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		// Sync verbose flag to shared package for subpackages
+		shared.SetVerbose(verbose)
+
 		// Allow root (help/version), init, sync, count, go, shell-init, understand, config, extension, index, gates, and validate to run anywhere
 		// Also allow subcommands of understand, config, extension, index, gates, remove, renumber, reorder, and validate
 		if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "sync" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" || cmd.Name() == "go" || cmd.Name() == "shell-init" || cmd.Name() == "understand" || cmd.Name() == "config" || cmd.Name() == "extension" || cmd.Name() == "index" || cmd.Name() == "gates" || cmd.Name() == "remove" || cmd.Name() == "renumber" || cmd.Name() == "reorder" || cmd.Name() == "validate" {
@@ -71,10 +83,10 @@ func init() {
 	rootCmd.AddCommand(NewTUICommand())
 	rootCmd.AddCommand(NewUpdateCommand())
 	rootCmd.AddCommand(NewCountCommand())
-	rootCmd.AddCommand(NewRenumberCommand())
-	rootCmd.AddCommand(NewReorderCommand())
-	rootCmd.AddCommand(NewInsertCommand())
-	rootCmd.AddCommand(NewRemoveCommand())
+	rootCmd.AddCommand(structure.NewRenumberCommand())
+	rootCmd.AddCommand(structure.NewReorderCommand())
+	rootCmd.AddCommand(structure.NewInsertCommand())
+	rootCmd.AddCommand(structure.NewRemoveCommand())
 	// Headless-first creation commands
 	rootCmd.AddCommand(NewApplyCommand())
 	// Grouped under 'create'
@@ -99,7 +111,7 @@ func init() {
 	rootCmd.AddCommand(NewValidateCommand())
 
 	// Navigation command
-	rootCmd.AddCommand(NewGoCommand())
+	rootCmd.AddCommand(navigation.NewGoCommand())
 
 	// Shell integration command
 	rootCmd.AddCommand(NewShellInitCommand())
@@ -111,8 +123,8 @@ func init() {
 	rootCmd.AddCommand(NewExtensionCommand())
 
 	// Index generation for Guild integration
-	rootCmd.AddCommand(NewIndexCommand())
+	rootCmd.AddCommand(navigation.NewIndexCommand())
 
 	// Gates policy management
-	rootCmd.AddCommand(NewGatesCommand())
+	rootCmd.AddCommand(gates.NewGatesCommand())
 }

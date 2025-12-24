@@ -1,10 +1,11 @@
-package commands
+package structure
 
 import (
 	"fmt"
 	"path/filepath"
 	"strconv"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	"github.com/spf13/cobra"
 )
@@ -93,7 +94,7 @@ For example, moving phase 3 to position 1 will shift phases 1 and 2 down.`,
 			renumberer := festival.NewRenumberer(festival.RenumberOptions{
 				DryRun:      opts.dryRun,
 				Backup:      opts.backup,
-				Verbose:     opts.verbose || verbose,
+				Verbose:     opts.verbose || shared.IsVerbose(),
 				AutoApprove: opts.force,
 			})
 
@@ -141,7 +142,7 @@ Elements between the source and destination positions are shifted accordingly.`,
 			renumberer := festival.NewRenumberer(festival.RenumberOptions{
 				DryRun:      opts.dryRun,
 				Backup:      opts.backup,
-				Verbose:     opts.verbose || verbose,
+				Verbose:     opts.verbose || shared.IsVerbose(),
 				AutoApprove: opts.force,
 			})
 
@@ -195,7 +196,7 @@ Parallel tasks (multiple tasks with the same number) are moved together.`,
 			renumberer := festival.NewRenumberer(festival.RenumberOptions{
 				DryRun:      opts.dryRun,
 				Backup:      opts.backup,
-				Verbose:     opts.verbose || verbose,
+				Verbose:     opts.verbose || shared.IsVerbose(),
 				AutoApprove: opts.force,
 			})
 

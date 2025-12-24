@@ -1,10 +1,11 @@
-package commands
+package structure
 
 import (
 	"fmt"
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	"github.com/spf13/cobra"
 )
@@ -107,7 +108,7 @@ Warning: This will permanently delete the phase and all its contents!`,
 			renumberer := festival.NewRenumberer(festival.RenumberOptions{
 				DryRun:  opts.dryRun,
 				Backup:  opts.backup,
-				Verbose: opts.verbose || verbose,
+				Verbose: opts.verbose || shared.IsVerbose(),
 			})
 
 			// Perform removal
@@ -185,7 +186,7 @@ Warning: This will permanently delete the sequence and all its contents!`,
 			renumberer := festival.NewRenumberer(festival.RenumberOptions{
 				DryRun:  opts.dryRun,
 				Backup:  opts.backup,
-				Verbose: opts.verbose || verbose,
+				Verbose: opts.verbose || shared.IsVerbose(),
 			})
 
 			// Perform removal
@@ -285,7 +286,7 @@ Warning: This will permanently delete the task file!`,
 			renumberer := festival.NewRenumberer(festival.RenumberOptions{
 				DryRun:  opts.dryRun,
 				Backup:  opts.backup,
-				Verbose: opts.verbose || verbose,
+				Verbose: opts.verbose || shared.IsVerbose(),
 			})
 
 			// Perform removal
