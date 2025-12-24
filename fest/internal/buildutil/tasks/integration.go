@@ -60,21 +60,54 @@ func Integration(verbose bool) error {
 	total := len(suites)
 	failures := 0
 
+	// Spinner characters for progress indication
+	spinner := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+
 	// Run each test suite
 	for i, suite := range suites {
 		name := strings.TrimPrefix(suite, "tests/integration/")
-
-		ui.Progress(i+1, total, fmt.Sprintf("Testing %s", name))
+		if name == "" {
+			name = "tests/integration"
+		}
 
 		start := time.Now()
 		cmd := exec.Command("go", "test", "-tags", "integration", "-timeout", "2m", "./"+suite)
 
+		var pass bool
+
 		if verbose {
+			// In verbose mode, show output directly
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
+			ui.Progress(i+1, total, fmt.Sprintf("Testing %s", name))
+			pass = cmd.Run() == nil
+		} else {
+			// Run test in background with spinner
+			done := make(chan bool, 1)
+			var cmdErr error
+
+			go func() {
+				cmdErr = cmd.Run()
+				done <- true
+			}()
+
+			// Show spinner with elapsed time
+			spinIdx := 0
+			for {
+				select {
+				case <-done:
+					pass = cmdErr == nil
+					goto testDone
+				default:
+					elapsed := time.Since(start).Seconds()
+					ui.Progress(i+1, total, fmt.Sprintf("%s Testing %s (%.0fs)", spinner[spinIdx%len(spinner)], name, elapsed))
+					time.Sleep(100 * time.Millisecond)
+					spinIdx++
+				}
+			}
+		testDone:
 		}
 
-		pass := cmd.Run() == nil
 		duration := time.Since(start)
 
 		results = append(results, IntegrationResult{
