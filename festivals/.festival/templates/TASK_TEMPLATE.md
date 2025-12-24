@@ -26,7 +26,7 @@ TEMPLATE USAGE:
 
 ## Rules Compliance
 
-Before starting this task, review FESTIVAL_RULES.md, particularly:
+Before starting this task, review [FESTIVAL_RULES.md]({{.festival_root}}/FESTIVAL_RULES.md), particularly:
 
 - [REPLACE: Relevant section 1]
 - [REPLACE: Relevant section 2]
@@ -55,7 +55,7 @@ Before starting this task, review FESTIVAL_RULES.md, particularly:
 
 ## Pre-Task Checklist
 
-- [ ] Read FESTIVAL_RULES.md completely
+- [ ] Read [FESTIVAL_RULES.md]({{.festival_root}}/FESTIVAL_RULES.md) completely
 - [ ] Understand task requirements
 - [ ] Review existing code/content and patterns
 - [ ] Verify dependencies are complete

@@ -237,6 +237,102 @@ Description: {{.description}}`
 	assert.Contains(t, err.Error(), "description")
 }
 
+// TestIntegration_FestivalRootLinks tests that {{.festival_root}} renders correct relative paths
+func TestIntegration_FestivalRootLinks(t *testing.T) {
+	manager := NewManager()
+
+	// Template simulating a task with links to festival-root documents
+	template := `# Task: {{.task_id}}
+
+## Rules Compliance
+
+Before starting this task, review [FESTIVAL_RULES.md]({{.festival_root}}/FESTIVAL_RULES.md), particularly:
+
+- Code quality standards
+- Testing requirements
+
+## Pre-Task Checklist
+
+- [ ] Read [FESTIVAL_RULES.md]({{.festival_root}}/FESTIVAL_RULES.md) completely
+- [ ] Review [FESTIVAL_OVERVIEW.md]({{.festival_root}}/FESTIVAL_OVERVIEW.md)
+- [ ] Check [TODO.md]({{.festival_root}}/TODO.md) for updates`
+
+	tests := []struct {
+		name         string
+		level        string
+		setup        func(*Context)
+		expectedRoot string
+	}{
+		{
+			name:  "task level - two directories up",
+			level: "task",
+			setup: func(ctx *Context) {
+				ctx.SetFestival("test-festival", "Test goal", nil)
+				ctx.SetPhase(1, "PLANNING", "planning")
+				ctx.SetSequence(1, "requirements")
+				ctx.SetTask(1, "user research")
+				ctx.ComputeStructureVariables()
+			},
+			expectedRoot: "../..",
+		},
+		{
+			name:  "sequence level - two directories up",
+			level: "sequence",
+			setup: func(ctx *Context) {
+				ctx.SetFestival("test-festival", "Test goal", nil)
+				ctx.SetPhase(1, "PLANNING", "planning")
+				ctx.SetSequence(1, "requirements")
+				ctx.ComputeStructureVariables()
+			},
+			expectedRoot: "../..",
+		},
+		{
+			name:  "phase level - one directory up",
+			level: "phase",
+			setup: func(ctx *Context) {
+				ctx.SetFestival("test-festival", "Test goal", nil)
+				ctx.SetPhase(1, "PLANNING", "planning")
+				ctx.ComputeStructureVariables()
+			},
+			expectedRoot: "..",
+		},
+		{
+			name:  "festival level - current directory",
+			level: "festival",
+			setup: func(ctx *Context) {
+				ctx.SetFestival("test-festival", "Test goal", nil)
+				ctx.ComputeStructureVariables()
+			},
+			expectedRoot: ".",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := NewContext()
+			tt.setup(ctx)
+
+			output, err := manager.RenderString(template, ctx)
+			require.NoError(t, err)
+
+			// Verify festival_root was substituted correctly
+			expectedRulesLink := "[FESTIVAL_RULES.md](" + tt.expectedRoot + "/FESTIVAL_RULES.md)"
+			expectedOverviewLink := "[FESTIVAL_OVERVIEW.md](" + tt.expectedRoot + "/FESTIVAL_OVERVIEW.md)"
+			expectedTodoLink := "[TODO.md](" + tt.expectedRoot + "/TODO.md)"
+
+			assert.Contains(t, output, expectedRulesLink, "FESTIVAL_RULES.md link should use %s", tt.expectedRoot)
+			assert.Contains(t, output, expectedOverviewLink, "FESTIVAL_OVERVIEW.md link should use %s", tt.expectedRoot)
+			assert.Contains(t, output, expectedTodoLink, "TODO.md link should use %s", tt.expectedRoot)
+
+			// Verify no unrendered variables
+			assert.NotContains(t, output, "{{.festival_root}}", "festival_root should be substituted")
+			assert.NotContains(t, output, "{{", "No unrendered template variables should remain")
+
+			t.Logf("Level %s: festival_root = %s", tt.level, tt.expectedRoot)
+		})
+	}
+}
+
 // TestIntegration_RealWorldScenario simulates real usage
 func TestIntegration_RealWorldScenario(t *testing.T) {
 	// Step 1: User runs `fest init auth-enhancement`

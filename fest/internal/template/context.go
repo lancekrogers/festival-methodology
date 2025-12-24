@@ -45,6 +45,7 @@ type Context struct {
 	ParentPhaseID    string // e.g., "001_PLANNING"
 	ParentSequenceID string // e.g., "01_requirements"
 	FullPath         string // e.g., "001_PLANNING/01_requirements/01_task.md"
+	FestivalRoot     string // relative path to festival root: ".", "..", "../.."
 
 	// Custom user-provided variables (from TUI or CLI)
 	Custom map[string]interface{}
@@ -140,20 +141,24 @@ func (c *Context) SetCustom(key string, value interface{}) {
 	c.Custom[key] = value
 }
 
-// ComputeStructureVariables calculates full_path, parent_* variables based on current level
+// ComputeStructureVariables calculates full_path, parent_*, and festival_root variables based on current level
 func (c *Context) ComputeStructureVariables() {
 	switch c.CurrentLevel {
 	case "task":
 		c.ParentPhaseID = c.PhaseID
 		c.ParentSequenceID = c.SequenceID
 		c.FullPath = filepath.Join(c.PhaseID, c.SequenceID, c.TaskID)
+		c.FestivalRoot = "../.."
 	case "sequence":
 		c.ParentPhaseID = c.PhaseID
 		c.FullPath = filepath.Join(c.PhaseID, c.SequenceID)
+		c.FestivalRoot = "../.."
 	case "phase":
 		c.FullPath = c.PhaseID
+		c.FestivalRoot = ".."
 	case "festival":
 		c.FullPath = ""
+		c.FestivalRoot = "."
 	}
 }
 
@@ -195,6 +200,7 @@ func (c *Context) ToTemplateData() map[string]interface{} {
 		"parent_phase_id":    c.ParentPhaseID,
 		"parent_sequence_id": c.ParentSequenceID,
 		"full_path":          c.FullPath,
+		"festival_root":      c.FestivalRoot,
 	}
 
 	// Merge custom variables

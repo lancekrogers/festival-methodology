@@ -140,6 +140,7 @@ func TestComputeStructureVariables(t *testing.T) {
 		wantParentPhase  string
 		wantParentSeq    string
 		wantCurrentLevel string
+		wantFestivalRoot string
 	}{
 		{
 			name: "task level",
@@ -153,6 +154,7 @@ func TestComputeStructureVariables(t *testing.T) {
 			wantParentPhase:  "001_PLANNING",
 			wantParentSeq:    "01_requirements",
 			wantCurrentLevel: "task",
+			wantFestivalRoot: "../..",
 		},
 		{
 			name: "sequence level",
@@ -165,6 +167,7 @@ func TestComputeStructureVariables(t *testing.T) {
 			wantParentPhase:  "002_IMPLEMENTATION",
 			wantParentSeq:    "",
 			wantCurrentLevel: "sequence",
+			wantFestivalRoot: "../..",
 		},
 		{
 			name: "phase level",
@@ -176,6 +179,7 @@ func TestComputeStructureVariables(t *testing.T) {
 			wantParentPhase:  "",
 			wantParentSeq:    "",
 			wantCurrentLevel: "phase",
+			wantFestivalRoot: "..",
 		},
 		{
 			name: "festival level",
@@ -187,6 +191,7 @@ func TestComputeStructureVariables(t *testing.T) {
 			wantParentPhase:  "",
 			wantParentSeq:    "",
 			wantCurrentLevel: "festival",
+			wantFestivalRoot: ".",
 		},
 	}
 
@@ -199,6 +204,7 @@ func TestComputeStructureVariables(t *testing.T) {
 			assert.Equal(t, tt.wantParentPhase, ctx.ParentPhaseID)
 			assert.Equal(t, tt.wantParentSeq, ctx.ParentSequenceID)
 			assert.Equal(t, tt.wantCurrentLevel, ctx.CurrentLevel)
+			assert.Equal(t, tt.wantFestivalRoot, ctx.FestivalRoot)
 		})
 	}
 }
@@ -254,6 +260,7 @@ func TestToTemplateData(t *testing.T) {
 	assert.Equal(t, "001_PLANNING", data["parent_phase_id"])
 	assert.Equal(t, "02_architecture_design", data["parent_sequence_id"])
 	assert.Equal(t, "001_PLANNING/02_architecture_design/03_database_schema.md", data["full_path"])
+	assert.Equal(t, "../..", data["festival_root"])
 
 	// Custom
 	assert.Equal(t, "custom_value", data["custom_var"])
@@ -388,6 +395,7 @@ func TestCompleteWorkflow(t *testing.T) {
 	assert.Equal(t, "001_PLANNING", ctx.ParentPhaseID)
 	assert.Equal(t, "02_architecture_design", ctx.ParentSequenceID)
 	assert.Equal(t, "001_PLANNING/02_architecture_design/03_database_schema_design.md", ctx.FullPath)
+	assert.Equal(t, "../..", ctx.FestivalRoot)
 
 	// Verify ToTemplateData includes everything
 	data := ctx.ToTemplateData()
