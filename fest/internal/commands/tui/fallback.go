@@ -275,7 +275,7 @@ func tuiCreatePhase(display *ui.UI) error {
 		return fmt.Errorf("phase name is required")
 	}
 	// Choose phase type
-	types := []string{"planning", "implementation", "review", "deployment"}
+	types := []string{"planning", "implementation", "review", "deployment", "research"}
 	tIdx := display.Choose("Phase type:", types)
 	if tIdx < 0 || tIdx >= len(types) {
 		tIdx = 0

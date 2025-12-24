@@ -297,7 +297,7 @@ func charmCreatePhase() error {
 		return err
 	}
 	var name, path, afterStr string
-	phaseTypes := []string{"planning", "implementation", "review", "deployment"}
+	phaseTypes := []string{"planning", "implementation", "review", "deployment", "research"}
 	var phaseType string = phaseTypes[0]
 
 	// Two-step: first fields; then compute default 'after'

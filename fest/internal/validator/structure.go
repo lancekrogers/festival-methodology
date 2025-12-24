@@ -9,6 +9,13 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 )
 
+// isResearchPhase checks if a phase is a research phase based on naming or type.
+// Research phases use freeform subdirectory structure and don't require numbered sequences/tasks.
+func isResearchPhase(phaseName string) bool {
+	normalized := strings.ToUpper(phaseName)
+	return strings.Contains(normalized, "RESEARCH")
+}
+
 // ValidateStructure checks naming conventions and hierarchy only.
 // Required file presence is handled by the CompletenessValidator.
 func ValidateStructure(festivalPath string) ([]Issue, error) {
@@ -37,6 +44,12 @@ func ValidateStructure(festivalPath string) ([]Issue, error) {
 					Fix:     fmt.Sprintf("rename to %03d_%s", phase.Number, strings.ToUpper(namePart)),
 				})
 			}
+		}
+
+		// Skip sequence/task validation for research phases
+		// Research phases use freeform subdirectory structure
+		if isResearchPhase(phase.Name) {
+			continue
 		}
 
 		sequences, err := parser.ParseSequences(phase.Path)

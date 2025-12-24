@@ -3,6 +3,7 @@ package validator
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	"github.com/lancekrogers/festival-methodology/fest/internal/gates"
@@ -21,6 +22,11 @@ func ValidateTasks(festivalPath string) ([]Issue, error) {
 	policy := gates.DefaultPolicy()
 
 	for _, phase := range phases {
+		// Skip research phases - they use freeform structure
+		if isResearchPhaseForTasks(phase.Name) {
+			continue
+		}
+
 		sequences, err := parser.ParseSequences(phase.Path)
 		if err != nil {
 			return issues, fmt.Errorf("parse sequences: %w", err)
@@ -81,4 +87,11 @@ func CheckTaskFilesExist(path string) bool {
 		return true
 	}
 	return len(issues) == 0
+}
+
+// isResearchPhaseForTasks checks if a phase is a research phase.
+// Research phases use freeform subdirectory structure and don't require numbered tasks.
+func isResearchPhaseForTasks(phaseName string) bool {
+	normalized := strings.ToUpper(phaseName)
+	return strings.Contains(normalized, "RESEARCH")
 }

@@ -82,6 +82,21 @@ func Clean(verbose bool) error {
 		return nil
 	})
 
+	// Clean up orphaned test containers (testcontainers)
+	ui.Task("Cleaning", "orphaned Docker test containers")
+	dockerCmd := exec.Command("docker", "container", "prune", "-f", "--filter", "label=org.testcontainers=true")
+	if verbose {
+		dockerCmd.Stdout = os.Stdout
+		dockerCmd.Stderr = os.Stderr
+	}
+	if err := dockerCmd.Run(); err != nil {
+		// Docker might not be available, that's OK
+		if verbose {
+			fmt.Printf("Note: Docker cleanup skipped (docker not available)\n")
+		}
+	}
+	ui.TaskPass()
+
 	// Display summary
 	removeStatus := fmt.Sprintf("✓ %d items removed", removed)
 	cleanStatus := "✓ Complete"

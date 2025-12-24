@@ -7,6 +7,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/gates"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/navigation"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/research"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/structure"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/system"
@@ -88,13 +89,13 @@ func init() {
 		shared.SetNoColor(noColor)
 		shared.SetConfigFile(configFile)
 
-		// Allow root (help/version), init, system, count, go, shell-init, understand, config, extension, index, gates, and validate to run anywhere
-		// Also allow subcommands of system, understand, config, extension, index, gates, remove, renumber, reorder, and validate
-		if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "system" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" || cmd.Name() == "go" || cmd.Name() == "shell-init" || cmd.Name() == "understand" || cmd.Name() == "config" || cmd.Name() == "extension" || cmd.Name() == "index" || cmd.Name() == "gates" || cmd.Name() == "remove" || cmd.Name() == "renumber" || cmd.Name() == "reorder" || cmd.Name() == "validate" {
+		// Allow root (help/version), init, system, count, go, shell-init, understand, config, extension, index, gates, research, and validate to run anywhere
+		// Also allow subcommands of system, understand, config, extension, index, gates, research, remove, renumber, reorder, and validate
+		if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "system" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" || cmd.Name() == "go" || cmd.Name() == "shell-init" || cmd.Name() == "understand" || cmd.Name() == "config" || cmd.Name() == "extension" || cmd.Name() == "index" || cmd.Name() == "gates" || cmd.Name() == "research" || cmd.Name() == "remove" || cmd.Name() == "renumber" || cmd.Name() == "reorder" || cmd.Name() == "validate" {
 			return nil
 		}
-		// Check if parent is system, understand, config, extension, index, gates, remove, renumber, reorder, or validate (for subcommands)
-		if cmd.Parent() != nil && (cmd.Parent().Name() == "system" || cmd.Parent().Name() == "understand" || cmd.Parent().Name() == "config" || cmd.Parent().Name() == "extension" || cmd.Parent().Name() == "index" || cmd.Parent().Name() == "gates" || cmd.Parent().Name() == "remove" || cmd.Parent().Name() == "renumber" || cmd.Parent().Name() == "reorder" || cmd.Parent().Name() == "validate") {
+		// Check if parent is system, understand, config, extension, index, gates, research, remove, renumber, reorder, or validate (for subcommands)
+		if cmd.Parent() != nil && (cmd.Parent().Name() == "system" || cmd.Parent().Name() == "understand" || cmd.Parent().Name() == "config" || cmd.Parent().Name() == "extension" || cmd.Parent().Name() == "index" || cmd.Parent().Name() == "gates" || cmd.Parent().Name() == "research" || cmd.Parent().Name() == "remove" || cmd.Parent().Name() == "renumber" || cmd.Parent().Name() == "reorder" || cmd.Parent().Name() == "validate") {
 			return nil
 		}
 		cwd, _ := os.Getwd()
@@ -203,4 +204,9 @@ func init() {
 	gatesCmd := gates.NewGatesCommand()
 	gatesCmd.GroupID = "learning"
 	rootCmd.AddCommand(gatesCmd)
+
+	// Research document management
+	researchCmd := research.NewResearchCommand()
+	researchCmd.GroupID = "creation"
+	rootCmd.AddCommand(researchCmd)
 }
