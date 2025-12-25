@@ -22,7 +22,7 @@ func NewGoCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "go [target]",
-		Short: "Navigate to festivals directory",
+		Short: "Navigate to festivals/ - use 'fgo' after shell-init setup",
 		Long: `Navigate to your workspace's festivals directory.
 
 The go command finds the festivals/ directory that has been registered

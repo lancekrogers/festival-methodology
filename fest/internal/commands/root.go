@@ -39,12 +39,27 @@ func IsVerbose() bool {
 
 var rootCmd = &cobra.Command{
 	Use:   "fest",
-	Short: "Festival Methodology CLI tool",
-	Long: `fest is a CLI tool for managing Festival Methodology files.
+	Short: "Festival Methodology CLI - goal-oriented project management for AI agents",
+	Long: `fest manages Festival Methodology - a goal-oriented project management
+system designed for AI agent development workflows.
 
-It helps you initialize, sync, and update festival directories while
-preserving your modifications and ensuring you always have the latest
-templates available.`,
+GETTING STARTED (for AI agents):
+  fest understand methodology    Learn core principles first
+  fest understand structure      Understand the 3-level hierarchy
+  fest understand tasks          Learn when/how to create task files
+  fest validate                  Check if a festival is properly structured
+
+COMMON WORKFLOWS:
+  fest create festival           Create a new festival (interactive TUI)
+  fest create phase/sequence     Add phases or sequences to existing festival
+  fest validate --fix            Fix common structure issues automatically
+  fest go                        Navigate to festivals directory
+
+SYSTEM MAINTENANCE:
+  fest system sync               Download latest templates from source
+  fest system update             Update .festival/ methodology files
+
+Run 'fest understand' to learn the methodology before executing tasks.`,
 	Version: fmt.Sprintf("%s (built %s, commit %s)", Version, BuildTime, GitCommit),
 }
 
@@ -56,6 +71,15 @@ func Execute() error {
 func init() {
 	// Disable the completion command - defaults are not useful for fest
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
+
+	// Define command groups for organized help output
+	rootCmd.AddGroup(
+		&cobra.Group{ID: "learning", Title: "Learning Commands:"},
+		&cobra.Group{ID: "creation", Title: "Creation Commands:"},
+		&cobra.Group{ID: "structure", Title: "Structure Commands:"},
+		&cobra.Group{ID: "navigation", Title: "Navigation Commands:"},
+		&cobra.Group{ID: "system", Title: "System Commands:"},
+	)
 
 	// Enforce being inside a festivals/ tree for most commands
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
@@ -86,22 +110,20 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable colored output")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logging")
 
-	// Add commands
-	rootCmd.AddCommand(NewInitCommand())
-	if shared.NewTUICommand != nil {
-		rootCmd.AddCommand(shared.NewTUICommand())
-	}
-	// System maintenance commands (sync, update)
-	rootCmd.AddCommand(system.NewSystemCommand())
-	rootCmd.AddCommand(NewCountCommand())
-	rootCmd.AddCommand(structure.NewRenumberCommand())
-	rootCmd.AddCommand(structure.NewReorderCommand())
-	rootCmd.AddCommand(structure.NewInsertCommand())
-	rootCmd.AddCommand(structure.NewRemoveCommand())
-	// Headless-first creation commands
-	rootCmd.AddCommand(NewApplyCommand())
-	// Grouped under 'create'
-	createCmd := &cobra.Command{Use: "create", Short: "Create festival elements",
+	// === LEARNING COMMANDS ===
+	understandCmd := understandcmd.NewUnderstandCommand()
+	understandCmd.GroupID = "learning"
+	rootCmd.AddCommand(understandCmd)
+
+	validateCmd := validation.NewValidateCommand()
+	validateCmd.GroupID = "learning"
+	rootCmd.AddCommand(validateCmd)
+
+	// === CREATION COMMANDS ===
+	createCmd := &cobra.Command{
+		Use:     "create",
+		Short:   "Create festivals, phases, sequences, or tasks (TUI)",
+		GroupID: "creation",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return shared.StartCreateTUI()
 		},
@@ -112,27 +134,69 @@ func init() {
 	createCmd.AddCommand(NewCreateTaskCommand())
 	rootCmd.AddCommand(createCmd)
 
-	// Methodology learning command
-	rootCmd.AddCommand(understandcmd.NewUnderstandCommand())
+	insertCmd := structure.NewInsertCommand()
+	insertCmd.GroupID = "creation"
+	rootCmd.AddCommand(insertCmd)
 
-	// Validation command
-	rootCmd.AddCommand(validation.NewValidateCommand())
+	applyCmd := NewApplyCommand()
+	applyCmd.GroupID = "creation"
+	rootCmd.AddCommand(applyCmd)
 
-	// Navigation command
-	rootCmd.AddCommand(navigation.NewGoCommand())
+	// === STRUCTURE COMMANDS ===
+	renumberCmd := structure.NewRenumberCommand()
+	renumberCmd.GroupID = "structure"
+	rootCmd.AddCommand(renumberCmd)
 
-	// Shell integration command
-	rootCmd.AddCommand(config.NewShellInitCommand())
+	reorderCmd := structure.NewReorderCommand()
+	reorderCmd.GroupID = "structure"
+	rootCmd.AddCommand(reorderCmd)
 
-	// Config repo management
-	rootCmd.AddCommand(config.NewConfigCommand())
+	removeCmd := structure.NewRemoveCommand()
+	removeCmd.GroupID = "structure"
+	rootCmd.AddCommand(removeCmd)
 
-	// Extension management
-	rootCmd.AddCommand(NewExtensionCommand())
+	// === NAVIGATION COMMANDS ===
+	goCmd := navigation.NewGoCommand()
+	goCmd.GroupID = "navigation"
+	rootCmd.AddCommand(goCmd)
 
-	// Index generation for Guild integration
-	rootCmd.AddCommand(navigation.NewIndexCommand())
+	indexCmd := navigation.NewIndexCommand()
+	indexCmd.GroupID = "navigation"
+	rootCmd.AddCommand(indexCmd)
 
-	// Gates policy management
-	rootCmd.AddCommand(gates.NewGatesCommand())
+	// === SYSTEM COMMANDS ===
+	initCmd := NewInitCommand()
+	initCmd.GroupID = "system"
+	rootCmd.AddCommand(initCmd)
+
+	systemCmd := system.NewSystemCommand()
+	systemCmd.GroupID = "system"
+	rootCmd.AddCommand(systemCmd)
+
+	configCmd := config.NewConfigCommand()
+	configCmd.GroupID = "system"
+	rootCmd.AddCommand(configCmd)
+
+	shellInitCmd := config.NewShellInitCommand()
+	shellInitCmd.GroupID = "system"
+	rootCmd.AddCommand(shellInitCmd)
+
+	extensionCmd := NewExtensionCommand()
+	extensionCmd.GroupID = "system"
+	rootCmd.AddCommand(extensionCmd)
+
+	countCmd := NewCountCommand()
+	countCmd.GroupID = "system"
+	rootCmd.AddCommand(countCmd)
+
+	if shared.NewTUICommand != nil {
+		tuiCmd := shared.NewTUICommand()
+		tuiCmd.GroupID = "creation"
+		rootCmd.AddCommand(tuiCmd)
+	}
+
+	// Gates policy management (part of learning/validation)
+	gatesCmd := gates.NewGatesCommand()
+	gatesCmd.GroupID = "learning"
+	rootCmd.AddCommand(gatesCmd)
 }

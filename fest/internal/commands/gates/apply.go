@@ -75,9 +75,10 @@ Quality gates are only added to sequences not matching excluded_patterns.`,
 			if len(args) > 0 {
 				opts.policyName = args[0]
 			}
-			// Default to dry-run unless approve is set
-			if !opts.approve {
-				opts.dryRun = true
+			// If approve is set, explicitly disable dry-run
+			// (since --dry-run flag defaults to true)
+			if opts.approve {
+				opts.dryRun = false
 			}
 			return runGatesApply(cmd.Context(), cmd, opts)
 		},

@@ -17,7 +17,7 @@ import (
 func NewGatesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gates",
-		Short: "Manage quality gate policies",
+		Short: "Manage quality gates - validation steps at sequence end",
 		Long: `Manage hierarchical quality gate policies for festivals.
 
 Quality gates are validation steps that run at the end of implementation

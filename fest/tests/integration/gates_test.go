@@ -70,7 +70,7 @@ func TestGatesCommands(t *testing.T) {
 	t.Run("GatesShow", func(t *testing.T) {
 		output, err := container.RunFestInDir("/festivals/test-gates-festival", "gates", "show")
 		require.NoError(t, err, "gates show should not fail")
-		require.Contains(t, output, "Effective gates", "Should show effective gates header")
+		require.Contains(t, output, "Merged gates", "Should show merged gates header")
 		require.Contains(t, output, "testing_and_verify", "Should show default gate")
 		require.Contains(t, output, "code_review", "Should show code review gate")
 		t.Logf("gates show: %s", output)
@@ -86,30 +86,30 @@ func TestGatesCommands(t *testing.T) {
 		t.Logf("gates show --json: %s", output)
 	})
 
-	// Test 6: gates init - create override file at festival level
+	// Test 6: gates init - create fest.yaml at festival level
 	t.Run("GatesInitFestival", func(t *testing.T) {
-		// First verify override doesn't exist
-		overridePath := "/festivals/test-gates-festival/.festival/gates.yml"
-		exists, _ := container.CheckFileExists(overridePath)
-		require.False(t, exists, "Override file should not exist initially")
+		// First verify fest.yaml doesn't exist
+		festYAMLPath := "/festivals/test-gates-festival/fest.yaml"
+		exists, _ := container.CheckFileExists(festYAMLPath)
+		require.False(t, exists, "fest.yaml should not exist initially")
 
 		// Run init
 		output, err := container.RunFestInDir("/festivals/test-gates-festival", "gates", "init")
 		require.NoError(t, err, "gates init should not fail")
-		require.Contains(t, output, "Created override file", "Should confirm file creation")
+		require.Contains(t, output, "Created fest.yaml", "Should confirm fest.yaml creation")
 		t.Logf("gates init: %s", output)
 
 		// Verify file was created
-		exists, err = container.CheckFileExists(overridePath)
+		exists, err = container.CheckFileExists(festYAMLPath)
 		require.NoError(t, err)
-		require.True(t, exists, "Override file should be created")
+		require.True(t, exists, "fest.yaml should be created")
 
 		// Verify file content
-		content, err := container.ReadFile(overridePath)
+		content, err := container.ReadFile(festYAMLPath)
 		require.NoError(t, err)
-		require.Contains(t, content, "version: 1", "Override should have version")
-		require.Contains(t, content, "inherit: true", "Override should have inherit setting")
-		t.Logf("Override file content: %s", content)
+		require.Contains(t, content, "quality_gates:", "fest.yaml should have quality_gates section")
+		require.Contains(t, content, "testing_and_verify", "fest.yaml should have default gate")
+		t.Logf("fest.yaml content: %s", content)
 	})
 
 	// Test 7: gates init --phase - create override at phase level
@@ -152,15 +152,15 @@ func TestGatesCommands(t *testing.T) {
 		require.True(t, exists, "Sequence override should be created")
 	})
 
-	// Test 9: gates apply - apply named policy
+	// Test 9: gates apply - apply named policy (policy-only mode)
 	t.Run("GatesApplyStrict", func(t *testing.T) {
 		// Create a second festival for apply test
 		err := createMinimalFestival(container, "/festivals/apply-test-festival")
 		require.NoError(t, err)
 
-		// Apply strict policy
-		output, err := container.RunFestInDir("/festivals/apply-test-festival", "gates", "apply", "strict")
-		require.NoError(t, err, "gates apply strict should not fail")
+		// Apply strict policy with --policy-only to write the policy file
+		output, err := container.RunFestInDir("/festivals/apply-test-festival", "gates", "apply", "strict", "--policy-only", "--approve")
+		require.NoError(t, err, "gates apply strict --policy-only should not fail")
 		require.Contains(t, output, "Applied policy", "Should confirm application")
 		require.Contains(t, output, "strict", "Should mention policy name")
 		t.Logf("gates apply strict: %s", output)
@@ -174,18 +174,18 @@ func TestGatesCommands(t *testing.T) {
 		t.Logf("Applied policy content: %s", content)
 	})
 
-	// Test 10: gates apply --dry-run
+	// Test 10: gates apply --dry-run (policy-only mode)
 	t.Run("GatesApplyDryRun", func(t *testing.T) {
 		// Create another test festival
 		err := createMinimalFestival(container, "/festivals/dry-run-test")
 		require.NoError(t, err)
 
-		// Apply with --dry-run
-		output, err := container.RunFestInDir("/festivals/dry-run-test", "gates", "apply", "lightweight", "--dry-run")
-		require.NoError(t, err, "gates apply --dry-run should not fail")
+		// Apply with --policy-only (dry-run is default)
+		output, err := container.RunFestInDir("/festivals/dry-run-test", "gates", "apply", "lightweight", "--policy-only")
+		require.NoError(t, err, "gates apply --policy-only should not fail")
 		require.Contains(t, output, "[dry-run]", "Should indicate dry run")
 		require.Contains(t, output, "lightweight", "Should mention policy name")
-		t.Logf("gates apply --dry-run: %s", output)
+		t.Logf("gates apply --policy-only: %s", output)
 
 		// Verify file was NOT created
 		policyPath := "/festivals/dry-run-test/.festival/gates.yml"
@@ -220,7 +220,7 @@ func TestGatesCommands(t *testing.T) {
 		// Show gates for that phase
 		output, err := container.RunFestInDir("/festivals/test-gates-festival", "gates", "show", "--phase", "002_IMPLEMENT")
 		require.NoError(t, err, "gates show --phase should not fail")
-		require.Contains(t, output, "Effective gates", "Should show effective gates")
+		require.Contains(t, output, "Merged gates", "Should show merged gates")
 		t.Logf("gates show --phase: %s", output)
 	})
 
@@ -228,7 +228,7 @@ func TestGatesCommands(t *testing.T) {
 	t.Run("GatesShowSequence", func(t *testing.T) {
 		output, err := container.RunFestInDir("/festivals/test-gates-festival", "gates", "show", "--sequence", "002_IMPLEMENT/01_core")
 		require.NoError(t, err, "gates show --sequence should not fail")
-		require.Contains(t, output, "Effective gates", "Should show effective gates")
+		require.Contains(t, output, "Merged gates", "Should show merged gates")
 		t.Logf("gates show --sequence: %s", output)
 	})
 
@@ -339,8 +339,9 @@ Implementation task.
 
 // createMinimalFestival creates a minimal festival structure
 func createMinimalFestival(tc *TestContainer, path string) error {
-	// Create directories
+	// Create directories including the root .festival (required by FindFestivalsRoot)
 	dirs := []string{
+		"/festivals/.festival", // Root .festival directory
 		filepath.Join(path, ".festival"),
 		filepath.Join(path, "001_PHASE/01_seq"),
 	}
