@@ -20,7 +20,7 @@ type Context struct {
 	PhaseNumber    int
 	PhaseName      string
 	PhaseID        string // formatted: "001_PLANNING"
-	PhaseType      string // "planning", "implementation", "validation", "review"
+	PhaseType      string // "planning", "implementation", "review", "deployment", "research"
 	PhaseStructure string // "freeform" or "structured"
 	PhaseObjective string
 

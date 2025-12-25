@@ -244,7 +244,7 @@ func charmPlanFestivalWizard() error {
 			pf := huh.NewForm(
 				huh.NewGroup(
 					huh.NewInput().Title(fmt.Sprintf("Phase %d name", i+1)).Placeholder("PLAN").Value(&pname).Validate(notEmpty),
-					huh.NewSelect[string]().Title("Phase type").Options(toOptions([]string{"planning", "implementation", "review", "deployment"})...).Value(&ptype),
+					huh.NewSelect[string]().Title("Phase type").Options(toOptions([]string{"planning", "implementation", "review", "deployment", "research"})...).Value(&ptype),
 				),
 			).WithTheme(theme())
 			if err := pf.Run(); err != nil {
