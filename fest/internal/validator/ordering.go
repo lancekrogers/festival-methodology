@@ -233,9 +233,9 @@ func validateConsecutiveDuplicates(elements []festival.FestivalElement, elementT
 			if seen[num] {
 				// This number was seen before but not in the previous position
 				issues = append(issues, Issue{
-					Level:   LevelError,
-					Code:    CodeNumberingGap,
-					Path:    entry.Name(),
+					Level: LevelError,
+					Code:  CodeNumberingGap,
+					Path:  entry.Name(),
 					Message: fmt.Sprintf("Non-consecutive duplicate: %s %s appears after different number (must be consecutive for parallel work)",
 						elementType, formatNumber(num, elementType)),
 					Fix: "Parallel items must have consecutive identical numbers",
