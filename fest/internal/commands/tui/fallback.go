@@ -119,7 +119,7 @@ func tuiCreateFestival(display *ui.UI) error {
 	}
 
 	// Collect additional variables required by core festival templates
-	required := uniqueStrings(collectRequiredVars(tmplRoot, defaultFestivalTemplatePaths(tmplRoot)))
+	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, defaultFestivalTemplatePaths(tmplRoot)))
 
 	vars := map[string]interface{}{}
 	// Pre-populate typical variables
@@ -157,7 +157,7 @@ func tuiCreateFestival(display *ui.UI) error {
 		VarsFile: varsFile,
 		Dest:     dest,
 	}
-	return shared.RunCreateFestival(opts)
+	return shared.RunCreateFestival(context.TODO(), opts)
 }
 
 // Wizard: create festival then optionally add phases
@@ -184,7 +184,7 @@ func tuiPlanFestivalWizard(display *ui.UI) error {
 	}
 
 	// gather extra vars from templates
-	required := uniqueStrings(collectRequiredVars(cwdTmpl, defaultFestivalTemplatePaths(cwdTmpl)))
+	required := uniqueStrings(collectRequiredVars(context.TODO(), cwdTmpl, defaultFestivalTemplatePaths(cwdTmpl)))
 	vars := map[string]interface{}{"festival_name": name, "festival_goal": goal}
 	if tags != "" {
 		vars["festival_tags"] = strings.Split(tags, ",")
@@ -203,7 +203,7 @@ func tuiPlanFestivalWizard(display *ui.UI) error {
 		return err
 	}
 
-	if err := shared.RunCreateFestival(&shared.CreateFestivalOpts{Name: name, Goal: goal, Tags: tags, VarsFile: varsFile, Dest: dest}); err != nil {
+	if err := shared.RunCreateFestival(context.TODO(), &shared.CreateFestivalOpts{Name: name, Goal: goal, Tags: tags, VarsFile: varsFile, Dest: dest}); err != nil {
 		return err
 	}
 
@@ -225,7 +225,7 @@ func tuiPlanFestivalWizard(display *ui.UI) error {
 			if ptype == "" {
 				ptype = "planning"
 			}
-			if err := shared.RunCreatePhase(&shared.CreatePhaseOpts{After: after, Name: pname, PhaseType: ptype, Path: festivalDir}); err != nil {
+			if err := shared.RunCreatePhase(context.TODO(), &shared.CreatePhaseOpts{After: after, Name: pname, PhaseType: ptype, Path: festivalDir}); err != nil {
 				return err
 			}
 			after++
@@ -295,7 +295,7 @@ func tuiCreatePhase(display *ui.UI) error {
 		after = atoiDefault(afterStr, defAfter)
 	}
 
-	required := uniqueStrings(collectRequiredVars(tmplRoot, []string{
+	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, []string{
 		filepath.Join(tmplRoot, "PHASE_GOAL_TEMPLATE.md"),
 	}))
 	vars := map[string]interface{}{}
@@ -322,7 +322,7 @@ func tuiCreatePhase(display *ui.UI) error {
 		Path:      path,
 		VarsFile:  varsFile,
 	}
-	return shared.RunCreatePhase(opts)
+	return shared.RunCreatePhase(context.TODO(), opts)
 }
 
 func tuiCreateSequence(display *ui.UI) error {
@@ -374,7 +374,7 @@ func tuiCreateSequence(display *ui.UI) error {
 		after = atoiDefault(afterStr, defAfter)
 	}
 
-	required := uniqueStrings(collectRequiredVars(tmplRoot, []string{
+	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, []string{
 		filepath.Join(tmplRoot, "SEQUENCE_GOAL_TEMPLATE.md"),
 	}))
 	vars := map[string]interface{}{}
@@ -398,7 +398,7 @@ func tuiCreateSequence(display *ui.UI) error {
 		Path:     resolvedPhase,
 		VarsFile: varsFile,
 	}
-	return shared.RunCreateSequence(opts)
+	return shared.RunCreateSequence(context.TODO(), opts)
 }
 
 func tuiCreateTask(display *ui.UI) error {
@@ -500,7 +500,7 @@ func tuiCreateTask(display *ui.UI) error {
 	}
 
 	// Prefer TASK_TEMPLATE.md for required vars
-	required := uniqueStrings(collectRequiredVars(tmplRoot, []string{
+	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, []string{
 		filepath.Join(tmplRoot, "TASK_TEMPLATE.md"),
 	}))
 	vars := map[string]interface{}{}
@@ -524,7 +524,7 @@ func tuiCreateTask(display *ui.UI) error {
 		Path:     resolvedSeq,
 		VarsFile: varsFile,
 	}
-	return shared.RunCreateTask(opts)
+	return shared.RunCreateTask(context.TODO(), opts)
 }
 
 // StartCreateTUI shows a create-only menu (fallback implementation)

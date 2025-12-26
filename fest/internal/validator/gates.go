@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -10,11 +11,11 @@ import (
 )
 
 // ValidateQualityGates checks that implementation sequences have quality gate tasks
-func ValidateQualityGates(festivalPath string) ([]Issue, error) {
+func ValidateQualityGates(ctx context.Context, festivalPath string) ([]Issue, error) {
 	issues := []Issue{}
 
 	parser := festival.NewParser()
-	phases, err := parser.ParsePhases(festivalPath)
+	phases, err := parser.ParsePhases(ctx, festivalPath)
 	if err != nil {
 		return issues, fmt.Errorf("parse phases: %w", err)
 	}
@@ -32,7 +33,7 @@ func ValidateQualityGates(festivalPath string) ([]Issue, error) {
 		if isNonImplementationPhase(phase.Name, nonImplPhasePatterns) {
 			continue
 		}
-		sequences, err := parser.ParseSequences(phase.Path)
+		sequences, err := parser.ParseSequences(ctx, phase.Path)
 		if err != nil {
 			return issues, fmt.Errorf("parse sequences: %w", err)
 		}
@@ -41,7 +42,7 @@ func ValidateQualityGates(festivalPath string) ([]Issue, error) {
 				continue
 			}
 
-			tasks, err := parser.ParseTasks(seq.Path)
+			tasks, err := parser.ParseTasks(ctx, seq.Path)
 			if err != nil {
 				return issues, fmt.Errorf("parse tasks: %w", err)
 			}

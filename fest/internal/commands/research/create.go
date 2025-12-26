@@ -117,7 +117,7 @@ func runResearchCreate(ctx context.Context, cmd *cobra.Command, docType, title, 
 
 	// Load template
 	loader := tpl.NewLoader()
-	t, err := loader.Load(templatePath)
+	t, err := loader.Load(ctx, templatePath)
 	if err != nil {
 		return fmt.Errorf("failed to load template %s: %w", templateFile, err)
 	}

@@ -32,7 +32,7 @@ func ValidateOrdering(ctx context.Context, festivalPath string) ([]Issue, error)
 	parser := festival.NewParser()
 
 	// Validate phase ordering
-	phases, err := parser.ParsePhases(festivalPath)
+	phases, err := parser.ParsePhases(ctx, festivalPath)
 	if err != nil {
 		return issues, fmt.Errorf("parse phases: %w", err)
 	}
@@ -46,7 +46,7 @@ func ValidateOrdering(ctx context.Context, festivalPath string) ([]Issue, error)
 			return issues, err
 		}
 
-		sequences, err := parser.ParseSequences(phase.Path)
+		sequences, err := parser.ParseSequences(ctx, phase.Path)
 		if err != nil {
 			continue // Skip phases that can't be parsed
 		}
@@ -60,7 +60,7 @@ func ValidateOrdering(ctx context.Context, festivalPath string) ([]Issue, error)
 				return issues, err
 			}
 
-			tasks, err := parser.ParseTasks(seq.Path)
+			tasks, err := parser.ParseTasks(ctx, seq.Path)
 			if err != nil {
 				continue
 			}

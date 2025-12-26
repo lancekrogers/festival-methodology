@@ -1,6 +1,7 @@
 package festival
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -74,7 +75,7 @@ Run 'fest validate tasks' to verify task files exist.`,
 			if strings.TrimSpace(opts.Name) == "" {
 				return fmt.Errorf("--name is required (or run without flags to open TUI)")
 			}
-			return RunCreateSequence(opts)
+			return RunCreateSequence(cmd.Context(), opts)
 		},
 	}
 	cmd.Flags().IntVar(&opts.After, "after", 0, "Insert after this number (0 inserts at beginning)")
@@ -86,7 +87,12 @@ Run 'fest validate tasks' to verify task files exist.`,
 }
 
 // RunCreateSequence executes the create sequence command logic.
-func RunCreateSequence(opts *CreateSequenceOptions) error {
+func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("context cancelled: %w", err)
+	}
+
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	cwd, _ := os.Getwd()
 
@@ -103,7 +109,7 @@ func RunCreateSequence(opts *CreateSequenceOptions) error {
 
 	// Insert sequence
 	ren := festival.NewRenumberer(festival.RenumberOptions{AutoApprove: true, Quiet: true})
-	if err := ren.InsertSequence(absPath, opts.After, opts.Name); err != nil {
+	if err := ren.InsertSequence(ctx, absPath, opts.After, opts.Name); err != nil {
 		return emitCreateSequenceError(opts, fmt.Errorf("failed to insert sequence: %w", err))
 	}
 
@@ -122,33 +128,33 @@ func RunCreateSequence(opts *CreateSequenceOptions) error {
 		vars = v
 	}
 
-	// Build context for sequence
-	ctx := tpl.NewContext()
-	ctx.SetSequence(newNumber, opts.Name)
+	// Build template context for sequence
+	tmplCtx := tpl.NewContext()
+	tmplCtx.SetSequence(newNumber, opts.Name)
 	for k, v := range vars {
-		ctx.SetCustom(k, v)
+		tmplCtx.SetCustom(k, v)
 	}
 
 	// Render or copy SEQUENCE_GOAL template
-	catalog, _ := tpl.LoadCatalog(tmplRoot)
+	catalog, _ := tpl.LoadCatalog(ctx, tmplRoot)
 	mgr := tpl.NewManager()
 	var content string
 	var renderErr error
 	if catalog != nil {
-		content, renderErr = mgr.RenderByID(catalog, "SEQUENCE_GOAL", ctx)
+		content, renderErr = mgr.RenderByID(ctx, catalog, "SEQUENCE_GOAL", tmplCtx)
 	}
 	if renderErr != nil || content == "" {
 		// Fall back to default filename
 		tpath := filepath.Join(tmplRoot, "SEQUENCE_GOAL_TEMPLATE.md")
 		if _, err := os.Stat(tpath); err == nil {
 			loader := tpl.NewLoader()
-			t, err := loader.Load(tpath)
+			t, err := loader.Load(ctx, tpath)
 			if err != nil {
 				return emitCreateSequenceError(opts, fmt.Errorf("failed to load sequence goal template: %w", err))
 			}
 			// Render if it appears templated; else copy
 			if strings.Contains(t.Content, "{{") {
-				out, err := mgr.Render(t, ctx)
+				out, err := mgr.Render(t, tmplCtx)
 				if err != nil {
 					return emitCreateSequenceError(opts, fmt.Errorf("failed to render sequence goal: %w", err))
 				}

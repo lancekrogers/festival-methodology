@@ -1,6 +1,7 @@
 package template
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -72,15 +73,15 @@ Created: {{.created_date}}
 	}
 
 	// Step 1: Build context for festival creation
-	ctx := NewContext()
-	ctx.SetFestival("auth-system-enhancement", "Implement OAuth authentication", []string{"backend", "security"})
-	ctx.SetCustom("owner", "Lance Rogers")
-	ctx.SetCustom("created_date", "2025-10-25") // Mock date for testing
-	ctx.SetCustom("fest_version", "2.0.0-dev")
+	tmplCtx := NewContext()
+	tmplCtx.SetFestival("auth-system-enhancement", "Implement OAuth authentication", []string{"backend", "security"})
+	tmplCtx.SetCustom("owner", "Lance Rogers")
+	tmplCtx.SetCustom("created_date", "2025-10-25") // Mock date for testing
+	tmplCtx.SetCustom("fest_version", "2.0.0-dev")
 
 	// Step 2: Render templates
 	manager := NewManager()
-	err := manager.RenderDirectory(templateDir, outputDir, ctx)
+	err := manager.RenderDirectory(context.Background(), templateDir, outputDir, tmplCtx)
 	require.NoError(t, err)
 
 	// Step 3: Verify outputs
@@ -143,13 +144,13 @@ Phase {{.phase_number}} of the festival
 	require.NoError(t, err)
 
 	// Build context for phase
-	ctx := NewContext()
-	ctx.SetFestival("auth-system-enhancement", "Implement OAuth authentication", []string{"backend", "security"})
-	ctx.SetPhase(1, "PLANNING", "planning")
+	tmplCtx := NewContext()
+	tmplCtx.SetFestival("auth-system-enhancement", "Implement OAuth authentication", []string{"backend", "security"})
+	tmplCtx.SetPhase(1, "PLANNING", "planning")
 
 	// Render phase
 	manager := NewManager()
-	err = manager.RenderFileToFile(templatePath, outputPath, ctx)
+	err = manager.RenderFileToFile(context.Background(), templatePath, outputPath, tmplCtx)
 	require.NoError(t, err)
 
 	// Verify output
@@ -224,13 +225,13 @@ Description: {{.description}}`
 	require.NoError(t, err)
 
 	// Create context missing 'description'
-	ctx := NewContext()
-	ctx.SetCustom("name", "test")
-	ctx.SetCustom("goal", "test goal")
+	tmplCtx := NewContext()
+	tmplCtx.SetCustom("name", "test")
+	tmplCtx.SetCustom("goal", "test goal")
 
 	// Should fail validation
 	manager := NewManager()
-	_, err = manager.RenderFile(templatePath, ctx)
+	_, err = manager.RenderFile(context.Background(), templatePath, tmplCtx)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "validation failed")

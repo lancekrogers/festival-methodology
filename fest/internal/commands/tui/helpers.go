@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -13,14 +14,17 @@ import (
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 )
 
-func collectRequiredVars(templateRoot string, paths []string) []string {
+func collectRequiredVars(ctx context.Context, templateRoot string, paths []string) []string {
 	loader := tpl.NewLoader()
 	vars := []string{}
 	for _, p := range paths {
+		if ctx.Err() != nil {
+			break
+		}
 		if _, err := os.Stat(p); err != nil {
 			continue
 		}
-		t, err := loader.Load(p)
+		t, err := loader.Load(ctx, p)
 		if err != nil || t.Metadata == nil {
 			continue
 		}
@@ -309,7 +313,7 @@ func exists(p string) bool {
 // so that the new phase is appended at the end. If no phases exist, returns 0.
 func nextPhaseAfter(festivalDir string) int {
 	parser := festival.NewParser()
-	phases, err := parser.ParsePhases(festivalDir)
+	phases, err := parser.ParsePhases(context.TODO(), festivalDir)
 	if err != nil || len(phases) == 0 {
 		return 0
 	}
@@ -325,7 +329,7 @@ func nextPhaseAfter(festivalDir string) int {
 // nextSequenceAfter returns the number to use for --after when inserting a sequence in a phase
 func nextSequenceAfter(phaseDir string) int {
 	parser := festival.NewParser()
-	seqs, err := parser.ParseSequences(phaseDir)
+	seqs, err := parser.ParseSequences(context.TODO(), phaseDir)
 	if err != nil || len(seqs) == 0 {
 		return 0
 	}
@@ -341,7 +345,7 @@ func nextSequenceAfter(phaseDir string) int {
 // nextTaskAfter returns the number to use for --after when inserting a task in a sequence
 func nextTaskAfter(seqDir string) int {
 	parser := festival.NewParser()
-	tasks, err := parser.ParseTasks(seqDir)
+	tasks, err := parser.ParseTasks(context.TODO(), seqDir)
 	if err != nil || len(tasks) == 0 {
 		return 0
 	}

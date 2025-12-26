@@ -106,16 +106,16 @@ var (
 	RunInit func(ctx context.Context, path string, opts *InitOpts) error
 
 	// RunCreateFestival executes the create festival command.
-	RunCreateFestival func(opts *CreateFestivalOpts) error
+	RunCreateFestival func(ctx context.Context, opts *CreateFestivalOpts) error
 
 	// RunCreatePhase executes the create phase command.
-	RunCreatePhase func(opts *CreatePhaseOpts) error
+	RunCreatePhase func(ctx context.Context, opts *CreatePhaseOpts) error
 
 	// RunCreateSequence executes the create sequence command.
-	RunCreateSequence func(opts *CreateSequenceOpts) error
+	RunCreateSequence func(ctx context.Context, opts *CreateSequenceOpts) error
 
 	// RunCreateTask executes the create task command.
-	RunCreateTask func(opts *CreateTaskOpts) error
+	RunCreateTask func(ctx context.Context, opts *CreateTaskOpts) error
 
 	// RunApply executes the apply command.
 	RunApply func(ctx context.Context, opts *ApplyOpts) error

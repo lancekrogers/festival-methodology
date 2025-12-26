@@ -1,6 +1,7 @@
 package festival
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -59,19 +60,27 @@ func NewParser() *Parser {
 }
 
 // ParseFestival parses the entire festival structure
-func (p *Parser) ParseFestival(festivalDir string) ([]FestivalElement, error) {
+func (p *Parser) ParseFestival(ctx context.Context, festivalDir string) ([]FestivalElement, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("context cancelled: %w", err)
+	}
+
 	if !isDir(festivalDir) {
 		return nil, fmt.Errorf("festival directory does not exist: %s", festivalDir)
 	}
 
-	phases, err := p.ParsePhases(festivalDir)
+	phases, err := p.ParsePhases(ctx, festivalDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse phases: %w", err)
 	}
 
 	// Parse sequences within each phase
 	for i := range phases {
-		sequences, err := p.ParseSequences(phases[i].Path)
+		if ctx.Err() != nil {
+			return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
+		}
+
+		sequences, err := p.ParseSequences(ctx, phases[i].Path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse sequences in %s: %w", phases[i].Name, err)
 		}
@@ -79,7 +88,11 @@ func (p *Parser) ParseFestival(festivalDir string) ([]FestivalElement, error) {
 
 		// Parse tasks within each sequence
 		for j := range phases[i].Children {
-			tasks, err := p.ParseTasks(phases[i].Children[j].Path)
+			if ctx.Err() != nil {
+				return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
+			}
+
+			tasks, err := p.ParseTasks(ctx, phases[i].Children[j].Path)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse tasks in %s: %w", phases[i].Children[j].Name, err)
 			}
@@ -91,22 +104,26 @@ func (p *Parser) ParseFestival(festivalDir string) ([]FestivalElement, error) {
 }
 
 // ParsePhases parses phase directories
-func (p *Parser) ParsePhases(festivalDir string) ([]FestivalElement, error) {
-	return p.parseElements(festivalDir, p.phasePattern, PhaseType, true)
+func (p *Parser) ParsePhases(ctx context.Context, festivalDir string) ([]FestivalElement, error) {
+	return p.parseElements(ctx, festivalDir, p.phasePattern, PhaseType, true)
 }
 
 // ParseSequences parses sequence directories within a phase
-func (p *Parser) ParseSequences(phaseDir string) ([]FestivalElement, error) {
-	return p.parseElements(phaseDir, p.sequencePattern, SequenceType, true)
+func (p *Parser) ParseSequences(ctx context.Context, phaseDir string) ([]FestivalElement, error) {
+	return p.parseElements(ctx, phaseDir, p.sequencePattern, SequenceType, true)
 }
 
 // ParseTasks parses task files within a sequence
-func (p *Parser) ParseTasks(sequenceDir string) ([]FestivalElement, error) {
-	return p.parseElements(sequenceDir, p.taskPattern, TaskType, false)
+func (p *Parser) ParseTasks(ctx context.Context, sequenceDir string) ([]FestivalElement, error) {
+	return p.parseElements(ctx, sequenceDir, p.taskPattern, TaskType, false)
 }
 
 // parseElements is the generic parser for numbered elements
-func (p *Parser) parseElements(dir string, pattern *regexp.Regexp, elemType ElementType, isDirectory bool) ([]FestivalElement, error) {
+func (p *Parser) parseElements(ctx context.Context, dir string, pattern *regexp.Regexp, elemType ElementType, isDirectory bool) ([]FestivalElement, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("context cancelled: %w", err)
+	}
+
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read directory %s: %w", dir, err)
@@ -156,17 +173,21 @@ func (p *Parser) parseElements(dir string, pattern *regexp.Regexp, elemType Elem
 }
 
 // GetNextNumber returns the next available number for an element type
-func (p *Parser) GetNextNumber(dir string, elemType ElementType) (int, error) {
+func (p *Parser) GetNextNumber(ctx context.Context, dir string, elemType ElementType) (int, error) {
+	if err := ctx.Err(); err != nil {
+		return 0, fmt.Errorf("context cancelled: %w", err)
+	}
+
 	var elements []FestivalElement
 	var err error
 
 	switch elemType {
 	case PhaseType:
-		elements, err = p.ParsePhases(dir)
+		elements, err = p.ParsePhases(ctx, dir)
 	case SequenceType:
-		elements, err = p.ParseSequences(dir)
+		elements, err = p.ParseSequences(ctx, dir)
 	case TaskType:
-		elements, err = p.ParseTasks(dir)
+		elements, err = p.ParseTasks(ctx, dir)
 	default:
 		return 0, fmt.Errorf("unknown element type: %v", elemType)
 	}
@@ -184,17 +205,21 @@ func (p *Parser) GetNextNumber(dir string, elemType ElementType) (int, error) {
 }
 
 // FindElement finds an element by number
-func (p *Parser) FindElement(dir string, number int, elemType ElementType) (*FestivalElement, error) {
+func (p *Parser) FindElement(ctx context.Context, dir string, number int, elemType ElementType) (*FestivalElement, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("context cancelled: %w", err)
+	}
+
 	var elements []FestivalElement
 	var err error
 
 	switch elemType {
 	case PhaseType:
-		elements, err = p.ParsePhases(dir)
+		elements, err = p.ParsePhases(ctx, dir)
 	case SequenceType:
-		elements, err = p.ParseSequences(dir)
+		elements, err = p.ParseSequences(ctx, dir)
 	case TaskType:
-		elements, err = p.ParseTasks(dir)
+		elements, err = p.ParseTasks(ctx, dir)
 	default:
 		return nil, fmt.Errorf("unknown element type: %v", elemType)
 	}
@@ -259,8 +284,12 @@ func ParseElementName(fullName string, elemType ElementType) (int, string, error
 }
 
 // HasParallelTasks checks if a sequence has parallel tasks (multiple tasks with same number)
-func (p *Parser) HasParallelTasks(sequenceDir string) (map[int][]FestivalElement, error) {
-	tasks, err := p.ParseTasks(sequenceDir)
+func (p *Parser) HasParallelTasks(ctx context.Context, sequenceDir string) (map[int][]FestivalElement, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("context cancelled: %w", err)
+	}
+
+	tasks, err := p.ParseTasks(ctx, sequenceDir)
 	if err != nil {
 		return nil, err
 	}

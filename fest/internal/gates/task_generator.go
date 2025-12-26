@@ -20,8 +20,12 @@ type TaskGenerator struct {
 }
 
 // NewTaskGenerator creates a task generator with the given template root.
-func NewTaskGenerator(templateRoot string) (*TaskGenerator, error) {
-	catalog, _ := tpl.LoadCatalog(templateRoot)
+func NewTaskGenerator(ctx context.Context, templateRoot string) (*TaskGenerator, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("context cancelled: %w", err)
+	}
+
+	catalog, _ := tpl.LoadCatalog(ctx, templateRoot)
 
 	return &TaskGenerator{
 		templateRoot: templateRoot,
@@ -135,7 +139,7 @@ func (g *TaskGenerator) GenerateForSequence(
 
 		// Create the task
 		if !opts.DryRun {
-			content := g.renderGateContent(gate, taskNum)
+			content := g.renderGateContent(ctx, gate, taskNum)
 
 			if err := os.WriteFile(taskPath, []byte(content), 0644); err != nil {
 				warnings = append(warnings, fmt.Sprintf("Failed to write %s: %v", taskPath, err))
@@ -155,7 +159,7 @@ func (g *TaskGenerator) GenerateForSequence(
 }
 
 // renderGateContent renders the content for a gate task file.
-func (g *TaskGenerator) renderGateContent(gate GateTask, taskNum int) string {
+func (g *TaskGenerator) renderGateContent(ctx context.Context, gate GateTask, taskNum int) string {
 	// Build context
 	tmplCtx := tpl.NewContext()
 	tmplCtx.SetTask(taskNum, gate.ID)
@@ -168,7 +172,7 @@ func (g *TaskGenerator) renderGateContent(gate GateTask, taskNum int) string {
 	// Try catalog first
 	var content string
 	if g.catalog != nil {
-		content, _ = g.manager.RenderByID(g.catalog, gate.Template, tmplCtx)
+		content, _ = g.manager.RenderByID(ctx, g.catalog, gate.Template, tmplCtx)
 	}
 
 	// Fallback to direct file load
@@ -176,7 +180,7 @@ func (g *TaskGenerator) renderGateContent(gate GateTask, taskNum int) string {
 		tpath := filepath.Join(g.templateRoot, gate.Template+".md")
 		if _, err := os.Stat(tpath); err == nil {
 			loader := tpl.NewLoader()
-			t, err := loader.Load(tpath)
+			t, err := loader.Load(ctx, tpath)
 			if err == nil {
 				if strings.Contains(t.Content, "{{") {
 					content, _ = g.manager.Render(t, tmplCtx)

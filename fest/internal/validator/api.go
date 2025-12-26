@@ -11,7 +11,7 @@ func (v *StructureValidator) Validate(ctx context.Context, path string) ([]Issue
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	return ValidateStructure(path)
+	return ValidateStructure(ctx, path)
 }
 
 // TaskValidator validates presence of task files in implementation sequences
@@ -23,7 +23,7 @@ func (v *TaskValidator) Validate(ctx context.Context, path string) ([]Issue, err
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	return ValidateTasks(path)
+	return ValidateTasks(ctx, path)
 }
 
 // QualityGateValidator validates presence of quality gate tasks; can later apply fixes
@@ -42,7 +42,7 @@ func (v *QualityGateValidator) ValidateWithFixes(ctx context.Context, path strin
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	issues, err := ValidateQualityGates(path)
+	issues, err := ValidateQualityGates(ctx, path)
 	if err != nil {
 		return nil, err
 	}

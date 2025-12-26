@@ -29,8 +29,8 @@ func runInitHook(ctx context.Context, path string, opts *shared.InitOpts) error 
 	})
 }
 
-func runCreateFestivalHook(opts *shared.CreateFestivalOpts) error {
-	return festival.RunCreateFestival(&festival.CreateFestivalOptions{
+func runCreateFestivalHook(ctx context.Context, opts *shared.CreateFestivalOpts) error {
+	return festival.RunCreateFestival(ctx, &festival.CreateFestivalOptions{
 		Name:       opts.Name,
 		Goal:       opts.Goal,
 		Tags:       opts.Tags,
@@ -40,8 +40,8 @@ func runCreateFestivalHook(opts *shared.CreateFestivalOpts) error {
 	})
 }
 
-func runCreatePhaseHook(opts *shared.CreatePhaseOpts) error {
-	return festival.RunCreatePhase(&festival.CreatePhaseOptions{
+func runCreatePhaseHook(ctx context.Context, opts *shared.CreatePhaseOpts) error {
+	return festival.RunCreatePhase(ctx, &festival.CreatePhaseOptions{
 		After:      opts.After,
 		Name:       opts.Name,
 		PhaseType:  opts.PhaseType,
@@ -51,8 +51,8 @@ func runCreatePhaseHook(opts *shared.CreatePhaseOpts) error {
 	})
 }
 
-func runCreateSequenceHook(opts *shared.CreateSequenceOpts) error {
-	return festival.RunCreateSequence(&festival.CreateSequenceOptions{
+func runCreateSequenceHook(ctx context.Context, opts *shared.CreateSequenceOpts) error {
+	return festival.RunCreateSequence(ctx, &festival.CreateSequenceOptions{
 		After:      opts.After,
 		Name:       opts.Name,
 		Path:       opts.Path,
@@ -61,8 +61,8 @@ func runCreateSequenceHook(opts *shared.CreateSequenceOpts) error {
 	})
 }
 
-func runCreateTaskHook(opts *shared.CreateTaskOpts) error {
-	return festival.RunCreateTask(&festival.CreateTaskOptions{
+func runCreateTaskHook(ctx context.Context, opts *shared.CreateTaskOpts) error {
+	return festival.RunCreateTask(ctx, &festival.CreateTaskOptions{
 		After:      opts.After,
 		Names:      opts.Names,
 		Path:       opts.Path,

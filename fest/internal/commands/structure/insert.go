@@ -85,7 +85,7 @@ The new phase will be created with the proper 3-digit numbering format.`,
 			})
 
 			// Perform insertion
-			return renumberer.InsertPhase(absPath, opts.after, opts.name)
+			return renumberer.InsertPhase(cmd.Context(), absPath, opts.after, opts.name)
 		},
 	}
 
@@ -135,7 +135,7 @@ The new sequence will be created with the proper 2-digit numbering format.`,
 			})
 
 			// Perform insertion
-			return renumberer.InsertSequence(absPath, opts.after, opts.name)
+			return renumberer.InsertSequence(cmd.Context(), absPath, opts.after, opts.name)
 		},
 	}
 
@@ -193,7 +193,7 @@ Note: Tasks are markdown files, so .md extension will be added automatically.`,
 
 			// Show what would happen
 			parser := festival.NewParser()
-			tasks, err := parser.ParseTasks(absPath)
+			tasks, err := parser.ParseTasks(cmd.Context(), absPath)
 			if err != nil {
 				return fmt.Errorf("failed to parse tasks: %w", err)
 			}

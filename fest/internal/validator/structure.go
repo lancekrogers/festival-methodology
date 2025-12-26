@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -18,11 +19,11 @@ func isResearchPhase(phaseName string) bool {
 
 // ValidateStructure checks naming conventions and hierarchy only.
 // Required file presence is handled by the CompletenessValidator.
-func ValidateStructure(festivalPath string) ([]Issue, error) {
+func ValidateStructure(ctx context.Context, festivalPath string) ([]Issue, error) {
 	issues := []Issue{}
 
 	parser := festival.NewParser()
-	phases, err := parser.ParsePhases(festivalPath)
+	phases, err := parser.ParsePhases(ctx, festivalPath)
 	if err != nil {
 		return issues, fmt.Errorf("parse phases: %w", err)
 	}
@@ -52,7 +53,7 @@ func ValidateStructure(festivalPath string) ([]Issue, error) {
 			continue
 		}
 
-		sequences, err := parser.ParseSequences(phase.Path)
+		sequences, err := parser.ParseSequences(ctx, phase.Path)
 		if err != nil {
 			return issues, fmt.Errorf("parse sequences: %w", err)
 		}

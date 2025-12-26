@@ -1,6 +1,7 @@
 package template
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -69,7 +70,7 @@ Content: {{.value}}`,
 
 			// Load template
 			loader := NewLoader()
-			tmpl, err := loader.Load(tmpFile)
+			tmpl, err := loader.Load(context.Background(), tmpFile)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -115,7 +116,7 @@ Content 3`,
 
 	// Load all templates
 	loader := NewLoader()
-	tmplList, err := loader.LoadAll(tmpDir)
+	tmplList, err := loader.LoadAll(context.Background(), tmpDir)
 	require.NoError(t, err)
 
 	// Should have loaded 3 markdown files

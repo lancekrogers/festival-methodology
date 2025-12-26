@@ -1,6 +1,7 @@
 package festival
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -25,7 +26,7 @@ func TestCreateSequence_DirectoryCreation(t *testing.T) {
 		Quiet:       true,
 	})
 
-	err := ren.InsertSequence(phaseDir, 0, "requirements")
+	err := ren.InsertSequence(context.Background(), phaseDir, 0, "requirements")
 	if err != nil {
 		t.Fatalf("InsertSequence failed: %v", err)
 	}
@@ -58,7 +59,7 @@ func TestCreateTask_FileCreation(t *testing.T) {
 		Quiet:       true,
 	})
 
-	err := ren.InsertTask(seqDir, 0, "define_requirements")
+	err := ren.InsertTask(context.Background(), seqDir, 0, "define_requirements")
 	if err != nil {
 		t.Fatalf("InsertTask failed: %v", err)
 	}
@@ -104,7 +105,7 @@ func TestCreateSequence_NoIsDirectoryError(t *testing.T) {
 	})
 
 	// Insert new sequence at beginning (should shift existing)
-	err := ren.InsertSequence(phaseDir, 0, "new_sequence")
+	err := ren.InsertSequence(context.Background(), phaseDir, 0, "new_sequence")
 	if err != nil {
 		t.Fatalf("InsertSequence failed with error: %v", err)
 	}
@@ -138,7 +139,7 @@ func TestCreateTask_NoIsDirectoryError(t *testing.T) {
 	})
 
 	// Insert new task at beginning (should shift existing)
-	err := ren.InsertTask(seqDir, 0, "new_task")
+	err := ren.InsertTask(context.Background(), seqDir, 0, "new_task")
 	if err != nil {
 		t.Fatalf("InsertTask failed with error: %v", err)
 	}
@@ -169,7 +170,7 @@ func TestCreatePhase_DirectoryCreation(t *testing.T) {
 		Quiet:       true,
 	})
 
-	err := ren.InsertPhase(tmpDir, 0, "PLANNING")
+	err := ren.InsertPhase(context.Background(), tmpDir, 0, "PLANNING")
 	if err != nil {
 		t.Fatalf("InsertPhase failed: %v", err)
 	}
@@ -196,28 +197,29 @@ func TestCreate_ChainedOperations(t *testing.T) {
 	})
 
 	// Create phases
-	if err := ren.InsertPhase(tmpDir, 0, "PLANNING"); err != nil {
+	ctx := context.Background()
+	if err := ren.InsertPhase(ctx, tmpDir, 0, "PLANNING"); err != nil {
 		t.Fatalf("InsertPhase PLANNING failed: %v", err)
 	}
-	if err := ren.InsertPhase(tmpDir, 1, "IMPLEMENT"); err != nil {
+	if err := ren.InsertPhase(ctx, tmpDir, 1, "IMPLEMENT"); err != nil {
 		t.Fatalf("InsertPhase IMPLEMENT failed: %v", err)
 	}
 
 	// Create sequences in first phase
 	phaseDir := filepath.Join(tmpDir, "001_PLANNING")
-	if err := ren.InsertSequence(phaseDir, 0, "requirements"); err != nil {
+	if err := ren.InsertSequence(ctx, phaseDir, 0, "requirements"); err != nil {
 		t.Fatalf("InsertSequence requirements failed: %v", err)
 	}
-	if err := ren.InsertSequence(phaseDir, 1, "design"); err != nil {
+	if err := ren.InsertSequence(ctx, phaseDir, 1, "design"); err != nil {
 		t.Fatalf("InsertSequence design failed: %v", err)
 	}
 
 	// Create tasks in first sequence
 	seqDir := filepath.Join(phaseDir, "01_requirements")
-	if err := ren.InsertTask(seqDir, 0, "gather_info"); err != nil {
+	if err := ren.InsertTask(ctx, seqDir, 0, "gather_info"); err != nil {
 		t.Fatalf("InsertTask gather_info failed: %v", err)
 	}
-	if err := ren.InsertTask(seqDir, 1, "analyze"); err != nil {
+	if err := ren.InsertTask(ctx, seqDir, 1, "analyze"); err != nil {
 		t.Fatalf("InsertTask analyze failed: %v", err)
 	}
 
@@ -252,7 +254,7 @@ func TestCreateOptions_DefaultAfterZero(t *testing.T) {
 	})
 
 	// Create with after=0 (default)
-	if err := ren.InsertPhase(tmpDir, 0, "FIRST"); err != nil {
+	if err := ren.InsertPhase(context.Background(), tmpDir, 0, "FIRST"); err != nil {
 		t.Fatalf("InsertPhase failed: %v", err)
 	}
 
@@ -276,7 +278,7 @@ func TestCreateOptions_InsertInMiddle(t *testing.T) {
 	})
 
 	// Insert after position 1
-	if err := ren.InsertPhase(tmpDir, 1, "SECOND"); err != nil {
+	if err := ren.InsertPhase(context.Background(), tmpDir, 1, "SECOND"); err != nil {
 		t.Fatalf("InsertPhase failed: %v", err)
 	}
 

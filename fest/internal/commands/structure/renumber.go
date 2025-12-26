@@ -87,7 +87,7 @@ Phases are numbered with 3 digits (001, 002, 003, etc.).`,
 			})
 
 			// Perform renumbering
-			return renumberer.RenumberPhases(absPath, opts.startFrom)
+			return renumberer.RenumberPhases(cmd.Context(), absPath, opts.startFrom)
 		},
 	}
 }
@@ -124,7 +124,7 @@ Sequences are numbered with 2 digits (01, 02, 03, etc.).`,
 			})
 
 			// Perform renumbering
-			return renumberer.RenumberSequences(absPath, opts.startFrom)
+			return renumberer.RenumberSequences(cmd.Context(), absPath, opts.startFrom)
 		},
 	}
 
@@ -166,7 +166,7 @@ Parallel tasks (multiple tasks with the same number) are preserved.`,
 			})
 
 			// Perform renumbering
-			return renumberer.RenumberTasks(absPath, opts.startFrom)
+			return renumberer.RenumberTasks(cmd.Context(), absPath, opts.startFrom)
 		},
 	}
 

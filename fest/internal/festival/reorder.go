@@ -1,14 +1,19 @@
 package festival
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"sort"
 )
 
 // ReorderPhase moves a phase from one position to another within a festival
-func (r *Renumberer) ReorderPhase(festivalDir string, from, to int) error {
-	phases, err := r.parser.ParsePhases(festivalDir)
+func (r *Renumberer) ReorderPhase(ctx context.Context, festivalDir string, from, to int) error {
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("context cancelled: %w", err)
+	}
+
+	phases, err := r.parser.ParsePhases(ctx, festivalDir)
 	if err != nil {
 		return fmt.Errorf("failed to parse phases: %w", err)
 	}
@@ -17,8 +22,12 @@ func (r *Renumberer) ReorderPhase(festivalDir string, from, to int) error {
 }
 
 // ReorderSequence moves a sequence from one position to another within a phase
-func (r *Renumberer) ReorderSequence(phaseDir string, from, to int) error {
-	sequences, err := r.parser.ParseSequences(phaseDir)
+func (r *Renumberer) ReorderSequence(ctx context.Context, phaseDir string, from, to int) error {
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("context cancelled: %w", err)
+	}
+
+	sequences, err := r.parser.ParseSequences(ctx, phaseDir)
 	if err != nil {
 		return fmt.Errorf("failed to parse sequences: %w", err)
 	}
@@ -27,8 +36,12 @@ func (r *Renumberer) ReorderSequence(phaseDir string, from, to int) error {
 }
 
 // ReorderTask moves a task from one position to another within a sequence
-func (r *Renumberer) ReorderTask(sequenceDir string, from, to int) error {
-	tasks, err := r.parser.ParseTasks(sequenceDir)
+func (r *Renumberer) ReorderTask(ctx context.Context, sequenceDir string, from, to int) error {
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("context cancelled: %w", err)
+	}
+
+	tasks, err := r.parser.ParseTasks(ctx, sequenceDir)
 	if err != nil {
 		return fmt.Errorf("failed to parse tasks: %w", err)
 	}

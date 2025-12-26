@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 
@@ -87,12 +88,13 @@ func runValidateTasks(opts *validateOptions) error {
 }
 
 func validateTaskFilesChecks(festivalPath string, result *ValidationResult) {
+	ctx := context.Background()
 	parser := festival.NewParser()
-	phases, _ := parser.ParsePhases(festivalPath)
+	phases, _ := parser.ParsePhases(ctx, festivalPath)
 	policy := gates.DefaultPolicy()
 
 	for _, phase := range phases {
-		sequences, _ := parser.ParseSequences(phase.Path)
+		sequences, _ := parser.ParseSequences(ctx, phase.Path)
 		for _, seq := range sequences {
 			// Check if this is an implementation sequence
 			if isExcludedSequence(seq.Name, policy.ExcludePatterns) {
@@ -100,7 +102,7 @@ func validateTaskFilesChecks(festivalPath string, result *ValidationResult) {
 			}
 
 			// Check for task files
-			tasks, _ := parser.ParseTasks(seq.Path)
+			tasks, _ := parser.ParseTasks(ctx, seq.Path)
 			if len(tasks) == 0 {
 				relPath, _ := filepath.Rel(festivalPath, seq.Path)
 				result.Issues = append(result.Issues, ValidationIssue{

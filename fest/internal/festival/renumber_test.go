@@ -2,6 +2,7 @@ package festival
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"os"
 	"path/filepath"
@@ -39,7 +40,7 @@ func TestRenumberer_QuietMode(t *testing.T) {
 		})
 
 		output := captureOutput(func() {
-			_ = r.RenumberPhases(tmpDir, 1)
+			_ = r.RenumberPhases(context.Background(), tmpDir, 1)
 		})
 
 		if output != "" {
@@ -61,7 +62,7 @@ func TestRenumberer_AutoApproveMode(t *testing.T) {
 			AutoApprove: true,
 		})
 
-		err := r.RenumberPhases(tmpDir, 1)
+		err := r.RenumberPhases(context.Background(), tmpDir, 1)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -89,7 +90,7 @@ func TestRenumberer_QuietAutoApproveCombined(t *testing.T) {
 	})
 
 	output := captureOutput(func() {
-		err := r.RenumberPhases(tmpDir, 1)
+		err := r.RenumberPhases(context.Background(), tmpDir, 1)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -122,7 +123,7 @@ func TestRenumberer_NoChangesNeeded(t *testing.T) {
 		})
 
 		output := captureOutput(func() {
-			_ = r.RenumberPhases(tmpDir, 1)
+			_ = r.RenumberPhases(context.Background(), tmpDir, 1)
 		})
 
 		if !strings.Contains(output, "No changes needed") {
@@ -137,7 +138,7 @@ func TestRenumberer_NoChangesNeeded(t *testing.T) {
 		})
 
 		output := captureOutput(func() {
-			_ = r.RenumberPhases(tmpDir, 1)
+			_ = r.RenumberPhases(context.Background(), tmpDir, 1)
 		})
 
 		if output != "" {
@@ -158,7 +159,7 @@ func TestRenumberer_ChangeCreate_Directory(t *testing.T) {
 	})
 
 	// Insert new phase - should create directory
-	err := r.InsertPhase(tmpDir, 0, "PREP")
+	err := r.InsertPhase(context.Background(), tmpDir, 0, "PREP")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -191,7 +192,7 @@ func TestRenumberer_ChangeCreate_Sequence(t *testing.T) {
 	})
 
 	// Insert new sequence
-	err := r.InsertSequence(tmpDir, 0, "kickoff")
+	err := r.InsertSequence(context.Background(), tmpDir, 0, "kickoff")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -224,7 +225,7 @@ func TestRenumberer_ChangeCreate_TaskFile(t *testing.T) {
 	})
 
 	// Insert new task - should create parent dir but NOT the file itself
-	err := r.InsertTask(tmpDir, 0, "new_task")
+	err := r.InsertTask(context.Background(), tmpDir, 0, "new_task")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -263,7 +264,7 @@ func TestRenumberer_ExecuteOrder_RenameHighestFirst(t *testing.T) {
 	})
 
 	// Insert at beginning - should shift all phases up
-	err := r.InsertPhase(tmpDir, 0, "PLANNING")
+	err := r.InsertPhase(context.Background(), tmpDir, 0, "PLANNING")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -300,7 +301,7 @@ func TestRenumberer_InsertPhase_AtEnd(t *testing.T) {
 	})
 
 	// Insert at end (after phase 2)
-	err := r.InsertPhase(tmpDir, 2, "REVIEW")
+	err := r.InsertPhase(context.Background(), tmpDir, 2, "REVIEW")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -332,7 +333,7 @@ func TestRenumberer_InsertSequence_InMiddle(t *testing.T) {
 	})
 
 	// Insert after sequence 1
-	err := r.InsertSequence(tmpDir, 1, "design")
+	err := r.InsertSequence(context.Background(), tmpDir, 1, "design")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -362,7 +363,7 @@ func TestRenumberer_RenumberSequences(t *testing.T) {
 		AutoApprove: true,
 	})
 
-	err := r.RenumberSequences(tmpDir, 1)
+	err := r.RenumberSequences(context.Background(), tmpDir, 1)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -391,7 +392,7 @@ func TestRenumberer_RenumberTasks_PreservesParallel(t *testing.T) {
 	})
 
 	// Renumber starting from 1
-	err := r.RenumberTasks(tmpDir, 1)
+	err := r.RenumberTasks(context.Background(), tmpDir, 1)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -429,7 +430,7 @@ func TestRenumberer_RemoveElement_Phase(t *testing.T) {
 	})
 
 	// Remove middle phase
-	err := r.RemoveElement(filepath.Join(tmpDir, "002_IMPLEMENT"))
+	err := r.RemoveElement(context.Background(), filepath.Join(tmpDir, "002_IMPLEMENT"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -462,7 +463,7 @@ func TestRenumberer_RemoveElement_Task(t *testing.T) {
 	})
 
 	// Remove first task
-	err := r.RemoveElement(filepath.Join(tmpDir, "01_first.md"))
+	err := r.RemoveElement(context.Background(), filepath.Join(tmpDir, "01_first.md"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -484,7 +485,7 @@ func TestRenumberer_ErrorCases(t *testing.T) {
 
 	t.Run("renumber phases with no phases", func(t *testing.T) {
 		r := NewRenumberer(RenumberOptions{Quiet: true, AutoApprove: true})
-		err := r.RenumberPhases(tmpDir, 1)
+		err := r.RenumberPhases(context.Background(), tmpDir, 1)
 		if err == nil {
 			t.Error("expected error for empty directory")
 		}
@@ -492,7 +493,7 @@ func TestRenumberer_ErrorCases(t *testing.T) {
 
 	t.Run("renumber sequences with no sequences", func(t *testing.T) {
 		r := NewRenumberer(RenumberOptions{Quiet: true, AutoApprove: true})
-		err := r.RenumberSequences(tmpDir, 1)
+		err := r.RenumberSequences(context.Background(), tmpDir, 1)
 		if err == nil {
 			t.Error("expected error for empty directory")
 		}
@@ -500,7 +501,7 @@ func TestRenumberer_ErrorCases(t *testing.T) {
 
 	t.Run("renumber tasks with no tasks", func(t *testing.T) {
 		r := NewRenumberer(RenumberOptions{Quiet: true, AutoApprove: true})
-		err := r.RenumberTasks(tmpDir, 1)
+		err := r.RenumberTasks(context.Background(), tmpDir, 1)
 		if err == nil {
 			t.Error("expected error for empty directory")
 		}
@@ -508,7 +509,7 @@ func TestRenumberer_ErrorCases(t *testing.T) {
 
 	t.Run("remove non-existent element", func(t *testing.T) {
 		r := NewRenumberer(RenumberOptions{Quiet: true, AutoApprove: true})
-		err := r.RemoveElement(filepath.Join(tmpDir, "001_NONEXISTENT"))
+		err := r.RemoveElement(context.Background(), filepath.Join(tmpDir, "001_NONEXISTENT"))
 		if err == nil {
 			t.Error("expected error for non-existent element")
 		}
@@ -547,7 +548,7 @@ func TestRenumberer_VerboseMode(t *testing.T) {
 	})
 
 	output := captureOutput(func() {
-		_ = r.RenumberPhases(tmpDir, 1)
+		_ = r.RenumberPhases(context.Background(), tmpDir, 1)
 	})
 
 	// Verbose mode should show rename operation
@@ -568,7 +569,7 @@ func TestRenumberer_DryRunMode(t *testing.T) {
 	})
 
 	output := captureOutput(func() {
-		_ = r.RenumberPhases(tmpDir, 1)
+		_ = r.RenumberPhases(context.Background(), tmpDir, 1)
 	})
 
 	// Dry run with auto-approve should show preview and apply

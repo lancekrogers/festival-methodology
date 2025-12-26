@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -117,17 +118,18 @@ func checkTemplatesFilled(festivalPath string) bool {
 }
 
 func checkTaskFilesExist(festivalPath string) bool {
+	ctx := context.Background()
 	parser := festival.NewParser()
-	phases, _ := parser.ParsePhases(festivalPath)
+	phases, _ := parser.ParsePhases(ctx, festivalPath)
 	policy := gates.DefaultPolicy()
 
 	for _, phase := range phases {
-		sequences, _ := parser.ParseSequences(phase.Path)
+		sequences, _ := parser.ParseSequences(ctx, phase.Path)
 		for _, seq := range sequences {
 			if isExcludedSequence(seq.Name, policy.ExcludePatterns) {
 				continue
 			}
-			tasks, _ := parser.ParseTasks(seq.Path)
+			tasks, _ := parser.ParseTasks(ctx, seq.Path)
 			if len(tasks) == 0 {
 				return false
 			}
@@ -138,7 +140,7 @@ func checkTaskFilesExist(festivalPath string) bool {
 
 func checkOrderCorrect(festivalPath string) bool {
 	parser := festival.NewParser()
-	phases, err := parser.ParsePhases(festivalPath)
+	phases, err := parser.ParsePhases(context.Background(), festivalPath)
 	if err != nil {
 		return true // Can't check, assume OK
 	}

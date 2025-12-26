@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -810,7 +811,7 @@ func TestCollectRequiredVars(t *testing.T) {
 	// and actual template files. We test the edge cases we can.
 
 	t.Run("non-existent paths returns empty", func(t *testing.T) {
-		got := collectRequiredVars("/nonexistent", []string{
+		got := collectRequiredVars(context.Background(), "/nonexistent", []string{
 			"/nonexistent/a.md",
 			"/nonexistent/b.md",
 		})
@@ -820,7 +821,7 @@ func TestCollectRequiredVars(t *testing.T) {
 	})
 
 	t.Run("empty paths returns empty", func(t *testing.T) {
-		got := collectRequiredVars("/any", []string{})
+		got := collectRequiredVars(context.Background(), "/any", []string{})
 		if len(got) != 0 {
 			t.Errorf("collectRequiredVars with empty paths returned %v, want empty", got)
 		}

@@ -1,6 +1,7 @@
 package festival
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -68,8 +69,12 @@ func NewRenumberer(options RenumberOptions) *Renumberer {
 }
 
 // RenumberPhases renumbers all phases starting from a given number
-func (r *Renumberer) RenumberPhases(festivalDir string, startFrom int) error {
-	phases, err := r.parser.ParsePhases(festivalDir)
+func (r *Renumberer) RenumberPhases(ctx context.Context, festivalDir string, startFrom int) error {
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("context cancelled: %w", err)
+	}
+
+	phases, err := r.parser.ParsePhases(ctx, festivalDir)
 	if err != nil {
 		return fmt.Errorf("failed to parse phases: %w", err)
 	}
@@ -102,8 +107,12 @@ func (r *Renumberer) RenumberPhases(festivalDir string, startFrom int) error {
 }
 
 // RenumberSequences renumbers sequences within a phase
-func (r *Renumberer) RenumberSequences(phaseDir string, startFrom int) error {
-	sequences, err := r.parser.ParseSequences(phaseDir)
+func (r *Renumberer) RenumberSequences(ctx context.Context, phaseDir string, startFrom int) error {
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("context cancelled: %w", err)
+	}
+
+	sequences, err := r.parser.ParseSequences(ctx, phaseDir)
 	if err != nil {
 		return fmt.Errorf("failed to parse sequences: %w", err)
 	}
@@ -136,8 +145,12 @@ func (r *Renumberer) RenumberSequences(phaseDir string, startFrom int) error {
 }
 
 // RenumberTasks renumbers tasks within a sequence
-func (r *Renumberer) RenumberTasks(sequenceDir string, startFrom int) error {
-	tasks, err := r.parser.ParseTasks(sequenceDir)
+func (r *Renumberer) RenumberTasks(ctx context.Context, sequenceDir string, startFrom int) error {
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("context cancelled: %w", err)
+	}
+
+	tasks, err := r.parser.ParseTasks(ctx, sequenceDir)
 	if err != nil {
 		return fmt.Errorf("failed to parse tasks: %w", err)
 	}
@@ -147,7 +160,7 @@ func (r *Renumberer) RenumberTasks(sequenceDir string, startFrom int) error {
 	}
 
 	// Check for parallel tasks
-	parallel, err := r.parser.HasParallelTasks(sequenceDir)
+	parallel, err := r.parser.HasParallelTasks(ctx, sequenceDir)
 	if err != nil {
 		return fmt.Errorf("failed to check parallel tasks: %w", err)
 	}
@@ -199,8 +212,12 @@ func (r *Renumberer) RenumberTasks(sequenceDir string, startFrom int) error {
 }
 
 // InsertPhase inserts a new phase after the specified number
-func (r *Renumberer) InsertPhase(festivalDir string, afterNumber int, name string) error {
-	phases, err := r.parser.ParsePhases(festivalDir)
+func (r *Renumberer) InsertPhase(ctx context.Context, festivalDir string, afterNumber int, name string) error {
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("context cancelled: %w", err)
+	}
+
+	phases, err := r.parser.ParsePhases(ctx, festivalDir)
 	if err != nil {
 		return fmt.Errorf("failed to parse phases: %w", err)
 	}
@@ -252,8 +269,12 @@ func (r *Renumberer) InsertPhase(festivalDir string, afterNumber int, name strin
 }
 
 // InsertSequence inserts a new sequence after the specified number
-func (r *Renumberer) InsertSequence(phaseDir string, afterNumber int, name string) error {
-	sequences, err := r.parser.ParseSequences(phaseDir)
+func (r *Renumberer) InsertSequence(ctx context.Context, phaseDir string, afterNumber int, name string) error {
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("context cancelled: %w", err)
+	}
+
+	sequences, err := r.parser.ParseSequences(ctx, phaseDir)
 	if err != nil {
 		return fmt.Errorf("failed to parse sequences: %w", err)
 	}
@@ -304,8 +325,12 @@ func (r *Renumberer) InsertSequence(phaseDir string, afterNumber int, name strin
 }
 
 // InsertTask inserts a new task after the specified number in a sequence directory
-func (r *Renumberer) InsertTask(sequenceDir string, afterNumber int, name string) error {
-	tasks, err := r.parser.ParseTasks(sequenceDir)
+func (r *Renumberer) InsertTask(ctx context.Context, sequenceDir string, afterNumber int, name string) error {
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("context cancelled: %w", err)
+	}
+
+	tasks, err := r.parser.ParseTasks(ctx, sequenceDir)
 	if err != nil {
 		return fmt.Errorf("failed to parse tasks: %w", err)
 	}
@@ -356,7 +381,11 @@ func (r *Renumberer) InsertTask(sequenceDir string, afterNumber int, name string
 }
 
 // RemoveElement removes an element and renumbers subsequent ones
-func (r *Renumberer) RemoveElement(path string) error {
+func (r *Renumberer) RemoveElement(ctx context.Context, path string) error {
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("context cancelled: %w", err)
+	}
+
 	dir := filepath.Dir(path)
 	base := filepath.Base(path)
 
@@ -367,14 +396,14 @@ func (r *Renumberer) RemoveElement(path string) error {
 
 	if matched := regexp.MustCompile(`^\d{3}_`).MatchString(base); matched {
 		elemType = PhaseType
-		elements, err = r.parser.ParsePhases(dir)
+		elements, err = r.parser.ParsePhases(ctx, dir)
 	} else if matched := regexp.MustCompile(`^\d{2}_`).MatchString(base); matched {
 		if strings.HasSuffix(base, ".md") {
 			elemType = TaskType
-			elements, err = r.parser.ParseTasks(dir)
+			elements, err = r.parser.ParseTasks(ctx, dir)
 		} else {
 			elemType = SequenceType
-			elements, err = r.parser.ParseSequences(dir)
+			elements, err = r.parser.ParseSequences(ctx, dir)
 		}
 	} else {
 		return fmt.Errorf("unable to determine element type for %s", path)
