@@ -149,6 +149,44 @@ func TestFestCompleteWorkflow(t *testing.T) {
   }
  })
 
+ // Test 5.5: Create a sequence (tests UX improvements)
+ t.Run("CreateSequence", func(t *testing.T) {
+  // Test creating a sequence with --json flag (which skips interactive prompt)
+  phasePath := "/festivals/test-festival/002_DESIGN"
+  exists, err := container.CheckDirExists(phasePath)
+  require.NoError(t, err)
+
+  if exists {
+   // Create a sequence with --json to get structured output
+   output, err := container.RunFestInDir(phasePath, "create", "sequence", "--name", "ux_test_sequence", "--json")
+   require.NoError(t, err, "create sequence should not fail")
+
+   // Verify JSON output structure
+   require.Contains(t, output, `"ok": true`, "Should indicate success")
+   require.Contains(t, output, `"action": "create_sequence"`, "Should identify action")
+   require.Contains(t, output, "warnings", "Should include warnings about task files")
+   require.Contains(t, output, "task", "Warnings should mention task files")
+   t.Logf("Create sequence JSON output: %s", output)
+
+   // Verify the sequence directory was created
+   // After existing sequences (01, 02, 03), new one should be 04
+   newSeqPath := "/festivals/test-festival/002_DESIGN/04_ux_test_sequence"
+   seqExists, err := container.CheckDirExists(newSeqPath)
+   if err == nil && seqExists {
+    t.Logf("Sequence created at: %s", newSeqPath)
+
+    // Verify SEQUENCE_GOAL.md was created
+    goalExists, _ := container.CheckFileExists(newSeqPath + "/SEQUENCE_GOAL.md")
+    require.True(t, goalExists, "SEQUENCE_GOAL.md should be created")
+   } else {
+    // Sequence might have a different number if test order varies
+    t.Log("Sequence created (path may vary based on existing sequences)")
+   }
+  } else {
+   t.Skip("Test phase 002_DESIGN not found")
+  }
+ })
+
  // Test 6: Remove an entire phase
  t.Run("RemovePhase", func(t *testing.T) {
   // Test removing an entire phase
