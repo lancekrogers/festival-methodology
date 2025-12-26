@@ -1,0 +1,46 @@
+my-festival/
+├── FESTIVAL_OVERVIEW.md              [REQUIRED]
+├── FESTIVAL_RULES.md                 [REQUIRED]
+├── TODO.md
+├── fest.yaml
+│
+├── 001_RESEARCH/                     (no quality gates - research phase)
+│   ├── PHASE_GOAL.md                 [REQUIRED]
+│   └── 01_discovery/
+│       ├── SEQUENCE_GOAL.md          [REQUIRED]
+│       └── [research documents]
+│
+├── 002_PLAN/                         (no quality gates - planning phase)
+│   ├── PHASE_GOAL.md                 [REQUIRED]
+│   ├── 01_requirements/
+│   │   ├── SEQUENCE_GOAL.md          [REQUIRED]
+│   │   └── [requirement docs]
+│   └── 02_architecture/
+│       ├── SEQUENCE_GOAL.md          [REQUIRED]
+│       └── [design docs]
+│
+├── 003_IMPLEMENT_CORE/               (quality gates required)
+│   ├── PHASE_GOAL.md                 [REQUIRED]
+│   ├── 01_foundation/
+│   │   ├── SEQUENCE_GOAL.md          [REQUIRED]
+│   │   ├── [tasks...]
+│   │   └── [quality gates]           ← 3 required tasks
+│   └── 02_data_layer/
+│       ├── SEQUENCE_GOAL.md          [REQUIRED]
+│       ├── [tasks...]
+│       └── [quality gates]           ← 3 required tasks
+│
+├── 004_IMPLEMENT_FEATURES/           (quality gates required)
+│   ├── PHASE_GOAL.md                 [REQUIRED]
+│   ├── 01_feature_a/
+│   │   ├── SEQUENCE_GOAL.md          [REQUIRED]
+│   │   └── [tasks + quality gates]
+│   └── 02_feature_b/
+│       ├── SEQUENCE_GOAL.md          [REQUIRED]
+│       └── [tasks + quality gates]
+│
+└── 005_FINAL_REVIEW/
+    ├── PHASE_GOAL.md                 [REQUIRED]
+    └── 01_integration_testing/
+        ├── SEQUENCE_GOAL.md          [REQUIRED]
+        └── [validation tasks]

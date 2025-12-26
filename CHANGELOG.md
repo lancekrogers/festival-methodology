@@ -35,6 +35,7 @@ Festival Methodology is currently in active development. This methodology has be
 ## Release Process
 
 When ready for release:
+
 1. Features will be tagged with semantic version numbers
 2. Releases will be created from git tags
 3. Version badges will reflect the latest tagged release

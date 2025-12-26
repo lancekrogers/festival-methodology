@@ -1,0 +1,59 @@
+my-festival/
+├── FESTIVAL_OVERVIEW.md              [REQUIRED] Festival goal and success criteria
+├── FESTIVAL_RULES.md                 [REQUIRED] Quality standards
+├── CONTEXT.md                        Decisions, rationale, discoveries
+├── STATUS_UPDATE.md                  Current progress tracking
+├── TODO.md                           Task checklist
+├── fest.yaml                         Quality gate config
+│
+├── 001_PLAN/
+│   ├── PHASE_GOAL.md                 [REQUIRED]
+│   ├── 01_requirements/
+│   │   ├── SEQUENCE_GOAL.md          [REQUIRED]
+│   │   ├── 01_analyze_use_cases.md
+│   │   ├── 02_define_specifications.md
+│   │   ├── 03_document_constraints.md
+│   │   └── results/                  Output artifacts
+│   │       └── requirements_spec.md
+│   └── 02_architecture/
+│       ├── SEQUENCE_GOAL.md          [REQUIRED]
+│       ├── 01_project_structure.md
+│       ├── 02_dependency_selection.md
+│       ├── 03_data_flow_design.md
+│       └── results/
+│           └── architecture_decision_record.md
+│
+├── 002_IMPLEMENT/
+│   ├── PHASE_GOAL.md                 [REQUIRED]
+│   ├── IMPLEMENTATION_SPEC.md        Optional phase-level spec
+│   ├── 01_core_infrastructure/
+│   │   ├── SEQUENCE_GOAL.md          [REQUIRED]
+│   │   ├── 01_project_setup.md
+│   │   ├── 02_database_schema.md
+│   │   ├── 03_api_endpoints.md
+│   │   ├── 04_testing_and_verify.md  ← QUALITY GATE [REQUIRED]
+│   │   ├── 05_code_review.md         ← QUALITY GATE [REQUIRED]
+│   │   ├── 06_review_results_iterate.md ← QUALITY GATE [REQUIRED]
+│   │   └── results/
+│   │       ├── testing_results.md
+│   │       └── code_review_findings.md
+│   └── 02_feature_implementation/
+│       ├── SEQUENCE_GOAL.md          [REQUIRED]
+│       ├── 01_user_authentication.md
+│       ├── 02_data_processing.md
+│       ├── 03_ui_components.md
+│       ├── 04_testing_and_verify.md  ← QUALITY GATE
+│       ├── 05_code_review.md         ← QUALITY GATE
+│       ├── 06_review_results_iterate.md ← QUALITY GATE
+│       └── results/
+│
+└── 003_REVIEW_AND_UAT/
+    ├── PHASE_GOAL.md                 [REQUIRED]
+    ├── ACCEPTANCE_CRITERIA.md
+    └── 01_final_validation/
+        ├── SEQUENCE_GOAL.md          [REQUIRED]
+        ├── 01_integration_testing.md
+        ├── 02_user_acceptance_testing.md
+        ├── 03_documentation_review.md
+        └── results/
+            └── uat_sign_off.md

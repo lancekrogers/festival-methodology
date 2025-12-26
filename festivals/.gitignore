@@ -1,0 +1,12 @@
+# Festival Methodology - Generated Files
+# These files are generated locally and should not be committed
+
+# Workspace marker (created by 'fest init --register')
+# This enables 'fest go' to find your active workspace
+.festival/.workspace
+
+# Fest checksums (created by 'fest init')
+.festival/.fest-checksums.json
+
+# Backup directories
+.fest-backup/

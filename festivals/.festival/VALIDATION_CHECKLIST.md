@@ -5,24 +5,28 @@ Use this checklist to ensure your festival follows methodology principles and is
 ## Festival Structure Validation
 
 ### ✅ Three-Level Hierarchy
+
 - [ ] Festival has numbered phases (001, 002, 003, etc.)
 - [ ] Each phase contains numbered sequences (01, 02, 03, etc.)
 - [ ] Each sequence contains numbered tasks (01, 02, 03, etc.)
 - [ ] Numbering indicates execution order and dependencies
 
 ### ✅ Goal Files Present
+
 - [ ] `FESTIVAL_GOAL.md` exists at festival root
 - [ ] Each phase has `PHASE_GOAL.md` in its directory
 - [ ] Each sequence has `SEQUENCE_GOAL.md` in its directory
 - [ ] Goals align: Sequence goals → Phase goals → Festival goal
 
 ### ✅ Standard Phases Present
+
 - [ ] **001_PLAN** - Requirements and architecture defined
 - [ ] **002_DEFINE_INTERFACES** - All interfaces specified
 - [ ] **003_IMPLEMENT** - Implementation tasks created
 - [ ] **004_REVIEW_AND_UAT** - Validation tasks defined
 
 ### ✅ Core Documentation
+
 - [ ] `FESTIVAL_OVERVIEW.md` exists with clear goals
 - [ ] `FESTIVAL_GOAL.md` tracks measurable objectives
 - [ ] `FESTIVAL_RULES.md` defines project standards
@@ -32,6 +36,7 @@ Use this checklist to ensure your festival follows methodology principles and is
 ## Phase-Specific Validation
 
 ### Phase 001_PLAN Checklist
+
 - [ ] Requirements fully documented
 - [ ] Stakeholders identified
 - [ ] Success criteria defined
@@ -40,6 +45,7 @@ Use this checklist to ensure your festival follows methodology principles and is
 - [ ] Initial risk assessment complete
 
 ### Phase 002_DEFINE_INTERFACES Checklist (CRITICAL)
+
 - [ ] All API endpoints specified
 - [ ] Data models fully defined
 - [ ] Function signatures documented
@@ -49,6 +55,7 @@ Use this checklist to ensure your festival follows methodology principles and is
 - [ ] **Interfaces locked before Phase 003**
 
 ### Phase 003_IMPLEMENT Checklist
+
 - [ ] Tasks reference interface definitions
 - [ ] Parallel work opportunities identified
 - [ ] Dependencies clearly marked
@@ -56,6 +63,7 @@ Use this checklist to ensure your festival follows methodology principles and is
 - [ ] Testing approach defined
 
 ### Phase 004_REVIEW_AND_UAT Checklist
+
 - [ ] Acceptance criteria defined
 - [ ] Test scenarios created
 - [ ] Review process documented
@@ -65,6 +73,7 @@ Use this checklist to ensure your festival follows methodology principles and is
 ## Sequence Validation
 
 ### ✅ Every Sequence Should Have
+
 - [ ] Clear objective statement
 - [ ] Numbered tasks in execution order
 - [ ] Quality verification tasks:
@@ -73,6 +82,7 @@ Use this checklist to ensure your festival follows methodology principles and is
   - [ ] `XX_review_results_iterate` task
 
 ### ✅ Task Dependencies
+
 - [ ] Tasks with same number can run in parallel
 - [ ] Sequential tasks have increasing numbers
 - [ ] Dependencies explicitly stated
@@ -81,6 +91,7 @@ Use this checklist to ensure your festival follows methodology principles and is
 ## Task Quality Validation
 
 ### ✅ Good Task Characteristics
+
 - [ ] **Specific objective** (not vague or abstract)
 - [ ] **Concrete deliverables** (files, functions, outputs)
 - [ ] **Testable requirements** (checklist items)
@@ -88,6 +99,7 @@ Use this checklist to ensure your festival follows methodology principles and is
 - [ ] **Definition of done** (clear completion criteria)
 
 ### ❌ Task Red Flags
+
 - [ ] Objective longer than 2 sentences
 - [ ] Requirements too abstract ("implement user management")
 - [ ] No specific deliverables listed
@@ -97,6 +109,7 @@ Use this checklist to ensure your festival follows methodology principles and is
 ## Interface Definition Validation
 
 ### ✅ API Endpoints Should Include
+
 - [ ] HTTP method (GET, POST, etc.)
 - [ ] Full path with parameters
 - [ ] Request body schema
@@ -106,6 +119,7 @@ Use this checklist to ensure your festival follows methodology principles and is
 - [ ] Example requests/responses
 
 ### ✅ Data Models Should Include
+
 - [ ] Field names and types
 - [ ] Required vs optional fields
 - [ ] Validation rules
@@ -116,12 +130,14 @@ Use this checklist to ensure your festival follows methodology principles and is
 ## Goal Validation
 
 ### ✅ Goal Alignment
+
 - [ ] Each sequence goal directly supports its phase goal
 - [ ] Each phase goal directly supports the festival goal
 - [ ] No orphaned goals (goals not contributing to higher level)
 - [ ] No missing goals (all levels have defined goals)
 
 ### ✅ Goal Measurability
+
 - [ ] Festival goal has quantifiable KPIs
 - [ ] Phase goals have specific success criteria
 - [ ] Sequence goals have concrete deliverables
@@ -130,12 +146,14 @@ Use this checklist to ensure your festival follows methodology principles and is
 ## Quality Gate Validation
 
 ### ✅ At Sequence Level
+
 - [ ] SEQUENCE_GOAL.md evaluated
 - [ ] Testing task validates all deliverables
 - [ ] Review task checks code quality
 - [ ] Iteration task addresses findings
 
 ### ✅ At Phase Level
+
 - [ ] PHASE_GOAL.md evaluation completed
 - [ ] All sequences complete before phase transition
 - [ ] All sequence goals achieved
@@ -144,6 +162,7 @@ Use this checklist to ensure your festival follows methodology principles and is
 - [ ] Next phase prerequisites met
 
 ### ✅ At Festival Level
+
 - [ ] FESTIVAL_GOAL.md evaluation completed
 - [ ] All success criteria met
 - [ ] All phase goals achieved
@@ -154,6 +173,7 @@ Use this checklist to ensure your festival follows methodology principles and is
 ## Common Anti-Patterns to Avoid
 
 ### ❌ Methodology Violations
+
 - [ ] Starting implementation before interfaces defined
 - [ ] Skipping quality verification tasks
 - [ ] Vague or abstract task definitions
@@ -161,6 +181,7 @@ Use this checklist to ensure your festival follows methodology principles and is
 - [ ] No clear success criteria
 
 ### ❌ Process Smell
+
 - [ ] Phases with only one sequence
 - [ ] Sequences with only one task
 - [ ] Tasks without concrete deliverables
@@ -170,6 +191,7 @@ Use this checklist to ensure your festival follows methodology principles and is
 ## Progress Tracking Validation
 
 ### ✅ TODO.md Should Show
+
 - [ ] Current phase and status
 - [ ] Sequence completion percentages
 - [ ] Task-level checkboxes
@@ -177,6 +199,7 @@ Use this checklist to ensure your festival follows methodology principles and is
 - [ ] Blockers and issues highlighted
 
 ### ✅ Progress Metrics
+
 - [ ] Can calculate % complete at each level
 - [ ] Can identify critical path
 - [ ] Can see parallel work opportunities
@@ -185,24 +208,28 @@ Use this checklist to ensure your festival follows methodology principles and is
 ## Ready-to-Execute Checklist
 
 ### Before Starting Phase 001
+
 - [ ] Festival overview documented
 - [ ] Team understands methodology
 - [ ] Tools and environment ready
 - [ ] Stakeholders aligned
 
 ### Before Starting Phase 002
+
 - [ ] Requirements fully understood
 - [ ] Architecture decisions final
 - [ ] All integration points identified
 - [ ] Interface templates ready
 
 ### Before Starting Phase 003
+
 - [ ] **All interfaces locked** (CRITICAL)
 - [ ] Development environment ready
 - [ ] Team assignments clear
 - [ ] Parallel work plan created
 
 ### Before Starting Phase 004
+
 - [ ] All implementation complete
 - [ ] Test environment ready
 - [ ] Review criteria defined
@@ -211,18 +238,21 @@ Use this checklist to ensure your festival follows methodology principles and is
 ## Continuous Validation
 
 ### Daily Checks
+
 - [ ] Progress updated in TODO.md
 - [ ] Blockers identified and communicated
 - [ ] Methodology compliance maintained
 - [ ] Quality gates not skipped
 
 ### Weekly Checks
+
 - [ ] Festival structure still appropriate
 - [ ] Interfaces still locked (Phase 003+)
 - [ ] Progress tracking accurate
 - [ ] Risk assessment updated
 
 ### Phase Transition Checks
+
 - [ ] Current phase complete
 - [ ] Next phase ready
 - [ ] Stakeholder review done
@@ -240,6 +270,7 @@ Count your checkmarks:
 ## Quick Validation Commands
 
 For automated validation (if tooling available):
+
 ```bash
 # Check structure
 find . -name "*.md" | grep -E "^[0-9]{2,3}_" | wc -l
@@ -278,6 +309,7 @@ If validation reveals issues:
 ## Summary
 
 This checklist ensures your festival:
+
 - Follows three-level hierarchy
 - Defines interfaces before implementation
 - Includes quality verification

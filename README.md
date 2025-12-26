@@ -31,7 +31,9 @@ Festival enables:
 ## What Makes Festival Different
 
 ### 🎯 Hierarchical Goal System
+
 Every level of your project has clear, measurable goals:
+
 - **Festival Goals** - Overall success criteria and KPIs
 - **Phase Goals** - Stage-specific objectives that build toward the festival goal
 - **Sequence Goals** - Granular targets that ensure phase completion
@@ -39,7 +41,9 @@ Every level of your project has clear, measurable goals:
 Each goal includes evaluation frameworks, so you always know if you've succeeded.
 
 ### 🧠 Context Preservation
+
 The `CONTEXT.md` file captures:
+
 - Key decisions and rationale
 - Session handoff notes
 - Open questions for human review
@@ -48,7 +52,9 @@ The `CONTEXT.md` file captures:
 This maintains continuity across AI sessions and human reviews.
 
 ### 🤖 Autonomy Levels
+
 Every task is marked with an autonomy level:
+
 - **High** - Agent completes independently
 - **Medium** - May need edge case clarification
 - **Low** - Expect human collaboration
@@ -56,37 +62,44 @@ Every task is marked with an autonomy level:
 This helps agents know when to proceed vs when to ask for help.
 
 ### 📚 Just-In-Time Documentation
+
 Agents read templates and examples only when needed, preserving context window for actual work.
 
 ## How It Works: From Goal to Execution
 
 ### 1. Define Your Goal
+
 You specify what you want to achieve - a complete feature, system, or product.
 
 ### 2. Create Goal Hierarchy
+
 Festival helps structure your goal into measurable objectives at every level.
 
 ### 3. Plan with Autonomy Levels
+
 Break down work into tasks, marking which can be done autonomously.
 
 ### 4. Execute with Context Tracking
+
 AI agents work independently, documenting decisions in CONTEXT.md.
 
 ### 5. Evaluate Against Goals
+
 Review progress using built-in evaluation frameworks.
 
 ### 6. Iterate or Complete
+
 Based on goal achievement, refine and continue or mark complete.
 
 ## The Three-Level Structure
 
-```
+```text
 Goal: Build E-Commerce Platform
 ├── FESTIVAL_GOAL.md            # Overall success metrics
 ├── Phase 1: Planning
 │   ├── PHASE_GOAL.md           # Planning objectives
 │   └── Sequences with goals
-├── Phase 2: Design  
+├── Phase 2: Design
 │   ├── PHASE_GOAL.md           # Design objectives
 │   └── Sequences with goals
 ├── Phase 3: Implementation
@@ -109,12 +122,14 @@ Festival tasks aren't vague descriptions - they're complete specifications AI ca
 ```markdown
 # Task: 01_implement_user_authentication.md
 
-**Autonomy Level:** high  # Agent can complete independently
+**Autonomy Level:** high # Agent can complete independently
 
 ## Objective
+
 Create JWT-based authentication with email/password login
 
 ## Requirements
+
 - [ ] User registration endpoint
 - [ ] Login with email/password
 - [ ] JWT token generation (15min access, 7day refresh)
@@ -122,6 +137,7 @@ Create JWT-based authentication with email/password login
 - [ ] Rate limiting (5 attempts/minute)
 
 ## Implementation Steps
+
 1. Install dependencies:
    npm install jsonwebtoken bcrypt express-rate-limit
 
@@ -136,12 +152,14 @@ Create JWT-based authentication with email/password login
    - POST /api/auth/logout
 
 ## Validation
+
 - Test registration with: curl -X POST localhost:3000/api/auth/register ...
 - Verify JWT expiration times
 - Check rate limiting blocks after 5 attempts
 - Ensure passwords are hashed, not plain text
 
 ## Deliverables
+
 - [ ] src/routes/auth.js - Authentication endpoints
 - [ ] src/middleware/auth.js - JWT verification
 - [ ] src/models/User.js - User model with password hashing
@@ -185,6 +203,7 @@ cat README.md
 ### 2. Define Your Goal Hierarchy
 
 Create goal documents at each level:
+
 - `FESTIVAL_GOAL.md` - Overall project success criteria
 - `PHASE_GOAL.md` - Goals for each phase
 - `SEQUENCE_GOAL.md` - Goals for each sequence
@@ -202,6 +221,7 @@ festivals/.festival/agents/festival_planning_agent.md
 ### 4. Mark Autonomy Levels
 
 As you create tasks, assign autonomy levels:
+
 - Review similar past tasks to gauge complexity
 - Start conservative (low autonomy) for unfamiliar work
 - Increase autonomy as patterns emerge
@@ -216,15 +236,15 @@ Use goal evaluation frameworks to assess progress and determine next steps.
 
 ## Festival vs Other Approaches
 
-| Aspect             | Festival                      | Traditional PM     | Ad-hoc AI          |
-| ------------------ | ----------------------------- | ------------------ | ------------------ |
-| **Focus**          | Goal achievement via tasks    | Task tracking      | Quick answers      |
-| **Task Detail**    | Complete executable specs     | User stories       | Vague prompts      |
-| **Execution Time** | Hours to days                 | Sprint cycles      | Minutes            |
-| **Context**        | Persists in CONTEXT.md        | Meeting notes      | Lost between chats |
-| **AI Autonomy**    | Guided by autonomy levels     | N/A                | Constant prompting |
-| **Collaboration**  | Human-AI task creation        | Human teams        | Human directs      |
-| **Success Metrics**| Built-in evaluation framework | Retrospectives     | Undefined          |
+| Aspect              | Festival                      | Traditional PM | Ad-hoc AI          |
+| ------------------- | ----------------------------- | -------------- | ------------------ |
+| **Focus**           | Goal achievement via tasks    | Task tracking  | Quick answers      |
+| **Task Detail**     | Complete executable specs     | User stories   | Vague prompts      |
+| **Execution Time**  | Hours to days                 | Sprint cycles  | Minutes            |
+| **Context**         | Persists in CONTEXT.md        | Meeting notes  | Lost between chats |
+| **AI Autonomy**     | Guided by autonomy levels     | N/A            | Constant prompting |
+| **Collaboration**   | Human-AI task creation        | Human teams    | Human directs      |
+| **Success Metrics** | Built-in evaluation framework | Retrospectives | Undefined          |
 
 ## Directory Structure
 
@@ -254,7 +274,7 @@ festivals/
 │           └── PHASE_GOAL.md        # Validation criteria
 ├── planned/                         # Festivals being designed
 ├── completed/                       # Finished projects
-├── archived/                        # Paused or cancelled work
+├── dungeon/                         # Archived: paused or cancelled work
 └── .festival/                       # Methodology resources
     ├── agents/                      # AI agent prompts
     ├── templates/                   # Document templates
@@ -264,6 +284,7 @@ festivals/
 ## What's Included
 
 ### Templates
+
 - **Goal Templates** - Festival, Phase, and Sequence goal tracking
 - **Task Templates** - With autonomy level support
 - **Context Template** - For decision and rationale tracking
@@ -271,11 +292,13 @@ festivals/
 - **Tracking Templates** - For progress monitoring
 
 ### AI Agents
+
 - **Planning Agent** - Guides festival structure creation
 - **Review Agent** - Validates methodology compliance
 - **Manager Agent** - Enforces process during execution
 
 ### Examples & Documentation
+
 - **15+ Real Task Examples** - Showing concrete implementations
 - **Goal Examples** - Demonstrating evaluation frameworks
 - **Complete Methodology Guide** - Detailed principles and practices

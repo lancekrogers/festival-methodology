@@ -1,3 +1,12 @@
+---
+id: template-index
+aliases:
+  - index
+  - catalog
+  - reference
+description: Quick reference guide for selecting the right template
+---
+
 # Festival Methodology Template Index
 
 Quick reference guide for selecting the right template for your needs.
@@ -8,14 +17,18 @@ Quick reference guide for selecting the right template for your needs.
 What do you need to create?
 │
 ├─ Starting a new festival?
-│  ├─ Use: FESTIVAL_OVERVIEW_TEMPLATE.md (overview and context)
-│  └─ Use: FESTIVAL_GOAL_TEMPLATE.md (goals and evaluation)
+│  ├─ Experienced with Festival Methodology?
+│  │  ├─ Yes → Use: FESTIVAL_QUICKSTART_TEMPLATE.md (minimal setup)
+│  │  └─ No → Use: FESTIVAL_OVERVIEW_TEMPLATE.md (comprehensive setup)
+│  └─ Need goal tracking?
+│     ├─ Simple project → Use quickstart template goals section
+│     └─ Complex project → Use: FESTIVAL_GOAL_TEMPLATE.md
 │
 ├─ Defining project standards?
 │  └─ Use: FESTIVAL_RULES_TEMPLATE.md
 │
-├─ Planning interfaces/contracts?
-│  └─ Use: COMMON_INTERFACES_TEMPLATE.md
+├─ Multi-system project needing interface planning?
+│  └─ Use: Interface Planning Extension templates (see extensions/interface-planning/)
 │
 ├─ Creating goals?
 │  ├─ Festival level?
@@ -39,6 +52,14 @@ What do you need to create?
 │  ├─ Use: PHASE_TEMPLATE.md (structure)
 │  └─ Use: PHASE_GOAL_TEMPLATE.md (goals)
 │
+├─ Creating a research phase?
+│  ├─ Phase goal → Use: RESEARCH_PHASE_GOAL_TEMPLATE.md
+│  └─ Research documents?
+│     ├─ Exploring unknowns → Use: RESEARCH_INVESTIGATION_TEMPLATE.md
+│     ├─ Comparing options → Use: RESEARCH_COMPARISON_TEMPLATE.md
+│     ├─ Defining specs → Use: RESEARCH_SPECIFICATION_TEMPLATE.md
+│     └─ Deep analysis → Use: RESEARCH_ANALYSIS_TEMPLATE.md
+│
 └─ Tracking progress?
    ├─ Manual/Human tracking?
    │  └─ Use: FESTIVAL_TODO_TEMPLATE.md
@@ -52,10 +73,11 @@ What do you need to create?
 
 | Template | Purpose | When to Use | Lines |
 |----------|---------|-------------|-------|
-| **FESTIVAL_OVERVIEW_TEMPLATE.md** | Define project context, stakeholders, approach | Starting any new festival | ~200 |
-| **FESTIVAL_GOAL_TEMPLATE.md** | Track festival goals, KPIs, and evaluation | Alongside FESTIVAL_OVERVIEW | ~250 |
+| **FESTIVAL_QUICKSTART_TEMPLATE.md** | Minimal setup for experienced teams | Team familiar with Festival Methodology | ~100 |
+| **FESTIVAL_OVERVIEW_TEMPLATE.md** | Define project context, stakeholders, approach | Starting any new festival (first-time users) | ~200 |
+| **FESTIVAL_GOAL_TEMPLATE.md** | Track festival goals, KPIs, and evaluation | Complex projects needing detailed goal tracking | ~250 |
 | **FESTIVAL_RULES_TEMPLATE.md** | Document project standards, conventions, guidelines | After initial planning, before implementation | ~150 |
-| **COMMON_INTERFACES_TEMPLATE.md** | Define all system interfaces and contracts | Phase 002_DEFINE_INTERFACES | ~400 |
+| **Interface Planning Extension** | Define system interfaces and contracts | Multi-system projects (see extensions/) | ~400 |
 
 ### Goal Templates
 
@@ -79,6 +101,18 @@ What do you need to create?
 | **TASK_TEMPLATE.md** | Comprehensive task with all sections | Complex, critical, or unfamiliar tasks | 188 |
 | **TASK_TEMPLATE_SIMPLE.md** | Streamlined task essentials only | Simple, routine, or well-understood tasks | ~40 |
 
+### Research Templates
+
+| Template | Purpose | When to Use | Lines |
+|----------|---------|-------------|-------|
+| **RESEARCH_PHASE_GOAL_TEMPLATE.md** | Research phase objectives and scope | Creating a research phase | ~80 |
+| **RESEARCH_INVESTIGATION_TEMPLATE.md** | Explore unknowns, gather information | Starting research, exploring problem space | ~100 |
+| **RESEARCH_COMPARISON_TEMPLATE.md** | Evaluate options, make decisions | Choosing between alternatives | ~120 |
+| **RESEARCH_SPECIFICATION_TEMPLATE.md** | Define requirements, design decisions | Documenting specs from research | ~100 |
+| **RESEARCH_ANALYSIS_TEMPLATE.md** | Deep-dive technical analysis | Root cause, performance, security analysis | ~100 |
+
+**Note:** Research phases use freeform subdirectory structure, not numbered sequences. Create research documents with `fest research create --type <type> --title "<title>"`.
+
 ### Tracking Templates
 
 | Template | Purpose | When to Use | Lines |
@@ -89,9 +123,11 @@ What do you need to create?
 ## Template Quick Reference
 
 ### FESTIVAL_OVERVIEW_TEMPLATE.md
+
 **Creates:** `FESTIVAL_OVERVIEW.md` in your festival root
 
 **Key Sections:**
+
 - Project Goal (one clear sentence)
 - Success Criteria (measurable outcomes)
 - Problem Statement (current vs desired state)
@@ -99,6 +135,7 @@ What do you need to create?
 - High-Level Phases (initial structure)
 
 **Example Output:**
+
 ```markdown
 # Festival Overview: User Authentication System
 
@@ -113,9 +150,11 @@ social auth, and role-based access control.
 ```
 
 ### COMMON_INTERFACES_TEMPLATE.md
+
 **Creates:** `COMMON_INTERFACES.md` in your festival root
 
 **Key Sections:**
+
 - API Endpoints (REST/GraphQL/RPC)
 - Data Models (schemas, types)
 - Function Signatures (public interfaces)
@@ -125,9 +164,11 @@ social auth, and role-based access control.
 **Critical:** Complete this BEFORE implementation begins!
 
 ### FESTIVAL_RULES_TEMPLATE.md
+
 **Creates:** `FESTIVAL_RULES.md` in your festival root
 
 **Key Sections:**
+
 - Code Standards (style, patterns)
 - Quality Gates (coverage, performance)
 - Security Requirements (auth, encryption)
@@ -137,6 +178,7 @@ social auth, and role-based access control.
 ### TASK_TEMPLATE.md vs TASK_TEMPLATE_SIMPLE.md
 
 **Full Template Includes:**
+
 - Objective & Context
 - Requirements & Deliverables
 - Pre-Task Checklist
@@ -148,18 +190,21 @@ social auth, and role-based access control.
 - Good vs Bad Examples
 
 **Simple Template Includes:**
+
 - Objective
 - Requirements (checklist)
 - Implementation Steps (brief)
 - Definition of Done
 
 **Choose Simple When:**
+
 - Task is well-understood
 - Team has done similar work
 - Risk is low
-- Time is critical
+- Goal progression needs rapid steps
 
 **Choose Full When:**
+
 - Task is complex or novel
 - Multiple people involved
 - High risk or critical path
@@ -168,6 +213,7 @@ social auth, and role-based access control.
 ### Progress Tracking Templates
 
 **Markdown Format (FESTIVAL_TODO_TEMPLATE.md):**
+
 ```markdown
 ## Phase 001_PLAN [████████░░] 80%
 ### 01_requirements [✅] Complete
@@ -179,6 +225,7 @@ social auth, and role-based access control.
 ```
 
 **YAML Format (FESTIVAL_TODO_TEMPLATE.yaml):**
+
 ```yaml
 phases:
   - id: "001_PLAN"
@@ -192,30 +239,67 @@ phases:
             status: "completed"
 ```
 
-## Usage Patterns
+## Collaborative Setup Patterns
 
-### Pattern 1: New Festival Setup
-1. `FESTIVAL_OVERVIEW_TEMPLATE.md` → Define goals
-2. `FESTIVAL_RULES_TEMPLATE.md` → Set standards
-3. `PHASE_TEMPLATE.md` → Structure phases
-4. `SEQUENCE_TEMPLATE.md` → Plan sequences
-5. `COMMON_INTERFACES_TEMPLATE.md` → Define interfaces
-6. `TASK_TEMPLATE.md` → Create tasks
-7. `FESTIVAL_TODO_TEMPLATE.md` → Track progress
+**CRITICAL**: All setup patterns assume either completed planning or external requirements from human. Never create implementation sequences without requirements.
+
+### Quick Setup Path (Requirements Available)
+
+**Use when:** Human has provided specific requirements or external planning documents
+
+1. `FESTIVAL_QUICKSTART_TEMPLATE.md` → Structure provided requirements
+2. Create sequences FROM requirements (using `REQUIREMENTS_TO_SEQUENCES_GUIDE.md`)
+3. `TASK_TEMPLATE_SIMPLE.md` → Create specific tasks from requirements
+4. `FESTIVAL_TODO_TEMPLATE.md` → Track progress
+5. Consider Interface Planning Extension if multi-system project
+
+**Complexity:** Minimal setup steps | **Best for:** Teams with clear requirements
+
+### Planning-First Path (Requirements Needed)
+
+**Use when:** Human has project vision but needs collaborative requirements gathering
+
+1. `FESTIVAL_OVERVIEW_TEMPLATE.md` → Capture vision and goals
+2. Collaborative planning phase using `COLLABORATIVE_PLANNING_GUIDE.md`
+3. Human provides specific requirements from planning
+4. Create implementation sequences from requirements
+5. `TASK_TEMPLATE.md` → Create detailed tasks
+6. `FESTIVAL_TODO_TEMPLATE.md` → Track progress
+7. Consider Interface Planning Extension if multi-system project
+
+**Complexity:** Comprehensive planning steps + implementation structuring | **Best for:** Projects needing requirements discovery
+
+### Iterative Setup Path (Evolving Requirements)
+
+**Use when:** Human has initial requirements but expects them to evolve
+
+1. `FESTIVAL_QUICKSTART_TEMPLATE.md` → Structure initial requirements
+2. Create first implementation sequence only
+3. Execute and learn from initial sequence
+4. Human provides additional/refined requirements
+5. Create next sequences based on new requirements
+6. Repeat iterative cycle
+
+**Complexity:** Ongoing step-by-step progression | **Best for:** Exploratory or research projects
+
+### Usage Patterns
 
 ### Pattern 2: Quick Task Creation
+
 1. Assess complexity
 2. Choose template (simple vs full)
 3. Fill required sections
 4. Add to sequence directory
 5. Update TODO.md
 
-### Pattern 3: Interface-First Development
+### Pattern 3: Multi-System Development (Extension)
+
 1. Complete Phase 001 planning
-2. Use `COMMON_INTERFACES_TEMPLATE.md` extensively
-3. Define ALL interfaces before coding
-4. Distribute interface docs to all developers
-5. Begin parallel implementation
+2. Activate Interface Planning Extension
+3. Use interface planning templates extensively
+4. Define ALL interfaces before coding
+5. Distribute interface docs to all developers
+6. Begin parallel implementation
 
 ## Template Customization Tips
 
@@ -266,17 +350,18 @@ A: No. Use what adds value, remove what doesn't.
 **Q: Can I create new templates?**
 A: Absolutely! Share them with the community.
 
-## Template Metrics
+## Template Step Complexity
 
-**Average completion times with templates:**
-- Festival Overview: 15-30 minutes
-- Common Interfaces: 1-2 hours
-- Task (Simple): 5-10 minutes
-- Task (Full): 15-20 minutes
-- Phase Planning: 20-30 minutes
-- Sequence Planning: 10-15 minutes
+**Relative complexity for template completion:**
 
-**Without templates:** 2-3x longer, less consistent
+- Festival Overview: Moderate complexity - defines project context and goals
+- Common Interfaces: Higher complexity - requires architectural thinking  
+- Task (Simple): Low complexity - straightforward task definition
+- Task (Full): Moderate complexity - comprehensive task specification
+- Phase Planning: Moderate complexity - logical goal progression design
+- Sequence Planning: Low-moderate complexity - related task grouping
+
+**Without templates:** More complex and less consistent goal progression
 
 ## Next Steps
 

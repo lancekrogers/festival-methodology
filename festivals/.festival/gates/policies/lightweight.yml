@@ -1,0 +1,9 @@
+version: 1
+name: lightweight
+description: Minimal gates for research and exploration phases
+
+append:
+  - id: code_review
+    template: QUALITY_GATE_REVIEW
+    name: Code Review
+    enabled: true
