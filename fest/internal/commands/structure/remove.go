@@ -64,7 +64,7 @@ Warning: This will permanently delete the phase and all its contents!`,
 			if num, err := parsePhaseNumber(target); err == nil {
 				// Find phase by number
 				parser := festival.NewParser()
-				phases, err := parser.ParsePhases(".")
+				phases, err := parser.ParsePhases(cmd.Context(), ".")
 				if err != nil {
 					return fmt.Errorf("failed to parse phases: %w", err)
 				}
@@ -112,7 +112,7 @@ Warning: This will permanently delete the phase and all its contents!`,
 			})
 
 			// Perform removal
-			return renumberer.RemoveElement(absPath)
+			return renumberer.RemoveElement(cmd.Context(), absPath)
 		},
 	}
 }
@@ -148,7 +148,7 @@ Warning: This will permanently delete the sequence and all its contents!`,
 			if num, err := parseSequenceNumber(target); err == nil {
 				// Find sequence by number
 				parser := festival.NewParser()
-				sequences, err := parser.ParseSequences(phaseAbs)
+				sequences, err := parser.ParseSequences(cmd.Context(), phaseAbs)
 				if err != nil {
 					return fmt.Errorf("failed to parse sequences: %w", err)
 				}
@@ -190,7 +190,7 @@ Warning: This will permanently delete the sequence and all its contents!`,
 			})
 
 			// Perform removal
-			return renumberer.RemoveElement(targetPath)
+			return renumberer.RemoveElement(cmd.Context(), targetPath)
 		},
 	}
 
@@ -231,7 +231,7 @@ Warning: This will permanently delete the task file!`,
 			if num, err := parseTaskNumber(target); err == nil {
 				// Find task by number
 				parser := festival.NewParser()
-				tasks, err := parser.ParseTasks(seqAbs)
+				tasks, err := parser.ParseTasks(cmd.Context(), seqAbs)
 				if err != nil {
 					return fmt.Errorf("failed to parse tasks: %w", err)
 				}
@@ -290,7 +290,7 @@ Warning: This will permanently delete the task file!`,
 			})
 
 			// Perform removal
-			return renumberer.RemoveElement(targetPath)
+			return renumberer.RemoveElement(cmd.Context(), targetPath)
 		},
 	}
 

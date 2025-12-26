@@ -1,6 +1,7 @@
 package festival
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,7 +22,7 @@ func TestReorderPhase_MoveUp(t *testing.T) {
 	})
 
 	// Move phase 3 to position 1
-	err := r.ReorderPhase(tmpDir, 3, 1)
+	err := r.ReorderPhase(context.Background(), tmpDir, 3, 1)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -52,7 +53,7 @@ func TestReorderPhase_MoveDown(t *testing.T) {
 	})
 
 	// Move phase 1 to position 3
-	err := r.ReorderPhase(tmpDir, 1, 3)
+	err := r.ReorderPhase(context.Background(), tmpDir, 1, 3)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -81,7 +82,7 @@ func TestReorderPhase_SamePosition(t *testing.T) {
 	})
 
 	// Move phase 1 to position 1 (no-op)
-	err := r.ReorderPhase(tmpDir, 1, 1)
+	err := r.ReorderPhase(context.Background(), tmpDir, 1, 1)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -105,7 +106,7 @@ func TestReorderPhase_InvalidFrom(t *testing.T) {
 		AutoApprove: true,
 	})
 
-	err := r.ReorderPhase(tmpDir, 5, 1)
+	err := r.ReorderPhase(context.Background(), tmpDir, 5, 1)
 	if err == nil {
 		t.Error("expected error for invalid source position")
 	}
@@ -125,7 +126,7 @@ func TestReorderPhase_InvalidTo(t *testing.T) {
 		AutoApprove: true,
 	})
 
-	err := r.ReorderPhase(tmpDir, 1, 10)
+	err := r.ReorderPhase(context.Background(), tmpDir, 1, 10)
 	if err == nil {
 		t.Error("expected error for invalid destination position")
 	}
@@ -149,7 +150,7 @@ func TestReorderSequence_MoveUp(t *testing.T) {
 	})
 
 	// Move sequence 4 (tests) to position 1
-	err := r.ReorderSequence(tmpDir, 4, 1)
+	err := r.ReorderSequence(context.Background(), tmpDir, 4, 1)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -182,7 +183,7 @@ func TestReorderSequence_MoveDown(t *testing.T) {
 	})
 
 	// Move sequence 1 (tests) to position 3
-	err := r.ReorderSequence(tmpDir, 1, 3)
+	err := r.ReorderSequence(context.Background(), tmpDir, 1, 3)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -213,7 +214,7 @@ func TestReorderTask_MoveUp(t *testing.T) {
 	})
 
 	// Move task 3 to position 1
-	err := r.ReorderTask(tmpDir, 3, 1)
+	err := r.ReorderTask(context.Background(), tmpDir, 3, 1)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -243,7 +244,7 @@ func TestReorderTask_MoveDown(t *testing.T) {
 	})
 
 	// Move task 1 to position 3
-	err := r.ReorderTask(tmpDir, 1, 3)
+	err := r.ReorderTask(context.Background(), tmpDir, 1, 3)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -275,7 +276,7 @@ func TestReorderTask_ParallelTasks(t *testing.T) {
 	})
 
 	// Move parallel tasks (02) to position 1
-	err := r.ReorderTask(tmpDir, 2, 1)
+	err := r.ReorderTask(context.Background(), tmpDir, 2, 1)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -312,7 +313,7 @@ func TestReorderPhase_DryRunMode(t *testing.T) {
 
 	output := captureOutput(func() {
 		// This will show preview but not apply since AutoApprove is false
-		_ = r.ReorderPhase(tmpDir, 2, 1)
+		_ = r.ReorderPhase(context.Background(), tmpDir, 2, 1)
 	})
 
 	// Since Quiet is true, output should be empty even in dry-run
@@ -341,7 +342,7 @@ func TestReorderPhase_VerboseMode(t *testing.T) {
 	})
 
 	output := captureOutput(func() {
-		_ = r.ReorderPhase(tmpDir, 2, 1)
+		_ = r.ReorderPhase(context.Background(), tmpDir, 2, 1)
 	})
 
 	// Verbose mode should show rename operations
@@ -358,7 +359,7 @@ func TestReorderPhase_EmptyDirectory(t *testing.T) {
 		AutoApprove: true,
 	})
 
-	err := r.ReorderPhase(tmpDir, 1, 2)
+	err := r.ReorderPhase(context.Background(), tmpDir, 1, 2)
 	if err == nil {
 		t.Error("expected error for empty directory")
 	}
@@ -372,7 +373,7 @@ func TestReorderSequence_EmptyDirectory(t *testing.T) {
 		AutoApprove: true,
 	})
 
-	err := r.ReorderSequence(tmpDir, 1, 2)
+	err := r.ReorderSequence(context.Background(), tmpDir, 1, 2)
 	if err == nil {
 		t.Error("expected error for empty directory")
 	}
@@ -386,7 +387,7 @@ func TestReorderTask_EmptyDirectory(t *testing.T) {
 		AutoApprove: true,
 	})
 
-	err := r.ReorderTask(tmpDir, 1, 2)
+	err := r.ReorderTask(context.Background(), tmpDir, 1, 2)
 	if err == nil {
 		t.Error("expected error for empty directory")
 	}
@@ -408,7 +409,7 @@ func TestReorderPhase_MoveMiddle(t *testing.T) {
 	})
 
 	// Move phase 2 to position 4
-	err := r.ReorderPhase(tmpDir, 2, 4)
+	err := r.ReorderPhase(context.Background(), tmpDir, 2, 4)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -448,7 +449,7 @@ func TestReorderSequence_PreservesContents(t *testing.T) {
 	})
 
 	// Move sequence 2 to position 1
-	err := r.ReorderSequence(tmpDir, 2, 1)
+	err := r.ReorderSequence(context.Background(), tmpDir, 2, 1)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

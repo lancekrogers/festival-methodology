@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"context"
 	"path/filepath"
 	"strings"
 
@@ -76,8 +77,9 @@ func runValidateQualityGates(opts *validateOptions) error {
 }
 
 func validateQualityGatesChecks(festivalPath string, result *ValidationResult, autoFix bool) {
+	ctx := context.Background()
 	parser := festival.NewParser()
-	phases, _ := parser.ParsePhases(festivalPath)
+	phases, _ := parser.ParsePhases(ctx, festivalPath)
 	policy := gates.DefaultPolicy()
 
 	gateIDs := map[string]bool{}
@@ -94,7 +96,7 @@ func validateQualityGatesChecks(festivalPath string, result *ValidationResult, a
 			continue
 		}
 
-		sequences, _ := parser.ParseSequences(phase.Path)
+		sequences, _ := parser.ParseSequences(ctx, phase.Path)
 		for _, seq := range sequences {
 			// Check if this is an implementation sequence
 			if isExcludedSequence(seq.Name, policy.ExcludePatterns) {
@@ -102,7 +104,7 @@ func validateQualityGatesChecks(festivalPath string, result *ValidationResult, a
 			}
 
 			// Check for quality gate tasks
-			tasks, _ := parser.ParseTasks(seq.Path)
+			tasks, _ := parser.ParseTasks(ctx, seq.Path)
 			hasGates := false
 			for _, task := range tasks {
 				// Check if task name contains any gate ID

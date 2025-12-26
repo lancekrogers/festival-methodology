@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -10,11 +11,15 @@ import (
 )
 
 // ValidateTasks ensures implementation sequences have task files (not just goals)
-func ValidateTasks(festivalPath string) ([]Issue, error) {
+func ValidateTasks(ctx context.Context, festivalPath string) ([]Issue, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("context cancelled: %w", err)
+	}
+
 	issues := []Issue{}
 
 	parser := festival.NewParser()
-	phases, err := parser.ParsePhases(festivalPath)
+	phases, err := parser.ParsePhases(ctx, festivalPath)
 	if err != nil {
 		return issues, fmt.Errorf("parse phases: %w", err)
 	}
@@ -27,7 +32,7 @@ func ValidateTasks(festivalPath string) ([]Issue, error) {
 			continue
 		}
 
-		sequences, err := parser.ParseSequences(phase.Path)
+		sequences, err := parser.ParseSequences(ctx, phase.Path)
 		if err != nil {
 			return issues, fmt.Errorf("parse sequences: %w", err)
 		}
@@ -36,7 +41,7 @@ func ValidateTasks(festivalPath string) ([]Issue, error) {
 				continue
 			}
 
-			tasks, err := parser.ParseTasks(seq.Path)
+			tasks, err := parser.ParseTasks(ctx, seq.Path)
 			if err != nil {
 				return issues, fmt.Errorf("parse tasks: %w", err)
 			}
@@ -82,7 +87,7 @@ func isExcludedSequence(name string, patterns []string) bool {
 
 // CheckTaskFilesExist returns true if all implementation sequences have at least one task file.
 func CheckTaskFilesExist(path string) bool {
-	issues, err := ValidateTasks(path)
+	issues, err := ValidateTasks(context.Background(), path)
 	if err != nil {
 		return true
 	}

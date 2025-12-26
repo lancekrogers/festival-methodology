@@ -82,7 +82,7 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 
 	// Insert phase
 	ren := festival.NewRenumberer(festival.RenumberOptions{AutoApprove: true, Quiet: true})
-	if err := ren.InsertPhase(absPath, opts.After, opts.Name); err != nil {
+	if err := ren.InsertPhase(ctx, absPath, opts.After, opts.Name); err != nil {
 		return emitCreatePhaseError(opts, fmt.Errorf("failed to insert phase: %w", err))
 	}
 

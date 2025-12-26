@@ -99,7 +99,7 @@ For example, moving phase 3 to position 1 will shift phases 1 and 2 down.`,
 			})
 
 			// Perform reordering
-			return renumberer.ReorderPhase(absPath, from, to)
+			return renumberer.ReorderPhase(cmd.Context(), absPath, from, to)
 		},
 	}
 }
@@ -147,7 +147,7 @@ Elements between the source and destination positions are shifted accordingly.`,
 			})
 
 			// Perform reordering
-			return renumberer.ReorderSequence(absPath, from, to)
+			return renumberer.ReorderSequence(cmd.Context(), absPath, from, to)
 		},
 	}
 
@@ -201,7 +201,7 @@ Parallel tasks (multiple tasks with the same number) are moved together.`,
 			})
 
 			// Perform reordering
-			return renumberer.ReorderTask(absPath, from, to)
+			return renumberer.ReorderTask(cmd.Context(), absPath, from, to)
 		},
 	}
 

@@ -147,7 +147,7 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 
 		// Insert task at current position
 		ren := festival.NewRenumberer(festival.RenumberOptions{AutoApprove: true, Quiet: true})
-		if err := ren.InsertTask(absPath, currentAfter, name); err != nil {
+		if err := ren.InsertTask(ctx, absPath, currentAfter, name); err != nil {
 			return emitCreateTaskError(opts, fmt.Errorf("failed to insert task %q: %w", name, err))
 		}
 

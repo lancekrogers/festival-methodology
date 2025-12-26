@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -71,10 +72,11 @@ func runValidateStructure(opts *validateOptions) error {
 }
 
 func validateStructureChecks(festivalPath string, result *ValidationResult) {
+	ctx := context.Background()
 	parser := festival.NewParser()
 
 	// Parse festival structure
-	phases, err := parser.ParsePhases(festivalPath)
+	phases, err := parser.ParsePhases(ctx, festivalPath)
 	if err != nil {
 		result.Issues = append(result.Issues, ValidationIssue{
 			Level:   LevelError,
@@ -98,7 +100,7 @@ func validateStructureChecks(festivalPath string, result *ValidationResult) {
 		}
 
 		// Check sequences
-		sequences, _ := parser.ParseSequences(phase.Path)
+		sequences, _ := parser.ParseSequences(ctx, phase.Path)
 		seqLowerPattern := regexp.MustCompile(`^\d{2}_[a-z][a-z0-9_]*$`)
 		for _, seq := range sequences {
 			if !seqLowerPattern.MatchString(seq.FullName) {
@@ -111,7 +113,7 @@ func validateStructureChecks(festivalPath string, result *ValidationResult) {
 			}
 
 			// Check tasks
-			tasks, _ := parser.ParseTasks(seq.Path)
+			tasks, _ := parser.ParseTasks(ctx, seq.Path)
 			taskLowerPattern := regexp.MustCompile(`^\d{2}_[a-z][a-z0-9_]*\.md$`)
 			for _, task := range tasks {
 				if !taskLowerPattern.MatchString(task.FullName) {

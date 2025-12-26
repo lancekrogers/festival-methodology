@@ -49,7 +49,7 @@ func (v *CompletenessValidator) Validate(ctx context.Context, path string) ([]Is
 	}
 
 	parser := festival.NewParser()
-	phases, _ := parser.ParsePhases(path)
+	phases, _ := parser.ParsePhases(ctx, path)
 
 	for _, phase := range phases {
 		if err := ctx.Err(); err != nil {
@@ -69,7 +69,7 @@ func (v *CompletenessValidator) Validate(ctx context.Context, path string) ([]Is
 		}
 
 		// Check sequences
-		sequences, _ := parser.ParseSequences(phase.Path)
+		sequences, _ := parser.ParseSequences(ctx, phase.Path)
 		for _, seq := range sequences {
 			seqGoalPath := filepath.Join(seq.Path, "SEQUENCE_GOAL.md")
 			if !fileExists(seqGoalPath) {
