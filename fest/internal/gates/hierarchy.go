@@ -3,9 +3,10 @@ package gates
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // EffectivePolicy represents the merged result of policies from all hierarchy levels
@@ -35,12 +36,14 @@ type HierarchicalLoader struct {
 // NewHierarchicalLoader creates a loader with the given festivals root
 func NewHierarchicalLoader(festivalsRoot string, registry *PolicyRegistry) (*HierarchicalLoader, error) {
 	if festivalsRoot == "" {
-		return nil, fmt.Errorf("festivalsRoot cannot be empty")
+		return nil, errors.Validation("festivalsRoot cannot be empty").
+			WithOp("NewHierarchicalLoader")
 	}
 
 	// Validate path exists
 	if _, err := os.Stat(festivalsRoot); os.IsNotExist(err) {
-		return nil, fmt.Errorf("festivals root does not exist: %s", festivalsRoot)
+		return nil, errors.NotFound("festivals root").
+			WithField("path", festivalsRoot)
 	}
 
 	return &HierarchicalLoader{
@@ -55,7 +58,7 @@ func (h *HierarchicalLoader) LoadForSequence(
 	festivalPath, phasePath, sequencePath string,
 ) (*EffectivePolicy, error) {
 	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, errors.Wrap(err, "context cancelled").WithOp("HierarchicalLoader.LoadForSequence")
 	}
 
 	// Start with built-in default
@@ -76,7 +79,7 @@ func (h *HierarchicalLoader) LoadForSequence(
 	// Walk each level
 	for _, lvl := range levels {
 		if err := ctx.Err(); err != nil {
-			return nil, fmt.Errorf("context cancelled: %w", err)
+			return nil, errors.Wrap(err, "context cancelled").WithOp("HierarchicalLoader.LoadForSequence")
 		}
 
 		policyPath := filepath.Join(lvl.path, lvl.file)
@@ -86,7 +89,10 @@ func (h *HierarchicalLoader) LoadForSequence(
 
 		policy, err := LoadPolicy(policyPath)
 		if err != nil {
-			return nil, fmt.Errorf("loading policy at %s: %w", policyPath, err)
+			return nil, errors.Wrap(err, "loading policy").
+				WithOp("HierarchicalLoader.LoadForSequence").
+				WithField("path", policyPath).
+				WithCode(errors.ErrCodeConfig)
 		}
 
 		policy.Source = &PolicySource{
@@ -107,7 +113,7 @@ func (h *HierarchicalLoader) LoadForPhase(
 	festivalPath, phasePath string,
 ) (*EffectivePolicy, error) {
 	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, errors.Wrap(err, "context cancelled").WithOp("HierarchicalLoader.LoadForPhase")
 	}
 
 	// Start with built-in default
@@ -126,7 +132,7 @@ func (h *HierarchicalLoader) LoadForPhase(
 
 	for _, lvl := range levels {
 		if err := ctx.Err(); err != nil {
-			return nil, fmt.Errorf("context cancelled: %w", err)
+			return nil, errors.Wrap(err, "context cancelled").WithOp("HierarchicalLoader.LoadForPhase")
 		}
 
 		policyPath := filepath.Join(lvl.path, lvl.file)
@@ -136,7 +142,10 @@ func (h *HierarchicalLoader) LoadForPhase(
 
 		policy, err := LoadPolicy(policyPath)
 		if err != nil {
-			return nil, fmt.Errorf("loading policy at %s: %w", policyPath, err)
+			return nil, errors.Wrap(err, "loading policy").
+				WithOp("HierarchicalLoader.LoadForPhase").
+				WithField("path", policyPath).
+				WithCode(errors.ErrCodeConfig)
 		}
 
 		policy.Source = &PolicySource{
@@ -157,7 +166,7 @@ func (h *HierarchicalLoader) LoadForFestival(
 	festivalPath string,
 ) (*EffectivePolicy, error) {
 	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, errors.Wrap(err, "context cancelled").WithOp("HierarchicalLoader.LoadForFestival")
 	}
 
 	// Start with built-in default
@@ -175,7 +184,7 @@ func (h *HierarchicalLoader) LoadForFestival(
 
 	for _, lvl := range levels {
 		if err := ctx.Err(); err != nil {
-			return nil, fmt.Errorf("context cancelled: %w", err)
+			return nil, errors.Wrap(err, "context cancelled").WithOp("HierarchicalLoader.LoadForFestival")
 		}
 
 		policyPath := filepath.Join(lvl.path, lvl.file)
@@ -185,7 +194,10 @@ func (h *HierarchicalLoader) LoadForFestival(
 
 		policy, err := LoadPolicy(policyPath)
 		if err != nil {
-			return nil, fmt.Errorf("loading policy at %s: %w", policyPath, err)
+			return nil, errors.Wrap(err, "loading policy").
+				WithOp("HierarchicalLoader.LoadForFestival").
+				WithField("path", policyPath).
+				WithCode(errors.ErrCodeConfig)
 		}
 
 		policy.Source = &PolicySource{

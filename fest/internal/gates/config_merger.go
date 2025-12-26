@@ -3,9 +3,10 @@ package gates
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // ConfigMerger merges gate configuration from fest.yaml and policy files.
@@ -19,7 +20,8 @@ type ConfigMerger struct {
 func NewConfigMerger(festivalsRoot string, registry *PolicyRegistry) (*ConfigMerger, error) {
 	loader, err := NewHierarchicalLoader(festivalsRoot, registry)
 	if err != nil {
-		return nil, fmt.Errorf("creating hierarchical loader: %w", err)
+		return nil, errors.Wrap(err, "creating hierarchical loader").
+			WithOp("NewConfigMerger")
 	}
 
 	return &ConfigMerger{
@@ -76,7 +78,7 @@ func (m *ConfigMerger) MergeForSequence(
 	opts MergeOptions,
 ) (*MergedPolicy, error) {
 	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, errors.Wrap(err, "context cancelled").WithOp("ConfigMerger.MergeForSequence")
 	}
 
 	merged := m.initMergedPolicy(opts)
@@ -103,7 +105,7 @@ func (m *ConfigMerger) MergeForPhase(
 	opts MergeOptions,
 ) (*MergedPolicy, error) {
 	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, errors.Wrap(err, "context cancelled").WithOp("ConfigMerger.MergeForPhase")
 	}
 
 	merged := m.initMergedPolicy(opts)
@@ -128,7 +130,7 @@ func (m *ConfigMerger) MergeForFestival(
 	opts MergeOptions,
 ) (*MergedPolicy, error) {
 	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, errors.Wrap(err, "context cancelled").WithOp("ConfigMerger.MergeForFestival")
 	}
 
 	merged := m.initMergedPolicy(opts)
@@ -178,7 +180,9 @@ func (m *ConfigMerger) initMergedPolicy(opts MergeOptions) *MergedPolicy {
 func (m *ConfigMerger) applyFestYAML(festivalPath string, merged *MergedPolicy) error {
 	policy, err := GatePolicyFromFestConfig(festivalPath)
 	if err != nil {
-		return fmt.Errorf("loading fest.yaml: %w", err)
+		return errors.Wrap(err, "loading fest.yaml").
+			WithOp("ConfigMerger.applyFestYAML").
+			WithCode(errors.ErrCodeConfig)
 	}
 
 	if policy == nil {
@@ -279,7 +283,7 @@ func (m *ConfigMerger) applyPolicyLevels(
 ) error {
 	for _, lvl := range levels {
 		if err := ctx.Err(); err != nil {
-			return fmt.Errorf("context cancelled: %w", err)
+			return errors.Wrap(err, "context cancelled").WithOp("ConfigMerger.applyPolicyLevels")
 		}
 
 		policyPath := filepath.Join(lvl.path, lvl.file)
@@ -289,7 +293,10 @@ func (m *ConfigMerger) applyPolicyLevels(
 
 		policy, err := LoadPolicy(policyPath)
 		if err != nil {
-			return fmt.Errorf("loading policy at %s: %w", policyPath, err)
+			return errors.Wrap(err, "loading policy").
+				WithOp("ConfigMerger.applyPolicyLevels").
+				WithField("path", policyPath).
+				WithCode(errors.ErrCodeConfig)
 		}
 
 		policy.Source = &PolicySource{

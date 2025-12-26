@@ -3,11 +3,11 @@ package gates
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/config"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"gopkg.in/yaml.v3"
 )
 
@@ -172,12 +172,14 @@ func DefaultPolicy() *GatePolicy {
 func LoadPolicy(path string) (*GatePolicy, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read policy file: %w", err)
+		return nil, errors.IO("reading policy file", err).
+			WithField("path", path)
 	}
 
 	var policy GatePolicy
 	if err := yaml.Unmarshal(data, &policy); err != nil {
-		return nil, fmt.Errorf("failed to parse policy file: %w", err)
+		return nil, errors.Parse("parsing policy file", err).
+			WithField("path", path)
 	}
 
 	// Apply defaults
@@ -192,11 +194,14 @@ func LoadPolicy(path string) (*GatePolicy, error) {
 func SavePolicy(path string, policy *GatePolicy) error {
 	data, err := yaml.Marshal(policy)
 	if err != nil {
-		return fmt.Errorf("failed to marshal policy: %w", err)
+		return errors.Wrap(err, "marshaling policy").
+			WithOp("SavePolicy").
+			WithCode(errors.ErrCodeParse)
 	}
 
 	if err := os.WriteFile(path, data, 0644); err != nil {
-		return fmt.Errorf("failed to write policy file: %w", err)
+		return errors.IO("writing policy file", err).
+			WithField("path", path)
 	}
 
 	return nil
@@ -212,12 +217,14 @@ func LoadPhaseOverride(phasePath string) (*PhaseOverride, error) {
 
 	data, err := os.ReadFile(overridePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read phase override: %w", err)
+		return nil, errors.IO("reading phase override", err).
+			WithField("path", overridePath)
 	}
 
 	var override PhaseOverride
 	if err := yaml.Unmarshal(data, &override); err != nil {
-		return nil, fmt.Errorf("failed to parse phase override: %w", err)
+		return nil, errors.Parse("parsing phase override", err).
+			WithField("path", overridePath)
 	}
 
 	return &override, nil
@@ -279,7 +286,9 @@ func GateTaskFromQualityGateTask(qt config.QualityGateTask) GateTask {
 func LoadGatesFromFestConfig(festivalPath string) ([]GateTask, []string, bool, error) {
 	cfg, err := config.LoadFestivalConfig(festivalPath)
 	if err != nil {
-		return nil, nil, false, fmt.Errorf("failed to load festival config: %w", err)
+		return nil, nil, false, errors.Wrap(err, "loading festival config").
+			WithCode(errors.ErrCodeConfig).
+			WithField("path", festivalPath)
 	}
 
 	if !cfg.QualityGates.Enabled {

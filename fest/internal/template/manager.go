@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // Manager is the high-level API for template operations
@@ -30,30 +32,38 @@ func (m *Manager) Render(t *Template, ctx *Context) (string, error) {
 func (m *Manager) RenderFile(ctx context.Context, templatePath string, tmplCtx *Context) (string, error) {
 	// Check context early
 	if err := ctx.Err(); err != nil {
-		return "", fmt.Errorf("context cancelled: %w", err)
+		return "", errors.Wrap(err, "context cancelled").
+			WithOp("Manager.RenderFile")
 	}
 
 	// Load template
 	tmpl, err := m.loader.Load(ctx, templatePath)
 	if err != nil {
-		return "", fmt.Errorf("failed to load template: %w", err)
+		return "", errors.Wrap(err, "loading template").
+			WithOp("Manager.RenderFile").
+			WithField("path", templatePath)
 	}
 
 	// Validate required variables
 	if err := ValidateTemplate(tmpl, tmplCtx); err != nil {
-		return "", fmt.Errorf("template validation failed: %w", err)
+		return "", errors.Wrap(err, "template validation failed").
+			WithCode(errors.ErrCodeValidation).
+			WithField("path", templatePath)
 	}
 
 	// Render template
 	output, err := m.renderer.Render(tmpl, tmplCtx)
 	if err != nil {
-		return "", fmt.Errorf("failed to render template: %w", err)
+		return "", errors.Wrap(err, "rendering template").
+			WithCode(errors.ErrCodeTemplate).
+			WithField("path", templatePath)
 	}
 
 	// Check for unrendered variables
 	unrendered := CheckUnrenderedVariables(output)
 	if len(unrendered) > 0 {
-		return "", fmt.Errorf("template has unrendered variables: %v", unrendered)
+		return "", errors.Validation(fmt.Sprintf("template has unrendered variables: %v", unrendered)).
+			WithField("path", templatePath)
 	}
 
 	return output, nil
@@ -63,7 +73,8 @@ func (m *Manager) RenderFile(ctx context.Context, templatePath string, tmplCtx *
 func (m *Manager) RenderFileToFile(ctx context.Context, templatePath, outputPath string, tmplCtx *Context) error {
 	// Check context early
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").
+			WithOp("Manager.RenderFileToFile")
 	}
 
 	// Render template
@@ -75,12 +86,14 @@ func (m *Manager) RenderFileToFile(ctx context.Context, templatePath, outputPath
 	// Ensure output directory exists
 	outputDir := filepath.Dir(outputPath)
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return fmt.Errorf("failed to create output directory: %w", err)
+		return errors.IO("creating output directory", err).
+			WithField("path", outputDir)
 	}
 
 	// Write output file
 	if err := os.WriteFile(outputPath, []byte(output), 0644); err != nil {
-		return fmt.Errorf("failed to write output file: %w", err)
+		return errors.IO("writing output file", err).
+			WithField("path", outputPath)
 	}
 
 	return nil
@@ -90,26 +103,32 @@ func (m *Manager) RenderFileToFile(ctx context.Context, templatePath, outputPath
 func (m *Manager) RenderDirectory(ctx context.Context, templateDir, outputDir string, tmplCtx *Context) error {
 	// Check context early
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").
+			WithOp("Manager.RenderDirectory")
 	}
 
 	// Load all templates
 	templates, err := m.loader.LoadAll(ctx, templateDir)
 	if err != nil {
-		return fmt.Errorf("failed to load templates: %w", err)
+		return errors.Wrap(err, "loading templates").
+			WithOp("Manager.RenderDirectory").
+			WithField("dir", templateDir)
 	}
 
 	// Render each template
 	for _, tmpl := range templates {
 		// Check context on each iteration
 		if ctxErr := ctx.Err(); ctxErr != nil {
-			return fmt.Errorf("context cancelled: %w", ctxErr)
+			return errors.Wrap(ctxErr, "context cancelled").
+				WithOp("Manager.RenderDirectory")
 		}
 
 		// Compute relative path
 		relPath, err := filepath.Rel(templateDir, tmpl.Path)
 		if err != nil {
-			return fmt.Errorf("failed to compute relative path: %w", err)
+			return errors.Wrap(err, "computing relative path").
+				WithField("template", tmpl.Path).
+				WithField("base", templateDir)
 		}
 
 		// Compute output path
@@ -117,29 +136,36 @@ func (m *Manager) RenderDirectory(ctx context.Context, templateDir, outputDir st
 
 		// Validate template
 		if err := ValidateTemplate(tmpl, tmplCtx); err != nil {
-			return fmt.Errorf("template validation failed for %s: %w", relPath, err)
+			return errors.Wrap(err, "template validation failed").
+				WithCode(errors.ErrCodeValidation).
+				WithField("path", relPath)
 		}
 
 		// Render template
 		output, err := m.renderer.Render(tmpl, tmplCtx)
 		if err != nil {
-			return fmt.Errorf("failed to render %s: %w", relPath, err)
+			return errors.Wrap(err, "rendering template").
+				WithCode(errors.ErrCodeTemplate).
+				WithField("path", relPath)
 		}
 
 		// Check for unrendered variables
 		unrendered := CheckUnrenderedVariables(output)
 		if len(unrendered) > 0 {
-			return fmt.Errorf("template %s has unrendered variables: %v", relPath, unrendered)
+			return errors.Validation(fmt.Sprintf("template has unrendered variables: %v", unrendered)).
+				WithField("path", relPath)
 		}
 
 		// Ensure output directory exists
 		if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
-			return fmt.Errorf("failed to create directory for %s: %w", relPath, err)
+			return errors.IO("creating directory", err).
+				WithField("path", relPath)
 		}
 
 		// Write output file
 		if err := os.WriteFile(outputPath, []byte(output), 0644); err != nil {
-			return fmt.Errorf("failed to write %s: %w", outputPath, err)
+			return errors.IO("writing output file", err).
+				WithField("path", outputPath)
 		}
 	}
 
@@ -156,7 +182,7 @@ func (m *Manager) RenderString(content string, ctx *Context) (string, error) {
 	// Check for unrendered variables
 	unrendered := CheckUnrenderedVariables(output)
 	if len(unrendered) > 0 {
-		return "", fmt.Errorf("template has unrendered variables: %v", unrendered)
+		return "", errors.Validation(fmt.Sprintf("template has unrendered variables: %v", unrendered))
 	}
 
 	return output, nil
@@ -166,12 +192,15 @@ func (m *Manager) RenderString(content string, ctx *Context) (string, error) {
 func (m *Manager) GetTemplateInfo(ctx context.Context, templatePath string) (*Metadata, error) {
 	// Check context early
 	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, errors.Wrap(err, "context cancelled").
+			WithOp("Manager.GetTemplateInfo")
 	}
 
 	tmpl, err := m.loader.Load(ctx, templatePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load template: %w", err)
+		return nil, errors.Wrap(err, "loading template").
+			WithOp("Manager.GetTemplateInfo").
+			WithField("path", templatePath)
 	}
 
 	if tmpl.Metadata == nil {
@@ -185,7 +214,8 @@ func (m *Manager) GetTemplateInfo(ctx context.Context, templatePath string) (*Me
 func (m *Manager) ListTemplates(ctx context.Context, dir string) ([]*Template, error) {
 	// Check context early
 	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, errors.Wrap(err, "context cancelled").
+			WithOp("Manager.ListTemplates")
 	}
 
 	return m.loader.LoadAll(ctx, dir)

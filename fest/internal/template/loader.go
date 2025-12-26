@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"gopkg.in/yaml.v3"
 )
 
@@ -46,13 +47,15 @@ func NewLoader() Loader {
 func (l *loaderImpl) Load(ctx context.Context, path string) (*Template, error) {
 	// Check context early
 	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, errors.Wrap(err, "context cancelled").
+			WithOp("Loader.Load")
 	}
 
 	// Read file
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open template file %s: %w", path, err)
+		return nil, errors.IO("opening template file", err).
+			WithField("path", path)
 	}
 	defer file.Close()
 
@@ -63,7 +66,8 @@ func (l *loaderImpl) Load(ctx context.Context, path string) (*Template, error) {
 		// Tolerant fallback for non‑YAML frontmatter: load full file content
 		b, rerr := os.ReadFile(path)
 		if rerr != nil {
-			return nil, fmt.Errorf("failed to read template %s: %w", path, err)
+			return nil, errors.IO("reading template file", err).
+				WithField("path", path)
 		}
 		return &Template{Path: path, Metadata: nil, Content: string(b)}, nil
 	}
@@ -88,7 +92,8 @@ func (l *loaderImpl) Load(ctx context.Context, path string) (*Template, error) {
 func (l *loaderImpl) LoadAll(ctx context.Context, dir string) ([]*Template, error) {
 	// Check context early
 	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, errors.Wrap(err, "context cancelled").
+			WithOp("Loader.LoadAll")
 	}
 
 	templates := []*Template{}
@@ -126,7 +131,8 @@ func (l *loaderImpl) LoadAll(ctx context.Context, dir string) ([]*Template, erro
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to walk directory %s: %w", dir, err)
+		return nil, errors.IO("walking template directory", err).
+			WithField("path", dir)
 	}
 
 	return templates, nil
@@ -173,7 +179,7 @@ func parseFrontmatter(file *os.File) (*Metadata, string, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, "", fmt.Errorf("error reading file: %w", err)
+		return nil, "", errors.IO("reading file", err)
 	}
 
 	// Parse frontmatter YAML if present
@@ -182,7 +188,7 @@ func parseFrontmatter(file *os.File) (*Metadata, string, error) {
 		metadata = &Metadata{}
 		yamlContent := strings.Join(frontmatterLines, "\n")
 		if err := yaml.Unmarshal([]byte(yamlContent), metadata); err != nil {
-			return nil, "", fmt.Errorf("failed to parse YAML frontmatter: %w", err)
+			return nil, "", errors.Parse("parsing YAML frontmatter", err)
 		}
 	}
 
