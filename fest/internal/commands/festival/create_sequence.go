@@ -22,6 +22,7 @@ type CreateSequenceOptions struct {
 	Path       string
 	VarsFile   string
 	JSONOutput bool
+	NoPrompt   bool
 }
 
 type createSequenceResult struct {
@@ -83,6 +84,7 @@ Run 'fest validate tasks' to verify task files exist.`,
 	cmd.Flags().StringVar(&opts.Path, "path", ".", "Path to phase directory (directory containing numbered sequences)")
 	cmd.Flags().StringVar(&opts.VarsFile, "vars-file", "", "JSON vars for rendering")
 	cmd.Flags().BoolVar(&opts.JSONOutput, "json", false, "Emit JSON output")
+	cmd.Flags().BoolVar(&opts.NoPrompt, "no-prompt", false, "Skip interactive prompts")
 	return cmd
 }
 
@@ -199,12 +201,27 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 	display.Success("Created sequence: %s", seqID)
 	display.Info("  └── %s", "SEQUENCE_GOAL.md")
 	fmt.Println()
-	display.Warning("REMINDER: Sequences need task files for AI execution!")
-	fmt.Println("   Goals define WHAT → Tasks define HOW")
+
+	// Show education message
+	display.Warning("Sequences need task files to be executable.")
+	fmt.Println("   SEQUENCE_GOAL.md defines WHAT to accomplish.")
+	fmt.Println("   Task files (01_*.md, 02_*.md) define HOW to do it.")
 	fmt.Println()
-	fmt.Println("   Next steps:")
-	fmt.Println("   1. Create tasks: fest create task --name \"design\"")
-	fmt.Println("   2. Learn more:   fest understand tasks")
+	fmt.Println("   💡 Run 'fest understand tasks' to learn more about task structure.")
+	fmt.Println()
+
+	// Blocking prompt (skip if --no-prompt or --json)
+	if !opts.NoPrompt && !opts.JSONOutput {
+		if display.Confirm("Create task files now?") {
+			fmt.Println()
+			fmt.Println("   To create tasks, run:")
+			fmt.Println("     fest create task --name \"your_task_name\"")
+			fmt.Println()
+			fmt.Println("   Or start the interactive TUI:")
+			fmt.Println("     fest create task")
+		}
+	}
+
 	return nil
 }
 

@@ -46,11 +46,13 @@ The sequence goal is achieved when:
 
 ## Task Alignment
 
+> **Note:** This table should be populated AFTER creating task files.
+> SEQUENCE_GOAL.md defines WHAT to accomplish. Task files define HOW.
+> Run `fest create task` to create tasks, then update this table.
+
 | Task | Task Objective | Contribution to Sequence Goal |
 |------|----------------|-------------------------------|
-| [REPLACE: 01_task] | [REPLACE: Brief objective] | [REPLACE: How it helps achieve sequence goal] |
-| [REPLACE: 02_task] | [REPLACE: Brief objective] | [REPLACE: How it helps achieve sequence goal] |
-| [REPLACE: 03_task] | [REPLACE: Brief objective] | [REPLACE: How it helps achieve sequence goal] |
+| [FILL: after creating tasks] | | |
 
 ## Dependencies
 
