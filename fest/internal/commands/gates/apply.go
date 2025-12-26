@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	gatescore "github.com/lancekrogers/festival-methodology/fest/internal/gates"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -96,25 +97,25 @@ Quality gates are only added to sequences not matching excluded_patterns.`,
 
 func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) error {
 	if err := ctx.Err(); err != nil {
-		return emitApplyError(opts, fmt.Errorf("context cancelled: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "context cancelled").WithOp("runGatesApply"))
 	}
 
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("getting working directory: %w", err))
+		return emitApplyError(opts, errors.IO("getting working directory", err))
 	}
 
 	festivalsRoot, err := tpl.FindFestivalsRoot(cwd)
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("finding festivals root: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "finding festivals root").WithOp("runGatesApply"))
 	}
 
 	// Resolve paths
 	festivalPath, phasePath, sequencePath, err := resolvePaths(festivalsRoot, cwd, opts.phase, opts.sequence)
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("resolving paths: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "resolving paths").WithOp("runGatesApply"))
 	}
 
 	// If policy-only mode with a named policy, just write the policy file
@@ -125,12 +126,12 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 	// Create merger and load effective policy
 	registry, err := gatescore.NewPolicyRegistry(festivalsRoot, getConfigRoot())
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("creating policy registry: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "creating policy registry").WithOp("runGatesApply"))
 	}
 
 	merger, err := gatescore.NewConfigMerger(festivalsRoot, registry)
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("creating config merger: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "creating config merger").WithOp("runGatesApply"))
 	}
 
 	// If a named policy is specified, we need to handle it differently
@@ -141,7 +142,7 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 		// Get the named policy and use it instead of fest.yaml
 		policy, err := registry.GetPolicy(opts.policyName)
 		if err != nil {
-			return emitApplyError(opts, fmt.Errorf("policy %q not found: %w", opts.policyName, err))
+			return emitApplyError(opts, errors.Wrap(err, "policy not found").WithField("policy", opts.policyName))
 		}
 
 		// Use named policy gates
@@ -160,7 +161,7 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 			mergedPolicy, err = merger.MergeForFestival(ctx, festivalPath, mergeOpts)
 		}
 		if err != nil {
-			return emitApplyError(opts, fmt.Errorf("loading gate configuration: %w", err))
+			return emitApplyError(opts, errors.Wrap(err, "loading gate configuration").WithOp("runGatesApply"))
 		}
 	}
 
@@ -188,7 +189,7 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 		// Find all implementation sequences
 		sequences, err = gatescore.FindSequencesWithInfo(festivalPath, mergedPolicy.ExcludePatterns)
 		if err != nil {
-			return emitApplyError(opts, fmt.Errorf("finding sequences: %w", err))
+			return emitApplyError(opts, errors.Wrap(err, "finding sequences").WithOp("runGatesApply"))
 		}
 	}
 
@@ -204,13 +205,13 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 	// Get template root
 	tmplRoot, err := tpl.LocalTemplateRoot(festivalPath)
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("finding template root: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "finding template root").WithOp("runGatesApply"))
 	}
 
 	// Create generator
 	generator, err := gatescore.NewTaskGenerator(ctx, tmplRoot)
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("creating task generator: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "creating task generator").WithOp("runGatesApply"))
 	}
 
 	// Process each sequence
@@ -297,13 +298,14 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 func runPolicyOnlyApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions, festivalsRoot, festivalPath, phasePath, sequencePath string) error {
 	registry, err := gatescore.NewPolicyRegistry(festivalsRoot, getConfigRoot())
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("creating policy registry: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "creating policy registry").WithOp("runPolicyOnlyApply"))
 	}
 
 	// Verify policy exists
 	info, ok := registry.Get(opts.policyName)
 	if !ok {
-		return emitApplyError(opts, fmt.Errorf("policy %q not found; run 'fest gates list' to see available policies", opts.policyName))
+		return emitApplyError(opts, errors.NotFound("policy").WithField("policy", opts.policyName).
+			WithField("hint", "run 'fest gates list' to see available policies"))
 	}
 
 	// Determine target path
@@ -320,20 +322,20 @@ func runPolicyOnlyApply(ctx context.Context, cmd *cobra.Command, opts *applyOpti
 	// Get the policy
 	policy, err := registry.GetPolicy(opts.policyName)
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("loading policy: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "loading policy").WithField("policy", opts.policyName))
 	}
 
 	// Ensure parent directory exists for festival-level override
 	if sequencePath == "" && phasePath == "" {
 		gatesDir := filepath.Join(festivalPath, ".festival")
 		if err := os.MkdirAll(gatesDir, 0755); err != nil {
-			return emitApplyError(opts, fmt.Errorf("creating .festival directory: %w", err))
+			return emitApplyError(opts, errors.IO("creating .festival directory", err).WithField("path", gatesDir))
 		}
 	}
 
 	// Write the override file
 	if err := gatescore.SavePolicy(overridePath, policy); err != nil {
-		return emitApplyError(opts, fmt.Errorf("saving policy: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "saving policy").WithField("path", overridePath))
 	}
 
 	fmt.Fprintf(out, "Applied policy %q to %s\n", opts.policyName, overridePath)

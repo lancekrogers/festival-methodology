@@ -1,11 +1,11 @@
 package gates
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	gatescore "github.com/lancekrogers/festival-methodology/fest/internal/gates"
 )
 
@@ -28,29 +28,30 @@ func resolvePaths(festivalsRoot, cwd, phase, sequence string) (festivalPath, pha
 	}
 
 	if festivalPath == "" {
-		return "", "", "", fmt.Errorf("no festival found")
+		return "", "", "", errors.NotFound("festival")
 	}
 
 	if sequence != "" {
 		// Parse sequence as "phase/sequence"
 		parts := strings.SplitN(sequence, "/", 2)
 		if len(parts) != 2 {
-			return "", "", "", fmt.Errorf("sequence must be in format 'phase/sequence'")
+			return "", "", "", errors.Validation("sequence must be in format 'phase/sequence'").
+				WithField("sequence", sequence)
 		}
 		phasePath = filepath.Join(festivalPath, parts[0])
 		sequencePath = filepath.Join(phasePath, parts[1])
 
 		// Verify paths exist
 		if _, err := os.Stat(phasePath); os.IsNotExist(err) {
-			return "", "", "", fmt.Errorf("phase not found: %s", parts[0])
+			return "", "", "", errors.NotFound("phase").WithField("phase", parts[0])
 		}
 		if _, err := os.Stat(sequencePath); os.IsNotExist(err) {
-			return "", "", "", fmt.Errorf("sequence not found: %s", sequence)
+			return "", "", "", errors.NotFound("sequence").WithField("sequence", sequence)
 		}
 	} else if phase != "" {
 		phasePath = filepath.Join(festivalPath, phase)
 		if _, err := os.Stat(phasePath); os.IsNotExist(err) {
-			return "", "", "", fmt.Errorf("phase not found: %s", phase)
+			return "", "", "", errors.NotFound("phase").WithField("phase", phase)
 		}
 	}
 

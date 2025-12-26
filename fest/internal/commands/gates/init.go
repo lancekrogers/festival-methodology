@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
 )
@@ -36,22 +37,22 @@ At phase/sequence level, creates .fest.gates.yml override file.`,
 
 func runGatesInit(ctx context.Context, cmd *cobra.Command, phase, sequence string) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("runGatesInit")
 	}
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("getting working directory: %w", err)
+		return errors.IO("getting working directory", err)
 	}
 
 	festivalsRoot, err := tpl.FindFestivalsRoot(cwd)
 	if err != nil {
-		return fmt.Errorf("finding festivals root: %w", err)
+		return errors.Wrap(err, "finding festivals root").WithOp("runGatesInit")
 	}
 
 	festivalPath, phasePath, sequencePath, err := resolvePaths(festivalsRoot, cwd, phase, sequence)
 	if err != nil {
-		return fmt.Errorf("resolving paths: %w", err)
+		return errors.Wrap(err, "resolving paths").WithOp("runGatesInit")
 	}
 
 	// Determine what to create
@@ -70,13 +71,13 @@ func createPhaseOverrideFile(cmd *cobra.Command, festivalPath, phasePath, sequen
 
 	// Check if file already exists
 	if _, err := os.Stat(overridePath); err == nil {
-		return fmt.Errorf("override file already exists: %s", overridePath)
+		return errors.Validation("override file already exists").WithField("path", overridePath)
 	}
 
 	// Ensure parent directory exists
 	parentDir := filepath.Dir(overridePath)
 	if err := os.MkdirAll(parentDir, 0755); err != nil {
-		return fmt.Errorf("creating directory: %w", err)
+		return errors.IO("creating directory", err).WithField("path", parentDir)
 	}
 
 	template := `# Gate policy override file
@@ -97,7 +98,7 @@ inherit: true  # Set to false to not inherit from parent levels
 `
 
 	if err := os.WriteFile(overridePath, []byte(template), 0644); err != nil {
-		return fmt.Errorf("writing override file: %w", err)
+		return errors.IO("writing override file", err).WithField("path", overridePath)
 	}
 
 	fmt.Fprintf(cmd.OutOrStdout(), "Created override file: %s\n", overridePath)
@@ -109,7 +110,7 @@ func createFestYAMLFile(cmd *cobra.Command, festivalPath string) error {
 
 	// Check if file already exists
 	if _, err := os.Stat(festYAMLPath); err == nil {
-		return fmt.Errorf("fest.yaml already exists: %s", festYAMLPath)
+		return errors.Validation("fest.yaml already exists").WithField("path", festYAMLPath)
 	}
 
 	template := `# Festival Configuration
@@ -151,7 +152,7 @@ tracking:
 `
 
 	if err := os.WriteFile(festYAMLPath, []byte(template), 0644); err != nil {
-		return fmt.Errorf("writing fest.yaml: %w", err)
+		return errors.IO("writing fest.yaml", err).WithField("path", festYAMLPath)
 	}
 
 	fmt.Fprintf(cmd.OutOrStdout(), "Created fest.yaml: %s\n", festYAMLPath)
