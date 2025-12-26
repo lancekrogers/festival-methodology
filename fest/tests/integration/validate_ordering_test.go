@@ -360,7 +360,8 @@ func TestValidateOrderingIntegration(t *testing.T) {
 		}
 
 		// Run validate ordering with --json flag
-		output, _ := container.RunFest("validate", "ordering", "--json", festivalPath)
+		output, err := container.RunFest("validate", "ordering", "--json", festivalPath)
+		require.Error(t, err, "validate ordering should fail when issues are found")
 		require.Contains(t, output, `"code"`, "JSON output should contain code field")
 		require.Contains(t, output, `"numbering_gap"`, "JSON output should contain numbering_gap code")
 		require.Contains(t, output, `"valid"`, "JSON output should contain valid field")
