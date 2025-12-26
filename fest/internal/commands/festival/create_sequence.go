@@ -1,4 +1,4 @@
-package commands
+package festival
 
 import (
 	"encoding/json"
@@ -87,7 +87,7 @@ Run 'fest validate tasks' to verify task files exist.`,
 
 // RunCreateSequence executes the create sequence command logic.
 func RunCreateSequence(opts *CreateSequenceOptions) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	cwd, _ := os.Getwd()
 
 	// Resolve template root

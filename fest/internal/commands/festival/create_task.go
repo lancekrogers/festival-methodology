@@ -1,4 +1,4 @@
-package commands
+package festival
 
 import (
 	"encoding/json"
@@ -98,7 +98,7 @@ Run 'fest validate tasks' to verify task files exist in implementation sequences
 
 // RunCreateTask executes the create task command logic.
 func RunCreateTask(opts *CreateTaskOptions) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	cwd, _ := os.Getwd()
 
 	// Resolve template root

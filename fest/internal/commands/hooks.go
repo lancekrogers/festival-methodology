@@ -3,7 +3,9 @@ package commands
 import (
 	"context"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/festival"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/system"
 )
 
 func init() {
@@ -20,7 +22,7 @@ func init() {
 // Hook implementations that convert shared.XxxOpts to internal XxxOptions
 
 func runInitHook(ctx context.Context, path string, opts *shared.InitOpts) error {
-	return RunInit(ctx, path, &InitOptions{
+	return system.RunInit(ctx, path, &system.InitOptions{
 		From:        opts.From,
 		Minimal:     opts.Minimal,
 		NoChecksums: opts.NoChecksums,
@@ -28,7 +30,7 @@ func runInitHook(ctx context.Context, path string, opts *shared.InitOpts) error 
 }
 
 func runCreateFestivalHook(opts *shared.CreateFestivalOpts) error {
-	return RunCreateFestival(&CreateFestivalOptions{
+	return festival.RunCreateFestival(&festival.CreateFestivalOptions{
 		Name:       opts.Name,
 		Goal:       opts.Goal,
 		Tags:       opts.Tags,
@@ -39,7 +41,7 @@ func runCreateFestivalHook(opts *shared.CreateFestivalOpts) error {
 }
 
 func runCreatePhaseHook(opts *shared.CreatePhaseOpts) error {
-	return RunCreatePhase(&CreatePhaseOptions{
+	return festival.RunCreatePhase(&festival.CreatePhaseOptions{
 		After:      opts.After,
 		Name:       opts.Name,
 		PhaseType:  opts.PhaseType,
@@ -50,7 +52,7 @@ func runCreatePhaseHook(opts *shared.CreatePhaseOpts) error {
 }
 
 func runCreateSequenceHook(opts *shared.CreateSequenceOpts) error {
-	return RunCreateSequence(&CreateSequenceOptions{
+	return festival.RunCreateSequence(&festival.CreateSequenceOptions{
 		After:      opts.After,
 		Name:       opts.Name,
 		Path:       opts.Path,
@@ -60,7 +62,7 @@ func runCreateSequenceHook(opts *shared.CreateSequenceOpts) error {
 }
 
 func runCreateTaskHook(opts *shared.CreateTaskOpts) error {
-	return RunCreateTask(&CreateTaskOptions{
+	return festival.RunCreateTask(&festival.CreateTaskOptions{
 		After:      opts.After,
 		Names:      opts.Names,
 		Path:       opts.Path,
@@ -70,7 +72,7 @@ func runCreateTaskHook(opts *shared.CreateTaskOpts) error {
 }
 
 func runApplyHook(ctx context.Context, opts *shared.ApplyOpts) error {
-	return RunApply(ctx, &ApplyOptions{
+	return festival.RunApply(ctx, &festival.ApplyOptions{
 		TemplateID:   opts.TemplateID,
 		TemplatePath: opts.TemplatePath,
 		DestPath:     opts.DestPath,

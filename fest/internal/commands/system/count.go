@@ -1,9 +1,10 @@
-package commands
+package system
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"os"
 	"strings"
 
@@ -66,7 +67,7 @@ When counting a directory with --recursive, the command:
 
 func runCount(ctx context.Context, path string, opts *countOptions) error {
 	// Create UI handler
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	// Check if path is a file or directory
 	info, err := os.Stat(path)
@@ -94,7 +95,7 @@ func runCount(ctx context.Context, path string, opts *countOptions) error {
 			return fmt.Errorf("no text files found in directory")
 		}
 
-		if verbose {
+		if shared.IsVerbose() {
 			display.Info("Found %d text files (skipped %d binary, %d ignored)",
 				len(walkResult.Files), walkResult.SkippedBinary, walkResult.SkippedIgnore)
 		}

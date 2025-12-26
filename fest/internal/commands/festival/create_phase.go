@@ -1,4 +1,4 @@
-package commands
+package festival
 
 import (
 	"encoding/json"
@@ -61,7 +61,7 @@ func NewCreatePhaseCommand() *cobra.Command {
 
 // RunCreatePhase executes the create phase command logic.
 func RunCreatePhase(opts *CreatePhaseOptions) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	cwd, _ := os.Getwd()
 	// Resolve template root
 	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
