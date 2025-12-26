@@ -52,7 +52,7 @@ func NewCreatePhaseCommand() *cobra.Command {
 	}
 	cmd.Flags().IntVar(&opts.After, "after", 0, "Insert after this number (0 inserts at beginning)")
 	cmd.Flags().StringVar(&opts.Name, "name", "", "Phase name (required)")
-	cmd.Flags().StringVar(&opts.PhaseType, "type", "planning", "Phase type (planning|implementation|review|deployment)")
+	cmd.Flags().StringVar(&opts.PhaseType, "type", "planning", "Phase type (planning|implementation|review|deployment|research)")
 	cmd.Flags().StringVar(&opts.Path, "path", ".", "Path to festival root (directory containing numbered phases)")
 	cmd.Flags().StringVar(&opts.VarsFile, "vars-file", "", "JSON vars for rendering")
 	cmd.Flags().BoolVar(&opts.JSONOutput, "json", false, "Emit JSON output")
@@ -108,12 +108,21 @@ func RunCreatePhase(opts *CreatePhaseOptions) error {
 	mgr := tpl.NewManager()
 	var content string
 	var renderErr error
+
+	// Select template based on phase type
+	templateID := "PHASE_GOAL"
+	templateFilename := "PHASE_GOAL_TEMPLATE.md"
+	if opts.PhaseType == "research" {
+		templateID = "RESEARCH_PHASE_GOAL"
+		templateFilename = "RESEARCH_PHASE_GOAL_TEMPLATE.md"
+	}
+
 	if catalog != nil {
-		content, renderErr = mgr.RenderByID(catalog, "PHASE_GOAL", ctx)
+		content, renderErr = mgr.RenderByID(catalog, templateID, ctx)
 	}
 	if renderErr != nil || content == "" {
 		// Fall back to default filename
-		tpath := filepath.Join(tmplRoot, "PHASE_GOAL_TEMPLATE.md")
+		tpath := filepath.Join(tmplRoot, templateFilename)
 		if _, err := os.Stat(tpath); err == nil {
 			loader := tpl.NewLoader()
 			t, err := loader.Load(tpath)
@@ -167,8 +176,13 @@ func RunCreatePhase(opts *CreatePhaseOptions) error {
 	fmt.Println()
 	fmt.Println("   Next steps:")
 	fmt.Println("   1. cd", phaseDir)
-	fmt.Println("   2. fest create sequence --name \"requirements\"")
-	fmt.Println("   3. fest create sequence --name \"implementation\"")
+	if opts.PhaseType == "research" {
+		fmt.Println("   2. Create subdirectories for research topics")
+		fmt.Println("   3. fest research create --type investigation --title \"topic\"")
+	} else {
+		fmt.Println("   2. fest create sequence --name \"requirements\"")
+		fmt.Println("   3. fest create sequence --name \"implementation\"")
+	}
 	return nil
 }
 

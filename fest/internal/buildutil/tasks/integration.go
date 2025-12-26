@@ -37,6 +37,24 @@ type IntegrationResult struct {
 func Integration(verbose bool) error {
 	ui.Section("Running Integration Tests")
 
+	// Clean up any orphaned test containers from previous runs
+	ui.Task("Cleaning", "orphaned test containers")
+	cleanCmd := exec.Command("docker", "container", "prune", "-f", "--filter", "label=org.testcontainers=true")
+	cleanCmd.Run() // Ignore errors - Docker might not be available
+	ui.TaskPass()
+
+	// Set up Docker environment for Colima compatibility
+	dockerHost := os.Getenv("DOCKER_HOST")
+	if dockerHost == "" {
+		// Try Colima's default socket path
+		colimaSocket := filepath.Join(os.Getenv("HOME"), ".colima", "default", "docker.sock")
+		if _, err := os.Stat(colimaSocket); err == nil {
+			os.Setenv("DOCKER_HOST", "unix://"+colimaSocket)
+		}
+	}
+	// Disable ryuk reaper for Colima compatibility
+	os.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
+
 	// Build Linux binary for Docker-based integration tests
 	ui.Task("Building", "Linux binary for Docker tests")
 	if err := os.MkdirAll("bin/linux", 0o755); err != nil {

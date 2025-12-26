@@ -244,7 +244,7 @@ func charmPlanFestivalWizard() error {
 			pf := huh.NewForm(
 				huh.NewGroup(
 					huh.NewInput().Title(fmt.Sprintf("Phase %d name", i+1)).Placeholder("PLAN").Value(&pname).Validate(notEmpty),
-					huh.NewSelect[string]().Title("Phase type").Options(toOptions([]string{"planning", "implementation", "review", "deployment"})...).Value(&ptype),
+					huh.NewSelect[string]().Title("Phase type").Options(toOptions([]string{"planning", "implementation", "review", "deployment", "research"})...).Value(&ptype),
 				),
 			).WithTheme(theme())
 			if err := pf.Run(); err != nil {
@@ -297,7 +297,7 @@ func charmCreatePhase() error {
 		return err
 	}
 	var name, path, afterStr string
-	phaseTypes := []string{"planning", "implementation", "review", "deployment"}
+	phaseTypes := []string{"planning", "implementation", "review", "deployment", "research"}
 	var phaseType string = phaseTypes[0]
 
 	// Two-step: first fields; then compute default 'after'

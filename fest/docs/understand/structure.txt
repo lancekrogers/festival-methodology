@@ -51,6 +51,27 @@ Every implementation sequence MUST end with these three tasks:
 
 Example: If your last implementation task is 03_*, quality gates are 04_, 05_, 06_
 
+Research Phases (Freeform Structure)
+------------------------------------
+
+Research phases use flexible subdirectory organization instead of numbered
+sequences. This allows organic exploration without rigid structure.
+
+Example research phase:
+
+  001_RESEARCH/
+  ├── PHASE_GOAL.md
+  ├── authentication/
+  │   ├── investigation_current_options.md
+  │   └── comparison_oauth_vs_jwt.md
+  ├── database/
+  │   └── analysis_performance.md
+  └── results/
+      └── specification_final_design.md
+
+Create research phases with: fest create phase --type research --name "RESEARCH"
+Create research docs with:   fest research create --type investigation --title "..."
+
 Complete Example Tree
 ---------------------
 

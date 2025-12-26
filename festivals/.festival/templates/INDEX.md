@@ -52,6 +52,14 @@ What do you need to create?
 │  ├─ Use: PHASE_TEMPLATE.md (structure)
 │  └─ Use: PHASE_GOAL_TEMPLATE.md (goals)
 │
+├─ Creating a research phase?
+│  ├─ Phase goal → Use: RESEARCH_PHASE_GOAL_TEMPLATE.md
+│  └─ Research documents?
+│     ├─ Exploring unknowns → Use: RESEARCH_INVESTIGATION_TEMPLATE.md
+│     ├─ Comparing options → Use: RESEARCH_COMPARISON_TEMPLATE.md
+│     ├─ Defining specs → Use: RESEARCH_SPECIFICATION_TEMPLATE.md
+│     └─ Deep analysis → Use: RESEARCH_ANALYSIS_TEMPLATE.md
+│
 └─ Tracking progress?
    ├─ Manual/Human tracking?
    │  └─ Use: FESTIVAL_TODO_TEMPLATE.md
@@ -92,6 +100,18 @@ What do you need to create?
 |----------|---------|-------------|-------|
 | **TASK_TEMPLATE.md** | Comprehensive task with all sections | Complex, critical, or unfamiliar tasks | 188 |
 | **TASK_TEMPLATE_SIMPLE.md** | Streamlined task essentials only | Simple, routine, or well-understood tasks | ~40 |
+
+### Research Templates
+
+| Template | Purpose | When to Use | Lines |
+|----------|---------|-------------|-------|
+| **RESEARCH_PHASE_GOAL_TEMPLATE.md** | Research phase objectives and scope | Creating a research phase | ~80 |
+| **RESEARCH_INVESTIGATION_TEMPLATE.md** | Explore unknowns, gather information | Starting research, exploring problem space | ~100 |
+| **RESEARCH_COMPARISON_TEMPLATE.md** | Evaluate options, make decisions | Choosing between alternatives | ~120 |
+| **RESEARCH_SPECIFICATION_TEMPLATE.md** | Define requirements, design decisions | Documenting specs from research | ~100 |
+| **RESEARCH_ANALYSIS_TEMPLATE.md** | Deep-dive technical analysis | Root cause, performance, security analysis | ~100 |
+
+**Note:** Research phases use freeform subdirectory structure, not numbered sequences. Create research documents with `fest research create --type <type> --title "<title>"`.
 
 ### Tracking Templates
 

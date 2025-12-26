@@ -20,7 +20,7 @@ type Context struct {
 	PhaseNumber    int
 	PhaseName      string
 	PhaseID        string // formatted: "001_PLANNING"
-	PhaseType      string // "planning", "implementation", "validation", "review"
+	PhaseType      string // "planning", "implementation", "review", "deployment", "research"
 	PhaseStructure string // "freeform" or "structured"
 	PhaseObjective string
 
@@ -78,6 +78,13 @@ func (c *Context) SetPhase(number int, name, phaseType string) {
 	c.PhaseType = phaseType
 	c.PhaseID = FormatPhaseID(number, name)
 	c.CurrentLevel = "phase"
+
+	// Automatically set phase structure based on type
+	if phaseType == "research" {
+		c.PhaseStructure = "freeform"
+	} else {
+		c.PhaseStructure = "structured"
+	}
 }
 
 // SetPhaseStructure sets whether the phase is freeform or structured

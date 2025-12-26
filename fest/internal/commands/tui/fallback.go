@@ -221,7 +221,7 @@ func tuiPlanFestivalWizard(display *ui.UI) error {
 			if pname == "" {
 				pname = fmt.Sprintf("PHASE_%d", i+1)
 			}
-			ptype := strings.TrimSpace(display.PromptDefault("Phase type (planning|implementation|review|deployment)", "planning"))
+			ptype := strings.TrimSpace(display.PromptDefault("Phase type (planning|implementation|review|deployment|research)", "planning"))
 			if ptype == "" {
 				ptype = "planning"
 			}
@@ -275,7 +275,7 @@ func tuiCreatePhase(display *ui.UI) error {
 		return fmt.Errorf("phase name is required")
 	}
 	// Choose phase type
-	types := []string{"planning", "implementation", "review", "deployment"}
+	types := []string{"planning", "implementation", "review", "deployment", "research"}
 	tIdx := display.Choose("Phase type:", types)
 	if tIdx < 0 || tIdx >= len(types) {
 		tIdx = 0

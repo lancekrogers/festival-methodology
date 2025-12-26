@@ -32,6 +32,12 @@ ALWAYS create task files for implementation sequences.
     • *_discovery, *_analysis, *_architecture
     • However: even planning may benefit from tasks
 
+  Research phases (--type research) use freeform structure:
+    • No numbered sequences required
+    • Use fest research create for documents
+    • Organize by topic subdirectories
+    • See: fest understand structure
+
 
 CORRECT STRUCTURE
 -----------------

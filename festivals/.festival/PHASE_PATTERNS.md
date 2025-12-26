@@ -148,6 +148,123 @@ This guide provides common step progression patterns for different types of goal
 **Learning-focused:** Expect multiple iterations and pivots.
 **Validation:** Each phase validates assumptions.
 
+## Research Phase Structure and Document Types
+
+Research phases (001_RESEARCH, 001_INVESTIGATE, etc.) use a **freeform subdirectory structure** instead of numbered sequences and tasks. This allows flexible organization of research documents.
+
+### Research Document Types
+
+The Festival Methodology provides four specialized research document templates:
+
+| Document Type | Template | Use When |
+|--------------|----------|----------|
+| **Investigation** | `RESEARCH_INVESTIGATION_TEMPLATE.md` | Exploring unknowns, gathering initial information, understanding problem space |
+| **Comparison** | `RESEARCH_COMPARISON_TEMPLATE.md` | Evaluating options, comparing alternatives, making technology decisions |
+| **Specification** | `RESEARCH_SPECIFICATION_TEMPLATE.md` | Defining requirements, documenting design decisions, creating implementation contracts |
+| **Analysis** | `RESEARCH_ANALYSIS_TEMPLATE.md` | Deep-dive on specific topics, performance analysis, root cause analysis |
+
+### Research Phase Directory Structure
+
+```
+001_RESEARCH/
+├── PHASE_GOAL.md                           # Research phase objectives
+├── topic_1/
+│   ├── investigation_current_system.md     # Investigation document
+│   ├── comparison_database_options.md      # Comparison document
+│   └── analysis_performance.md             # Analysis document
+├── topic_2/
+│   └── specification_api_design.md         # Specification document
+└── results/
+    └── research_summary.md                 # Synthesized findings
+```
+
+### When to Use Each Document Type
+
+**Investigation** - Start here when facing unknowns:
+- "How does the current system work?"
+- "What are the existing patterns in the codebase?"
+- "What technologies are available?"
+
+**Comparison** - Use when choosing between options:
+- "Which database should we use?"
+- "Should we build or buy?"
+- "Which framework best fits our needs?"
+
+**Specification** - Use to define what will be built:
+- "What are the requirements for this feature?"
+- "How should this API be designed?"
+- "What are the acceptance criteria?"
+
+**Analysis** - Use for deep technical understanding:
+- "Why is the system slow?"
+- "What is causing these errors?"
+- "How secure is the current implementation?"
+
+### Research Phase CLI Commands
+
+```bash
+# Create a research phase
+fest create phase --name "RESEARCH" --type research
+
+# Create research documents
+fest research create --type investigation --title "API Authentication Options"
+fest research create --type comparison --title "Database Selection"
+
+# Generate research summary
+fest research summary --phase 001_RESEARCH
+
+# Link research to implementation phases
+fest research link api-auth.md --phase 002_IMPLEMENT
+```
+
+### Research Phase Patterns
+
+#### Discovery-First Pattern
+
+```
+001_RESEARCH/
+├── investigation_problem_space.md
+├── investigation_existing_solutions.md
+├── comparison_approaches.md
+└── specification_selected_approach.md
+```
+
+**Use when:** Starting a project with significant unknowns.
+
+#### Technology Selection Pattern
+
+```
+001_EVALUATE_OPTIONS/
+├── investigation_requirements.md
+├── comparison_option_a_vs_b.md
+├── comparison_option_b_vs_c.md
+└── analysis_proof_of_concept.md
+```
+
+**Use when:** Making critical technology decisions.
+
+#### Root Cause Pattern
+
+```
+001_INVESTIGATE/
+├── investigation_symptoms.md
+├── analysis_system_behavior.md
+├── analysis_code_review.md
+└── specification_fix_approach.md
+```
+
+**Use when:** Diagnosing and fixing complex issues.
+
+### Research Document Quality Gates
+
+Research documents should meet these criteria before being considered complete:
+
+- [ ] All research questions answered or documented as unresolved
+- [ ] Evidence provided for all findings
+- [ ] Recommendations are actionable and specific
+- [ ] Document reviewed by stakeholder
+- [ ] Findings integrated into festival planning
+
 ## Specialized Domain Patterns
 
 ### Data/Analytics Project
