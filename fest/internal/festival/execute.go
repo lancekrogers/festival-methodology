@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // executeChanges applies the planned changes
@@ -58,7 +60,7 @@ func (r *Renumberer) executeChanges() error {
 	// Create backup if requested
 	if r.options.Backup {
 		if err := r.createBackup(); err != nil {
-			return fmt.Errorf("failed to create backup: %w", err)
+			return errors.IO("Renumberer.createBackup", err)
 		}
 	}
 
@@ -67,7 +69,9 @@ func (r *Renumberer) executeChanges() error {
 		switch change.Type {
 		case ChangeRename:
 			if err := os.Rename(change.OldPath, change.NewPath); err != nil {
-				return fmt.Errorf("failed to rename %s to %s: %w", change.OldPath, change.NewPath, err)
+				return errors.IO("Renumberer.rename", err).
+					WithField("from", change.OldPath).
+					WithField("to", change.NewPath)
 			}
 			if r.options.Verbose {
 				fmt.Printf("Renamed: %s → %s\n", filepath.Base(change.OldPath), filepath.Base(change.NewPath))
@@ -79,11 +83,13 @@ func (r *Renumberer) executeChanges() error {
 			if strings.HasSuffix(strings.ToLower(change.NewPath), ".md") {
 				// For file creations, just ensure parent exists; the caller writes content.
 				if err := os.MkdirAll(filepath.Dir(change.NewPath), 0755); err != nil {
-					return fmt.Errorf("failed to create parent directory for %s: %w", change.NewPath, err)
+					return errors.IO("Renumberer.mkdirParent", err).
+						WithField("path", change.NewPath)
 				}
 			} else {
 				if err := os.MkdirAll(change.NewPath, 0755); err != nil {
-					return fmt.Errorf("failed to create %s: %w", change.NewPath, err)
+					return errors.IO("Renumberer.mkdir", err).
+						WithField("path", change.NewPath)
 				}
 			}
 			if r.options.Verbose {
@@ -92,7 +98,8 @@ func (r *Renumberer) executeChanges() error {
 
 		case ChangeRemove:
 			if err := os.RemoveAll(change.OldPath); err != nil {
-				return fmt.Errorf("failed to remove %s: %w", change.OldPath, err)
+				return errors.IO("Renumberer.remove", err).
+					WithField("path", change.OldPath)
 			}
 			if r.options.Verbose {
 				fmt.Printf("Removed: %s\n", filepath.Base(change.OldPath))

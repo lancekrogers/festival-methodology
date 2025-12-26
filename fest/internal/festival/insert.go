@@ -2,20 +2,23 @@ package festival
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 	"sort"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // InsertPhase inserts a new phase after the specified number
 func (r *Renumberer) InsertPhase(ctx context.Context, festivalDir string, afterNumber int, name string) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("Renumberer.InsertPhase")
 	}
 
 	phases, err := r.parser.ParsePhases(ctx, festivalDir)
 	if err != nil {
-		return fmt.Errorf("failed to parse phases: %w", err)
+		return errors.Wrap(err, "failed to parse phases").
+			WithOp("Renumberer.InsertPhase").
+			WithCode(errors.ErrCodeParse)
 	}
 
 	// Find insertion point
@@ -67,12 +70,14 @@ func (r *Renumberer) InsertPhase(ctx context.Context, festivalDir string, afterN
 // InsertSequence inserts a new sequence after the specified number
 func (r *Renumberer) InsertSequence(ctx context.Context, phaseDir string, afterNumber int, name string) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("Renumberer.InsertSequence")
 	}
 
 	sequences, err := r.parser.ParseSequences(ctx, phaseDir)
 	if err != nil {
-		return fmt.Errorf("failed to parse sequences: %w", err)
+		return errors.Wrap(err, "failed to parse sequences").
+			WithOp("Renumberer.InsertSequence").
+			WithCode(errors.ErrCodeParse)
 	}
 
 	// Find insertion point
@@ -123,12 +128,14 @@ func (r *Renumberer) InsertSequence(ctx context.Context, phaseDir string, afterN
 // InsertTask inserts a new task after the specified number in a sequence directory
 func (r *Renumberer) InsertTask(ctx context.Context, sequenceDir string, afterNumber int, name string) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("Renumberer.InsertTask")
 	}
 
 	tasks, err := r.parser.ParseTasks(ctx, sequenceDir)
 	if err != nil {
-		return fmt.Errorf("failed to parse tasks: %w", err)
+		return errors.Wrap(err, "failed to parse tasks").
+			WithOp("Renumberer.InsertTask").
+			WithCode(errors.ErrCodeParse)
 	}
 
 	// Find insertion point

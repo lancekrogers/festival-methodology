@@ -5,17 +5,21 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // ReorderPhase moves a phase from one position to another within a festival
 func (r *Renumberer) ReorderPhase(ctx context.Context, festivalDir string, from, to int) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("Renumberer.ReorderPhase")
 	}
 
 	phases, err := r.parser.ParsePhases(ctx, festivalDir)
 	if err != nil {
-		return fmt.Errorf("failed to parse phases: %w", err)
+		return errors.Wrap(err, "failed to parse phases").
+			WithOp("Renumberer.ReorderPhase").
+			WithCode(errors.ErrCodeParse)
 	}
 
 	return r.reorderElements(phases, from, to, festivalDir, PhaseType)
@@ -24,12 +28,14 @@ func (r *Renumberer) ReorderPhase(ctx context.Context, festivalDir string, from,
 // ReorderSequence moves a sequence from one position to another within a phase
 func (r *Renumberer) ReorderSequence(ctx context.Context, phaseDir string, from, to int) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("Renumberer.ReorderSequence")
 	}
 
 	sequences, err := r.parser.ParseSequences(ctx, phaseDir)
 	if err != nil {
-		return fmt.Errorf("failed to parse sequences: %w", err)
+		return errors.Wrap(err, "failed to parse sequences").
+			WithOp("Renumberer.ReorderSequence").
+			WithCode(errors.ErrCodeParse)
 	}
 
 	return r.reorderElements(sequences, from, to, phaseDir, SequenceType)
@@ -38,12 +44,14 @@ func (r *Renumberer) ReorderSequence(ctx context.Context, phaseDir string, from,
 // ReorderTask moves a task from one position to another within a sequence
 func (r *Renumberer) ReorderTask(ctx context.Context, sequenceDir string, from, to int) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("Renumberer.ReorderTask")
 	}
 
 	tasks, err := r.parser.ParseTasks(ctx, sequenceDir)
 	if err != nil {
-		return fmt.Errorf("failed to parse tasks: %w", err)
+		return errors.Wrap(err, "failed to parse tasks").
+			WithOp("Renumberer.ReorderTask").
+			WithCode(errors.ErrCodeParse)
 	}
 
 	// Handle parallel tasks - group them by number
@@ -58,7 +66,7 @@ func (r *Renumberer) ReorderTask(ctx context.Context, sequenceDir string, from, 
 // reorderElements is the core reordering algorithm for phases and sequences
 func (r *Renumberer) reorderElements(elements []FestivalElement, from, to int, dir string, elemType ElementType) error {
 	if len(elements) == 0 {
-		return fmt.Errorf("no elements found in %s", dir)
+		return errors.NotFound("elements").WithField("dir", dir)
 	}
 
 	// Validate positions
@@ -80,14 +88,19 @@ func (r *Renumberer) reorderElements(elements []FestivalElement, from, to int, d
 		}
 	}
 	if fromElement == nil {
-		return fmt.Errorf("element at position %d not found", from)
+		return errors.NotFound("element").
+			WithField("position", from).
+			WithField("dir", dir)
 	}
 
 	// Validate 'to' position - must be within valid range
 	minNum := elements[0].Number
 	maxNum := elements[len(elements)-1].Number
 	if to < minNum || to > maxNum {
-		return fmt.Errorf("destination position %d is out of range [%d, %d]", to, minNum, maxNum)
+		return errors.Validation("destination position out of range").
+			WithField("to", to).
+			WithField("min", minNum).
+			WithField("max", maxNum)
 	}
 
 	// Build change plan
@@ -180,7 +193,7 @@ func (r *Renumberer) reorderElements(elements []FestivalElement, from, to int, d
 // reorderTasksWithParallel handles task reordering with parallel task support
 func (r *Renumberer) reorderTasksWithParallel(taskGroups map[int][]FestivalElement, allTasks []FestivalElement, from, to int, dir string) error {
 	if len(allTasks) == 0 {
-		return fmt.Errorf("no tasks found in %s", dir)
+		return errors.NotFound("tasks").WithField("dir", dir)
 	}
 
 	// Validate positions
@@ -194,7 +207,9 @@ func (r *Renumberer) reorderTasksWithParallel(taskGroups map[int][]FestivalEleme
 	// Check if 'from' position exists
 	fromTasks, exists := taskGroups[from]
 	if !exists {
-		return fmt.Errorf("task at position %d not found", from)
+		return errors.NotFound("task").
+			WithField("position", from).
+			WithField("dir", dir)
 	}
 
 	// Get unique numbers in sorted order
@@ -208,7 +223,10 @@ func (r *Renumberer) reorderTasksWithParallel(taskGroups map[int][]FestivalEleme
 	minNum := numbers[0]
 	maxNum := numbers[len(numbers)-1]
 	if to < minNum || to > maxNum {
-		return fmt.Errorf("destination position %d is out of range [%d, %d]", to, minNum, maxNum)
+		return errors.Validation("destination position out of range").
+			WithField("to", to).
+			WithField("min", minNum).
+			WithField("max", maxNum)
 	}
 
 	// Build change plan

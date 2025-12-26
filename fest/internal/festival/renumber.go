@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // RenumberOptions configures renumbering behavior
@@ -67,16 +69,18 @@ func NewRenumberer(options RenumberOptions) *Renumberer {
 // RenumberPhases renumbers all phases starting from a given number
 func (r *Renumberer) RenumberPhases(ctx context.Context, festivalDir string, startFrom int) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("Renumberer.RenumberPhases")
 	}
 
 	phases, err := r.parser.ParsePhases(ctx, festivalDir)
 	if err != nil {
-		return fmt.Errorf("failed to parse phases: %w", err)
+		return errors.Wrap(err, "failed to parse phases").
+			WithOp("Renumberer.RenumberPhases").
+			WithCode(errors.ErrCodeParse)
 	}
 
 	if len(phases) == 0 {
-		return fmt.Errorf("no phases found in %s", festivalDir)
+		return errors.NotFound("phases").WithField("dir", festivalDir)
 	}
 
 	// Build renumbering plan
@@ -105,16 +109,18 @@ func (r *Renumberer) RenumberPhases(ctx context.Context, festivalDir string, sta
 // RenumberSequences renumbers sequences within a phase
 func (r *Renumberer) RenumberSequences(ctx context.Context, phaseDir string, startFrom int) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("Renumberer.RenumberSequences")
 	}
 
 	sequences, err := r.parser.ParseSequences(ctx, phaseDir)
 	if err != nil {
-		return fmt.Errorf("failed to parse sequences: %w", err)
+		return errors.Wrap(err, "failed to parse sequences").
+			WithOp("Renumberer.RenumberSequences").
+			WithCode(errors.ErrCodeParse)
 	}
 
 	if len(sequences) == 0 {
-		return fmt.Errorf("no sequences found in %s", phaseDir)
+		return errors.NotFound("sequences").WithField("dir", phaseDir)
 	}
 
 	// Build renumbering plan
@@ -143,22 +149,26 @@ func (r *Renumberer) RenumberSequences(ctx context.Context, phaseDir string, sta
 // RenumberTasks renumbers tasks within a sequence
 func (r *Renumberer) RenumberTasks(ctx context.Context, sequenceDir string, startFrom int) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("Renumberer.RenumberTasks")
 	}
 
 	tasks, err := r.parser.ParseTasks(ctx, sequenceDir)
 	if err != nil {
-		return fmt.Errorf("failed to parse tasks: %w", err)
+		return errors.Wrap(err, "failed to parse tasks").
+			WithOp("Renumberer.RenumberTasks").
+			WithCode(errors.ErrCodeParse)
 	}
 
 	if len(tasks) == 0 {
-		return fmt.Errorf("no tasks found in %s", sequenceDir)
+		return errors.NotFound("tasks").WithField("dir", sequenceDir)
 	}
 
 	// Check for parallel tasks
 	parallel, err := r.parser.HasParallelTasks(ctx, sequenceDir)
 	if err != nil {
-		return fmt.Errorf("failed to check parallel tasks: %w", err)
+		return errors.Wrap(err, "failed to check parallel tasks").
+			WithOp("Renumberer.RenumberTasks").
+			WithCode(errors.ErrCodeParse)
 	}
 
 	if len(parallel) > 0 && !r.options.DryRun {

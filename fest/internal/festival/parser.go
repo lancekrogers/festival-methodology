@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // ElementType represents the type of festival element
@@ -62,39 +64,47 @@ func NewParser() *Parser {
 // ParseFestival parses the entire festival structure
 func (p *Parser) ParseFestival(ctx context.Context, festivalDir string) ([]FestivalElement, error) {
 	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, errors.Wrap(err, "context cancelled").WithOp("Parser.ParseFestival")
 	}
 
 	if !isDir(festivalDir) {
-		return nil, fmt.Errorf("festival directory does not exist: %s", festivalDir)
+		return nil, errors.NotFound("festival directory").WithField("path", festivalDir)
 	}
 
 	phases, err := p.ParsePhases(ctx, festivalDir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse phases: %w", err)
+		return nil, errors.Wrap(err, "failed to parse phases").
+			WithOp("Parser.ParseFestival").
+			WithCode(errors.ErrCodeParse)
 	}
 
 	// Parse sequences within each phase
 	for i := range phases {
 		if ctx.Err() != nil {
-			return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
+			return nil, errors.Wrap(ctx.Err(), "context cancelled").WithOp("Parser.ParseFestival")
 		}
 
 		sequences, err := p.ParseSequences(ctx, phases[i].Path)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse sequences in %s: %w", phases[i].Name, err)
+			return nil, errors.Wrap(err, "failed to parse sequences").
+				WithOp("Parser.ParseFestival").
+				WithField("phase", phases[i].Name).
+				WithCode(errors.ErrCodeParse)
 		}
 		phases[i].Children = sequences
 
 		// Parse tasks within each sequence
 		for j := range phases[i].Children {
 			if ctx.Err() != nil {
-				return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
+				return nil, errors.Wrap(ctx.Err(), "context cancelled").WithOp("Parser.ParseFestival")
 			}
 
 			tasks, err := p.ParseTasks(ctx, phases[i].Children[j].Path)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse tasks in %s: %w", phases[i].Children[j].Name, err)
+				return nil, errors.Wrap(err, "failed to parse tasks").
+					WithOp("Parser.ParseFestival").
+					WithField("sequence", phases[i].Children[j].Name).
+					WithCode(errors.ErrCodeParse)
 			}
 			phases[i].Children[j].Children = tasks
 		}
@@ -121,12 +131,12 @@ func (p *Parser) ParseTasks(ctx context.Context, sequenceDir string) ([]Festival
 // parseElements is the generic parser for numbered elements
 func (p *Parser) parseElements(ctx context.Context, dir string, pattern *regexp.Regexp, elemType ElementType, isDirectory bool) ([]FestivalElement, error) {
 	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, errors.Wrap(err, "context cancelled").WithOp("Parser.parseElements")
 	}
 
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read directory %s: %w", dir, err)
+		return nil, errors.IO("Parser.parseElements", err).WithField("dir", dir)
 	}
 
 	var elements []FestivalElement
@@ -175,7 +185,7 @@ func (p *Parser) parseElements(ctx context.Context, dir string, pattern *regexp.
 // GetNextNumber returns the next available number for an element type
 func (p *Parser) GetNextNumber(ctx context.Context, dir string, elemType ElementType) (int, error) {
 	if err := ctx.Err(); err != nil {
-		return 0, fmt.Errorf("context cancelled: %w", err)
+		return 0, errors.Wrap(err, "context cancelled").WithOp("Parser.GetNextNumber")
 	}
 
 	var elements []FestivalElement
@@ -189,7 +199,9 @@ func (p *Parser) GetNextNumber(ctx context.Context, dir string, elemType Element
 	case TaskType:
 		elements, err = p.ParseTasks(ctx, dir)
 	default:
-		return 0, fmt.Errorf("unknown element type: %v", elemType)
+		return 0, errors.Validation("unknown element type").
+			WithOp("Parser.GetNextNumber").
+			WithField("type", elemType.String())
 	}
 
 	if err != nil {
@@ -207,7 +219,7 @@ func (p *Parser) GetNextNumber(ctx context.Context, dir string, elemType Element
 // FindElement finds an element by number
 func (p *Parser) FindElement(ctx context.Context, dir string, number int, elemType ElementType) (*FestivalElement, error) {
 	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, errors.Wrap(err, "context cancelled").WithOp("Parser.FindElement")
 	}
 
 	var elements []FestivalElement
@@ -221,7 +233,9 @@ func (p *Parser) FindElement(ctx context.Context, dir string, number int, elemTy
 	case TaskType:
 		elements, err = p.ParseTasks(ctx, dir)
 	default:
-		return nil, fmt.Errorf("unknown element type: %v", elemType)
+		return nil, errors.Validation("unknown element type").
+			WithOp("Parser.FindElement").
+			WithField("type", elemType.String())
 	}
 
 	if err != nil {
@@ -234,7 +248,9 @@ func (p *Parser) FindElement(ctx context.Context, dir string, number int, elemTy
 		}
 	}
 
-	return nil, fmt.Errorf("%s %d not found", elemType, number)
+	return nil, errors.NotFound(elemType.String()).
+		WithField("number", number).
+		WithField("dir", dir)
 }
 
 // FormatNumber formats a number based on element type
@@ -267,17 +283,23 @@ func ParseElementName(fullName string, elemType ElementType) (int, string, error
 	case TaskType:
 		pattern = regexp.MustCompile(`^(\d{2})_(.+)\.md$`)
 	default:
-		return 0, "", fmt.Errorf("unknown element type: %v", elemType)
+		return 0, "", errors.Validation("unknown element type").
+			WithOp("ParseElementName").
+			WithField("type", elemType.String())
 	}
 
 	matches := pattern.FindStringSubmatch(fullName)
 	if matches == nil {
-		return 0, "", fmt.Errorf("name does not match %s pattern: %s", elemType, fullName)
+		return 0, "", errors.Validation("name does not match pattern").
+			WithOp("ParseElementName").
+			WithField("name", fullName).
+			WithField("type", elemType.String())
 	}
 
 	num, err := strconv.Atoi(matches[1])
 	if err != nil {
-		return 0, "", fmt.Errorf("failed to parse number: %w", err)
+		return 0, "", errors.Parse("failed to parse number", err).
+			WithField("name", fullName)
 	}
 
 	return num, matches[2], nil
@@ -286,7 +308,7 @@ func ParseElementName(fullName string, elemType ElementType) (int, string, error
 // HasParallelTasks checks if a sequence has parallel tasks (multiple tasks with same number)
 func (p *Parser) HasParallelTasks(ctx context.Context, sequenceDir string) (map[int][]FestivalElement, error) {
 	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, errors.Wrap(err, "context cancelled").WithOp("Parser.HasParallelTasks")
 	}
 
 	tasks, err := p.ParseTasks(ctx, sequenceDir)

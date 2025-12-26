@@ -2,16 +2,17 @@ package festival
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // RemoveElement removes an element and renumbers subsequent ones
 func (r *Renumberer) RemoveElement(ctx context.Context, path string) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("Renumberer.RemoveElement")
 	}
 
 	dir := filepath.Dir(path)
@@ -34,11 +35,15 @@ func (r *Renumberer) RemoveElement(ctx context.Context, path string) error {
 			elements, err = r.parser.ParseSequences(ctx, dir)
 		}
 	} else {
-		return fmt.Errorf("unable to determine element type for %s", path)
+		return errors.Validation("unable to determine element type").
+			WithOp("Renumberer.RemoveElement").
+			WithField("path", path)
 	}
 
 	if err != nil {
-		return fmt.Errorf("failed to parse elements: %w", err)
+		return errors.Wrap(err, "failed to parse elements").
+			WithOp("Renumberer.RemoveElement").
+			WithCode(errors.ErrCodeParse)
 	}
 
 	// Find element to remove
@@ -53,7 +58,7 @@ func (r *Renumberer) RemoveElement(ctx context.Context, path string) error {
 	}
 
 	if toRemove == nil {
-		return fmt.Errorf("element not found: %s", path)
+		return errors.NotFound("element").WithField("path", path)
 	}
 
 	// Build changes
