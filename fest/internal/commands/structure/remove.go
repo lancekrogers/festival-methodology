@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	"github.com/spf13/cobra"
 )
@@ -66,7 +67,7 @@ Warning: This will permanently delete the phase and all its contents!`,
 				parser := festival.NewParser()
 				phases, err := parser.ParsePhases(cmd.Context(), ".")
 				if err != nil {
-					return fmt.Errorf("failed to parse phases: %w", err)
+					return errors.Wrap(err, "parsing phases").WithOp("removePhase")
 				}
 
 				found := false
@@ -79,7 +80,7 @@ Warning: This will permanently delete the phase and all its contents!`,
 				}
 
 				if !found {
-					return fmt.Errorf("phase %03d not found", num)
+					return errors.NotFound("phase").WithField("number", num)
 				}
 			} else {
 				// Use as path
@@ -89,7 +90,7 @@ Warning: This will permanently delete the phase and all its contents!`,
 			// Convert to absolute path
 			absPath, err := filepath.Abs(targetPath)
 			if err != nil {
-				return fmt.Errorf("failed to resolve path: %w", err)
+				return errors.Wrap(err, "resolving path").WithField("path", targetPath)
 			}
 
 			// Confirm removal if not forced
@@ -132,7 +133,7 @@ Warning: This will permanently delete the sequence and all its contents!`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if phaseDir == "" {
-				return fmt.Errorf("--phase flag is required")
+				return errors.Validation("--phase flag is required")
 			}
 
 			target := args[0]
@@ -140,7 +141,7 @@ Warning: This will permanently delete the sequence and all its contents!`,
 			// Convert phase to absolute path
 			phaseAbs, err := filepath.Abs(phaseDir)
 			if err != nil {
-				return fmt.Errorf("failed to resolve phase path: %w", err)
+				return errors.Wrap(err, "resolving phase path").WithField("phase", phaseDir)
 			}
 
 			// Determine target path
@@ -150,7 +151,7 @@ Warning: This will permanently delete the sequence and all its contents!`,
 				parser := festival.NewParser()
 				sequences, err := parser.ParseSequences(cmd.Context(), phaseAbs)
 				if err != nil {
-					return fmt.Errorf("failed to parse sequences: %w", err)
+					return errors.Wrap(err, "parsing sequences").WithOp("removeSequence")
 				}
 
 				found := false
@@ -163,7 +164,7 @@ Warning: This will permanently delete the sequence and all its contents!`,
 				}
 
 				if !found {
-					return fmt.Errorf("sequence %02d not found in %s", num, phaseDir)
+					return errors.NotFound("sequence").WithField("number", num).WithField("phase", phaseDir)
 				}
 			} else {
 				// Use as name/path
@@ -215,7 +216,7 @@ Warning: This will permanently delete the task file!`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if sequenceDir == "" {
-				return fmt.Errorf("--sequence flag is required")
+				return errors.Validation("--sequence flag is required")
 			}
 
 			target := args[0]
@@ -223,7 +224,7 @@ Warning: This will permanently delete the task file!`,
 			// Convert sequence to absolute path
 			seqAbs, err := filepath.Abs(sequenceDir)
 			if err != nil {
-				return fmt.Errorf("failed to resolve sequence path: %w", err)
+				return errors.Wrap(err, "resolving sequence path").WithField("sequence", sequenceDir)
 			}
 
 			// Determine target path
@@ -233,7 +234,7 @@ Warning: This will permanently delete the task file!`,
 				parser := festival.NewParser()
 				tasks, err := parser.ParseTasks(cmd.Context(), seqAbs)
 				if err != nil {
-					return fmt.Errorf("failed to parse tasks: %w", err)
+					return errors.Wrap(err, "parsing tasks").WithOp("removeTask")
 				}
 
 				// Handle potential parallel tasks
@@ -245,7 +246,7 @@ Warning: This will permanently delete the task file!`,
 				}
 
 				if len(matches) == 0 {
-					return fmt.Errorf("task %02d not found in %s", num, sequenceDir)
+					return errors.NotFound("task").WithField("number", num).WithField("sequence", sequenceDir)
 				} else if len(matches) > 1 {
 					// Multiple tasks with same number
 					fmt.Println("Multiple tasks found with that number:")
@@ -256,7 +257,7 @@ Warning: This will permanently delete the task file!`,
 					var choice int
 					fmt.Scanln(&choice)
 					if choice < 1 || choice > len(matches) {
-						return fmt.Errorf("invalid selection")
+						return errors.Validation("invalid selection")
 					}
 					targetPath = matches[choice-1].Path
 				} else {
@@ -306,7 +307,7 @@ func parsePhaseNumber(s string) (int, error) {
 	if _, err := fmt.Sscanf(s, "%d", &num); err == nil {
 		return num, nil
 	}
-	return 0, fmt.Errorf("not a number")
+	return 0, errors.Validation("not a number").WithField("input", s)
 }
 
 func parseSequenceNumber(s string) (int, error) {
@@ -314,7 +315,7 @@ func parseSequenceNumber(s string) (int, error) {
 	if _, err := fmt.Sscanf(s, "%d", &num); err == nil {
 		return num, nil
 	}
-	return 0, fmt.Errorf("not a number")
+	return 0, errors.Validation("not a number").WithField("input", s)
 }
 
 func parseTaskNumber(s string) (int, error) {
@@ -322,5 +323,5 @@ func parseTaskNumber(s string) (int, error) {
 	if _, err := fmt.Sscanf(s, "%d", &num); err == nil {
 		return num, nil
 	}
-	return 0, fmt.Errorf("not a number")
+	return 0, errors.Validation("not a number").WithField("input", s)
 }

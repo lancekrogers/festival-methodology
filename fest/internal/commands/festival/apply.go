@@ -3,12 +3,12 @@ package festival
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/fileops"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -67,7 +67,7 @@ func RunApply(ctx context.Context, opts *ApplyOptions) error {
 	// Resolve local template root
 	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("%w", err))
+		return emitApplyError(opts, err)
 	}
 
 	// Load vars if provided
@@ -75,7 +75,7 @@ func RunApply(ctx context.Context, opts *ApplyOptions) error {
 	if strings.TrimSpace(opts.VarsFile) != "" {
 		v, err := loadVarsFile(opts.VarsFile)
 		if err != nil {
-			return emitApplyError(opts, fmt.Errorf("failed to read vars-file: %w", err))
+			return emitApplyError(opts, errors.Wrap(err, "reading vars-file").WithField("path", opts.VarsFile))
 		}
 		vars = v
 	} else {
@@ -86,19 +86,19 @@ func RunApply(ctx context.Context, opts *ApplyOptions) error {
 	tpath := opts.TemplatePath
 	tmplID := opts.TemplateID
 	if tpath == "" && tmplID == "" {
-		return emitApplyError(opts, fmt.Errorf("must provide --template-id or --template-path"))
+		return emitApplyError(opts, errors.Validation("must provide --template-id or --template-path"))
 	}
 
 	if tpath == "" {
 		// resolve by ID using catalog
 		catalog, err := tpl.LoadCatalog(ctx, tmplRoot)
 		if err != nil {
-			return emitApplyError(opts, fmt.Errorf("failed to load template catalog: %w", err))
+			return emitApplyError(opts, errors.Wrap(err, "loading template catalog"))
 		}
 		if p, ok := catalog.Resolve(tmplID); ok {
 			tpath = p
 		} else {
-			return emitApplyError(opts, fmt.Errorf("unknown template id: %s", tmplID))
+			return emitApplyError(opts, errors.NotFound("template").WithField("id", tmplID))
 		}
 	} else {
 		// If relative, make it relative to template root
@@ -109,7 +109,7 @@ func RunApply(ctx context.Context, opts *ApplyOptions) error {
 
 	// Ensure destination parent exists
 	if err := os.MkdirAll(filepath.Dir(opts.DestPath), 0755); err != nil {
-		return emitApplyError(opts, fmt.Errorf("failed to create destination directory: %w", err))
+		return emitApplyError(opts, errors.IO("creating destination directory", err).WithField("path", filepath.Dir(opts.DestPath)))
 	}
 
 	// Decide copy vs render
@@ -117,7 +117,7 @@ func RunApply(ctx context.Context, opts *ApplyOptions) error {
 	loader := tpl.NewLoader()
 	tmpl, err := loader.Load(ctx, tpath)
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("failed to load template: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "loading template").WithField("path", tpath))
 	}
 
 	mode := "copy"
@@ -154,14 +154,14 @@ func RunApply(ctx context.Context, opts *ApplyOptions) error {
 		}
 		out, err := mgr.Render(tmpl, tmplCtx)
 		if err != nil {
-			return emitApplyError(opts, fmt.Errorf("failed to render: %w", err))
+			return emitApplyError(opts, errors.Wrap(err, "rendering template"))
 		}
 		if err := os.WriteFile(opts.DestPath, []byte(out), 0644); err != nil {
-			return emitApplyError(opts, fmt.Errorf("failed to write destination: %w", err))
+			return emitApplyError(opts, errors.IO("writing destination", err).WithField("path", opts.DestPath))
 		}
 	} else {
 		if err := fileops.CopyFile(ctx, tpath, opts.DestPath); err != nil {
-			return emitApplyError(opts, fmt.Errorf("failed to copy: %w", err))
+			return emitApplyError(opts, errors.Wrap(err, "copying template"))
 		}
 	}
 

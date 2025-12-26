@@ -1,10 +1,10 @@
 package structure
 
 import (
-	"fmt"
 	"path/filepath"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	"github.com/spf13/cobra"
 )
@@ -76,7 +76,7 @@ Phases are numbered with 3 digits (001, 002, 003, etc.).`,
 			// Convert to absolute path
 			absPath, err := filepath.Abs(festivalDir)
 			if err != nil {
-				return fmt.Errorf("failed to resolve path: %w", err)
+				return errors.Wrap(err, "resolving path").WithField("path", festivalDir)
 			}
 
 			// Create renumberer
@@ -107,13 +107,13 @@ Sequences are numbered with 2 digits (01, 02, 03, etc.).`,
   fest renumber sequence --phase 001_PLAN --start 2 # Start from 02`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if phaseDir == "" {
-				return fmt.Errorf("--phase flag is required")
+				return errors.Validation("--phase flag is required")
 			}
 
 			// Convert to absolute path
 			absPath, err := filepath.Abs(phaseDir)
 			if err != nil {
-				return fmt.Errorf("failed to resolve path: %w", err)
+				return errors.Wrap(err, "resolving path").WithField("path", phaseDir)
 			}
 
 			// Create renumberer
@@ -149,13 +149,13 @@ Parallel tasks (multiple tasks with the same number) are preserved.`,
   fest renumber task --sequence ./path/to/sequence --start 2`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if sequenceDir == "" {
-				return fmt.Errorf("--sequence flag is required")
+				return errors.Validation("--sequence flag is required")
 			}
 
 			// Convert to absolute path
 			absPath, err := filepath.Abs(sequenceDir)
 			if err != nil {
-				return fmt.Errorf("failed to resolve path: %w", err)
+				return errors.Wrap(err, "resolving path").WithField("path", sequenceDir)
 			}
 
 			// Create renumberer

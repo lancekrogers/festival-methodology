@@ -1,11 +1,11 @@
 package structure
 
 import (
-	"fmt"
 	"path/filepath"
 	"strconv"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	"github.com/spf13/cobra"
 )
@@ -71,12 +71,12 @@ For example, moving phase 3 to position 1 will shift phases 1 and 2 down.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			from, err := strconv.Atoi(args[0])
 			if err != nil {
-				return fmt.Errorf("invalid source position: %s", args[0])
+				return errors.Validation("invalid source position").WithField("position", args[0])
 			}
 
 			to, err := strconv.Atoi(args[1])
 			if err != nil {
-				return fmt.Errorf("invalid destination position: %s", args[1])
+				return errors.Validation("invalid destination position").WithField("position", args[1])
 			}
 
 			festivalDir := "."
@@ -87,7 +87,7 @@ For example, moving phase 3 to position 1 will shift phases 1 and 2 down.`,
 			// Convert to absolute path
 			absPath, err := filepath.Abs(festivalDir)
 			if err != nil {
-				return fmt.Errorf("failed to resolve path: %w", err)
+				return errors.Wrap(err, "resolving path").WithField("path", festivalDir)
 			}
 
 			// Create renumberer
@@ -119,23 +119,23 @@ Elements between the source and destination positions are shifted accordingly.`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if phaseDir == "" {
-				return fmt.Errorf("--phase flag is required")
+				return errors.Validation("--phase flag is required")
 			}
 
 			from, err := strconv.Atoi(args[0])
 			if err != nil {
-				return fmt.Errorf("invalid source position: %s", args[0])
+				return errors.Validation("invalid source position").WithField("position", args[0])
 			}
 
 			to, err := strconv.Atoi(args[1])
 			if err != nil {
-				return fmt.Errorf("invalid destination position: %s", args[1])
+				return errors.Validation("invalid destination position").WithField("position", args[1])
 			}
 
 			// Convert to absolute path
 			absPath, err := filepath.Abs(phaseDir)
 			if err != nil {
-				return fmt.Errorf("failed to resolve path: %w", err)
+				return errors.Wrap(err, "resolving path").WithField("path", phaseDir)
 			}
 
 			// Create renumberer
@@ -173,23 +173,23 @@ Parallel tasks (multiple tasks with the same number) are moved together.`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if sequenceDir == "" {
-				return fmt.Errorf("--sequence flag is required")
+				return errors.Validation("--sequence flag is required")
 			}
 
 			from, err := strconv.Atoi(args[0])
 			if err != nil {
-				return fmt.Errorf("invalid source position: %s", args[0])
+				return errors.Validation("invalid source position").WithField("position", args[0])
 			}
 
 			to, err := strconv.Atoi(args[1])
 			if err != nil {
-				return fmt.Errorf("invalid destination position: %s", args[1])
+				return errors.Validation("invalid destination position").WithField("position", args[1])
 			}
 
 			// Convert to absolute path
 			absPath, err := filepath.Abs(sequenceDir)
 			if err != nil {
-				return fmt.Errorf("failed to resolve path: %w", err)
+				return errors.Wrap(err, "resolving path").WithField("path", sequenceDir)
 			}
 
 			// Create renumberer
