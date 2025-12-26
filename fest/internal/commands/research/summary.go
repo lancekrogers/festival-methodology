@@ -28,13 +28,13 @@ type ResearchDocInfo struct {
 
 // ResearchSummary contains the summary of research documents
 type ResearchSummary struct {
-	GeneratedAt time.Time                  `json:"generated_at" yaml:"generated_at"`
-	Scope       string                     `json:"scope" yaml:"scope"`
-	ScopeID     string                     `json:"scope_id" yaml:"scope_id"`
-	Total       int                        `json:"total" yaml:"total"`
-	ByType      map[string]int             `json:"by_type" yaml:"by_type"`
-	ByStatus    map[string]int             `json:"by_status" yaml:"by_status"`
-	Documents   []ResearchDocInfo          `json:"documents" yaml:"documents"`
+	GeneratedAt time.Time         `json:"generated_at" yaml:"generated_at"`
+	Scope       string            `json:"scope" yaml:"scope"`
+	ScopeID     string            `json:"scope_id" yaml:"scope_id"`
+	Total       int               `json:"total" yaml:"total"`
+	ByType      map[string]int    `json:"by_type" yaml:"by_type"`
+	ByStatus    map[string]int    `json:"by_status" yaml:"by_status"`
+	Documents   []ResearchDocInfo `json:"documents" yaml:"documents"`
 }
 
 func newResearchSummaryCmd() *cobra.Command {

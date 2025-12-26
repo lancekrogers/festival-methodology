@@ -44,11 +44,11 @@ func DefaultMergeOptions() MergeOptions {
 
 // MergedPolicy represents the result of merging all configuration sources.
 type MergedPolicy struct {
-	Gates           []GateTask      // Final merged list of gates
-	ExcludePatterns []string        // Merged exclude patterns
-	Sources         []PolicySource  // All sources that contributed
-	Level           PolicyLevel     // Most specific level that contributed
-	FestYAMLEnabled bool            // Whether fest.yaml has quality gates enabled
+	Gates           []GateTask     // Final merged list of gates
+	ExcludePatterns []string       // Merged exclude patterns
+	Sources         []PolicySource // All sources that contributed
+	Level           PolicyLevel    // Most specific level that contributed
+	FestYAMLEnabled bool           // Whether fest.yaml has quality gates enabled
 }
 
 // GetActiveGates returns only enabled and non-removed gates.
