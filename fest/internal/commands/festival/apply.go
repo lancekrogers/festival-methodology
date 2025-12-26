@@ -1,9 +1,10 @@
-package commands
+package festival
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,7 +61,7 @@ func NewApplyCommand() *cobra.Command {
 
 // RunApply executes the apply command logic.
 func RunApply(ctx context.Context, opts *ApplyOptions) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	cwd, _ := os.Getwd()
 
 	// Resolve local template root

@@ -5,6 +5,8 @@ import (
 	"os"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/config"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/extensions"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/festival"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/gates"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/navigation"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/research"
@@ -129,17 +131,17 @@ func init() {
 			return shared.StartCreateTUI()
 		},
 	}
-	createCmd.AddCommand(NewCreateFestivalCommand())
-	createCmd.AddCommand(NewCreatePhaseCommand())
-	createCmd.AddCommand(NewCreateSequenceCommand())
-	createCmd.AddCommand(NewCreateTaskCommand())
+	createCmd.AddCommand(festival.NewCreateFestivalCommand())
+	createCmd.AddCommand(festival.NewCreatePhaseCommand())
+	createCmd.AddCommand(festival.NewCreateSequenceCommand())
+	createCmd.AddCommand(festival.NewCreateTaskCommand())
 	rootCmd.AddCommand(createCmd)
 
 	insertCmd := structure.NewInsertCommand()
 	insertCmd.GroupID = "creation"
 	rootCmd.AddCommand(insertCmd)
 
-	applyCmd := NewApplyCommand()
+	applyCmd := festival.NewApplyCommand()
 	applyCmd.GroupID = "creation"
 	rootCmd.AddCommand(applyCmd)
 
@@ -166,7 +168,7 @@ func init() {
 	rootCmd.AddCommand(indexCmd)
 
 	// === SYSTEM COMMANDS ===
-	initCmd := NewInitCommand()
+	initCmd := system.NewInitCommand()
 	initCmd.GroupID = "system"
 	rootCmd.AddCommand(initCmd)
 
@@ -182,11 +184,11 @@ func init() {
 	shellInitCmd.GroupID = "system"
 	rootCmd.AddCommand(shellInitCmd)
 
-	extensionCmd := NewExtensionCommand()
+	extensionCmd := extensions.NewExtensionCommand()
 	extensionCmd.GroupID = "system"
 	rootCmd.AddCommand(extensionCmd)
 
-	countCmd := NewCountCommand()
+	countCmd := system.NewCountCommand()
 	countCmd.GroupID = "system"
 	rootCmd.AddCommand(countCmd)
 

@@ -1,8 +1,9 @@
-package commands
+package system
 
 import (
 	"context"
 	"fmt"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"os"
 	"path/filepath"
 
@@ -70,7 +71,7 @@ Workspace Registration:
 // RunInit executes the init command logic.
 func RunInit(ctx context.Context, targetPath string, opts *InitOptions) error {
 	// Create UI handler
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	// Convert to absolute path
 	absPath, err := filepath.Abs(targetPath)

@@ -1,8 +1,9 @@
-package commands
+package extensions
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"os"
 	"sort"
 
@@ -59,7 +60,7 @@ func newExtensionListCommand() *cobra.Command {
 }
 
 func runExtensionList(jsonOutput bool, source, extType string) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	// Get festival root if available
 	cwd, _ := os.Getwd()
@@ -111,7 +112,7 @@ func runExtensionList(jsonOutput bool, source, extType string) error {
 		}
 		fmt.Printf(" [%s]\n", ext.Source)
 
-		if ext.Description != "" && verbose {
+		if ext.Description != "" && shared.IsVerbose() {
 			fmt.Printf("    %s\n", ext.Description)
 		}
 		if ext.Type != "" {
@@ -143,7 +144,7 @@ func newExtensionInfoCommand() *cobra.Command {
 }
 
 func runExtensionInfo(name string, jsonOutput bool) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	// Get festival root if available
 	cwd, _ := os.Getwd()

@@ -1,4 +1,4 @@
-package commands
+package festival
 
 import (
 	"encoding/json"
@@ -63,7 +63,7 @@ func NewCreateFestivalCommand() *cobra.Command {
 
 // RunCreateFestival executes the create festival command logic.
 func RunCreateFestival(opts *CreateFestivalOptions) error {
-	display := ui.New(noColor, verbose)
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	cwd, _ := os.Getwd()
 
 	// Resolve festivals root and template root
