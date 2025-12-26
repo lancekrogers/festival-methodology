@@ -4,12 +4,12 @@ package tui
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 )
@@ -23,7 +23,7 @@ func tuiCreateTask(display *ui.UI) error {
 
 	name := strings.TrimSpace(display.Prompt("Task name (e.g., user_research)"))
 	if name == "" {
-		return fmt.Errorf("task name is required")
+		return errors.Validation("task name is required")
 	}
 	var resolvedSeq string
 	if isSequenceDirPath(cwd) {
@@ -41,7 +41,7 @@ func tuiCreateTask(display *ui.UI) error {
 				path := strings.TrimSpace(display.PromptDefault("Sequence (dir or number, e.g., 01 or 01_requirements)", "."))
 				rs, rerr := resolveSequenceDirInput(path, cwd)
 				if rerr != nil {
-					return fmt.Errorf("invalid sequence: %w", rerr)
+					return errors.Wrap(rerr, "invalid sequence")
 				}
 				resolvedSeq = rs
 			}
@@ -49,7 +49,7 @@ func tuiCreateTask(display *ui.UI) error {
 			path := strings.TrimSpace(display.PromptDefault("Sequence (dir or number, e.g., 01 or 01_requirements)", "."))
 			rs, rerr := resolveSequenceDirInput(path, cwd)
 			if rerr != nil {
-				return fmt.Errorf("invalid sequence: %w", rerr)
+				return errors.Wrap(rerr, "invalid sequence")
 			}
 			resolvedSeq = rs
 		}
@@ -67,7 +67,7 @@ func tuiCreateTask(display *ui.UI) error {
 				p := strings.TrimSpace(display.PromptDefault("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)", "."))
 				rp, rerr := resolvePhaseDirInput(p, cwd)
 				if rerr != nil {
-					return fmt.Errorf("invalid phase: %w", rerr)
+					return errors.Wrap(rerr, "invalid phase")
 				}
 				chosenPhase = rp
 			}
@@ -75,7 +75,7 @@ func tuiCreateTask(display *ui.UI) error {
 			p := strings.TrimSpace(display.PromptDefault("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)", "."))
 			rp, rerr := resolvePhaseDirInput(p, cwd)
 			if rerr != nil {
-				return fmt.Errorf("invalid phase: %w", rerr)
+				return errors.Wrap(rerr, "invalid phase")
 			}
 			chosenPhase = rp
 		}
@@ -91,7 +91,7 @@ func tuiCreateTask(display *ui.UI) error {
 				s := strings.TrimSpace(display.PromptDefault("Sequence (dir or number, e.g., 01 or 01_requirements)", "."))
 				rs, rerr := resolveSequenceDirInput(s, chosenPhase)
 				if rerr != nil {
-					return fmt.Errorf("invalid sequence: %w", rerr)
+					return errors.Wrap(rerr, "invalid sequence")
 				}
 				resolvedSeq = rs
 			}
@@ -99,7 +99,7 @@ func tuiCreateTask(display *ui.UI) error {
 			s := strings.TrimSpace(display.PromptDefault("Sequence (dir or number, e.g., 01 or 01_requirements)", "."))
 			rs, rerr := resolveSequenceDirInput(s, chosenPhase)
 			if rerr != nil {
-				return fmt.Errorf("invalid sequence: %w", rerr)
+				return errors.Wrap(rerr, "invalid sequence")
 			}
 			resolvedSeq = rs
 		}

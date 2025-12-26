@@ -3,11 +3,11 @@ package system
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"os"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/fileops"
 	"github.com/lancekrogers/festival-methodology/fest/internal/tokens"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -72,7 +72,7 @@ func runCount(ctx context.Context, path string, opts *countOptions) error {
 	// Check if path is a file or directory
 	info, err := os.Stat(path)
 	if err != nil {
-		return fmt.Errorf("failed to access path: %w", err)
+		return errors.IO("accessing path", err).WithField("path", path)
 	}
 
 	var content []byte
@@ -82,17 +82,17 @@ func runCount(ctx context.Context, path string, opts *countOptions) error {
 	if isDirectory {
 		// Require recursive flag for directories
 		if !opts.recursive {
-			return fmt.Errorf("path is a directory; use --recursive flag to count tokens in all files")
+			return errors.Validation("path is a directory - use --recursive flag to count tokens in all files").WithField("path", path)
 		}
 
 		// Walk directory and collect files
 		walkResult, err := fileops.WalkDirectory(ctx, path)
 		if err != nil {
-			return fmt.Errorf("failed to walk directory: %w", err)
+			return errors.IO("walking directory", err).WithField("path", path)
 		}
 
 		if len(walkResult.Files) == 0 {
-			return fmt.Errorf("no text files found in directory")
+			return errors.NotFound("text files in directory").WithField("path", path)
 		}
 
 		if shared.IsVerbose() {
@@ -103,7 +103,7 @@ func runCount(ctx context.Context, path string, opts *countOptions) error {
 		// Aggregate all file contents
 		content, err = fileops.AggregateFileContents(ctx, walkResult.Files)
 		if err != nil {
-			return fmt.Errorf("failed to read files: %w", err)
+			return errors.IO("reading files", err).WithField("path", path)
 		}
 
 		fileCount = len(walkResult.Files)
@@ -111,7 +111,7 @@ func runCount(ctx context.Context, path string, opts *countOptions) error {
 		// Read single file
 		content, err = os.ReadFile(path)
 		if err != nil {
-			return fmt.Errorf("failed to read file: %w", err)
+			return errors.IO("reading file", err).WithField("path", path)
 		}
 		fileCount = 1
 	}
@@ -125,7 +125,7 @@ func runCount(ctx context.Context, path string, opts *countOptions) error {
 	// Get counts
 	result, err := counter.Count(string(content), opts.model, opts.all)
 	if err != nil {
-		return fmt.Errorf("failed to count tokens: %w", err)
+		return errors.Wrap(err, "counting tokens")
 	}
 
 	// Add path info

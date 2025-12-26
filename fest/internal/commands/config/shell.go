@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -61,7 +62,7 @@ func runShellInit(cmd *cobra.Command, args []string) error {
 	case "fish":
 		fmt.Print(fishInit())
 	default:
-		return fmt.Errorf("unsupported shell: %s\nSupported shells: zsh, bash, fish", shell)
+		return errors.Validation("unsupported shell - supported: zsh, bash, fish").WithField("shell", shell)
 	}
 
 	return nil

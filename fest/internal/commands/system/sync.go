@@ -2,7 +2,6 @@ package system
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/config"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/github"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
@@ -68,7 +68,7 @@ func runSync(opts *syncOptions) error {
 	// Load configuration
 	cfg, err := config.Load(ctx, shared.GetConfigFile())
 	if err != nil && opts.source == "" {
-		return fmt.Errorf("no config found and no --source specified: %w", err)
+		return errors.Wrap(err, "no config found and no --source specified - use --source flag")
 	}
 
 	// Determine repository URL
@@ -83,7 +83,7 @@ func runSync(opts *syncOptions) error {
 	// Parse repository to get owner and repo
 	owner, repo, err := parseRepoURLForSync(repoURL)
 	if err != nil {
-		return fmt.Errorf("invalid repository URL: %w", err)
+		return errors.Validation("invalid repository URL").WithField("url", repoURL)
 	}
 
 	// Create downloader
@@ -135,7 +135,7 @@ func runSync(opts *syncOptions) error {
 	progressBar.Finish()
 
 	if err != nil {
-		return fmt.Errorf("download failed: %w", err)
+		return errors.IO("downloading templates", err).WithField("url", repoURL)
 	}
 
 	// Update config with sync time
@@ -170,7 +170,7 @@ func parseRepoURLForSync(url string) (owner, repo string, err error) {
 	// Split owner and repo
 	parts := strings.Split(url, "/")
 	if len(parts) < 2 {
-		return "", "", fmt.Errorf("invalid repository URL format")
+		return "", "", errors.Validation("invalid repository URL format")
 	}
 
 	owner = parts[0]

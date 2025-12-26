@@ -4,12 +4,12 @@ package tui
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 )
@@ -23,7 +23,7 @@ func tuiCreateFestival(display *ui.UI) error {
 
 	name := strings.TrimSpace(display.Prompt("Festival name"))
 	if name == "" {
-		return fmt.Errorf("festival name is required")
+		return errors.Validation("festival name is required")
 	}
 	goal := strings.TrimSpace(display.PromptDefault("Festival goal", ""))
 	tags := strings.TrimSpace(display.PromptDefault("Tags (comma-separated)", ""))
@@ -88,7 +88,7 @@ func tuiPlanFestivalWizard(display *ui.UI) error {
 	}
 	name := strings.TrimSpace(display.Prompt("Festival name"))
 	if name == "" {
-		return fmt.Errorf("festival name is required")
+		return errors.Validation("festival name is required")
 	}
 	goal := strings.TrimSpace(display.PromptDefault("Festival goal", ""))
 	tags := strings.TrimSpace(display.PromptDefault("Tags (comma-separated)", ""))

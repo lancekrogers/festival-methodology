@@ -3,10 +3,11 @@ package extensions
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"os"
 	"sort"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/extensions"
 	"github.com/lancekrogers/festival-methodology/fest/internal/gates"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -69,7 +70,7 @@ func runExtensionList(jsonOutput bool, source, extType string) error {
 	// Load extensions
 	loader := extensions.NewExtensionLoader()
 	if err := loader.LoadAll(festivalRoot); err != nil {
-		return fmt.Errorf("failed to load extensions: %w", err)
+		return errors.Wrap(err, "loading extensions")
 	}
 
 	// Get extensions with optional filtering
@@ -153,7 +154,7 @@ func runExtensionInfo(name string, jsonOutput bool) error {
 	// Load extensions
 	loader := extensions.NewExtensionLoader()
 	if err := loader.LoadAll(festivalRoot); err != nil {
-		return fmt.Errorf("failed to load extensions: %w", err)
+		return errors.Wrap(err, "loading extensions")
 	}
 
 	ext := loader.Get(name)
@@ -166,7 +167,7 @@ func runExtensionInfo(name string, jsonOutput bool) error {
 			enc.SetIndent("", "  ")
 			return enc.Encode(output)
 		}
-		return fmt.Errorf("extension '%s' not found", name)
+		return errors.NotFound("extension").WithField("name", name)
 	}
 
 	if jsonOutput {

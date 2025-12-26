@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -47,40 +48,40 @@ it also adds a reference in the target documents.`,
 
 func runResearchLink(ctx context.Context, cmd *cobra.Command, docPath string, phases, sequences, tasks []string, bidirectional, unlink, jsonOutput bool) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("runResearchLink")
 	}
 
 	// Validate inputs
 	if len(phases) == 0 && len(sequences) == 0 && len(tasks) == 0 {
-		return fmt.Errorf("at least one of --phase, --sequence, or --task is required")
+		return errors.Validation("at least one of --phase, --sequence, or --task is required")
 	}
 
 	// Resolve document path
 	absDocPath, err := filepath.Abs(docPath)
 	if err != nil {
-		return fmt.Errorf("invalid document path: %w", err)
+		return errors.Wrap(err, "resolving document path").WithField("path", docPath)
 	}
 
 	// Check document exists
 	if _, err := os.Stat(absDocPath); os.IsNotExist(err) {
-		return fmt.Errorf("research document not found: %s", docPath)
+		return errors.NotFound("research document").WithField("path", docPath)
 	}
 
 	// Read document
 	content, err := os.ReadFile(absDocPath)
 	if err != nil {
-		return fmt.Errorf("reading document: %w", err)
+		return errors.IO("reading document", err).WithField("path", absDocPath)
 	}
 
 	// Parse and update frontmatter
 	newContent, linksAdded, linksRemoved, err := updateDocumentLinks(string(content), phases, sequences, tasks, unlink)
 	if err != nil {
-		return fmt.Errorf("updating links: %w", err)
+		return errors.Wrap(err, "updating links")
 	}
 
 	// Write updated document
 	if err := os.WriteFile(absDocPath, []byte(newContent), 0644); err != nil {
-		return fmt.Errorf("writing document: %w", err)
+		return errors.IO("writing document", err).WithField("path", absDocPath)
 	}
 
 	// Handle bidirectional linking (if adding, not unlinking)
@@ -136,12 +137,12 @@ func runResearchLink(ctx context.Context, cmd *cobra.Command, docPath string, ph
 func updateDocumentLinks(content string, phases, sequences, tasks []string, unlink bool) (string, int, int, error) {
 	// Check for frontmatter
 	if !strings.HasPrefix(content, "---") {
-		return "", 0, 0, fmt.Errorf("document has no frontmatter")
+		return "", 0, 0, errors.Validation("document has no frontmatter")
 	}
 
 	endIndex := strings.Index(content[3:], "\n---")
 	if endIndex == -1 {
-		return "", 0, 0, fmt.Errorf("invalid frontmatter format")
+		return "", 0, 0, errors.Validation("invalid frontmatter format")
 	}
 
 	frontmatterStr := content[4 : 3+endIndex]
@@ -149,7 +150,7 @@ func updateDocumentLinks(content string, phases, sequences, tasks []string, unli
 
 	var frontmatter map[string]interface{}
 	if err := yaml.Unmarshal([]byte(frontmatterStr), &frontmatter); err != nil {
-		return "", 0, 0, fmt.Errorf("parsing frontmatter: %w", err)
+		return "", 0, 0, errors.Parse("parsing frontmatter", err)
 	}
 
 	linksAdded := 0
@@ -209,7 +210,7 @@ func updateDocumentLinks(content string, phases, sequences, tasks []string, unli
 	// Serialize frontmatter
 	newFrontmatter, err := yaml.Marshal(frontmatter)
 	if err != nil {
-		return "", 0, 0, fmt.Errorf("serializing frontmatter: %w", err)
+		return "", 0, 0, errors.Wrap(err, "serializing frontmatter")
 	}
 
 	newContent := "---\n" + string(newFrontmatter) + "---" + bodyContent

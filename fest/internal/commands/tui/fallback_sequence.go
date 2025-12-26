@@ -4,12 +4,12 @@ package tui
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 )
@@ -23,7 +23,7 @@ func tuiCreateSequence(display *ui.UI) error {
 
 	name := strings.TrimSpace(display.Prompt("Sequence name (e.g., requirements)"))
 	if name == "" {
-		return fmt.Errorf("sequence name is required")
+		return errors.Validation("sequence name is required")
 	}
 	var resolvedPhase string
 	if isPhaseDirPath(cwd) {
@@ -42,7 +42,7 @@ func tuiCreateSequence(display *ui.UI) error {
 				path := strings.TrimSpace(display.PromptDefault("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)", "."))
 				rp, rerr := resolvePhaseDirInput(path, cwd)
 				if rerr != nil {
-					return fmt.Errorf("invalid phase: %w", rerr)
+					return errors.Wrap(rerr, "invalid phase")
 				}
 				resolvedPhase = rp
 			}
@@ -50,7 +50,7 @@ func tuiCreateSequence(display *ui.UI) error {
 			path := strings.TrimSpace(display.PromptDefault("Phase (dir or number, e.g., 002 or 002_IMPLEMENT)", "."))
 			rp, rerr := resolvePhaseDirInput(path, cwd)
 			if rerr != nil {
-				return fmt.Errorf("invalid phase: %w", rerr)
+				return errors.Wrap(rerr, "invalid phase")
 			}
 			resolvedPhase = rp
 		}

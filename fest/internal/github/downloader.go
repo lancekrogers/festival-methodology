@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // ProgressFunc is called during download to report progress
@@ -74,7 +76,7 @@ func (d *Downloader) Download(targetDir string, progress ProgressFunc) error {
 	// Parse repository URL to get owner and repo name
 	owner, repo, err := parseRepoURL(d.repoURL)
 	if err != nil {
-		return fmt.Errorf("invalid repository URL: %w", err)
+		return errors.Wrap(err, "invalid repository URL")
 	}
 
 	// Build raw content base URL
@@ -82,17 +84,17 @@ func (d *Downloader) Download(targetDir string, progress ProgressFunc) error {
 
 	// Create target directory
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
-		return fmt.Errorf("failed to create target directory: %w", err)
+		return errors.IO("creating target directory", err).WithField("path", targetDir)
 	}
 
 	// Get file list from GitHub API
 	files, err := d.getFilesFromGitHub(owner, repo)
 	if err != nil {
-		return fmt.Errorf("failed to get file list: %w", err)
+		return errors.Wrap(err, "getting file list from GitHub")
 	}
 
 	if len(files) == 0 {
-		return fmt.Errorf("no files found in festivals/ directory")
+		return errors.NotFound("files in festivals/ directory")
 	}
 
 	totalFiles := int64(len(files))
@@ -121,7 +123,7 @@ func (d *Downloader) Download(targetDir string, progress ProgressFunc) error {
 		}
 
 		if lastErr != nil {
-			return fmt.Errorf("failed to download %s after %d attempts: %w", file, d.retry, lastErr)
+			return errors.Wrap(lastErr, "downloading file after retries").WithField("file", file).WithField("attempts", d.retry)
 		}
 	}
 
@@ -133,31 +135,31 @@ func (d *Downloader) downloadFile(url, targetPath string) error {
 	// Create directory if needed
 	targetDir := filepath.Dir(targetPath)
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
+		return errors.IO("creating directory", err).WithField("path", targetDir)
 	}
 
 	// Make HTTP request
 	resp, err := d.client.Get(url)
 	if err != nil {
-		return fmt.Errorf("failed to download: %w", err)
+		return errors.IO("downloading from URL", err).WithField("url", url)
 	}
 	defer resp.Body.Close()
 
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("download failed with status: %d", resp.StatusCode)
+		return errors.IO("download failed", nil).WithField("status", resp.StatusCode).WithField("url", url)
 	}
 
 	// Create target file
 	out, err := os.Create(targetPath)
 	if err != nil {
-		return fmt.Errorf("failed to create file: %w", err)
+		return errors.IO("creating file", err).WithField("path", targetPath)
 	}
 	defer out.Close()
 
 	// Copy content
 	if _, err := io.Copy(out, resp.Body); err != nil {
-		return fmt.Errorf("failed to write file: %w", err)
+		return errors.IO("writing file", err).WithField("path", targetPath)
 	}
 
 	return out.Sync()
@@ -175,7 +177,7 @@ func parseRepoURL(url string) (owner, repo string, err error) {
 	// Split owner and repo
 	parts := strings.Split(url, "/")
 	if len(parts) < 2 {
-		return "", "", fmt.Errorf("invalid repository URL format")
+		return "", "", errors.Validation("invalid repository URL format").WithField("url", url)
 	}
 
 	owner = parts[0]
@@ -192,19 +194,19 @@ func (d *Downloader) getFilesFromGitHub(owner, repo string) ([]string, error) {
 	// Make API request
 	resp, err := d.client.Get(apiURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch file tree from GitHub API: %w", err)
+		return nil, errors.IO("fetching file tree from GitHub API", err).WithField("url", apiURL)
 	}
 	defer resp.Body.Close()
 
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GitHub API request failed with status: %d", resp.StatusCode)
+		return nil, errors.IO("GitHub API request failed", nil).WithField("status", resp.StatusCode)
 	}
 
 	// Parse response
 	var treeResp GitHubTreeResponse
 	if err := json.NewDecoder(resp.Body).Decode(&treeResp); err != nil {
-		return nil, fmt.Errorf("failed to parse GitHub API response: %w", err)
+		return nil, errors.Parse("parsing GitHub API response", err)
 	}
 
 	// Filter for files in festivals/ directory
@@ -234,19 +236,19 @@ func (d *Downloader) getFilesWithSHA(owner, repo string) (map[string]string, err
 	// Make API request
 	resp, err := d.client.Get(apiURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch file tree from GitHub API: %w", err)
+		return nil, errors.IO("fetching file tree from GitHub API", err).WithField("url", apiURL)
 	}
 	defer resp.Body.Close()
 
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GitHub API request failed with status: %d", resp.StatusCode)
+		return nil, errors.IO("GitHub API request failed", nil).WithField("status", resp.StatusCode)
 	}
 
 	// Parse response
 	var treeResp GitHubTreeResponse
 	if err := json.NewDecoder(resp.Body).Decode(&treeResp); err != nil {
-		return nil, fmt.Errorf("failed to parse GitHub API response: %w", err)
+		return nil, errors.Parse("parsing GitHub API response", err)
 	}
 
 	// Build map of path -> SHA for files in festivals/ directory
@@ -273,7 +275,7 @@ func (d *Downloader) getFilesWithSHA(owner, repo string) (map[string]string, err
 func calculateGitBlobSHA(filePath string) (string, error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
-		return "", fmt.Errorf("failed to read file: %w", err)
+		return "", errors.IO("reading file", err).WithField("path", filePath)
 	}
 
 	// Git blob format: "blob <size>\0<content>"
@@ -291,7 +293,7 @@ func (d *Downloader) CheckForUpdates(owner, repo, targetDir string) (bool, []str
 	// Get remote file list with SHAs
 	remoteFiles, err := d.getFilesWithSHA(owner, repo)
 	if err != nil {
-		return false, nil, fmt.Errorf("failed to get remote file list: %w", err)
+		return false, nil, errors.Wrap(err, "getting remote file list")
 	}
 
 	changes := []string{}
@@ -355,7 +357,7 @@ func (d *Downloader) CheckForUpdates(owner, repo, targetDir string) (bool, []str
 	})
 
 	if err != nil {
-		return false, nil, fmt.Errorf("failed to walk local directory: %w", err)
+		return false, nil, errors.IO("walking local directory", err).WithField("path", targetDir)
 	}
 
 	hasUpdates := len(changes) > 0

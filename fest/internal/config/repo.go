@@ -3,10 +3,11 @@ package config
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 const (
@@ -67,12 +68,12 @@ func LoadRepoManifest(ctx context.Context) (*ConfigRepoManifest, error) {
 
 	data, err := os.ReadFile(manifestPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read repo manifest: %w", err)
+		return nil, errors.IO("reading repo manifest", err).WithField("path", manifestPath)
 	}
 
 	var manifest ConfigRepoManifest
 	if err := json.Unmarshal(data, &manifest); err != nil {
-		return nil, fmt.Errorf("failed to parse repo manifest: %w", err)
+		return nil, errors.Parse("parsing repo manifest", err).WithField("path", manifestPath)
 	}
 
 	return &manifest, nil
@@ -86,17 +87,17 @@ func SaveRepoManifest(ctx context.Context, manifest *ConfigRepoManifest) error {
 
 	configDir := ConfigDir()
 	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return fmt.Errorf("failed to create config directory: %w", err)
+		return errors.IO("creating config directory", err).WithField("path", configDir)
 	}
 
 	data, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
-		return fmt.Errorf("failed to marshal repo manifest: %w", err)
+		return errors.Wrap(err, "marshaling repo manifest")
 	}
 
 	manifestPath := RepoManifestPath()
 	if err := os.WriteFile(manifestPath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write repo manifest: %w", err)
+		return errors.IO("writing repo manifest", err).WithField("path", manifestPath)
 	}
 
 	return nil

@@ -4,12 +4,12 @@ package tui
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 )
@@ -23,7 +23,7 @@ func tuiCreatePhase(display *ui.UI) error {
 
 	name := strings.TrimSpace(display.Prompt("Phase name (e.g., PLAN)"))
 	if name == "" {
-		return fmt.Errorf("phase name is required")
+		return errors.Validation("phase name is required")
 	}
 	// Choose phase type
 	types := []string{"planning", "implementation", "review", "deployment", "research"}

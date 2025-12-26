@@ -1,10 +1,10 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"gopkg.in/yaml.v3"
 )
 
@@ -63,13 +63,13 @@ func LoadFestivalConfig(festivalPath string) (*FestivalConfig, error) {
 	// Read file
 	data, err := os.ReadFile(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read festival config: %w", err)
+		return nil, errors.IO("reading festival config", err).WithField("path", configPath)
 	}
 
 	// Parse YAML
 	var cfg FestivalConfig
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse festival config: %w", err)
+		return nil, errors.Parse("parsing festival config", err).WithField("path", configPath)
 	}
 
 	// Apply defaults for missing values
@@ -85,12 +85,12 @@ func SaveFestivalConfig(festivalPath string, cfg *FestivalConfig) error {
 	// Marshal to YAML
 	data, err := yaml.Marshal(cfg)
 	if err != nil {
-		return fmt.Errorf("failed to marshal festival config: %w", err)
+		return errors.Wrap(err, "marshaling festival config")
 	}
 
 	// Write file
 	if err := os.WriteFile(configPath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write festival config: %w", err)
+		return errors.IO("writing festival config", err).WithField("path", configPath)
 	}
 
 	return nil

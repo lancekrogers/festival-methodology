@@ -2,12 +2,12 @@ package system
 
 import (
 	"context"
-	"fmt"
-	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"os"
 	"path/filepath"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/config"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/fileops"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/lancekrogers/festival-methodology/fest/internal/workspace"
@@ -76,7 +76,7 @@ func RunInit(ctx context.Context, targetPath string, opts *InitOptions) error {
 	// Convert to absolute path
 	absPath, err := filepath.Abs(targetPath)
 	if err != nil {
-		return fmt.Errorf("invalid path: %w", err)
+		return errors.Wrap(err, "resolving path").WithField("path", targetPath)
 	}
 
 	// Handle --register flag: register existing festivals directory
@@ -106,14 +106,14 @@ func RunInit(ctx context.Context, targetPath string, opts *InitOptions) error {
 
 	// Check if source exists
 	if !fileops.Exists(sourceDir) {
-		return fmt.Errorf("source directory not found at %s. Run 'fest sync' first", sourceDir)
+		return errors.NotFound("source directory").WithField("path", sourceDir).WithField("hint", "run 'fest sync' first")
 	}
 
 	display.Info("Initializing festival structure at %s...", festivalPath)
 
 	// Create festivals directory if it doesn't exist
 	if err := os.MkdirAll(festivalPath, 0755); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
+		return errors.IO("creating directory", err).WithField("path", festivalPath)
 	}
 
 	// Copy structure
@@ -126,14 +126,14 @@ func RunInit(ctx context.Context, targetPath string, opts *InitOptions) error {
 			dst := filepath.Join(festivalPath, dir)
 			if fileops.Exists(src) {
 				if err := copier.CopyDirectory(ctx, src, dst); err != nil {
-					return fmt.Errorf("failed to copy %s: %w", dir, err)
+					return errors.IO("copying directory", err).WithField("source", src).WithField("destination", dst)
 				}
 			}
 		}
 	} else {
 		// Copy everything
 		if err := copier.CopyDirectory(ctx, sourceDir, festivalPath); err != nil {
-			return fmt.Errorf("failed to copy festival structure: %w", err)
+			return errors.IO("copying festival structure", err).WithField("source", sourceDir).WithField("destination", festivalPath)
 		}
 	}
 
@@ -146,11 +146,11 @@ func RunInit(ctx context.Context, targetPath string, opts *InitOptions) error {
 		festivalMetaDir := filepath.Join(festivalPath, ".festival")
 		checksums, err := fileops.GenerateChecksums(ctx, festivalMetaDir)
 		if err != nil {
-			return fmt.Errorf("failed to generate checksums: %w", err)
+			return errors.Wrap(err, "generating checksums").WithField("path", festivalMetaDir)
 		}
 
 		if err := fileops.SaveChecksums(ctx, checksumFile, checksums); err != nil {
-			return fmt.Errorf("failed to save checksums: %w", err)
+			return errors.IO("saving checksums", err).WithField("path", checksumFile)
 		}
 
 		display.Info("Created checksum tracking at %s", checksumFile)
@@ -197,7 +197,7 @@ func runRegister(targetPath string, display *ui.UI) error {
 
 	// Register
 	if err := workspace.RegisterFestivals(festivalsDir); err != nil {
-		return fmt.Errorf("failed to register workspace: %w", err)
+		return errors.Wrap(err, "registering workspace").WithField("path", festivalsDir)
 	}
 
 	marker, _ := workspace.ReadMarker(festivalsDir)
@@ -235,7 +235,7 @@ func runUnregister(targetPath string, display *ui.UI) error {
 
 	// Unregister
 	if err := workspace.UnregisterFestivals(festivalsDir); err != nil {
-		return fmt.Errorf("failed to unregister workspace: %w", err)
+		return errors.Wrap(err, "unregistering workspace").WithField("path", festivalsDir)
 	}
 
 	display.Success("Unregistered workspace: %s", wsName)
@@ -262,10 +262,10 @@ func findFestivalsDir(targetPath string) (string, error) {
 	// Walk up looking for festivals directory
 	nearest, err := workspace.FindNearestFestivals(targetPath)
 	if err != nil {
-		return "", fmt.Errorf("failed to find festivals directory: %w", err)
+		return "", errors.Wrap(err, "finding festivals directory").WithField("path", targetPath)
 	}
 	if nearest == "" {
-		return "", fmt.Errorf("no festivals directory found from %s", targetPath)
+		return "", errors.NotFound("festivals directory").WithField("path", targetPath)
 	}
 
 	return nearest, nil

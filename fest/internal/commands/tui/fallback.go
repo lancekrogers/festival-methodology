@@ -4,10 +4,10 @@ package tui
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
@@ -47,7 +47,7 @@ func runTUI(ctx context.Context) error {
 				return err
 			}
 		} else {
-			return fmt.Errorf("no festivals/ directory detected")
+			return errors.NotFound("festivals directory")
 		}
 	}
 

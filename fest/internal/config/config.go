@@ -3,9 +3,10 @@ package config
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 const (
@@ -92,13 +93,13 @@ func Load(ctx context.Context, customPath string) (*Config, error) {
 	// Read file
 	data, err := os.ReadFile(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read config: %w", err)
+		return nil, errors.IO("reading config", err).WithField("path", configPath)
 	}
 
 	// Parse JSON
 	var cfg Config
 	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse config: %w", err)
+		return nil, errors.Parse("parsing config", err).WithField("path", configPath)
 	}
 
 	// Apply defaults for missing values
@@ -118,18 +119,18 @@ func Save(ctx context.Context, cfg *Config) error {
 
 	// Create directory if it doesn't exist
 	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return fmt.Errorf("failed to create config directory: %w", err)
+		return errors.IO("creating config directory", err).WithField("path", configDir)
 	}
 
 	// Marshal to JSON
 	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
-		return fmt.Errorf("failed to marshal config: %w", err)
+		return errors.Wrap(err, "marshaling config")
 	}
 
 	// Write file
 	if err := os.WriteFile(configPath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write config: %w", err)
+		return errors.IO("writing config", err).WithField("path", configPath)
 	}
 
 	return nil

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -71,7 +72,7 @@ research documents with their metadata.`,
 
 func runResearchSummary(ctx context.Context, cmd *cobra.Command, phase string, festival bool, output, format string, jsonOutput bool) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("runResearchSummary")
 	}
 
 	if jsonOutput {
@@ -80,13 +81,13 @@ func runResearchSummary(ctx context.Context, cmd *cobra.Command, phase string, f
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("getting working directory: %w", err)
+		return errors.IO("getting working directory", err)
 	}
 
 	// Find festivals root
 	festivalsRoot, err := tpl.FindFestivalsRoot(cwd)
 	if err != nil {
-		return fmt.Errorf("finding festivals root: %w", err)
+		return errors.Wrap(err, "finding festivals root")
 	}
 
 	// Determine scope
@@ -97,7 +98,7 @@ func runResearchSummary(ctx context.Context, cmd *cobra.Command, phase string, f
 		// Get current festival
 		festivalPath := detectFestivalPath(cwd, festivalsRoot)
 		if festivalPath == "" {
-			return fmt.Errorf("not inside a festival directory")
+			return errors.NotFound("festival directory")
 		}
 		searchPath = festivalPath
 		scope = "festival"
@@ -105,11 +106,11 @@ func runResearchSummary(ctx context.Context, cmd *cobra.Command, phase string, f
 	} else if phase != "" {
 		festivalPath := detectFestivalPath(cwd, festivalsRoot)
 		if festivalPath == "" {
-			return fmt.Errorf("not inside a festival directory")
+			return errors.NotFound("festival directory")
 		}
 		searchPath = filepath.Join(festivalPath, phase)
 		if _, err := os.Stat(searchPath); os.IsNotExist(err) {
-			return fmt.Errorf("phase directory not found: %s", phase)
+			return errors.NotFound("phase directory").WithField("phase", phase)
 		}
 		scope = "phase"
 		scopeID = phase
@@ -124,7 +125,7 @@ func runResearchSummary(ctx context.Context, cmd *cobra.Command, phase string, f
 			// Try to detect festival
 			festivalPath := detectFestivalPath(cwd, festivalsRoot)
 			if festivalPath == "" {
-				return fmt.Errorf("not inside a festival or phase directory")
+				return errors.NotFound("festival or phase directory")
 			}
 			searchPath = festivalPath
 			scope = "festival"
@@ -135,7 +136,7 @@ func runResearchSummary(ctx context.Context, cmd *cobra.Command, phase string, f
 	// Collect research documents
 	docs, err := collectResearchDocs(searchPath)
 	if err != nil {
-		return fmt.Errorf("collecting research documents: %w", err)
+		return errors.Wrap(err, "collecting research documents")
 	}
 
 	// Build summary
@@ -161,7 +162,7 @@ func runResearchSummary(ctx context.Context, cmd *cobra.Command, phase string, f
 	if format == "json" {
 		data, err := json.MarshalIndent(summary, "", "  ")
 		if err != nil {
-			return fmt.Errorf("marshaling JSON: %w", err)
+			return errors.Wrap(err, "marshaling JSON")
 		}
 		result = string(data)
 	} else {
@@ -171,7 +172,7 @@ func runResearchSummary(ctx context.Context, cmd *cobra.Command, phase string, f
 	// Write output
 	if output != "" {
 		if err := os.WriteFile(output, []byte(result), 0644); err != nil {
-			return fmt.Errorf("writing output file: %w", err)
+			return errors.IO("writing output file", err).WithField("path", output)
 		}
 		fmt.Fprintf(cmd.OutOrStdout(), "Summary written to: %s\n", output)
 	} else {

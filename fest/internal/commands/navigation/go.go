@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/workspace"
 	"github.com/spf13/cobra"
 )
@@ -64,7 +65,7 @@ If no registered festivals are found, falls back to nearest festivals/.`,
 func runGo(target string, opts *goOptions) error {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to get current directory: %w", err)
+		return errors.IO("getting current directory", err)
 	}
 
 	// Handle --all flag
@@ -75,11 +76,11 @@ func runGo(target string, opts *goOptions) error {
 	// Find the appropriate festivals directory
 	festivalsDir, err := workspace.FindFestivals(cwd)
 	if err != nil {
-		return fmt.Errorf("failed to find festivals directory: %w", err)
+		return errors.Wrap(err, "finding festivals directory")
 	}
 
 	if festivalsDir == "" {
-		return fmt.Errorf("no festivals directory found")
+		return errors.NotFound("festivals directory")
 	}
 
 	// Handle --workspace flag
@@ -110,14 +111,14 @@ func runGo(target string, opts *goOptions) error {
 func runGoAll(cwd string, opts *goOptions) error {
 	allFestivals, err := workspace.FindAllMarkedFestivals(cwd)
 	if err != nil {
-		return fmt.Errorf("failed to find festivals directories: %w", err)
+		return errors.Wrap(err, "finding festivals directories")
 	}
 
 	if len(allFestivals) == 0 {
 		// Fall back to showing nearest
 		nearest, err := workspace.FindNearestFestivals(cwd)
 		if err != nil || nearest == "" {
-			return fmt.Errorf("no festivals directories found")
+			return errors.NotFound("festivals directories")
 		}
 		if opts.json {
 			fmt.Printf(`{"festivals": [{"path": "%s", "registered": false}]}%s`, nearest, "\n")
@@ -199,7 +200,7 @@ func resolveGoTarget(target, festivalsDir string) (string, error) {
 		return fullPath, nil
 	}
 
-	return "", fmt.Errorf("could not resolve target: %s", target)
+	return "", errors.NotFound("target").WithField("target", target)
 }
 
 func isPhaseShortcut(s string) bool {
@@ -258,7 +259,7 @@ func resolvePhaseShortcut(shortcut, festivalsDir string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("phase %s not found", shortcut)
+	return "", errors.NotFound("phase").WithField("shortcut", shortcut)
 }
 
 func resolveSequenceShortcut(shortcut, phaseDir string) (string, error) {
@@ -269,7 +270,7 @@ func resolveSequenceShortcut(shortcut, phaseDir string) (string, error) {
 
 	entries, err := os.ReadDir(phaseDir)
 	if err != nil {
-		return "", fmt.Errorf("could not read phase directory: %w", err)
+		return "", errors.IO("reading phase directory", err).WithField("path", phaseDir)
 	}
 
 	for _, entry := range entries {
@@ -278,5 +279,5 @@ func resolveSequenceShortcut(shortcut, phaseDir string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("sequence %s not found in %s", shortcut, filepath.Base(phaseDir))
+	return "", errors.NotFound("sequence").WithField("shortcut", shortcut).WithField("phase", filepath.Base(phaseDir))
 }

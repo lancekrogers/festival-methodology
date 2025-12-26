@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
@@ -129,17 +130,17 @@ func resolveFestivalPath(pathArg string) (string, error) {
 	if pathArg != "" {
 		absPath, err := filepath.Abs(pathArg)
 		if err != nil {
-			return "", fmt.Errorf("invalid path: %w", err)
+			return "", errors.Wrap(err, "resolving path").WithField("path", pathArg)
 		}
 
 		// Check if path exists
 		if !validateDirExists(absPath) {
-			return "", fmt.Errorf("path does not exist: %s", absPath)
+			return "", errors.NotFound("path").WithField("path", absPath)
 		}
 
 		// Check if it's a festival directory
 		if !isFestivalDir(absPath) {
-			return "", fmt.Errorf("path is not a festival directory: %s\n  (expected FESTIVAL_OVERVIEW.md or phase directories like 001_PHASE_NAME)", absPath)
+			return "", errors.Validation("path is not a festival directory (expected FESTIVAL_OVERVIEW.md or phase directories like 001_PHASE_NAME)").WithField("path", absPath)
 		}
 
 		return absPath, nil
@@ -148,7 +149,7 @@ func resolveFestivalPath(pathArg string) (string, error) {
 	// Try current directory
 	cwd, err := os.Getwd()
 	if err != nil {
-		return "", fmt.Errorf("failed to get working directory: %w", err)
+		return "", errors.IO("getting working directory", err)
 	}
 
 	// Check if we're in a festival directory
@@ -171,7 +172,7 @@ func resolveFestivalPath(pathArg string) (string, error) {
 	}
 
 	// Not in a festival - provide helpful error
-	return "", fmt.Errorf("not inside a festival directory\n  Run from inside a festival, or provide a path: fest validate /path/to/festival")
+	return "", errors.Validation("not inside a festival directory - run from inside a festival, or provide a path: fest validate /path/to/festival")
 }
 
 // isFestivalDir checks if a directory appears to be a festival root

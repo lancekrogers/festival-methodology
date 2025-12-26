@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 )
@@ -54,12 +55,12 @@ func writeTempVarsFile(vars map[string]interface{}) (string, error) {
 	}
 	f, err := os.CreateTemp("", "fest-vars-*.json")
 	if err != nil {
-		return "", fmt.Errorf("failed to create temp vars file: %w", err)
+		return "", errors.IO("creating temp vars file", err)
 	}
 	enc := json.NewEncoder(f)
 	if err := enc.Encode(vars); err != nil {
 		_ = f.Close()
-		return "", fmt.Errorf("failed to write temp vars file: %w", err)
+		return "", errors.IO("writing temp vars file", err)
 	}
 	_ = f.Close()
 	return f.Name(), nil
@@ -108,7 +109,7 @@ func resolvePhaseDirInput(input, cwd string) (string, error) {
 			return absCwd, nil
 		}
 		// No specific phase; default to CWD if it looks like a festival directory
-		return "", fmt.Errorf("please specify a phase (e.g., 002_IMPLEMENT or 02)")
+		return "", errors.Validation("please specify a phase (e.g., 002_IMPLEMENT or 02)")
 	}
 	if filepath.IsAbs(input) {
 		if info, err := os.Stat(input); err == nil && info.IsDir() {
@@ -124,7 +125,7 @@ func resolvePhaseDirInput(input, cwd string) (string, error) {
 	// Collect phase dirs under festivalDir
 	phases := listPhaseDirs(festivalDir)
 	if len(phases) == 0 {
-		return "", fmt.Errorf("no phase directories found under %s", festivalDir)
+		return "", errors.NotFound("phase directories").WithField("path", festivalDir)
 	}
 
 	// If numeric, pad to 3 digits and match prefix
@@ -136,7 +137,7 @@ func resolvePhaseDirInput(input, cwd string) (string, error) {
 				return filepath.Join(festivalDir, name), nil
 			}
 		}
-		return "", fmt.Errorf("phase %s not found under %s", code, festivalDir)
+		return "", errors.NotFound("phase").WithField("code", code).WithField("path", festivalDir)
 	}
 
 	// Match by name suffix after underscore (case-insensitive)
@@ -153,7 +154,7 @@ func resolvePhaseDirInput(input, cwd string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("could not resolve phase '%s'", input)
+	return "", errors.NotFound("phase").WithField("input", input)
 }
 
 func isDigits(s string) bool {
@@ -246,7 +247,7 @@ func resolveSequenceDirInput(input, cwd string) (string, error) {
 		if isSequenceDirPath(absCwd) {
 			return absCwd, nil
 		}
-		return "", fmt.Errorf("please specify a sequence (e.g., 01_requirements or 01)")
+		return "", errors.Validation("please specify a sequence (e.g., 01_requirements or 01)")
 	}
 
 	// If a direct path exists
@@ -274,7 +275,7 @@ func resolveSequenceDirInput(input, cwd string) (string, error) {
 
 	sequences := listSequenceDirs(phaseDir)
 	if len(sequences) == 0 {
-		return "", fmt.Errorf("no sequence directories found under %s", phaseDir)
+		return "", errors.NotFound("sequence directories").WithField("path", phaseDir)
 	}
 
 	if isDigits(input) {
@@ -285,7 +286,7 @@ func resolveSequenceDirInput(input, cwd string) (string, error) {
 				return filepath.Join(phaseDir, name), nil
 			}
 		}
-		return "", fmt.Errorf("sequence %s not found under %s", code, phaseDir)
+		return "", errors.NotFound("sequence").WithField("code", code).WithField("path", phaseDir)
 	}
 
 	needle := strings.ToLower(input)
@@ -301,7 +302,7 @@ func resolveSequenceDirInput(input, cwd string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("could not resolve sequence '%s'", input)
+	return "", errors.NotFound("sequence").WithField("input", input)
 }
 
 func exists(p string) bool {

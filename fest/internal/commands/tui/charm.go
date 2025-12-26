@@ -4,13 +4,13 @@ package tui
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"strings"
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
 )
@@ -55,7 +55,7 @@ func runCharmTUI(ctx context.Context) error {
 				return err
 			}
 		} else {
-			return fmt.Errorf("no festivals/ directory detected")
+			return errors.NotFound("festivals directory")
 		}
 	}
 
@@ -117,7 +117,7 @@ func runCharmTUI(ctx context.Context) error {
 // notEmpty validates that a string is not empty
 func notEmpty(s string) error {
 	if strings.TrimSpace(s) == "" {
-		return fmt.Errorf("value required")
+		return errors.Validation("value required")
 	}
 	return nil
 }
