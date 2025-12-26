@@ -91,7 +91,7 @@ func RunApply(ctx context.Context, opts *ApplyOptions) error {
 
 	if tpath == "" {
 		// resolve by ID using catalog
-		catalog, err := tpl.LoadCatalog(tmplRoot)
+		catalog, err := tpl.LoadCatalog(ctx, tmplRoot)
 		if err != nil {
 			return emitApplyError(opts, fmt.Errorf("failed to load template catalog: %w", err))
 		}
@@ -115,7 +115,7 @@ func RunApply(ctx context.Context, opts *ApplyOptions) error {
 	// Decide copy vs render
 	mgr := tpl.NewManager()
 	loader := tpl.NewLoader()
-	tmpl, err := loader.Load(tpath)
+	tmpl, err := loader.Load(ctx, tpath)
 	if err != nil {
 		return emitApplyError(opts, fmt.Errorf("failed to load template: %w", err))
 	}

@@ -2,6 +2,7 @@ package template
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -30,8 +31,8 @@ type Template struct {
 
 // Loader loads templates from the filesystem
 type Loader interface {
-	Load(path string) (*Template, error)
-	LoadAll(dir string) ([]*Template, error)
+	Load(ctx context.Context, path string) (*Template, error)
+	LoadAll(ctx context.Context, dir string) ([]*Template, error)
 }
 
 type loaderImpl struct{}
@@ -42,7 +43,12 @@ func NewLoader() Loader {
 }
 
 // Load loads a single template file
-func (l *loaderImpl) Load(path string) (*Template, error) {
+func (l *loaderImpl) Load(ctx context.Context, path string) (*Template, error) {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("context cancelled: %w", err)
+	}
+
 	// Read file
 	file, err := os.Open(path)
 	if err != nil {
@@ -79,10 +85,20 @@ func (l *loaderImpl) Load(path string) (*Template, error) {
 }
 
 // LoadAll loads all markdown templates from a directory
-func (l *loaderImpl) LoadAll(dir string) ([]*Template, error) {
+func (l *loaderImpl) LoadAll(ctx context.Context, dir string) ([]*Template, error) {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("context cancelled: %w", err)
+	}
+
 	templates := []*Template{}
 
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		// Check context on each iteration
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
+
 		if err != nil {
 			return err
 		}
@@ -98,7 +114,7 @@ func (l *loaderImpl) LoadAll(dir string) ([]*Template, error) {
 		}
 
 		// Load template
-		tmpl, err := l.Load(path)
+		tmpl, err := l.Load(ctx, path)
 		if err != nil {
 			// Log error but continue
 			fmt.Fprintf(os.Stderr, "Warning: failed to load template %s: %v\n", path, err)

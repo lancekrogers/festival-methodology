@@ -1,6 +1,7 @@
 package festival
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -85,7 +86,7 @@ Run 'fest validate tasks' to verify task files exist in implementation sequences
 					return fmt.Errorf("task names cannot be empty")
 				}
 			}
-			return RunCreateTask(opts)
+			return RunCreateTask(cmd.Context(), opts)
 		},
 	}
 	cmd.Flags().IntVar(&opts.After, "after", 0, "Insert after this number (0 inserts at beginning)")
@@ -97,7 +98,12 @@ Run 'fest validate tasks' to verify task files exist in implementation sequences
 }
 
 // RunCreateTask executes the create task command logic.
-func RunCreateTask(opts *CreateTaskOptions) error {
+func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("context cancelled: %w", err)
+	}
+
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	cwd, _ := os.Getwd()
 
@@ -123,7 +129,7 @@ func RunCreateTask(opts *CreateTaskOptions) error {
 	}
 
 	// Load template catalog once
-	catalog, _ := tpl.LoadCatalog(tmplRoot)
+	catalog, _ := tpl.LoadCatalog(ctx, tmplRoot)
 	mgr := tpl.NewManager()
 	loader := tpl.NewLoader()
 
@@ -134,6 +140,11 @@ func RunCreateTask(opts *CreateTaskOptions) error {
 
 	// Create each task sequentially
 	for _, name := range opts.Names {
+		// Check context on each iteration
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return fmt.Errorf("context cancelled: %w", ctxErr)
+		}
+
 		// Insert task at current position
 		ren := festival.NewRenumberer(festival.RenumberOptions{AutoApprove: true, Quiet: true})
 		if err := ren.InsertTask(absPath, currentAfter, name); err != nil {
@@ -145,30 +156,30 @@ func RunCreateTask(opts *CreateTaskOptions) error {
 		taskID := tpl.FormatTaskID(newNumber, name)
 		taskPath := filepath.Join(absPath, taskID)
 
-		// Build context for this task
-		ctx := tpl.NewContext()
-		ctx.SetTask(newNumber, name)
+		// Build template context for this task
+		tmplCtx := tpl.NewContext()
+		tmplCtx.SetTask(newNumber, name)
 		for k, v := range vars {
-			ctx.SetCustom(k, v)
+			tmplCtx.SetCustom(k, v)
 		}
 
 		// Render or copy TASK template
 		var content string
 		var renderErr error
 		if catalog != nil {
-			content, renderErr = mgr.RenderByID(catalog, "TASK", ctx)
+			content, renderErr = mgr.RenderByID(ctx, catalog, "TASK", tmplCtx)
 		}
 		if renderErr != nil || content == "" {
 			// Fall back to default filename
 			tpath := filepath.Join(tmplRoot, "TASK_TEMPLATE.md")
 			if _, err := os.Stat(tpath); err == nil {
-				t, err := loader.Load(tpath)
+				t, err := loader.Load(ctx, tpath)
 				if err != nil {
 					return emitCreateTaskError(opts, fmt.Errorf("failed to load task template: %w", err))
 				}
 				// Render if it appears templated; else copy
 				if strings.Contains(t.Content, "{{") {
-					out, err := mgr.Render(t, ctx)
+					out, err := mgr.Render(t, tmplCtx)
 					if err != nil {
 						return emitCreateTaskError(opts, fmt.Errorf("failed to render task: %w", err))
 					}

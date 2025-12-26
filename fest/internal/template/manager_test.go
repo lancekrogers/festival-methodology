@@ -1,6 +1,7 @@
 package template
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -30,13 +31,13 @@ Goal: {{.goal}}
 	require.NoError(t, err)
 
 	// Create context
-	ctx := NewContext()
-	ctx.SetCustom("name", "my-festival")
-	ctx.SetCustom("goal", "Build awesome things")
+	tmplCtx := NewContext()
+	tmplCtx.SetCustom("name", "my-festival")
+	tmplCtx.SetCustom("goal", "Build awesome things")
 
 	// Render template
 	manager := NewManager()
-	output, err := manager.RenderFile(templatePath, ctx)
+	output, err := manager.RenderFile(context.Background(), templatePath, tmplCtx)
 
 	require.NoError(t, err)
 	assert.Contains(t, output, "# Festival: my-festival")
@@ -63,12 +64,12 @@ Goal: {{.goal}}`
 	require.NoError(t, err)
 
 	// Create context with missing variable
-	ctx := NewContext()
-	ctx.SetCustom("name", "my-festival")
+	tmplCtx := NewContext()
+	tmplCtx.SetCustom("name", "my-festival")
 
 	// Render template - should fail validation
 	manager := NewManager()
-	_, err = manager.RenderFile(templatePath, ctx)
+	_, err = manager.RenderFile(context.Background(), templatePath, tmplCtx)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "validation failed")
@@ -88,13 +89,13 @@ Goal: {{.goal}}`
 	require.NoError(t, err)
 
 	// Create context
-	ctx := NewContext()
-	ctx.SetCustom("name", "my-festival")
-	ctx.SetCustom("goal", "Build awesome things")
+	tmplCtx := NewContext()
+	tmplCtx.SetCustom("name", "my-festival")
+	tmplCtx.SetCustom("goal", "Build awesome things")
 
 	// Render to file
 	manager := NewManager()
-	err = manager.RenderFileToFile(templatePath, outputPath, ctx)
+	err = manager.RenderFileToFile(context.Background(), templatePath, outputPath, tmplCtx)
 	require.NoError(t, err)
 
 	// Verify output file exists and has correct content
@@ -129,13 +130,13 @@ func TestManager_RenderDirectory(t *testing.T) {
 	}
 
 	// Create context
-	ctx := NewContext()
-	ctx.SetCustom("name", "my-festival")
-	ctx.SetCustom("goal", "Build awesome things")
+	tmplCtx := NewContext()
+	tmplCtx.SetCustom("name", "my-festival")
+	tmplCtx.SetCustom("goal", "Build awesome things")
 
 	// Render directory
 	manager := NewManager()
-	err = manager.RenderDirectory(templateDir, outputDir, ctx)
+	err = manager.RenderDirectory(context.Background(), templateDir, outputDir, tmplCtx)
 	require.NoError(t, err)
 
 	// Verify all files were created
@@ -156,10 +157,10 @@ func TestManager_RenderDirectory(t *testing.T) {
 func TestManager_RenderString(t *testing.T) {
 	manager := NewManager()
 
-	ctx := NewContext()
-	ctx.SetCustom("name", "Test")
+	tmplCtx := NewContext()
+	tmplCtx.SetCustom("name", "Test")
 
-	output, err := manager.RenderString("Hello {{.name}}!", ctx)
+	output, err := manager.RenderString("Hello {{.name}}!", tmplCtx)
 	require.NoError(t, err)
 	assert.Equal(t, "Hello Test!", output)
 }
@@ -185,7 +186,7 @@ Content here`
 
 	// Get template info
 	manager := NewManager()
-	metadata, err := manager.GetTemplateInfo(templatePath)
+	metadata, err := manager.GetTemplateInfo(context.Background(), templatePath)
 
 	require.NoError(t, err)
 	assert.Equal(t, "TEST_TEMPLATE", metadata.TemplateID)
@@ -224,7 +225,7 @@ Content 3`,
 
 	// List templates
 	manager := NewManager()
-	tmplList, err := manager.ListTemplates(tmpDir)
+	tmplList, err := manager.ListTemplates(context.Background(), tmpDir)
 
 	require.NoError(t, err)
 	assert.Len(t, tmplList, 3)

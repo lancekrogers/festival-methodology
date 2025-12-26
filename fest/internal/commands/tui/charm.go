@@ -140,7 +140,7 @@ func charmCreateFestival() error {
 	}
 
 	// Additional variables from templates
-	required := uniqueStrings(collectRequiredVars(tmplRoot, defaultFestivalTemplatePaths(tmplRoot)))
+	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, defaultFestivalTemplatePaths(tmplRoot)))
 	vars := map[string]interface{}{"festival_name": name, "festival_goal": goal}
 	if strings.TrimSpace(tags) != "" {
 		vars["festival_tags"] = strings.Split(tags, ",")
@@ -165,7 +165,7 @@ func charmCreateFestival() error {
 	}
 
 	opts := &shared.CreateFestivalOpts{Name: name, Goal: goal, Tags: tags, VarsFile: varsFile, Dest: dest}
-	return shared.RunCreateFestival(opts)
+	return shared.RunCreateFestival(context.TODO(), opts)
 }
 
 func charmPlanFestivalWizard() error {
@@ -195,7 +195,7 @@ func charmPlanFestivalWizard() error {
 		return err
 	}
 
-	required := uniqueStrings(collectRequiredVars(tmplRoot, defaultFestivalTemplatePaths(tmplRoot)))
+	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, defaultFestivalTemplatePaths(tmplRoot)))
 	vars := map[string]interface{}{"festival_name": name, "festival_goal": goal}
 	if strings.TrimSpace(tags) != "" {
 		vars["festival_tags"] = strings.Split(tags, ",")
@@ -217,7 +217,7 @@ func charmPlanFestivalWizard() error {
 		return err
 	}
 
-	if err := shared.RunCreateFestival(&shared.CreateFestivalOpts{Name: name, Goal: goal, Tags: tags, VarsFile: varsFile, Dest: dest}); err != nil {
+	if err := shared.RunCreateFestival(context.TODO(), &shared.CreateFestivalOpts{Name: name, Goal: goal, Tags: tags, VarsFile: varsFile, Dest: dest}); err != nil {
 		return err
 	}
 	slug := slugify(name)
@@ -250,7 +250,7 @@ func charmPlanFestivalWizard() error {
 			if err := pf.Run(); err != nil {
 				return err
 			}
-			if err := shared.RunCreatePhase(&shared.CreatePhaseOpts{After: after, Name: pname, PhaseType: ptype, Path: festivalDir}); err != nil {
+			if err := shared.RunCreatePhase(context.TODO(), &shared.CreatePhaseOpts{After: after, Name: pname, PhaseType: ptype, Path: festivalDir}); err != nil {
 				return err
 			}
 			after++
@@ -338,7 +338,7 @@ func charmCreatePhase() error {
 	}
 	after := atoiDefault(afterStr, defAfter)
 
-	required := uniqueStrings(collectRequiredVars(tmplRoot, []string{filepath.Join(tmplRoot, "PHASE_GOAL_TEMPLATE.md")}))
+	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, []string{filepath.Join(tmplRoot, "PHASE_GOAL_TEMPLATE.md")}))
 	vars := map[string]interface{}{}
 	for _, k := range required {
 		if k == "phase_number" || k == "phase_name" || k == "phase_type" {
@@ -358,7 +358,7 @@ func charmCreatePhase() error {
 		return err
 	}
 	opts := &shared.CreatePhaseOpts{After: after, Name: name, PhaseType: phaseType, Path: fallbackDot(path), VarsFile: varsFile}
-	return shared.RunCreatePhase(opts)
+	return shared.RunCreatePhase(context.TODO(), opts)
 }
 
 func charmCreateSequence() error {
@@ -469,7 +469,7 @@ func charmCreateSequence() error {
 		resolvedPath = rp
 	}
 
-	required := uniqueStrings(collectRequiredVars(tmplRoot, []string{filepath.Join(tmplRoot, "SEQUENCE_GOAL_TEMPLATE.md")}))
+	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, []string{filepath.Join(tmplRoot, "SEQUENCE_GOAL_TEMPLATE.md")}))
 	vars := map[string]interface{}{}
 	for _, k := range required {
 		if k == "sequence_number" || k == "sequence_name" {
@@ -489,7 +489,7 @@ func charmCreateSequence() error {
 		return err
 	}
 	opts := &shared.CreateSequenceOpts{After: after, Name: name, Path: fallbackDot(resolvedPath), VarsFile: varsFile}
-	return shared.RunCreateSequence(opts)
+	return shared.RunCreateSequence(context.TODO(), opts)
 }
 
 func charmCreateTask() error {
@@ -634,7 +634,7 @@ func charmCreateTask() error {
 	}
 	after := atoiDefault(afterStr, 0)
 
-	required := uniqueStrings(collectRequiredVars(tmplRoot, []string{filepath.Join(tmplRoot, "TASK_TEMPLATE.md")}))
+	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, []string{filepath.Join(tmplRoot, "TASK_TEMPLATE.md")}))
 	vars := map[string]interface{}{}
 	for _, k := range required {
 		if k == "task_number" || k == "task_name" {
@@ -664,7 +664,7 @@ func charmCreateTask() error {
 		resolvedSeq = rs
 	}
 	opts := &shared.CreateTaskOpts{After: after, Names: []string{name}, Path: fallbackDot(resolvedSeq), VarsFile: varsFile}
-	return shared.RunCreateTask(opts)
+	return shared.RunCreateTask(context.TODO(), opts)
 }
 
 func notEmpty(s string) error {

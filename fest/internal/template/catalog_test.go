@@ -1,6 +1,7 @@
 package template
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -43,7 +44,7 @@ Just content.
 		t.Fatalf("failed to write template3: %v", err)
 	}
 
-	catalog, err := LoadCatalog(tmpDir)
+	catalog, err := LoadCatalog(context.Background(), tmpDir)
 	if err != nil {
 		t.Fatalf("LoadCatalog failed: %v", err)
 	}
@@ -125,16 +126,16 @@ Hello, {{.name}}!
 		t.Fatalf("failed to write template: %v", err)
 	}
 
-	catalog, err := LoadCatalog(tmpDir)
+	catalog, err := LoadCatalog(context.Background(), tmpDir)
 	if err != nil {
 		t.Fatalf("LoadCatalog failed: %v", err)
 	}
 
 	mgr := NewManager()
-	ctx := NewContext()
-	ctx.SetCustom("name", "World")
+	tmplCtx := NewContext()
+	tmplCtx.SetCustom("name", "World")
 
-	result, err := mgr.RenderByID(catalog, "GREETING", ctx)
+	result, err := mgr.RenderByID(context.Background(), catalog, "GREETING", tmplCtx)
 	if err != nil {
 		t.Fatalf("RenderByID failed: %v", err)
 	}
@@ -148,9 +149,9 @@ Hello, {{.name}}!
 func TestManager_RenderByID_UnknownID(t *testing.T) {
 	catalog := &Catalog{byID: map[string]string{}}
 	mgr := NewManager()
-	ctx := NewContext()
+	tmplCtx := NewContext()
 
-	_, err := mgr.RenderByID(catalog, "UNKNOWN", ctx)
+	_, err := mgr.RenderByID(context.Background(), catalog, "UNKNOWN", tmplCtx)
 	if err == nil {
 		t.Error("expected error for unknown ID")
 	}
@@ -158,9 +159,9 @@ func TestManager_RenderByID_UnknownID(t *testing.T) {
 
 func TestManager_RenderByID_NilCatalog(t *testing.T) {
 	mgr := NewManager()
-	ctx := NewContext()
+	tmplCtx := NewContext()
 
-	_, err := mgr.RenderByID(nil, "TEST", ctx)
+	_, err := mgr.RenderByID(context.Background(), nil, "TEST", tmplCtx)
 	if err == nil {
 		t.Error("expected error for nil catalog")
 	}

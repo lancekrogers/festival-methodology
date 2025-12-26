@@ -1,6 +1,7 @@
 package template
 
 import (
+	"context"
 	"fmt"
 )
 
@@ -10,9 +11,14 @@ type Catalog struct {
 }
 
 // LoadCatalog scans the given templateRoot and builds an ID -> path map.
-func LoadCatalog(templateRoot string) (*Catalog, error) {
+func LoadCatalog(ctx context.Context, templateRoot string) (*Catalog, error) {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("context cancelled: %w", err)
+	}
+
 	l := NewLoader()
-	tmpls, err := l.LoadAll(templateRoot)
+	tmpls, err := l.LoadAll(ctx, templateRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +46,12 @@ func (c *Catalog) Resolve(id string) (string, bool) {
 }
 
 // RenderByID renders a template by ID/alias using the catalog
-func (m *Manager) RenderByID(catalog *Catalog, id string, ctx *Context) (string, error) {
+func (m *Manager) RenderByID(ctx context.Context, catalog *Catalog, id string, tmplCtx *Context) (string, error) {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return "", fmt.Errorf("context cancelled: %w", err)
+	}
+
 	if catalog == nil {
 		return "", fmt.Errorf("template catalog is nil")
 	}
@@ -48,5 +59,5 @@ func (m *Manager) RenderByID(catalog *Catalog, id string, ctx *Context) (string,
 	if !ok {
 		return "", fmt.Errorf("unknown template id: %s", id)
 	}
-	return m.RenderFile(path, ctx)
+	return m.RenderFile(ctx, path, tmplCtx)
 }

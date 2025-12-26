@@ -1,6 +1,7 @@
 package template
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -26,20 +27,25 @@ func (m *Manager) Render(t *Template, ctx *Context) (string, error) {
 }
 
 // RenderFile renders a template file with the given context
-func (m *Manager) RenderFile(templatePath string, ctx *Context) (string, error) {
+func (m *Manager) RenderFile(ctx context.Context, templatePath string, tmplCtx *Context) (string, error) {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return "", fmt.Errorf("context cancelled: %w", err)
+	}
+
 	// Load template
-	tmpl, err := m.loader.Load(templatePath)
+	tmpl, err := m.loader.Load(ctx, templatePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to load template: %w", err)
 	}
 
 	// Validate required variables
-	if err := ValidateTemplate(tmpl, ctx); err != nil {
+	if err := ValidateTemplate(tmpl, tmplCtx); err != nil {
 		return "", fmt.Errorf("template validation failed: %w", err)
 	}
 
 	// Render template
-	output, err := m.renderer.Render(tmpl, ctx)
+	output, err := m.renderer.Render(tmpl, tmplCtx)
 	if err != nil {
 		return "", fmt.Errorf("failed to render template: %w", err)
 	}
@@ -54,9 +60,14 @@ func (m *Manager) RenderFile(templatePath string, ctx *Context) (string, error) 
 }
 
 // RenderFileToFile renders a template and writes it to an output file
-func (m *Manager) RenderFileToFile(templatePath, outputPath string, ctx *Context) error {
+func (m *Manager) RenderFileToFile(ctx context.Context, templatePath, outputPath string, tmplCtx *Context) error {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("context cancelled: %w", err)
+	}
+
 	// Render template
-	output, err := m.RenderFile(templatePath, ctx)
+	output, err := m.RenderFile(ctx, templatePath, tmplCtx)
 	if err != nil {
 		return err
 	}
@@ -76,15 +87,25 @@ func (m *Manager) RenderFileToFile(templatePath, outputPath string, ctx *Context
 }
 
 // RenderDirectory renders all templates in a directory to an output directory
-func (m *Manager) RenderDirectory(templateDir, outputDir string, ctx *Context) error {
+func (m *Manager) RenderDirectory(ctx context.Context, templateDir, outputDir string, tmplCtx *Context) error {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("context cancelled: %w", err)
+	}
+
 	// Load all templates
-	templates, err := m.loader.LoadAll(templateDir)
+	templates, err := m.loader.LoadAll(ctx, templateDir)
 	if err != nil {
 		return fmt.Errorf("failed to load templates: %w", err)
 	}
 
 	// Render each template
 	for _, tmpl := range templates {
+		// Check context on each iteration
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return fmt.Errorf("context cancelled: %w", ctxErr)
+		}
+
 		// Compute relative path
 		relPath, err := filepath.Rel(templateDir, tmpl.Path)
 		if err != nil {
@@ -95,12 +116,12 @@ func (m *Manager) RenderDirectory(templateDir, outputDir string, ctx *Context) e
 		outputPath := filepath.Join(outputDir, relPath)
 
 		// Validate template
-		if err := ValidateTemplate(tmpl, ctx); err != nil {
+		if err := ValidateTemplate(tmpl, tmplCtx); err != nil {
 			return fmt.Errorf("template validation failed for %s: %w", relPath, err)
 		}
 
 		// Render template
-		output, err := m.renderer.Render(tmpl, ctx)
+		output, err := m.renderer.Render(tmpl, tmplCtx)
 		if err != nil {
 			return fmt.Errorf("failed to render %s: %w", relPath, err)
 		}
@@ -142,8 +163,13 @@ func (m *Manager) RenderString(content string, ctx *Context) (string, error) {
 }
 
 // GetTemplateInfo loads a template and returns its metadata
-func (m *Manager) GetTemplateInfo(templatePath string) (*Metadata, error) {
-	tmpl, err := m.loader.Load(templatePath)
+func (m *Manager) GetTemplateInfo(ctx context.Context, templatePath string) (*Metadata, error) {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("context cancelled: %w", err)
+	}
+
+	tmpl, err := m.loader.Load(ctx, templatePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load template: %w", err)
 	}
@@ -156,6 +182,11 @@ func (m *Manager) GetTemplateInfo(templatePath string) (*Metadata, error) {
 }
 
 // ListTemplates lists all templates in a directory
-func (m *Manager) ListTemplates(dir string) ([]*Template, error) {
-	return m.loader.LoadAll(dir)
+func (m *Manager) ListTemplates(ctx context.Context, dir string) ([]*Template, error) {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("context cancelled: %w", err)
+	}
+
+	return m.loader.LoadAll(ctx, dir)
 }

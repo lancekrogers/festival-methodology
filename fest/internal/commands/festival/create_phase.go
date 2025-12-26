@@ -1,6 +1,7 @@
 package festival
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -47,7 +48,7 @@ func NewCreatePhaseCommand() *cobra.Command {
 			if strings.TrimSpace(opts.Name) == "" {
 				return fmt.Errorf("--name is required (or run without flags to open TUI)")
 			}
-			return RunCreatePhase(opts)
+			return RunCreatePhase(cmd.Context(), opts)
 		},
 	}
 	cmd.Flags().IntVar(&opts.After, "after", 0, "Insert after this number (0 inserts at beginning)")
@@ -60,7 +61,12 @@ func NewCreatePhaseCommand() *cobra.Command {
 }
 
 // RunCreatePhase executes the create phase command logic.
-func RunCreatePhase(opts *CreatePhaseOptions) error {
+func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("context cancelled: %w", err)
+	}
+
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	cwd, _ := os.Getwd()
 	// Resolve template root
@@ -95,16 +101,16 @@ func RunCreatePhase(opts *CreatePhaseOptions) error {
 		vars = v
 	}
 
-	// Build context for phase
-	ctx := tpl.NewContext()
-	ctx.SetPhase(newNumber, opts.Name, opts.PhaseType)
+	// Build template context for phase
+	tmplCtx := tpl.NewContext()
+	tmplCtx.SetPhase(newNumber, opts.Name, opts.PhaseType)
 	for k, v := range vars {
-		ctx.SetCustom(k, v)
+		tmplCtx.SetCustom(k, v)
 	}
 
 	// Render or copy PHASE_GOAL template
 	// Try IDs first via catalog
-	catalog, _ := tpl.LoadCatalog(tmplRoot)
+	catalog, _ := tpl.LoadCatalog(ctx, tmplRoot)
 	mgr := tpl.NewManager()
 	var content string
 	var renderErr error
@@ -118,20 +124,20 @@ func RunCreatePhase(opts *CreatePhaseOptions) error {
 	}
 
 	if catalog != nil {
-		content, renderErr = mgr.RenderByID(catalog, templateID, ctx)
+		content, renderErr = mgr.RenderByID(ctx, catalog, templateID, tmplCtx)
 	}
 	if renderErr != nil || content == "" {
 		// Fall back to default filename
 		tpath := filepath.Join(tmplRoot, templateFilename)
 		if _, err := os.Stat(tpath); err == nil {
 			loader := tpl.NewLoader()
-			t, err := loader.Load(tpath)
+			t, err := loader.Load(ctx, tpath)
 			if err != nil {
 				return emitCreatePhaseError(opts, fmt.Errorf("failed to load phase goal template: %w", err))
 			}
 			// Render if it appears templated; else copy
 			if strings.Contains(t.Content, "{{") {
-				out, err := mgr.Render(t, ctx)
+				out, err := mgr.Render(t, tmplCtx)
 				if err != nil {
 					return emitCreatePhaseError(opts, fmt.Errorf("failed to render phase goal: %w", err))
 				}

@@ -1,6 +1,7 @@
 package festival
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -49,7 +50,7 @@ func NewCreateFestivalCommand() *cobra.Command {
 			if strings.TrimSpace(opts.Name) == "" {
 				return fmt.Errorf("--name is required (or run without flags to open TUI)")
 			}
-			return RunCreateFestival(opts)
+			return RunCreateFestival(cmd.Context(), opts)
 		},
 	}
 	cmd.Flags().StringVar(&opts.Name, "name", "", "Festival name (required)")
@@ -62,7 +63,12 @@ func NewCreateFestivalCommand() *cobra.Command {
 }
 
 // RunCreateFestival executes the create festival command logic.
-func RunCreateFestival(opts *CreateFestivalOptions) error {
+func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("context cancelled: %w", err)
+	}
+
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	cwd, _ := os.Getwd()
 
@@ -86,11 +92,11 @@ func RunCreateFestival(opts *CreateFestivalOptions) error {
 		vars = v
 	}
 
-	// Build context
-	ctx := tpl.NewContext()
-	ctx.SetFestival(opts.Name, opts.Goal, parseTags(opts.Tags))
+	// Build template context
+	tmplCtx := tpl.NewContext()
+	tmplCtx.SetFestival(opts.Name, opts.Goal, parseTags(opts.Tags))
 	for k, v := range vars {
-		ctx.SetCustom(k, v)
+		tmplCtx.SetCustom(k, v)
 	}
 
 	// Destination
@@ -123,7 +129,7 @@ func RunCreateFestival(opts *CreateFestivalOptions) error {
 		}
 		// Load and decide copy vs render
 		loader := tpl.NewLoader()
-		t, err := loader.Load(tpath)
+		t, err := loader.Load(ctx, tpath)
 		if err != nil {
 			return emitCreateFestivalError(opts, fmt.Errorf("failed to load template %s: %w", c.Template, err))
 		}
@@ -131,7 +137,7 @@ func RunCreateFestival(opts *CreateFestivalOptions) error {
 		// If template appears to require variables, render; else copy
 		requires := t.Metadata != nil && len(t.Metadata.RequiredVariables) > 0
 		if requires || strings.Contains(t.Content, "{{") {
-			out, err := mgr.Render(t, ctx)
+			out, err := mgr.Render(t, tmplCtx)
 			if err != nil {
 				return emitCreateFestivalError(opts, fmt.Errorf("failed to render %s: %w", c.Template, err))
 			}

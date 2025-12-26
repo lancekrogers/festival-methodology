@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -13,14 +14,17 @@ import (
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 )
 
-func collectRequiredVars(templateRoot string, paths []string) []string {
+func collectRequiredVars(ctx context.Context, templateRoot string, paths []string) []string {
 	loader := tpl.NewLoader()
 	vars := []string{}
 	for _, p := range paths {
+		if ctx.Err() != nil {
+			break
+		}
 		if _, err := os.Stat(p); err != nil {
 			continue
 		}
-		t, err := loader.Load(p)
+		t, err := loader.Load(ctx, p)
 		if err != nil || t.Metadata == nil {
 			continue
 		}

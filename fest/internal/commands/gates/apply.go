@@ -209,7 +209,7 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 	}
 
 	// Create generator
-	generator, err := gatescore.NewTaskGenerator(tmplRoot)
+	generator, err := gatescore.NewTaskGenerator(ctx, tmplRoot)
 	if err != nil {
 		return emitApplyError(opts, fmt.Errorf("creating task generator: %w", err))
 	}

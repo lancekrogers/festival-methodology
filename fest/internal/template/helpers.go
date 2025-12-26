@@ -1,6 +1,8 @@
 package template
 
 import (
+	"context"
+	"fmt"
 	"os"
 )
 
@@ -8,11 +10,16 @@ import (
 // falls back to rendering or copying a specific file path.
 // If the template contains Go template delimiters or declares required variables,
 // it is rendered with the provided context; otherwise the file content is copied.
-func RenderByIDOrFallback(catalog *Catalog, id string, fallbackPath string, ctx *Context) (string, error) {
+func RenderByIDOrFallback(ctx context.Context, catalog *Catalog, id string, fallbackPath string, tmplCtx *Context) (string, error) {
+	// Check context early
+	if err := ctx.Err(); err != nil {
+		return "", fmt.Errorf("context cancelled: %w", err)
+	}
+
 	mgr := NewManager()
 	// Try by ID via catalog
 	if catalog != nil && id != "" {
-		if content, err := mgr.RenderByID(catalog, id, ctx); err == nil && content != "" {
+		if content, err := mgr.RenderByID(ctx, catalog, id, tmplCtx); err == nil && content != "" {
 			return content, nil
 		}
 	}
@@ -20,7 +27,7 @@ func RenderByIDOrFallback(catalog *Catalog, id string, fallbackPath string, ctx 
 	// Fallback to explicit file
 	// Load template file and decide render vs copy based on content/metadata
 	loader := NewLoader()
-	t, err := loader.Load(fallbackPath)
+	t, err := loader.Load(ctx, fallbackPath)
 	if err != nil {
 		// As a last resort, try to read raw content (if not a template with frontmatter)
 		b, rerr := os.ReadFile(fallbackPath)
@@ -33,7 +40,7 @@ func RenderByIDOrFallback(catalog *Catalog, id string, fallbackPath string, ctx 
 	// If the template has required variables or contains delimiters, render
 	requires := t.Metadata != nil && len(t.Metadata.RequiredVariables) > 0
 	if requires || containsDelims(t.Content) {
-		out, err := mgr.Render(t, ctx)
+		out, err := mgr.Render(t, tmplCtx)
 		if err != nil {
 			return "", err
 		}
