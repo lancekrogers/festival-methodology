@@ -113,6 +113,34 @@ func (tc *TestContainer) RunFest(args ...string) (string, error) {
  return string(output), nil
 }
 
+// RunFestInDir runs fest command from a specific directory
+func (tc *TestContainer) RunFestInDir(dir string, args ...string) (string, error) {
+ // Use sh -c to change directory and run fest
+ cmd := []string{"sh", "-c", "cd " + dir + " && /fest " + strings.Join(args, " ")}
+ return tc.runCommand(cmd)
+}
+
+// runCommand executes a command in the container
+// Returns output even on non-zero exit for test debugging
+func (tc *TestContainer) runCommand(cmd []string) (string, error) {
+ exitCode, reader, err := tc.container.Exec(tc.ctx, cmd)
+ if err != nil {
+  return "", fmt.Errorf("failed to execute command: %w", err)
+ }
+
+ output, err := io.ReadAll(reader)
+ if err != nil {
+  return "", fmt.Errorf("failed to read output: %w", err)
+ }
+
+ // Don't return error on non-zero exit - let tests check output
+ if exitCode != 0 {
+  return string(output), nil
+ }
+
+ return string(output), nil
+}
+
 // CopyToContainer copies a file to the container
 func (tc *TestContainer) CopyToContainer(sourcePath, targetPath string) error {
  fileContent, err := os.ReadFile(sourcePath)
