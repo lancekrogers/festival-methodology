@@ -18,21 +18,28 @@ import (
 
 // CreateTaskOptions holds options for the create task command.
 type CreateTaskOptions struct {
-	After      int
-	Names      []string
-	Path       string
-	VarsFile   string
-	JSONOutput bool
+	After       int
+	Names       []string
+	Path        string
+	VarsFile    string
+	Markers     string // Inline JSON with hint→value mappings
+	MarkersFile string // JSON file path with hint→value mappings
+	SkipMarkers bool   // Skip marker processing
+	DryRun      bool   // Show markers without creating file
+	JSONOutput  bool
 }
 
 type createTaskResult struct {
-	OK       bool                   `json:"ok"`
-	Action   string                 `json:"action"`
-	Task     map[string]interface{} `json:"task,omitempty"`
-	Created  []string               `json:"created,omitempty"`
-	Renumber []string               `json:"renumbered,omitempty"`
-	Errors   []map[string]any       `json:"errors,omitempty"`
-	Warnings []string               `json:"warnings,omitempty"`
+	OK            bool                     `json:"ok"`
+	Action        string                   `json:"action"`
+	Task          map[string]interface{}   `json:"task,omitempty"`
+	Created       []string                 `json:"created,omitempty"`
+	Renumber      []string                 `json:"renumbered,omitempty"`
+	Markers       []map[string]interface{} `json:"markers,omitempty"`
+	MarkersFilled int                      `json:"markers_filled,omitempty"`
+	MarkersTotal  int                      `json:"markers_total,omitempty"`
+	Errors        []map[string]any         `json:"errors,omitempty"`
+	Warnings      []string                 `json:"warnings,omitempty"`
 }
 
 // NewCreateTaskCommand adds 'create task'
@@ -72,6 +79,16 @@ EXAMPLES:
   # Create task in specific sequence
   fest create task --name "setup" --path ./002_IMPLEMENT/01_api --json
 
+MARKER FILLING (for AI agents):
+  # Fill all REPLACE markers in one command
+  fest create task --name "setup" --markers '{"Brief description": "Auth middleware", "Yes/No": "Yes"}'
+
+  # Preview template markers first (dry-run)
+  fest create task --name "setup" --dry-run --json
+
+  # Skip marker filling (leave REPLACE tags)
+  fest create task --name "setup" --skip-markers
+
 Run 'fest understand tasks' for detailed guidance on task file creation.
 Run 'fest validate tasks' to verify task files exist in implementation sequences.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -94,6 +111,10 @@ Run 'fest validate tasks' to verify task files exist in implementation sequences
 	cmd.Flags().StringSliceVar(&opts.Names, "name", nil, "Task name(s) - can be specified multiple times for batch creation")
 	cmd.Flags().StringVar(&opts.Path, "path", ".", "Path to sequence directory (directory containing numbered task files)")
 	cmd.Flags().StringVar(&opts.VarsFile, "vars-file", "", "JSON vars for rendering")
+	cmd.Flags().StringVar(&opts.Markers, "markers", "", "JSON string with REPLACE marker hint→value mappings")
+	cmd.Flags().StringVar(&opts.MarkersFile, "markers-file", "", "JSON file with REPLACE marker hint→value mappings")
+	cmd.Flags().BoolVar(&opts.SkipMarkers, "skip-markers", false, "Skip REPLACE marker processing")
+	cmd.Flags().BoolVar(&opts.DryRun, "dry-run", false, "Show template markers without creating file")
 	cmd.Flags().BoolVar(&opts.JSONOutput, "json", false, "Emit JSON output")
 	return cmd
 }
@@ -137,6 +158,7 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 	// Track all created tasks for output
 	var createdTasks []map[string]interface{}
 	var createdPaths []string
+	var totalMarkersFilled, totalMarkersCount int
 	currentAfter := opts.After
 
 	// Create each task sequentially
@@ -196,6 +218,33 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 			if err := os.WriteFile(taskPath, []byte(content), 0644); err != nil {
 				return emitCreateTaskError(opts, errors.IO("writing task", err).WithField("path", taskPath))
 			}
+
+			// Process REPLACE markers in the created file
+			markerResult, err := ProcessMarkers(ctx, MarkerOptions{
+				FilePath:    taskPath,
+				Markers:     opts.Markers,
+				MarkersFile: opts.MarkersFile,
+				SkipMarkers: opts.SkipMarkers,
+				DryRun:      opts.DryRun,
+				JSONOutput:  opts.JSONOutput,
+			})
+			if err != nil {
+				return emitCreateTaskError(opts, errors.Wrap(err, "processing markers"))
+			}
+
+			// For dry-run, output markers and exit
+			if opts.DryRun && markerResult != nil {
+				if err := PrintDryRunMarkers(markerResult, opts.JSONOutput); err != nil {
+					return emitCreateTaskError(opts, err)
+				}
+				return nil
+			}
+
+			// Track marker results for reporting
+			if markerResult != nil && markerResult.Total > 0 {
+				totalMarkersFilled += markerResult.Filled
+				totalMarkersCount += markerResult.Total
+			}
 		}
 
 		// Track created task
@@ -213,10 +262,12 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 	// Output results
 	if opts.JSONOutput {
 		result := createTaskResult{
-			OK:       true,
-			Action:   "create_task",
-			Created:  createdPaths,
-			Renumber: []string{},
+			OK:            true,
+			Action:        "create_task",
+			Created:       createdPaths,
+			Renumber:      []string{},
+			MarkersFilled: totalMarkersFilled,
+			MarkersTotal:  totalMarkersCount,
 		}
 		// For single task, use Task field for backward compatibility
 		if len(createdTasks) == 1 {
@@ -235,6 +286,17 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 			display.Info("  └── %s", task["id"])
 		}
 	}
+
+	// Report marker filling status
+	if totalMarkersCount > 0 {
+		if totalMarkersFilled == totalMarkersCount {
+			display.Success("Filled %d/%d REPLACE markers", totalMarkersFilled, totalMarkersCount)
+		} else {
+			display.Warning("Filled %d/%d REPLACE markers (%d remaining)",
+				totalMarkersFilled, totalMarkersCount, totalMarkersCount-totalMarkersFilled)
+		}
+	}
+
 	fmt.Println()
 	fmt.Println("   Next steps:")
 	fmt.Println("   • Add more tasks: fest create task --name \"next_step\"")

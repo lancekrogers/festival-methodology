@@ -18,22 +18,29 @@ import (
 
 // CreatePhaseOptions holds options for the create phase command.
 type CreatePhaseOptions struct {
-	After      int
-	Name       string
-	PhaseType  string
-	Path       string
-	VarsFile   string
-	JSONOutput bool
+	After       int
+	Name        string
+	PhaseType   string
+	Path        string
+	VarsFile    string
+	Markers     string // Inline JSON with hint→value mappings
+	MarkersFile string // JSON file path with hint→value mappings
+	SkipMarkers bool   // Skip marker processing
+	DryRun      bool   // Show markers without creating file
+	JSONOutput  bool
 }
 
 type createPhaseResult struct {
-	OK       bool                   `json:"ok"`
-	Action   string                 `json:"action"`
-	Phase    map[string]interface{} `json:"phase,omitempty"`
-	Created  []string               `json:"created,omitempty"`
-	Renumber []string               `json:"renumbered,omitempty"`
-	Errors   []map[string]any       `json:"errors,omitempty"`
-	Warnings []string               `json:"warnings,omitempty"`
+	OK            bool                     `json:"ok"`
+	Action        string                   `json:"action"`
+	Phase         map[string]interface{}   `json:"phase,omitempty"`
+	Created       []string                 `json:"created,omitempty"`
+	Renumber      []string                 `json:"renumbered,omitempty"`
+	Markers       []map[string]interface{} `json:"markers,omitempty"`
+	MarkersFilled int                      `json:"markers_filled,omitempty"`
+	MarkersTotal  int                      `json:"markers_total,omitempty"`
+	Errors        []map[string]any         `json:"errors,omitempty"`
+	Warnings      []string                 `json:"warnings,omitempty"`
 }
 
 // NewCreatePhaseCommand adds 'create phase'
@@ -57,6 +64,10 @@ func NewCreatePhaseCommand() *cobra.Command {
 	cmd.Flags().StringVar(&opts.PhaseType, "type", "planning", "Phase type (planning|implementation|review|deployment|research)")
 	cmd.Flags().StringVar(&opts.Path, "path", ".", "Path to festival root (directory containing numbered phases)")
 	cmd.Flags().StringVar(&opts.VarsFile, "vars-file", "", "JSON vars for rendering")
+	cmd.Flags().StringVar(&opts.Markers, "markers", "", "JSON string with REPLACE marker hint→value mappings")
+	cmd.Flags().StringVar(&opts.MarkersFile, "markers-file", "", "JSON file with REPLACE marker hint→value mappings")
+	cmd.Flags().BoolVar(&opts.SkipMarkers, "skip-markers", false, "Skip REPLACE marker processing")
+	cmd.Flags().BoolVar(&opts.DryRun, "dry-run", false, "Show template markers without creating file")
 	cmd.Flags().BoolVar(&opts.JSONOutput, "json", false, "Emit JSON output")
 	return cmd
 }
@@ -154,9 +165,36 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 		return emitCreatePhaseError(opts, errors.IO("creating phase dir", err).WithField("path", phaseDir))
 	}
 	goalPath := filepath.Join(phaseDir, "PHASE_GOAL.md")
+	var markersFilled, markersTotal int
 	if content != "" {
 		if err := os.WriteFile(goalPath, []byte(content), 0644); err != nil {
 			return emitCreatePhaseError(opts, errors.IO("writing phase goal", err).WithField("path", goalPath))
+		}
+
+		// Process REPLACE markers in the created file
+		markerResult, err := ProcessMarkers(ctx, MarkerOptions{
+			FilePath:    goalPath,
+			Markers:     opts.Markers,
+			MarkersFile: opts.MarkersFile,
+			SkipMarkers: opts.SkipMarkers,
+			DryRun:      opts.DryRun,
+			JSONOutput:  opts.JSONOutput,
+		})
+		if err != nil {
+			return emitCreatePhaseError(opts, errors.Wrap(err, "processing markers"))
+		}
+
+		// For dry-run, output markers and exit
+		if opts.DryRun && markerResult != nil {
+			if err := PrintDryRunMarkers(markerResult, opts.JSONOutput); err != nil {
+				return emitCreatePhaseError(opts, err)
+			}
+			return nil
+		}
+
+		if markerResult != nil {
+			markersFilled = markerResult.Filled
+			markersTotal = markerResult.Total
 		}
 	}
 
@@ -170,8 +208,10 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 				"name":   opts.Name,
 				"type":   opts.PhaseType,
 			},
-			Created:  []string{goalPath},
-			Renumber: []string{},
+			Created:       []string{goalPath},
+			Renumber:      []string{},
+			MarkersFilled: markersFilled,
+			MarkersTotal:  markersTotal,
 			Warnings: []string{
 				"Next: Create sequences with 'fest create sequence --name SEQUENCE_NAME'",
 			},
@@ -180,6 +220,17 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 
 	display.Success("Created phase: %s", phaseID)
 	display.Info("  └── %s", "PHASE_GOAL.md")
+
+	// Report marker filling status
+	if markersTotal > 0 {
+		if markersFilled == markersTotal {
+			display.Success("Filled %d/%d REPLACE markers", markersFilled, markersTotal)
+		} else {
+			display.Warning("Filled %d/%d REPLACE markers (%d remaining)",
+				markersFilled, markersTotal, markersTotal-markersFilled)
+		}
+	}
+
 	fmt.Println()
 	fmt.Println("   Next steps:")
 	fmt.Println("   1. cd", phaseDir)

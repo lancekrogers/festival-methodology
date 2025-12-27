@@ -18,22 +18,29 @@ import (
 
 // CreateSequenceOptions holds options for the create sequence command.
 type CreateSequenceOptions struct {
-	After      int
-	Name       string
-	Path       string
-	VarsFile   string
-	JSONOutput bool
-	NoPrompt   bool
+	After       int
+	Name        string
+	Path        string
+	VarsFile    string
+	Markers     string // Inline JSON with hint→value mappings
+	MarkersFile string // JSON file path with hint→value mappings
+	SkipMarkers bool   // Skip marker processing
+	DryRun      bool   // Show markers without creating file
+	JSONOutput  bool
+	NoPrompt    bool
 }
 
 type createSequenceResult struct {
-	OK       bool                   `json:"ok"`
-	Action   string                 `json:"action"`
-	Sequence map[string]interface{} `json:"sequence,omitempty"`
-	Created  []string               `json:"created,omitempty"`
-	Renumber []string               `json:"renumbered,omitempty"`
-	Errors   []map[string]any       `json:"errors,omitempty"`
-	Warnings []string               `json:"warnings,omitempty"`
+	OK            bool                     `json:"ok"`
+	Action        string                   `json:"action"`
+	Sequence      map[string]interface{}   `json:"sequence,omitempty"`
+	Created       []string                 `json:"created,omitempty"`
+	Renumber      []string                 `json:"renumbered,omitempty"`
+	Markers       []map[string]interface{} `json:"markers,omitempty"`
+	MarkersFilled int                      `json:"markers_filled,omitempty"`
+	MarkersTotal  int                      `json:"markers_total,omitempty"`
+	Errors        []map[string]any         `json:"errors,omitempty"`
+	Warnings      []string                 `json:"warnings,omitempty"`
 }
 
 // NewCreateSequenceCommand adds 'create sequence'
@@ -84,6 +91,10 @@ Run 'fest validate tasks' to verify task files exist.`,
 	cmd.Flags().StringVar(&opts.Name, "name", "", "Sequence name (required)")
 	cmd.Flags().StringVar(&opts.Path, "path", ".", "Path to phase directory (directory containing numbered sequences)")
 	cmd.Flags().StringVar(&opts.VarsFile, "vars-file", "", "JSON vars for rendering")
+	cmd.Flags().StringVar(&opts.Markers, "markers", "", "JSON string with REPLACE marker hint→value mappings")
+	cmd.Flags().StringVar(&opts.MarkersFile, "markers-file", "", "JSON file with REPLACE marker hint→value mappings")
+	cmd.Flags().BoolVar(&opts.SkipMarkers, "skip-markers", false, "Skip REPLACE marker processing")
+	cmd.Flags().BoolVar(&opts.DryRun, "dry-run", false, "Show template markers without creating file")
 	cmd.Flags().BoolVar(&opts.JSONOutput, "json", false, "Emit JSON output")
 	cmd.Flags().BoolVar(&opts.NoPrompt, "no-prompt", false, "Skip interactive prompts")
 	return cmd
@@ -173,9 +184,36 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 		return emitCreateSequenceError(opts, errors.IO("creating sequence dir", err).WithField("path", seqDir))
 	}
 	goalPath := filepath.Join(seqDir, "SEQUENCE_GOAL.md")
+	var markersFilled, markersTotal int
 	if content != "" {
 		if err := os.WriteFile(goalPath, []byte(content), 0644); err != nil {
 			return emitCreateSequenceError(opts, errors.IO("writing sequence goal", err).WithField("path", goalPath))
+		}
+
+		// Process REPLACE markers in the created file
+		markerResult, err := ProcessMarkers(ctx, MarkerOptions{
+			FilePath:    goalPath,
+			Markers:     opts.Markers,
+			MarkersFile: opts.MarkersFile,
+			SkipMarkers: opts.SkipMarkers,
+			DryRun:      opts.DryRun,
+			JSONOutput:  opts.JSONOutput,
+		})
+		if err != nil {
+			return emitCreateSequenceError(opts, errors.Wrap(err, "processing markers"))
+		}
+
+		// For dry-run, output markers and exit
+		if opts.DryRun && markerResult != nil {
+			if err := PrintDryRunMarkers(markerResult, opts.JSONOutput); err != nil {
+				return emitCreateSequenceError(opts, err)
+			}
+			return nil
+		}
+
+		if markerResult != nil {
+			markersFilled = markerResult.Filled
+			markersTotal = markerResult.Total
 		}
 	}
 
@@ -188,8 +226,10 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 				"id":     seqID,
 				"name":   opts.Name,
 			},
-			Created:  []string{goalPath},
-			Renumber: []string{},
+			Created:       []string{goalPath},
+			Renumber:      []string{},
+			MarkersFilled: markersFilled,
+			MarkersTotal:  markersTotal,
 			Warnings: []string{
 				"Sequences need task files for AI execution. Goals define WHAT, tasks define HOW.",
 				"Create tasks with: fest create task --name \"...\"",
@@ -201,6 +241,17 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 
 	display.Success("Created sequence: %s", seqID)
 	display.Info("  └── %s", "SEQUENCE_GOAL.md")
+
+	// Report marker filling status
+	if markersTotal > 0 {
+		if markersFilled == markersTotal {
+			display.Success("Filled %d/%d REPLACE markers", markersFilled, markersTotal)
+		} else {
+			display.Warning("Filled %d/%d REPLACE markers (%d remaining)",
+				markersFilled, markersTotal, markersTotal-markersFilled)
+		}
+	}
+
 	fmt.Println()
 
 	// Show education message
