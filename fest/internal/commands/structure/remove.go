@@ -2,6 +2,7 @@ package structure
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -120,36 +121,56 @@ Warning: This will permanently delete the phase and all its contents!`,
 
 // newRemoveSequenceCommand creates the sequence removal subcommand
 func newRemoveSequenceCommand(opts *removeOptions) *cobra.Command {
-	var phaseDir string
+	var phaseFlag string
 
 	cmd := &cobra.Command{
 		Use:   "sequence [sequence-number|sequence-name]",
 		Short: "Remove a sequence and renumber subsequent sequences",
 		Long: `Remove a sequence by number or name and automatically renumber all following sequences.
-		
-Warning: This will permanently delete the sequence and all its contents!`,
-		Example: `  fest remove sequence --phase 001_PLAN 2  # Remove sequence 02
+
+Warning: This will permanently delete the sequence and all its contents!
+
+If --phase is omitted and you're inside a phase directory, it will use the current phase.`,
+		Example: `  fest remove sequence 2                   # Use current phase (if inside one)
+  fest remove sequence --phase 1 2          # Numeric shortcut for phase 001_*
+  fest remove sequence --phase 001_PLAN 2   # Remove sequence 02
   fest remove sequence --phase 001_PLAN 02_architecture`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if phaseDir == "" {
-				return errors.Validation("--phase flag is required")
+			cwd, err := os.Getwd()
+			if err != nil {
+				return errors.IO("getting current directory", err)
+			}
+
+			// Detect context
+			ctx, err := festival.DetectContext(cwd)
+			if err != nil {
+				return errors.Wrap(err, "detecting context")
+			}
+
+			var phaseDir string
+			if phaseFlag != "" {
+				if ctx.FestivalDir == "" {
+					return errors.Validation("not inside a festival directory")
+				}
+				phaseDir, err = festival.ResolvePhase(phaseFlag, ctx.FestivalDir)
+				if err != nil {
+					return err
+				}
+			} else if ctx.PhaseDir != "" {
+				phaseDir = ctx.PhaseDir
+			} else {
+				return errors.Validation("--phase required (not inside a phase directory)")
 			}
 
 			target := args[0]
-
-			// Convert phase to absolute path
-			phaseAbs, err := filepath.Abs(phaseDir)
-			if err != nil {
-				return errors.Wrap(err, "resolving phase path").WithField("phase", phaseDir)
-			}
 
 			// Determine target path
 			var targetPath string
 			if num, err := parseSequenceNumber(target); err == nil {
 				// Find sequence by number
 				parser := festival.NewParser()
-				sequences, err := parser.ParseSequences(cmd.Context(), phaseAbs)
+				sequences, err := parser.ParseSequences(cmd.Context(), phaseDir)
 				if err != nil {
 					return errors.Wrap(err, "parsing sequences").WithOp("removeSequence")
 				}
@@ -164,11 +185,11 @@ Warning: This will permanently delete the sequence and all its contents!`,
 				}
 
 				if !found {
-					return errors.NotFound("sequence").WithField("number", num).WithField("phase", phaseDir)
+					return errors.NotFound("sequence").WithField("number", num).WithField("phase", filepath.Base(phaseDir))
 				}
 			} else {
 				// Use as name/path
-				targetPath = filepath.Join(phaseAbs, target)
+				targetPath = filepath.Join(phaseDir, target)
 			}
 
 			// Confirm removal if not forced
@@ -195,44 +216,76 @@ Warning: This will permanently delete the sequence and all its contents!`,
 		},
 	}
 
-	cmd.Flags().StringVar(&phaseDir, "phase", "", "phase containing the sequence")
-	cmd.MarkFlagRequired("phase")
+	cmd.Flags().StringVar(&phaseFlag, "phase", "", "phase directory (numeric shortcut, name, or path)")
 
 	return cmd
 }
 
 // newRemoveTaskCommand creates the task removal subcommand
 func newRemoveTaskCommand(opts *removeOptions) *cobra.Command {
-	var sequenceDir string
+	var phaseFlag string
+	var sequenceFlag string
 
 	cmd := &cobra.Command{
 		Use:   "task [task-number|task-name]",
 		Short: "Remove a task and renumber subsequent tasks",
 		Long: `Remove a task by number or name and automatically renumber all following tasks.
-		
-Warning: This will permanently delete the task file!`,
-		Example: `  fest remove task --sequence 001_PLAN/01_requirements 2
-  fest remove task --sequence ./path/to/sequence 02_validate.md`,
+
+Warning: This will permanently delete the task file!
+
+If --sequence is omitted and you're inside a sequence directory, it will use the current sequence.`,
+		Example: `  fest remove task 2                              # Use current sequence (if inside one)
+  fest remove task --sequence 1 2                 # Numeric shortcut for sequence 01_*
+  fest remove task --phase 1 --sequence 2 3       # Phase 001_*, sequence 02_*
+  fest remove task --sequence ./path/to/seq 02_validate.md`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if sequenceDir == "" {
-				return errors.Validation("--sequence flag is required")
+			cwd, err := os.Getwd()
+			if err != nil {
+				return errors.IO("getting current directory", err)
+			}
+
+			// Detect context
+			ctx, err := festival.DetectContext(cwd)
+			if err != nil {
+				return errors.Wrap(err, "detecting context")
+			}
+
+			var sequenceDir string
+			if sequenceFlag != "" {
+				var phaseDir string
+				if phaseFlag != "" {
+					if ctx.FestivalDir == "" {
+						return errors.Validation("not inside a festival directory")
+					}
+					phaseDir, err = festival.ResolvePhase(phaseFlag, ctx.FestivalDir)
+					if err != nil {
+						return err
+					}
+				} else if ctx.PhaseDir != "" {
+					phaseDir = ctx.PhaseDir
+				} else {
+					return errors.Validation("--phase required when using --sequence with numeric shortcut")
+				}
+
+				sequenceDir, err = festival.ResolveSequence(sequenceFlag, phaseDir)
+				if err != nil {
+					return err
+				}
+			} else if ctx.SequenceDir != "" {
+				sequenceDir = ctx.SequenceDir
+			} else {
+				return errors.Validation("--sequence required (not inside a sequence directory)")
 			}
 
 			target := args[0]
-
-			// Convert sequence to absolute path
-			seqAbs, err := filepath.Abs(sequenceDir)
-			if err != nil {
-				return errors.Wrap(err, "resolving sequence path").WithField("sequence", sequenceDir)
-			}
 
 			// Determine target path
 			var targetPath string
 			if num, err := parseTaskNumber(target); err == nil {
 				// Find task by number
 				parser := festival.NewParser()
-				tasks, err := parser.ParseTasks(cmd.Context(), seqAbs)
+				tasks, err := parser.ParseTasks(cmd.Context(), sequenceDir)
 				if err != nil {
 					return errors.Wrap(err, "parsing tasks").WithOp("removeTask")
 				}
@@ -246,7 +299,7 @@ Warning: This will permanently delete the task file!`,
 				}
 
 				if len(matches) == 0 {
-					return errors.NotFound("task").WithField("number", num).WithField("sequence", sequenceDir)
+					return errors.NotFound("task").WithField("number", num).WithField("sequence", filepath.Base(sequenceDir))
 				} else if len(matches) > 1 {
 					// Multiple tasks with same number
 					fmt.Println("Multiple tasks found with that number:")
@@ -268,7 +321,7 @@ Warning: This will permanently delete the task file!`,
 				if !strings.HasSuffix(target, ".md") {
 					target += ".md"
 				}
-				targetPath = filepath.Join(seqAbs, target)
+				targetPath = filepath.Join(sequenceDir, target)
 			}
 
 			// Confirm removal if not forced
@@ -295,8 +348,8 @@ Warning: This will permanently delete the task file!`,
 		},
 	}
 
-	cmd.Flags().StringVar(&sequenceDir, "sequence", "", "sequence containing the task")
-	cmd.MarkFlagRequired("sequence")
+	cmd.Flags().StringVar(&phaseFlag, "phase", "", "phase directory (numeric shortcut, name, or path)")
+	cmd.Flags().StringVar(&sequenceFlag, "sequence", "", "sequence directory (numeric shortcut, name, or path)")
 
 	return cmd
 }

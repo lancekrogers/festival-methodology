@@ -1,6 +1,7 @@
 package structure
 
 import (
+	"os"
 	"path/filepath"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
@@ -94,26 +95,48 @@ Phases are numbered with 3 digits (001, 002, 003, etc.).`,
 
 // newRenumberSequenceCommand creates the sequence renumbering subcommand
 func newRenumberSequenceCommand(opts *renumberOptions) *cobra.Command {
-	var phaseDir string
+	var phaseFlag string
 
 	cmd := &cobra.Command{
 		Use:   "sequence",
 		Short: "Renumber sequences within a phase",
 		Long: `Renumber all sequences in a phase starting from the specified number (default: 1).
-		
-Sequences are numbered with 2 digits (01, 02, 03, etc.).`,
-		Example: `  fest renumber sequence --phase 001_PLAN           # Renumber sequences in phase
+
+Sequences are numbered with 2 digits (01, 02, 03, etc.).
+
+If --phase is omitted and you're inside a phase directory, it will use the current phase.`,
+		Example: `  fest renumber sequence                            # Use current phase (if inside one)
+  fest renumber sequence --phase 1                  # Numeric shortcut for phase 001_*
+  fest renumber sequence --phase 001_PLAN           # Renumber sequences in phase
   fest renumber sequence --phase ./003_IMPLEMENT    # Use path to phase
   fest renumber sequence --phase 001_PLAN --start 2 # Start from 02`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if phaseDir == "" {
-				return errors.Validation("--phase flag is required")
+			cwd, err := os.Getwd()
+			if err != nil {
+				return errors.IO("getting current directory", err)
 			}
 
-			// Convert to absolute path
-			absPath, err := filepath.Abs(phaseDir)
+			// Detect context
+			ctx, err := festival.DetectContext(cwd)
 			if err != nil {
-				return errors.Wrap(err, "resolving path").WithField("path", phaseDir)
+				return errors.Wrap(err, "detecting context")
+			}
+
+			var phaseDir string
+			if phaseFlag != "" {
+				// Resolve phase flag (supports numeric shortcuts)
+				if ctx.FestivalDir == "" {
+					return errors.Validation("not inside a festival directory")
+				}
+				phaseDir, err = festival.ResolvePhase(phaseFlag, ctx.FestivalDir)
+				if err != nil {
+					return err
+				}
+			} else if ctx.PhaseDir != "" {
+				// Use current phase from context
+				phaseDir = ctx.PhaseDir
+			} else {
+				return errors.Validation("--phase required (not inside a phase directory)")
 			}
 
 			// Create renumberer
@@ -124,38 +147,74 @@ Sequences are numbered with 2 digits (01, 02, 03, etc.).`,
 			})
 
 			// Perform renumbering
-			return renumberer.RenumberSequences(cmd.Context(), absPath, opts.startFrom)
+			return renumberer.RenumberSequences(cmd.Context(), phaseDir, opts.startFrom)
 		},
 	}
 
-	cmd.Flags().StringVar(&phaseDir, "phase", "", "phase directory to renumber sequences in")
-	cmd.MarkFlagRequired("phase")
+	cmd.Flags().StringVar(&phaseFlag, "phase", "", "phase directory (numeric shortcut, name, or path)")
 
 	return cmd
 }
 
 // newRenumberTaskCommand creates the task renumbering subcommand
 func newRenumberTaskCommand(opts *renumberOptions) *cobra.Command {
-	var sequenceDir string
+	var phaseFlag string
+	var sequenceFlag string
 
 	cmd := &cobra.Command{
 		Use:   "task",
 		Short: "Renumber tasks within a sequence",
 		Long: `Renumber all tasks in a sequence starting from the specified number (default: 1).
-		
+
 Tasks are numbered with 2 digits (01, 02, 03, etc.).
-Parallel tasks (multiple tasks with the same number) are preserved.`,
-		Example: `  fest renumber task --sequence 001_PLAN/01_requirements
-  fest renumber task --sequence ./path/to/sequence --start 2`,
+Parallel tasks (multiple tasks with the same number) are preserved.
+
+If --sequence is omitted and you're inside a sequence directory, it will use the current sequence.
+Use --phase to specify the phase when using numeric sequence shortcuts.`,
+		Example: `  fest renumber task                              # Use current sequence (if inside one)
+  fest renumber task --sequence 1                 # Numeric shortcut for sequence 01_*
+  fest renumber task --phase 1 --sequence 2       # Phase 001_*, sequence 02_*
+  fest renumber task --sequence 01_requirements   # Use sequence name
+  fest renumber task --sequence ./path/to/seq     # Use path to sequence`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if sequenceDir == "" {
-				return errors.Validation("--sequence flag is required")
+			cwd, err := os.Getwd()
+			if err != nil {
+				return errors.IO("getting current directory", err)
 			}
 
-			// Convert to absolute path
-			absPath, err := filepath.Abs(sequenceDir)
+			// Detect context
+			ctx, err := festival.DetectContext(cwd)
 			if err != nil {
-				return errors.Wrap(err, "resolving path").WithField("path", sequenceDir)
+				return errors.Wrap(err, "detecting context")
+			}
+
+			var sequenceDir string
+			if sequenceFlag != "" {
+				// Need to resolve sequence, which requires phase
+				var phaseDir string
+				if phaseFlag != "" {
+					if ctx.FestivalDir == "" {
+						return errors.Validation("not inside a festival directory")
+					}
+					phaseDir, err = festival.ResolvePhase(phaseFlag, ctx.FestivalDir)
+					if err != nil {
+						return err
+					}
+				} else if ctx.PhaseDir != "" {
+					phaseDir = ctx.PhaseDir
+				} else {
+					return errors.Validation("--phase required when using --sequence with numeric shortcut")
+				}
+
+				sequenceDir, err = festival.ResolveSequence(sequenceFlag, phaseDir)
+				if err != nil {
+					return err
+				}
+			} else if ctx.SequenceDir != "" {
+				// Use current sequence from context
+				sequenceDir = ctx.SequenceDir
+			} else {
+				return errors.Validation("--sequence required (not inside a sequence directory)")
 			}
 
 			// Create renumberer
@@ -166,12 +225,12 @@ Parallel tasks (multiple tasks with the same number) are preserved.`,
 			})
 
 			// Perform renumbering
-			return renumberer.RenumberTasks(cmd.Context(), absPath, opts.startFrom)
+			return renumberer.RenumberTasks(cmd.Context(), sequenceDir, opts.startFrom)
 		},
 	}
 
-	cmd.Flags().StringVar(&sequenceDir, "sequence", "", "sequence directory to renumber tasks in")
-	cmd.MarkFlagRequired("sequence")
+	cmd.Flags().StringVar(&phaseFlag, "phase", "", "phase directory (numeric shortcut, name, or path)")
+	cmd.Flags().StringVar(&sequenceFlag, "sequence", "", "sequence directory (numeric shortcut, name, or path)")
 
 	return cmd
 }

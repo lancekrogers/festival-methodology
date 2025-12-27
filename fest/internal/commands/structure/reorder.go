@@ -1,6 +1,7 @@
 package structure
 
 import (
+	"os"
 	"path/filepath"
 	"strconv"
 
@@ -106,20 +107,31 @@ For example, moving phase 3 to position 1 will shift phases 1 and 2 down.`,
 
 // newReorderSequenceCommand creates the sequence reordering subcommand
 func newReorderSequenceCommand(opts *reorderOptions) *cobra.Command {
-	var phaseDir string
+	var phaseFlag string
 
 	cmd := &cobra.Command{
 		Use:   "sequence <from> <to>",
 		Short: "Reorder sequences within a phase",
 		Long: `Move a sequence from one position to another within a phase.
 
-Elements between the source and destination positions are shifted accordingly.`,
-		Example: `  fest reorder sequence --phase 001_PLAN 3 1           # Move sequence 03 to position 01
+Elements between the source and destination positions are shifted accordingly.
+
+If --phase is omitted and you're inside a phase directory, it will use the current phase.`,
+		Example: `  fest reorder sequence 3 1                            # Use current phase (if inside one)
+  fest reorder sequence --phase 1 3 1                  # Numeric shortcut for phase 001_*
+  fest reorder sequence --phase 001_PLAN 3 1           # Move sequence 03 to position 01
   fest reorder sequence --phase ./003_IMPLEMENT 1 4    # Move sequence 01 to position 04`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if phaseDir == "" {
-				return errors.Validation("--phase flag is required")
+			cwd, err := os.Getwd()
+			if err != nil {
+				return errors.IO("getting current directory", err)
+			}
+
+			// Detect context
+			ctx, err := festival.DetectContext(cwd)
+			if err != nil {
+				return errors.Wrap(err, "detecting context")
 			}
 
 			from, err := strconv.Atoi(args[0])
@@ -132,10 +144,19 @@ Elements between the source and destination positions are shifted accordingly.`,
 				return errors.Validation("invalid destination position").WithField("position", args[1])
 			}
 
-			// Convert to absolute path
-			absPath, err := filepath.Abs(phaseDir)
-			if err != nil {
-				return errors.Wrap(err, "resolving path").WithField("path", phaseDir)
+			var phaseDir string
+			if phaseFlag != "" {
+				if ctx.FestivalDir == "" {
+					return errors.Validation("not inside a festival directory")
+				}
+				phaseDir, err = festival.ResolvePhase(phaseFlag, ctx.FestivalDir)
+				if err != nil {
+					return err
+				}
+			} else if ctx.PhaseDir != "" {
+				phaseDir = ctx.PhaseDir
+			} else {
+				return errors.Validation("--phase required (not inside a phase directory)")
 			}
 
 			// Create renumberer
@@ -147,19 +168,19 @@ Elements between the source and destination positions are shifted accordingly.`,
 			})
 
 			// Perform reordering
-			return renumberer.ReorderSequence(cmd.Context(), absPath, from, to)
+			return renumberer.ReorderSequence(cmd.Context(), phaseDir, from, to)
 		},
 	}
 
-	cmd.Flags().StringVar(&phaseDir, "phase", "", "phase directory to reorder sequences in")
-	cmd.MarkFlagRequired("phase")
+	cmd.Flags().StringVar(&phaseFlag, "phase", "", "phase directory (numeric shortcut, name, or path)")
 
 	return cmd
 }
 
 // newReorderTaskCommand creates the task reordering subcommand
 func newReorderTaskCommand(opts *reorderOptions) *cobra.Command {
-	var sequenceDir string
+	var phaseFlag string
+	var sequenceFlag string
 
 	cmd := &cobra.Command{
 		Use:   "task <from> <to>",
@@ -167,13 +188,24 @@ func newReorderTaskCommand(opts *reorderOptions) *cobra.Command {
 		Long: `Move a task from one position to another within a sequence.
 
 Elements between the source and destination positions are shifted accordingly.
-Parallel tasks (multiple tasks with the same number) are moved together.`,
-		Example: `  fest reorder task --sequence 001_PLAN/01_requirements 3 1
+Parallel tasks (multiple tasks with the same number) are moved together.
+
+If --sequence is omitted and you're inside a sequence directory, it will use the current sequence.`,
+		Example: `  fest reorder task 3 1                               # Use current sequence (if inside one)
+  fest reorder task --sequence 1 3 1                  # Numeric shortcut for sequence 01_*
+  fest reorder task --phase 1 --sequence 2 3 1        # Phase 001_*, sequence 02_*
   fest reorder task --sequence ./path/to/sequence 1 5`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if sequenceDir == "" {
-				return errors.Validation("--sequence flag is required")
+			cwd, err := os.Getwd()
+			if err != nil {
+				return errors.IO("getting current directory", err)
+			}
+
+			// Detect context
+			ctx, err := festival.DetectContext(cwd)
+			if err != nil {
+				return errors.Wrap(err, "detecting context")
 			}
 
 			from, err := strconv.Atoi(args[0])
@@ -186,10 +218,31 @@ Parallel tasks (multiple tasks with the same number) are moved together.`,
 				return errors.Validation("invalid destination position").WithField("position", args[1])
 			}
 
-			// Convert to absolute path
-			absPath, err := filepath.Abs(sequenceDir)
-			if err != nil {
-				return errors.Wrap(err, "resolving path").WithField("path", sequenceDir)
+			var sequenceDir string
+			if sequenceFlag != "" {
+				var phaseDir string
+				if phaseFlag != "" {
+					if ctx.FestivalDir == "" {
+						return errors.Validation("not inside a festival directory")
+					}
+					phaseDir, err = festival.ResolvePhase(phaseFlag, ctx.FestivalDir)
+					if err != nil {
+						return err
+					}
+				} else if ctx.PhaseDir != "" {
+					phaseDir = ctx.PhaseDir
+				} else {
+					return errors.Validation("--phase required when using --sequence with numeric shortcut")
+				}
+
+				sequenceDir, err = festival.ResolveSequence(sequenceFlag, phaseDir)
+				if err != nil {
+					return err
+				}
+			} else if ctx.SequenceDir != "" {
+				sequenceDir = ctx.SequenceDir
+			} else {
+				return errors.Validation("--sequence required (not inside a sequence directory)")
 			}
 
 			// Create renumberer
@@ -201,12 +254,12 @@ Parallel tasks (multiple tasks with the same number) are moved together.`,
 			})
 
 			// Perform reordering
-			return renumberer.ReorderTask(cmd.Context(), absPath, from, to)
+			return renumberer.ReorderTask(cmd.Context(), sequenceDir, from, to)
 		},
 	}
 
-	cmd.Flags().StringVar(&sequenceDir, "sequence", "", "sequence directory to reorder tasks in")
-	cmd.MarkFlagRequired("sequence")
+	cmd.Flags().StringVar(&phaseFlag, "phase", "", "phase directory (numeric shortcut, name, or path)")
+	cmd.Flags().StringVar(&sequenceFlag, "sequence", "", "sequence directory (numeric shortcut, name, or path)")
 
 	return cmd
 }

@@ -74,19 +74,63 @@ func bashZshInit() string {
 #   eval "$(fest shell-init zsh)"
 
 fgo() {
-    local dest
-    dest=$(command fest go "$@" 2>&1)
-    local exit_code=$?
-
-    if [[ $exit_code -eq 0 && -n "$dest" && -d "$dest" ]]; then
-        cd "$dest"
-    else
-        # If fest go failed or returned non-directory output, show the error
-        if [[ -n "$dest" ]]; then
-            echo "$dest" >&2
-        fi
-        return 1
-    fi
+    case "$1" in
+        map|unmap|list)
+            # Pass through to fest go subcommands (no cd needed)
+            command fest go "$@"
+            ;;
+        project)
+            # Navigate to linked project
+            local dest
+            dest=$(command fest go project 2>&1)
+            local exit_code=$?
+            if [[ $exit_code -eq 0 && -n "$dest" && -d "$dest" ]]; then
+                cd "$dest"
+            else
+                echo "fgo: no project linked (use 'fest link <path>' from a festival)" >&2
+                return 1
+            fi
+            ;;
+        fest)
+            # Navigate back to festival from project
+            local dest
+            dest=$(command fest go fest 2>&1)
+            local exit_code=$?
+            if [[ $exit_code -eq 0 && -n "$dest" && -d "$dest" ]]; then
+                cd "$dest"
+            else
+                echo "fgo: not in a linked project" >&2
+                return 1
+            fi
+            ;;
+        -*)
+            # Shortcut navigation: strip leading dash and lookup
+            local name="${1#-}"
+            local dest
+            dest=$(command fest go shortcut "$name" 2>&1)
+            local exit_code=$?
+            if [[ $exit_code -eq 0 && -n "$dest" && -d "$dest" ]]; then
+                cd "$dest"
+            else
+                echo "fgo: shortcut not found: -$name" >&2
+                return 1
+            fi
+            ;;
+        *)
+            # Normal navigation (festival/phase/status directories)
+            local dest
+            dest=$(command fest go "$@" 2>&1)
+            local exit_code=$?
+            if [[ $exit_code -eq 0 && -n "$dest" && -d "$dest" ]]; then
+                cd "$dest"
+            else
+                if [[ -n "$dest" ]]; then
+                    echo "$dest" >&2
+                fi
+                return 1
+            fi
+            ;;
+    esac
 }
 `
 }
@@ -97,17 +141,53 @@ func fishInit() string {
 #   fest shell-init fish | source
 
 function fgo
-    set -l dest (command fest go $argv 2>&1)
-    set -l exit_code $status
-
-    if test $exit_code -eq 0 -a -n "$dest" -a -d "$dest"
-        cd $dest
-    else
-        # If fest go failed or returned non-directory output, show the error
-        if test -n "$dest"
-            echo $dest >&2
-        end
-        return 1
+    switch $argv[1]
+        case map unmap list
+            # Pass through to fest go subcommands (no cd needed)
+            command fest go $argv
+        case project
+            # Navigate to linked project
+            set -l dest (command fest go project 2>&1)
+            set -l exit_code $status
+            if test $exit_code -eq 0 -a -n "$dest" -a -d "$dest"
+                cd $dest
+            else
+                echo "fgo: no project linked (use 'fest link <path>' from a festival)" >&2
+                return 1
+            end
+        case fest
+            # Navigate back to festival from project
+            set -l dest (command fest go fest 2>&1)
+            set -l exit_code $status
+            if test $exit_code -eq 0 -a -n "$dest" -a -d "$dest"
+                cd $dest
+            else
+                echo "fgo: not in a linked project" >&2
+                return 1
+            end
+        case '-*'
+            # Shortcut navigation: strip leading dash and lookup
+            set -l name (string sub -s 2 $argv[1])
+            set -l dest (command fest go shortcut $name 2>&1)
+            set -l exit_code $status
+            if test $exit_code -eq 0 -a -n "$dest" -a -d "$dest"
+                cd $dest
+            else
+                echo "fgo: shortcut not found: -$name" >&2
+                return 1
+            end
+        case '*'
+            # Normal navigation (festival/phase/status directories)
+            set -l dest (command fest go $argv 2>&1)
+            set -l exit_code $status
+            if test $exit_code -eq 0 -a -n "$dest" -a -d "$dest"
+                cd $dest
+            else
+                if test -n "$dest"
+                    echo $dest >&2
+                end
+                return 1
+            end
     end
 end
 `

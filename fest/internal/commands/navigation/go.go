@@ -59,6 +59,14 @@ If no registered festivals are found, falls back to nearest festivals/.`,
 	cmd.Flags().BoolVar(&opts.showAll, "all", false, "list all registered festivals directories")
 	cmd.Flags().BoolVar(&opts.json, "json", false, "output in JSON format")
 
+	// Add subcommands for navigation shortcuts
+	cmd.AddCommand(NewGoMapCommand())
+	cmd.AddCommand(NewGoUnmapCommand())
+	cmd.AddCommand(NewGoListCommand())
+	cmd.AddCommand(NewGoShortcutCommand())
+	cmd.AddCommand(NewGoProjectCommand())
+	cmd.AddCommand(NewGoFestCommand())
+
 	return cmd
 }
 
