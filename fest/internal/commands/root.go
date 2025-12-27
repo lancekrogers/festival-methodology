@@ -9,6 +9,7 @@ import (
 	depscmd "github.com/lancekrogers/festival-methodology/fest/internal/commands/deps"
 	executecmd "github.com/lancekrogers/festival-methodology/fest/internal/commands/execute"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/extensions"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/migrate"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/festival"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/gates"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/navigation"
@@ -99,13 +100,13 @@ func init() {
 		shared.SetNoColor(noColor)
 		shared.SetConfigFile(configFile)
 
-		// Allow root (help/version), init, system, count, go, shell-init, understand, config, extension, index, gates, research, show, status, progress, context, deps, next, execute, link, unlink, links, and validate to run anywhere
-		// Also allow subcommands of system, understand, config, extension, index, gates, research, show, status, progress, context, deps, next, execute, remove, renumber, reorder, and validate
-		if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "system" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" || cmd.Name() == "go" || cmd.Name() == "shell-init" || cmd.Name() == "understand" || cmd.Name() == "config" || cmd.Name() == "extension" || cmd.Name() == "index" || cmd.Name() == "gates" || cmd.Name() == "research" || cmd.Name() == "show" || cmd.Name() == "status" || cmd.Name() == "progress" || cmd.Name() == "context" || cmd.Name() == "deps" || cmd.Name() == "next" || cmd.Name() == "execute" || cmd.Name() == "link" || cmd.Name() == "unlink" || cmd.Name() == "links" || cmd.Name() == "remove" || cmd.Name() == "renumber" || cmd.Name() == "reorder" || cmd.Name() == "validate" {
+		// Allow root (help/version), init, system, count, go, shell-init, understand, config, extension, index, gates, research, show, status, progress, context, deps, next, execute, migrate, link, unlink, links, and validate to run anywhere
+		// Also allow subcommands of system, understand, config, extension, index, gates, research, show, status, progress, context, deps, next, execute, migrate, remove, renumber, reorder, and validate
+		if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "system" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" || cmd.Name() == "go" || cmd.Name() == "shell-init" || cmd.Name() == "understand" || cmd.Name() == "config" || cmd.Name() == "extension" || cmd.Name() == "index" || cmd.Name() == "gates" || cmd.Name() == "research" || cmd.Name() == "show" || cmd.Name() == "status" || cmd.Name() == "progress" || cmd.Name() == "context" || cmd.Name() == "deps" || cmd.Name() == "next" || cmd.Name() == "execute" || cmd.Name() == "migrate" || cmd.Name() == "link" || cmd.Name() == "unlink" || cmd.Name() == "links" || cmd.Name() == "remove" || cmd.Name() == "renumber" || cmd.Name() == "reorder" || cmd.Name() == "validate" {
 			return nil
 		}
-		// Check if parent is system, understand, config, extension, index, gates, research, show, status, context, deps, next, execute, remove, renumber, reorder, or validate (for subcommands)
-		if cmd.Parent() != nil && (cmd.Parent().Name() == "system" || cmd.Parent().Name() == "understand" || cmd.Parent().Name() == "config" || cmd.Parent().Name() == "extension" || cmd.Parent().Name() == "index" || cmd.Parent().Name() == "gates" || cmd.Parent().Name() == "research" || cmd.Parent().Name() == "show" || cmd.Parent().Name() == "status" || cmd.Parent().Name() == "context" || cmd.Parent().Name() == "deps" || cmd.Parent().Name() == "next" || cmd.Parent().Name() == "execute" || cmd.Parent().Name() == "remove" || cmd.Parent().Name() == "renumber" || cmd.Parent().Name() == "reorder" || cmd.Parent().Name() == "validate") {
+		// Check if parent is system, understand, config, extension, index, gates, research, show, status, context, deps, next, execute, migrate, remove, renumber, reorder, or validate (for subcommands)
+		if cmd.Parent() != nil && (cmd.Parent().Name() == "system" || cmd.Parent().Name() == "understand" || cmd.Parent().Name() == "config" || cmd.Parent().Name() == "extension" || cmd.Parent().Name() == "index" || cmd.Parent().Name() == "gates" || cmd.Parent().Name() == "research" || cmd.Parent().Name() == "show" || cmd.Parent().Name() == "status" || cmd.Parent().Name() == "context" || cmd.Parent().Name() == "deps" || cmd.Parent().Name() == "next" || cmd.Parent().Name() == "execute" || cmd.Parent().Name() == "migrate" || cmd.Parent().Name() == "remove" || cmd.Parent().Name() == "renumber" || cmd.Parent().Name() == "reorder" || cmd.Parent().Name() == "validate") {
 			return nil
 		}
 		cwd, _ := os.Getwd()
@@ -214,6 +215,10 @@ func init() {
 	executeCmd := executecmd.NewExecuteCommand()
 	executeCmd.GroupID = "navigation"
 	rootCmd.AddCommand(executeCmd)
+
+	migrateCmd := migrate.NewMigrateCommand()
+	migrateCmd.GroupID = "system"
+	rootCmd.AddCommand(migrateCmd)
 
 	// === SYSTEM COMMANDS ===
 	initCmd := system.NewInitCommand()
