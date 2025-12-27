@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/pkoukk/tiktoken-go"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // TiktokenTokenizer implements exact tokenization for OpenAI models
@@ -23,7 +25,7 @@ func NewTiktokenTokenizer(model string) (*TiktokenTokenizer, error) {
 		// Try to get encoding for the model directly
 		encoding, err = tiktoken.EncodingForModel(model)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get encoding for model %s: %w", model, err)
+			return nil, errors.Wrap(err, "getting encoding for model").WithField("model", model)
 		}
 	}
 
@@ -138,7 +140,7 @@ func (s *SimpleTokenizer) CountTokens(text string) (int, error) {
 		words := len(strings.Fields(text))
 		return int(float64(words) * 1.33), nil
 	default:
-		return 0, fmt.Errorf("unknown tokenization method: %s", s.method)
+		return 0, errors.Validation("unknown tokenization method").WithField("method", s.method)
 	}
 }
 

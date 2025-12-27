@@ -5,12 +5,13 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // ChecksumEntry represents a file checksum entry
@@ -75,7 +76,7 @@ func GenerateChecksums(ctx context.Context, rootPath string) (map[string]Checksu
 		// Calculate checksum
 		hash, err := calculateFileChecksum(ctx, path)
 		if err != nil {
-			return fmt.Errorf("failed to checksum %s: %w", relPath, err)
+			return errors.IO("calculating checksum", err).WithField("path", relPath)
 		}
 
 		checksums[relPath] = ChecksumEntry{
@@ -100,7 +101,7 @@ func LoadChecksums(ctx context.Context, path string) (map[string]ChecksumEntry, 
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read checksum file: %w", err)
+		return nil, errors.IO("reading checksum file", err).WithField("path", path)
 	}
 
 	var checksumData ChecksumData
@@ -110,7 +111,7 @@ func LoadChecksums(ctx context.Context, path string) (map[string]ChecksumEntry, 
 		if err2 := json.Unmarshal(data, &simpleChecksums); err2 == nil {
 			return simpleChecksums, nil
 		}
-		return nil, fmt.Errorf("failed to parse checksum file: %w", err)
+		return nil, errors.Parse("parsing checksum file", err).WithField("path", path)
 	}
 
 	return checksumData.Files, nil
@@ -140,11 +141,11 @@ func SaveChecksums(ctx context.Context, path string, checksums map[string]Checks
 
 	data, err := json.MarshalIndent(checksumData, "", "  ")
 	if err != nil {
-		return fmt.Errorf("failed to marshal checksums: %w", err)
+		return errors.Wrap(err, "marshaling checksums")
 	}
 
 	if err := os.WriteFile(path, data, 0644); err != nil {
-		return fmt.Errorf("failed to write checksum file: %w", err)
+		return errors.IO("writing checksum file", err).WithField("path", path)
 	}
 
 	return nil

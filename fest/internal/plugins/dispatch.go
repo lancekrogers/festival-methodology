@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // Dispatcher handles plugin command dispatch
@@ -32,7 +34,7 @@ func (d *Dispatcher) CanHandle(args []string) bool {
 func (d *Dispatcher) Dispatch(args []string) error {
 	plugin := d.discovery.FindByArgs(args)
 	if plugin == nil {
-		return fmt.Errorf("no plugin found for: %v", args)
+		return errors.NotFound("plugin").WithField("args", args)
 	}
 
 	return d.Execute(plugin, args)
@@ -47,7 +49,7 @@ func (d *Dispatcher) Execute(plugin *DiscoveredPlugin, allArgs []string) error {
 		var err error
 		execPath, err = exec.LookPath(plugin.Exec)
 		if err != nil {
-			return fmt.Errorf("plugin executable not found: %s", plugin.Exec)
+			return errors.NotFound("plugin executable").WithField("exec", plugin.Exec)
 		}
 	}
 
@@ -77,7 +79,7 @@ func (d *Dispatcher) Execute(plugin *DiscoveredPlugin, allArgs []string) error {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			os.Exit(exitErr.ExitCode())
 		}
-		return fmt.Errorf("plugin execution failed: %w", err)
+		return errors.Wrap(err, "plugin execution failed").WithField("command", plugin.Command)
 	}
 
 	return nil

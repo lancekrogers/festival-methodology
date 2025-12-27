@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 )
 
@@ -34,7 +35,7 @@ func ValidateOrdering(ctx context.Context, festivalPath string) ([]Issue, error)
 	// Validate phase ordering
 	phases, err := parser.ParsePhases(ctx, festivalPath)
 	if err != nil {
-		return issues, fmt.Errorf("parse phases: %w", err)
+		return issues, errors.Wrap(err, "parsing phases").WithField("path", festivalPath)
 	}
 
 	phaseIssues := validateElementOrdering(phases, festivalPath, "phase")
