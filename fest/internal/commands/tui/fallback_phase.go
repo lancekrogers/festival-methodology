@@ -42,7 +42,7 @@ func tuiCreatePhase(ctx context.Context, display *ui.UI) error {
 	if festDir == "." || festDir == "" {
 		festDir = findFestivalDir(cwd)
 	}
-	defAfter := nextPhaseAfter(festDir)
+	defAfter := nextPhaseAfter(ctx, festDir)
 	after := defAfter
 	if !display.Confirm("Append at end?") {
 		afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", fmt.Sprintf("%d", defAfter)))

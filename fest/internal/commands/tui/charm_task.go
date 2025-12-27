@@ -35,7 +35,7 @@ func charmCreateTask(ctx context.Context) error {
 			return err
 		}
 		// Position select with default append
-		defAfter := nextTaskAfter(cwd)
+		defAfter := nextTaskAfter(ctx, cwd)
 		var pos string
 		if err := huh.NewForm(huh.NewGroup(
 			huh.NewSelect[string]().Title("Position").Options(
@@ -139,7 +139,7 @@ func charmCreateTask(ctx context.Context) error {
 		if rerr != nil {
 			return rerr
 		}
-		defAfter := nextTaskAfter(rs)
+		defAfter := nextTaskAfter(ctx, rs)
 		var pos string
 		if err := huh.NewForm(huh.NewGroup(
 			huh.NewSelect[string]().Title("Position").Options(

@@ -45,7 +45,7 @@ func charmCreatePhase(ctx context.Context) error {
 	if strings.TrimSpace(basePath) == "" || basePath == "." {
 		basePath = findFestivalDir(cwd)
 	}
-	defAfter := nextPhaseAfter(basePath)
+	defAfter := nextPhaseAfter(ctx, basePath)
 	// Choose position for phase
 	var posPhase string
 	if err := huh.NewForm(huh.NewGroup(

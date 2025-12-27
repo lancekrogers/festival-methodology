@@ -129,7 +129,7 @@ func init() {
 		Short:   "Create festivals, phases, sequences, or tasks (TUI)",
 		GroupID: "creation",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return shared.StartCreateTUI()
+			return shared.StartCreateTUI(cmd.Context())
 		},
 	}
 	createCmd.AddCommand(festival.NewCreateFestivalCommand())

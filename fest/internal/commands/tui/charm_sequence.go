@@ -35,7 +35,7 @@ func charmCreateSequence(ctx context.Context) error {
 			return err
 		}
 		// Position selection with default append
-		defAfter := nextSequenceAfter(cwd)
+		defAfter := nextSequenceAfter(ctx, cwd)
 		var pos string
 		if err := huh.NewForm(huh.NewGroup(
 			huh.NewSelect[string]().Title("Position").Options(
@@ -97,7 +97,7 @@ func charmCreateSequence(ctx context.Context) error {
 		if rerr != nil {
 			return rerr
 		}
-		defAfter := nextSequenceAfter(rp)
+		defAfter := nextSequenceAfter(ctx, rp)
 		var pos string
 		if err := huh.NewForm(huh.NewGroup(
 			huh.NewSelect[string]().Title("Position").Options(

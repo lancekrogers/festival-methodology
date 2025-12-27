@@ -108,7 +108,7 @@ func tuiCreateTask(ctx context.Context, display *ui.UI) error {
 		}
 	}
 	// Default to append after last task in resolved sequence
-	defAfter := nextTaskAfter(resolvedSeq)
+	defAfter := nextTaskAfter(ctx, resolvedSeq)
 	after := defAfter
 	if !display.Confirm("Append at end?") {
 		afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", fmt.Sprintf("%d", defAfter)))

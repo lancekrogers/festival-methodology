@@ -59,7 +59,7 @@ func tuiCreateSequence(ctx context.Context, display *ui.UI) error {
 		}
 	}
 	// Default to append after last sequence in resolved phase
-	defAfter := nextSequenceAfter(resolvedPhase)
+	defAfter := nextSequenceAfter(ctx, resolvedPhase)
 	after := defAfter
 	if !display.Confirm("Append at end?") {
 		afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", fmt.Sprintf("%d", defAfter)))
