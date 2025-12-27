@@ -61,11 +61,13 @@ type GenerateSummary struct {
 }
 
 // GenerateForSequence generates task files for gates in a single sequence.
+// festivalPath is optional - if provided, it's used to resolve gates/ prefixed templates.
 func (g *TaskGenerator) GenerateForSequence(
 	ctx context.Context,
 	sequencePath string,
 	gates []GateTask,
 	opts GenerateOptions,
+	festivalPath ...string,
 ) ([]GenerateResult, []string, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, nil, errors.Wrap(err, "context cancelled").
@@ -143,7 +145,11 @@ func (g *TaskGenerator) GenerateForSequence(
 
 		// Create the task
 		if !opts.DryRun {
-			content := g.renderGateContent(ctx, gate, taskNum)
+			var festPath string
+			if len(festivalPath) > 0 {
+				festPath = festivalPath[0]
+			}
+			content := g.renderGateContent(ctx, gate, taskNum, festPath)
 
 			if err := os.WriteFile(taskPath, []byte(content), 0644); err != nil {
 				warnings = append(warnings, fmt.Sprintf("Failed to write %s: %v", taskPath, err))
@@ -163,7 +169,8 @@ func (g *TaskGenerator) GenerateForSequence(
 }
 
 // renderGateContent renders the content for a gate task file.
-func (g *TaskGenerator) renderGateContent(ctx context.Context, gate GateTask, taskNum int) string {
+// festivalPath is used to resolve gates/ prefixed templates.
+func (g *TaskGenerator) renderGateContent(ctx context.Context, gate GateTask, taskNum int, festivalPath string) string {
 	// Build context
 	tmplCtx := tpl.NewContext()
 	tmplCtx.SetTask(taskNum, gate.ID)
@@ -173,15 +180,43 @@ func (g *TaskGenerator) renderGateContent(ctx context.Context, gate GateTask, ta
 		}
 	}
 
-	// Try catalog first
 	var content string
-	if g.catalog != nil {
-		content, _ = g.manager.RenderByID(ctx, g.catalog, gate.Template, tmplCtx)
+
+	// Handle "gates/TEMPLATE_NAME" format - resolve from festival's gates/ directory first
+	if strings.HasPrefix(gate.Template, "gates/") && festivalPath != "" {
+		templateName := strings.TrimPrefix(gate.Template, "gates/")
+		gatesPath := filepath.Join(festivalPath, "gates", templateName+".md")
+
+		if _, err := os.Stat(gatesPath); err == nil {
+			loader := tpl.NewLoader()
+			t, err := loader.Load(ctx, gatesPath)
+			if err == nil {
+				if strings.Contains(t.Content, "{{") {
+					content, _ = g.manager.Render(t, tmplCtx)
+				} else {
+					content = t.Content
+				}
+			}
+		}
 	}
 
-	// Fallback to direct file load
+	// Try catalog if not found in festival gates/
+	if content == "" && g.catalog != nil {
+		// For gates/ prefix, try with the stripped template name
+		templateID := gate.Template
+		if strings.HasPrefix(templateID, "gates/") {
+			templateID = strings.TrimPrefix(templateID, "gates/")
+		}
+		content, _ = g.manager.RenderByID(ctx, g.catalog, templateID, tmplCtx)
+	}
+
+	// Fallback to direct file load from template root
 	if content == "" && g.templateRoot != "" {
-		tpath := filepath.Join(g.templateRoot, gate.Template+".md")
+		templateName := gate.Template
+		if strings.HasPrefix(templateName, "gates/") {
+			templateName = strings.TrimPrefix(templateName, "gates/")
+		}
+		tpath := filepath.Join(g.templateRoot, templateName+".md")
 		if _, err := os.Stat(tpath); err == nil {
 			loader := tpl.NewLoader()
 			t, err := loader.Load(ctx, tpath)

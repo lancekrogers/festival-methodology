@@ -96,7 +96,8 @@ func SaveFestivalConfig(festivalPath string, cfg *FestivalConfig) error {
 	return nil
 }
 
-// DefaultFestivalConfig returns the default festival configuration
+// DefaultFestivalConfig returns the default festival configuration.
+// Note: Template paths use "gates/" prefix to reference the festival's gates/ directory.
 func DefaultFestivalConfig() *FestivalConfig {
 	return &FestivalConfig{
 		Version: "1.0",
@@ -106,19 +107,19 @@ func DefaultFestivalConfig() *FestivalConfig {
 			Tasks: []QualityGateTask{
 				{
 					ID:       "testing_and_verify",
-					Template: "QUALITY_GATE_TESTING",
+					Template: "gates/QUALITY_GATE_TESTING",
 					Name:     "Testing and Verification",
 					Enabled:  true,
 				},
 				{
 					ID:       "code_review",
-					Template: "QUALITY_GATE_REVIEW",
+					Template: "gates/QUALITY_GATE_REVIEW",
 					Name:     "Code Review",
 					Enabled:  true,
 				},
 				{
 					ID:       "review_results_iterate",
-					Template: "QUALITY_GATE_ITERATE",
+					Template: "gates/QUALITY_GATE_ITERATE",
 					Name:     "Review Results and Iterate",
 					Enabled:  true,
 				},
@@ -128,6 +129,7 @@ func DefaultFestivalConfig() *FestivalConfig {
 			"*_planning",
 			"*_research",
 			"*_requirements",
+			"*_docs",
 		},
 		Templates: TemplatePrefs{
 			TaskDefault:  "TASK_TEMPLATE_SIMPLE",

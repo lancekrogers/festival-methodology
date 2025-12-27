@@ -66,3 +66,30 @@ func LocalTemplateRoot(startDir string) (string, error) {
 	}
 	return filepath.Join(root, ".festival", "templates"), nil
 }
+
+// FindFestivalRoot walks up from startDir until it finds a directory containing fest.yaml.
+// This identifies the root of an individual festival (not the festivals/ directory).
+// Returns the directory path that contains fest.yaml.
+func FindFestivalRoot(startDir string) (string, error) {
+	dir := startDir
+	for {
+		if dir == "" || dir == "/" || dir == "." {
+			break
+		}
+		// Check for fest.yaml in this directory
+		if _, err := os.Stat(filepath.Join(dir, "fest.yaml")); err == nil {
+			return dir, nil
+		}
+		// Stop if we've reached the festivals directory (don't search above it)
+		if filepath.Base(dir) == "festivals" {
+			break
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return "", errors.NotFound("festival root (no fest.yaml found)").
+		WithField("start_dir", startDir)
+}

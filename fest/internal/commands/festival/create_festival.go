@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -31,16 +32,19 @@ type CreateFestivalOptions struct {
 }
 
 type createFestivalResult struct {
-	OK            bool                     `json:"ok"`
-	Action        string                   `json:"action"`
-	Festival      map[string]string        `json:"festival,omitempty"`
-	Created       []string                 `json:"created,omitempty"`
-	Markers       []map[string]interface{} `json:"markers,omitempty"`
-	MarkersFilled int                      `json:"markers_filled,omitempty"`
-	MarkersTotal  int                      `json:"markers_total,omitempty"`
-	Errors        []map[string]any         `json:"errors,omitempty"`
-	Warnings      []string                 `json:"warnings,omitempty"`
-	Extra         map[string]interface{}   `json:"extra,omitempty"`
+	OK             bool                     `json:"ok"`
+	Action         string                   `json:"action"`
+	Festival       map[string]string        `json:"festival,omitempty"`
+	Created        []string                 `json:"created,omitempty"`
+	GatesDirectory string                   `json:"gates_directory,omitempty"`
+	FestYAML       string                   `json:"fest_yaml,omitempty"`
+	GateTemplates  []string                 `json:"gate_templates,omitempty"`
+	Markers        []map[string]interface{} `json:"markers,omitempty"`
+	MarkersFilled  int                      `json:"markers_filled,omitempty"`
+	MarkersTotal   int                      `json:"markers_total,omitempty"`
+	Errors         []map[string]any         `json:"errors,omitempty"`
+	Warnings       []string                 `json:"warnings,omitempty"`
+	Extra          map[string]interface{}   `json:"extra,omitempty"`
 }
 
 // NewCreateFestivalCommand adds 'create festival'
@@ -164,6 +168,45 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 		created = append(created, outPath)
 	}
 
+	// Create gates directory and copy gate templates
+	gatesDir := filepath.Join(destDir, "gates")
+	if err := os.MkdirAll(gatesDir, 0755); err != nil {
+		return emitCreateFestivalError(opts, errors.IO("creating gates directory", err).WithField("path", gatesDir))
+	}
+
+	gateTemplates := []string{
+		"QUALITY_GATE_TESTING.md",
+		"QUALITY_GATE_REVIEW.md",
+		"QUALITY_GATE_ITERATE.md",
+	}
+
+	copiedGates := []string{}
+	for _, gt := range gateTemplates {
+		srcPath := filepath.Join(tmplRoot, gt)
+		if _, err := os.Stat(srcPath); err != nil {
+			// Skip if template doesn't exist
+			continue
+		}
+		content, err := os.ReadFile(srcPath)
+		if err != nil {
+			return emitCreateFestivalError(opts, errors.IO("reading gate template", err).WithField("path", srcPath))
+		}
+		outPath := filepath.Join(gatesDir, gt)
+		if err := os.WriteFile(outPath, content, 0644); err != nil {
+			return emitCreateFestivalError(opts, errors.IO("writing gate template", err).WithField("path", outPath))
+		}
+		copiedGates = append(copiedGates, outPath)
+		created = append(created, outPath)
+	}
+
+	// Generate fest.yaml with default gates configuration
+	festConfig := defaultFestivalGatesConfig()
+	festConfigPath := filepath.Join(destDir, config.FestivalConfigFileName)
+	if err := config.SaveFestivalConfig(destDir, festConfig); err != nil {
+		return emitCreateFestivalError(opts, errors.Wrap(err, "writing fest.yaml").WithField("path", festConfigPath))
+	}
+	created = append(created, festConfigPath)
+
 	// Process REPLACE markers in all created files
 	var totalMarkersFilled, totalMarkersCount int
 	var allMarkers []map[string]interface{}
@@ -209,9 +252,12 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 				"slug": slug,
 				"dest": destCategory,
 			},
-			Created:       created,
-			MarkersFilled: totalMarkersFilled,
-			MarkersTotal:  totalMarkersCount,
+			Created:        created,
+			GatesDirectory: gatesDir,
+			FestYAML:       festConfigPath,
+			GateTemplates:  copiedGates,
+			MarkersFilled:  totalMarkersFilled,
+			MarkersTotal:   totalMarkersCount,
 			Warnings: []string{
 				"Next: Create phases with 'fest create phase --name PHASE_NAME'",
 			},
@@ -233,11 +279,18 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 		}
 	}
 
+	// Report gates setup
+	if len(copiedGates) > 0 {
+		display.Success("Created gates/ directory with %d default templates", len(copiedGates))
+		display.Info("  Quality gates configured in fest.yaml")
+	}
+
 	fmt.Println()
 	fmt.Println("   Next steps:")
 	fmt.Println("   1. cd", destDir)
 	fmt.Println("   2. fest create phase --name \"PLAN\"")
 	fmt.Println("   3. fest create phase --name \"IMPLEMENT\"")
+	fmt.Println("   4. After creating tasks: fest gates apply --approve")
 	return nil
 }
 
@@ -287,4 +340,50 @@ func Slugify(s string) string {
 		slug = "festival"
 	}
 	return slug
+}
+
+// defaultFestivalGatesConfig creates a festival config with gates/ prefixed template paths.
+// This is used when creating a new festival to set up default quality gates.
+func defaultFestivalGatesConfig() *config.FestivalConfig {
+	return &config.FestivalConfig{
+		Version: "1.0",
+		QualityGates: config.QualityGatesConfig{
+			Enabled:    true,
+			AutoAppend: true,
+			Tasks: []config.QualityGateTask{
+				{
+					ID:       "testing_and_verify",
+					Template: "gates/QUALITY_GATE_TESTING",
+					Name:     "Testing and Verification",
+					Enabled:  true,
+				},
+				{
+					ID:       "code_review",
+					Template: "gates/QUALITY_GATE_REVIEW",
+					Name:     "Code Review",
+					Enabled:  true,
+				},
+				{
+					ID:       "review_results_iterate",
+					Template: "gates/QUALITY_GATE_ITERATE",
+					Name:     "Review Results and Iterate",
+					Enabled:  true,
+				},
+			},
+		},
+		ExcludedPatterns: []string{
+			"*_planning",
+			"*_research",
+			"*_requirements",
+			"*_docs",
+		},
+		Templates: config.TemplatePrefs{
+			TaskDefault:  "TASK_TEMPLATE_SIMPLE",
+			PreferSimple: true,
+		},
+		Tracking: config.TrackingConfig{
+			Enabled:      true,
+			ChecksumFile: ".festival-checksums.json",
+		},
+	}
 }

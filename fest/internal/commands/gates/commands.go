@@ -272,19 +272,82 @@ func runGatesList(ctx context.Context, cmd *cobra.Command, jsonOutput bool) erro
 
 	policies := registry.ListInfo()
 
-	if jsonOutput {
-		enc := json.NewEncoder(cmd.OutOrStdout())
-		enc.SetIndent("", "  ")
-		return enc.Encode(policies)
+	// Try to find festival root to discover local templates
+	var localTemplates []string
+	var gatesDir string
+	festivalRoot, findErr := tpl.FindFestivalRoot(cwd)
+	if findErr == nil {
+		gatesDir = filepath.Join(festivalRoot, "gates")
+		localTemplates = discoverLocalGateTemplates(gatesDir)
 	}
 
+	if jsonOutput {
+		return printGatesListJSON(cmd, policies, localTemplates, gatesDir)
+	}
+
+	return printGatesListTable(cmd, policies, localTemplates, gatesDir)
+}
+
+// discoverLocalGateTemplates finds all .md files in a gates directory
+func discoverLocalGateTemplates(gatesDir string) []string {
+	var templates []string
+
+	entries, err := os.ReadDir(gatesDir)
+	if err != nil {
+		return templates // Return empty if directory doesn't exist
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if strings.HasSuffix(name, ".md") {
+			// Return without .md extension
+			templates = append(templates, strings.TrimSuffix(name, ".md"))
+		}
+	}
+
+	return templates
+}
+
+func printGatesListJSON(cmd *cobra.Command, policies []*gatescore.PolicyInfo, localTemplates []string, gatesDir string) error {
+	output := struct {
+		Policies       []*gatescore.PolicyInfo `json:"policies"`
+		LocalTemplates []string                `json:"local_templates,omitempty"`
+		GatesDirectory string                  `json:"gates_directory,omitempty"`
+	}{
+		Policies:       policies,
+		LocalTemplates: localTemplates,
+	}
+
+	if len(localTemplates) > 0 {
+		output.GatesDirectory = gatesDir
+	}
+
+	enc := json.NewEncoder(cmd.OutOrStdout())
+	enc.SetIndent("", "  ")
+	return enc.Encode(output)
+}
+
+func printGatesListTable(cmd *cobra.Command, policies []*gatescore.PolicyInfo, localTemplates []string, gatesDir string) error {
 	out := cmd.OutOrStdout()
+
+	// Show named policies
 	fmt.Fprintf(out, "Available gate policies:\n\n")
 	fmt.Fprintf(out, "  %-16s %-12s %s\n", "Name", "Source", "Description")
 	fmt.Fprintf(out, "  %-16s %-12s %s\n", strings.Repeat("-", 16), strings.Repeat("-", 12), strings.Repeat("-", 40))
 
 	for _, info := range policies {
 		fmt.Fprintf(out, "  %-16s [%-10s] %s\n", info.Name, info.Source, info.Description)
+	}
+
+	// Show local templates if present
+	if len(localTemplates) > 0 {
+		fmt.Fprintf(out, "\nLocal gate templates (in gates/):\n")
+		for _, tmpl := range localTemplates {
+			fmt.Fprintf(out, "  - %s\n", tmpl)
+		}
 	}
 
 	fmt.Fprintln(out)

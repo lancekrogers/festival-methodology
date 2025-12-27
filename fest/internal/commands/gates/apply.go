@@ -226,7 +226,7 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 	}
 
 	for _, seq := range sequences {
-		results, seqWarnings, err := generator.GenerateForSequence(ctx, seq.Path, activeGates, genOpts)
+		results, seqWarnings, err := generator.GenerateForSequence(ctx, seq.Path, activeGates, genOpts, festivalPath)
 		if err != nil {
 			warnings = append(warnings, fmt.Sprintf("Sequence %s: %v", seq.Name, err))
 			continue
