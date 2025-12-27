@@ -180,3 +180,139 @@ func findSubstring(s, substr string) bool {
 	}
 	return false
 }
+
+func TestTemplateResolver_GatesPrefixResolution(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "resolver-gates-test-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create directory structure
+	festivalPath := filepath.Join(tmpDir, "festival")
+	phasePath := filepath.Join(festivalPath, "002_IMPLEMENT")
+	sequencePath := filepath.Join(phasePath, "01_core")
+	os.MkdirAll(sequencePath, 0755)
+
+	// Create template in festival's gates/ directory
+	gatesDir := filepath.Join(festivalPath, "gates")
+	os.MkdirAll(gatesDir, 0755)
+	gatesTemplatePath := filepath.Join(gatesDir, "QUALITY_GATE_TESTING.md")
+	os.WriteFile(gatesTemplatePath, []byte("# Testing Gate"), 0644)
+
+	// Also create fallback in global templates
+	globalTemplateDir := filepath.Join(tmpDir, ".festival", "templates")
+	os.MkdirAll(globalTemplateDir, 0755)
+	globalTemplatePath := filepath.Join(globalTemplateDir, "QUALITY_GATE_TESTING.md")
+	os.WriteFile(globalTemplatePath, []byte("# Global Testing Gate"), 0644)
+
+	resolver := NewTemplateResolver(tmpDir)
+
+	t.Run("gates/ prefix resolves to festival gates directory", func(t *testing.T) {
+		result, err := resolver.Resolve("gates/QUALITY_GATE_TESTING", festivalPath, phasePath, sequencePath)
+		if err != nil {
+			t.Fatalf("Resolve error: %v", err)
+		}
+		if !result.Exists {
+			t.Error("Expected template to exist")
+		}
+		if result.Path != gatesTemplatePath {
+			t.Errorf("Expected path %q, got %q", gatesTemplatePath, result.Path)
+		}
+		if result.Level != PolicyLevelFestival {
+			t.Errorf("Expected level %q, got %q", PolicyLevelFestival, result.Level)
+		}
+	})
+
+	t.Run("gates/ prefix falls back to global when not in festival gates/", func(t *testing.T) {
+		// Remove the festival-level template
+		os.Remove(gatesTemplatePath)
+		resolver.ClearCache()
+
+		result, err := resolver.Resolve("gates/QUALITY_GATE_TESTING", festivalPath, phasePath, sequencePath)
+		if err != nil {
+			t.Fatalf("Resolve error: %v", err)
+		}
+		if !result.Exists {
+			t.Error("Expected template to exist via fallback")
+		}
+		if result.Path != globalTemplatePath {
+			t.Errorf("Expected fallback path %q, got %q", globalTemplatePath, result.Path)
+		}
+	})
+
+	t.Run("without gates/ prefix searches standard hierarchy", func(t *testing.T) {
+		resolver.ClearCache()
+
+		result, err := resolver.Resolve("QUALITY_GATE_TESTING", festivalPath, phasePath, sequencePath)
+		if err != nil {
+			t.Fatalf("Resolve error: %v", err)
+		}
+		if !result.Exists {
+			t.Error("Expected template to exist")
+		}
+		// Should find global template since no gates/ prefix
+		if result.Path != globalTemplatePath {
+			t.Errorf("Expected path %q, got %q", globalTemplatePath, result.Path)
+		}
+	})
+}
+
+func TestTemplateResolver_ResolveForFestival_GatesPrefix(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "resolver-festival-gates-test-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create festival with gates directory
+	festivalPath := filepath.Join(tmpDir, "festival")
+	gatesDir := filepath.Join(festivalPath, "gates")
+	os.MkdirAll(gatesDir, 0755)
+	gatesTemplatePath := filepath.Join(gatesDir, "MY_GATE.md")
+	os.WriteFile(gatesTemplatePath, []byte("# My Gate"), 0644)
+
+	resolver := NewTemplateResolver(tmpDir)
+
+	result, err := resolver.ResolveForFestival("gates/MY_GATE", festivalPath)
+	if err != nil {
+		t.Fatalf("ResolveForFestival error: %v", err)
+	}
+	if !result.Exists {
+		t.Error("Expected template to exist")
+	}
+	if result.Path != gatesTemplatePath {
+		t.Errorf("Expected path %q, got %q", gatesTemplatePath, result.Path)
+	}
+}
+
+func TestTemplateResolver_ResolveForPhase_GatesPrefix(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "resolver-phase-gates-test-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create festival with gates directory
+	festivalPath := filepath.Join(tmpDir, "festival")
+	phasePath := filepath.Join(festivalPath, "001_PLAN")
+	os.MkdirAll(phasePath, 0755)
+
+	gatesDir := filepath.Join(festivalPath, "gates")
+	os.MkdirAll(gatesDir, 0755)
+	gatesTemplatePath := filepath.Join(gatesDir, "PHASE_GATE.md")
+	os.WriteFile(gatesTemplatePath, []byte("# Phase Gate"), 0644)
+
+	resolver := NewTemplateResolver(tmpDir)
+
+	result, err := resolver.ResolveForPhase("gates/PHASE_GATE", festivalPath, phasePath)
+	if err != nil {
+		t.Fatalf("ResolveForPhase error: %v", err)
+	}
+	if !result.Exists {
+		t.Error("Expected template to exist")
+	}
+	if result.Path != gatesTemplatePath {
+		t.Errorf("Expected path %q, got %q", gatesTemplatePath, result.Path)
+	}
+}

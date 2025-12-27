@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/config"
-	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/extensions"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/festival"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/gates"
@@ -16,6 +15,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/system"
 	understandcmd "github.com/lancekrogers/festival-methodology/fest/internal/commands/understand"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/validation"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
 

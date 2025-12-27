@@ -18,8 +18,8 @@ type MarkerValue struct {
 
 // Result contains the outcome of marker processing.
 type Result struct {
-	FilePath       string   `json:"file_path"`
-	TotalMarkers   int      `json:"total_markers"`
-	FilledMarkers  int      `json:"filled_markers"`
-	UnfilledHints  []string `json:"unfilled_hints,omitempty"`
+	FilePath      string   `json:"file_path"`
+	TotalMarkers  int      `json:"total_markers"`
+	FilledMarkers int      `json:"filled_markers"`
+	UnfilledHints []string `json:"unfilled_hints,omitempty"`
 }

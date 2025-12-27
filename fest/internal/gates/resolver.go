@@ -41,6 +41,36 @@ func NewTemplateResolver(festivalsRoot string) *TemplateResolver {
 	}
 }
 
+// gatesPrefixInfo holds parsed information about a template ID with optional gates/ prefix
+type gatesPrefixInfo struct {
+	originalID string // Original template ID (e.g., "gates/QUALITY_GATE_TESTING")
+	resolvedID string // Template name without prefix (e.g., "QUALITY_GATE_TESTING")
+	hasPrefix  bool   // Whether the original had "gates/" prefix
+	gatesPath  string // Path to festival's gates/ directory (empty if no prefix or no festivalPath)
+}
+
+// parseGatesPrefix extracts gates/ prefix info from a template ID.
+// If templateID starts with "gates/" and festivalPath is provided,
+// returns info about where to look for the template.
+func parseGatesPrefix(templateID, festivalPath string) gatesPrefixInfo {
+	const gatesPrefix = "gates/"
+
+	info := gatesPrefixInfo{
+		originalID: templateID,
+		resolvedID: templateID,
+		hasPrefix:  strings.HasPrefix(templateID, gatesPrefix),
+	}
+
+	if info.hasPrefix {
+		info.resolvedID = strings.TrimPrefix(templateID, gatesPrefix)
+		if festivalPath != "" {
+			info.gatesPath = filepath.Join(festivalPath, "gates", info.resolvedID+".md")
+		}
+	}
+
+	return info
+}
+
 // Resolve finds a template by ID, searching the hierarchy from most to least specific.
 // Search order: sequence → phase → festival → global gates → built-in
 // If templateID starts with "gates/", it first looks in the festival's gates/ directory.
@@ -54,52 +84,16 @@ func (r *TemplateResolver) Resolve(
 		return cached, nil
 	}
 
-	// Handle "gates/TEMPLATE_NAME" format
-	resolvedID := templateID
-	isGatesPath := strings.HasPrefix(templateID, "gates/")
-	if isGatesPath {
-		resolvedID = strings.TrimPrefix(templateID, "gates/")
-	}
+	// Parse gates/ prefix
+	gatesInfo := parseGatesPrefix(templateID, festivalPath)
 
 	// Build search paths from most to least specific
-	var searchPaths []struct {
-		level PolicyLevel
-		path  string
-	}
-
-	// If templateID starts with "gates/", prioritize festival's gates/ directory
-	if isGatesPath && festivalPath != "" {
-		searchPaths = append(searchPaths, struct {
-			level PolicyLevel
-			path  string
-		}{PolicyLevelFestival, filepath.Join(festivalPath, "gates", resolvedID+".md")})
-	}
-
-	// Standard hierarchy paths
-	searchPaths = append(searchPaths, []struct {
-		level PolicyLevel
-		path  string
-	}{
-		// 1. Sequence level
-		{PolicyLevelSequence, filepath.Join(sequencePath, ".fest.templates", resolvedID+".md")},
-
-		// 2. Phase level
-		{PolicyLevelPhase, filepath.Join(phasePath, ".fest.templates", resolvedID+".md")},
-
-		// 3. Festival level (legacy location)
-		{PolicyLevelFestival, filepath.Join(festivalPath, ".festival", "templates", resolvedID+".md")},
-
-		// 4. Global gates level
-		{PolicyLevelGlobal, filepath.Join(r.festivalsRoot, ".festival", "gates", "templates", resolvedID+".md")},
-
-		// 5. Built-in templates
-		{PolicyLevelBuiltin, filepath.Join(r.festivalsRoot, ".festival", "templates", resolvedID+".md")},
-	}...)
+	searchPaths := r.buildSearchPaths(gatesInfo, festivalPath, phasePath, sequencePath)
 
 	var searched []string
 	for _, sp := range searchPaths {
 		// Skip empty paths
-		if sp.path == "" || sp.path == filepath.Join("", ".fest.templates", resolvedID+".md") {
+		if sp.path == "" || sp.path == filepath.Join("", ".fest.templates", gatesInfo.resolvedID+".md") {
 			continue
 		}
 
@@ -123,6 +117,36 @@ func (r *TemplateResolver) Resolve(
 	}
 }
 
+// searchPath represents a template search location with its hierarchy level
+type searchPath struct {
+	level PolicyLevel
+	path  string
+}
+
+// buildSearchPaths creates the ordered list of paths to search for a template
+func (r *TemplateResolver) buildSearchPaths(
+	gatesInfo gatesPrefixInfo,
+	festivalPath, phasePath, sequencePath string,
+) []searchPath {
+	var paths []searchPath
+
+	// If gates/ prefix, prioritize festival's gates/ directory
+	if gatesInfo.hasPrefix && gatesInfo.gatesPath != "" {
+		paths = append(paths, searchPath{PolicyLevelFestival, gatesInfo.gatesPath})
+	}
+
+	// Standard hierarchy paths
+	paths = append(paths,
+		searchPath{PolicyLevelSequence, filepath.Join(sequencePath, ".fest.templates", gatesInfo.resolvedID+".md")},
+		searchPath{PolicyLevelPhase, filepath.Join(phasePath, ".fest.templates", gatesInfo.resolvedID+".md")},
+		searchPath{PolicyLevelFestival, filepath.Join(festivalPath, ".festival", "templates", gatesInfo.resolvedID+".md")},
+		searchPath{PolicyLevelGlobal, filepath.Join(r.festivalsRoot, ".festival", "gates", "templates", gatesInfo.resolvedID+".md")},
+		searchPath{PolicyLevelBuiltin, filepath.Join(r.festivalsRoot, ".festival", "templates", gatesInfo.resolvedID+".md")},
+	)
+
+	return paths
+}
+
 // ResolveForPhase finds a template, stopping at phase level (no sequence search)
 // If templateID starts with "gates/", it first looks in the festival's gates/ directory.
 func (r *TemplateResolver) ResolveForPhase(
@@ -134,38 +158,23 @@ func (r *TemplateResolver) ResolveForPhase(
 		return cached, nil
 	}
 
-	// Handle "gates/TEMPLATE_NAME" format
-	resolvedID := templateID
-	isGatesPath := strings.HasPrefix(templateID, "gates/")
-	if isGatesPath {
-		resolvedID = strings.TrimPrefix(templateID, "gates/")
-	}
+	// Parse gates/ prefix
+	gatesInfo := parseGatesPrefix(templateID, festivalPath)
 
-	var searchPaths []struct {
-		level PolicyLevel
-		path  string
+	// Build search paths (phase level and below)
+	var paths []searchPath
+	if gatesInfo.hasPrefix && gatesInfo.gatesPath != "" {
+		paths = append(paths, searchPath{PolicyLevelFestival, gatesInfo.gatesPath})
 	}
-
-	// If templateID starts with "gates/", prioritize festival's gates/ directory
-	if isGatesPath && festivalPath != "" {
-		searchPaths = append(searchPaths, struct {
-			level PolicyLevel
-			path  string
-		}{PolicyLevelFestival, filepath.Join(festivalPath, "gates", resolvedID+".md")})
-	}
-
-	searchPaths = append(searchPaths, []struct {
-		level PolicyLevel
-		path  string
-	}{
-		{PolicyLevelPhase, filepath.Join(phasePath, ".fest.templates", resolvedID+".md")},
-		{PolicyLevelFestival, filepath.Join(festivalPath, ".festival", "templates", resolvedID+".md")},
-		{PolicyLevelGlobal, filepath.Join(r.festivalsRoot, ".festival", "gates", "templates", resolvedID+".md")},
-		{PolicyLevelBuiltin, filepath.Join(r.festivalsRoot, ".festival", "templates", resolvedID+".md")},
-	}...)
+	paths = append(paths,
+		searchPath{PolicyLevelPhase, filepath.Join(phasePath, ".fest.templates", gatesInfo.resolvedID+".md")},
+		searchPath{PolicyLevelFestival, filepath.Join(festivalPath, ".festival", "templates", gatesInfo.resolvedID+".md")},
+		searchPath{PolicyLevelGlobal, filepath.Join(r.festivalsRoot, ".festival", "gates", "templates", gatesInfo.resolvedID+".md")},
+		searchPath{PolicyLevelBuiltin, filepath.Join(r.festivalsRoot, ".festival", "templates", gatesInfo.resolvedID+".md")},
+	)
 
 	var searched []string
-	for _, sp := range searchPaths {
+	for _, sp := range paths {
 		if sp.path == "" {
 			continue
 		}
@@ -198,37 +207,22 @@ func (r *TemplateResolver) ResolveForFestival(
 		return cached, nil
 	}
 
-	// Handle "gates/TEMPLATE_NAME" format
-	resolvedID := templateID
-	isGatesPath := strings.HasPrefix(templateID, "gates/")
-	if isGatesPath {
-		resolvedID = strings.TrimPrefix(templateID, "gates/")
-	}
+	// Parse gates/ prefix
+	gatesInfo := parseGatesPrefix(templateID, festivalPath)
 
-	var searchPaths []struct {
-		level PolicyLevel
-		path  string
+	// Build search paths (festival level and below)
+	var paths []searchPath
+	if gatesInfo.hasPrefix && gatesInfo.gatesPath != "" {
+		paths = append(paths, searchPath{PolicyLevelFestival, gatesInfo.gatesPath})
 	}
-
-	// If templateID starts with "gates/", prioritize festival's gates/ directory
-	if isGatesPath && festivalPath != "" {
-		searchPaths = append(searchPaths, struct {
-			level PolicyLevel
-			path  string
-		}{PolicyLevelFestival, filepath.Join(festivalPath, "gates", resolvedID+".md")})
-	}
-
-	searchPaths = append(searchPaths, []struct {
-		level PolicyLevel
-		path  string
-	}{
-		{PolicyLevelFestival, filepath.Join(festivalPath, ".festival", "templates", resolvedID+".md")},
-		{PolicyLevelGlobal, filepath.Join(r.festivalsRoot, ".festival", "gates", "templates", resolvedID+".md")},
-		{PolicyLevelBuiltin, filepath.Join(r.festivalsRoot, ".festival", "templates", resolvedID+".md")},
-	}...)
+	paths = append(paths,
+		searchPath{PolicyLevelFestival, filepath.Join(festivalPath, ".festival", "templates", gatesInfo.resolvedID+".md")},
+		searchPath{PolicyLevelGlobal, filepath.Join(r.festivalsRoot, ".festival", "gates", "templates", gatesInfo.resolvedID+".md")},
+		searchPath{PolicyLevelBuiltin, filepath.Join(r.festivalsRoot, ".festival", "templates", gatesInfo.resolvedID+".md")},
+	)
 
 	var searched []string
-	for _, sp := range searchPaths {
+	for _, sp := range paths {
 		if sp.path == "" {
 			continue
 		}

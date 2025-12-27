@@ -290,3 +290,208 @@ func TestCreateOptions_InsertInMiddle(t *testing.T) {
 		}
 	}
 }
+
+// TestCreateFestival_GatesDirectory tests that festival creation creates gates directory
+func TestCreateFestival_GatesDirectory(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create the festivals directory structure with templates
+	festivalsDir := filepath.Join(tmpDir, "festivals")
+	festivalMetaDir := filepath.Join(festivalsDir, ".festival")
+	templatesDir := filepath.Join(festivalMetaDir, "templates")
+	if err := os.MkdirAll(templatesDir, 0755); err != nil {
+		t.Fatalf("failed to create template dir: %v", err)
+	}
+
+	// Create minimal gate templates
+	gateTemplates := []string{
+		"QUALITY_GATE_TESTING.md",
+		"QUALITY_GATE_REVIEW.md",
+		"QUALITY_GATE_ITERATE.md",
+	}
+	for _, tmpl := range gateTemplates {
+		content := "# " + tmpl + "\n\nGate template content."
+		if err := os.WriteFile(filepath.Join(templatesDir, tmpl), []byte(content), 0644); err != nil {
+			t.Fatalf("failed to create template %s: %v", tmpl, err)
+		}
+	}
+
+	// Also create core templates to satisfy festival creation
+	coreTemplates := []string{
+		"FESTIVAL_OVERVIEW_TEMPLATE.md",
+		"FESTIVAL_GOAL_TEMPLATE.md",
+	}
+	for _, tmpl := range coreTemplates {
+		content := "# {{.festival_name}}\n"
+		if err := os.WriteFile(filepath.Join(templatesDir, tmpl), []byte(content), 0644); err != nil {
+			t.Fatalf("failed to create template %s: %v", tmpl, err)
+		}
+	}
+
+	// Change working directory temporarily
+	origDir, _ := os.Getwd()
+	defer os.Chdir(origDir)
+	os.Chdir(festivalsDir)
+
+	// Run create festival
+	opts := &CreateFestivalOptions{
+		Name:        "test-festival",
+		Goal:        "Test goal",
+		SkipMarkers: true,
+		Dest:        "active",
+	}
+
+	err := RunCreateFestival(context.Background(), opts)
+	if err != nil {
+		t.Fatalf("RunCreateFestival failed: %v", err)
+	}
+
+	// Verify gates directory was created
+	festivalDir := filepath.Join(festivalsDir, "active", "test-festival")
+	gatesDir := filepath.Join(festivalDir, "gates")
+
+	info, err := os.Stat(gatesDir)
+	if err != nil {
+		t.Fatalf("expected gates directory to exist: %v", err)
+	}
+	if !info.IsDir() {
+		t.Error("expected gates to be a directory")
+	}
+
+	// Verify gate templates were copied
+	for _, tmpl := range gateTemplates {
+		gatePath := filepath.Join(gatesDir, tmpl)
+		if _, err := os.Stat(gatePath); err != nil {
+			t.Errorf("expected gate template %s to exist: %v", tmpl, err)
+		}
+	}
+}
+
+// TestCreateFestival_FestYAMLGenerated tests that fest.yaml is generated with gates config
+func TestCreateFestival_FestYAMLGenerated(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create the festivals directory structure with templates
+	festivalsDir := filepath.Join(tmpDir, "festivals")
+	festivalMetaDir := filepath.Join(festivalsDir, ".festival")
+	templatesDir := filepath.Join(festivalMetaDir, "templates")
+	if err := os.MkdirAll(templatesDir, 0755); err != nil {
+		t.Fatalf("failed to create template dir: %v", err)
+	}
+
+	// Create minimal gate templates
+	for _, tmpl := range []string{"QUALITY_GATE_TESTING.md", "QUALITY_GATE_REVIEW.md", "QUALITY_GATE_ITERATE.md"} {
+		if err := os.WriteFile(filepath.Join(templatesDir, tmpl), []byte("# Gate"), 0644); err != nil {
+			t.Fatalf("failed to create template: %v", err)
+		}
+	}
+
+	// Also create core templates
+	for _, tmpl := range []string{"FESTIVAL_OVERVIEW_TEMPLATE.md", "FESTIVAL_GOAL_TEMPLATE.md"} {
+		if err := os.WriteFile(filepath.Join(templatesDir, tmpl), []byte("# Template"), 0644); err != nil {
+			t.Fatalf("failed to create template: %v", err)
+		}
+	}
+
+	// Change working directory temporarily
+	origDir, _ := os.Getwd()
+	defer os.Chdir(origDir)
+	os.Chdir(festivalsDir)
+
+	// Run create festival
+	opts := &CreateFestivalOptions{
+		Name:        "gates-test",
+		Goal:        "Test gates configuration",
+		SkipMarkers: true,
+		Dest:        "active",
+	}
+
+	err := RunCreateFestival(context.Background(), opts)
+	if err != nil {
+		t.Fatalf("RunCreateFestival failed: %v", err)
+	}
+
+	// Verify fest.yaml was created
+	festivalDir := filepath.Join(festivalsDir, "active", "gates-test")
+	festYAMLPath := filepath.Join(festivalDir, "fest.yaml")
+
+	if _, err := os.Stat(festYAMLPath); err != nil {
+		t.Fatalf("expected fest.yaml to exist: %v", err)
+	}
+
+	// Read and verify content has gates/ prefix
+	content, err := os.ReadFile(festYAMLPath)
+	if err != nil {
+		t.Fatalf("failed to read fest.yaml: %v", err)
+	}
+	contentStr := string(content)
+
+	// Check that gates/ prefix is used in template paths
+	if !contains(contentStr, "gates/QUALITY_GATE_TESTING") {
+		t.Error("fest.yaml should contain gates/QUALITY_GATE_TESTING")
+	}
+	if !contains(contentStr, "gates/QUALITY_GATE_REVIEW") {
+		t.Error("fest.yaml should contain gates/QUALITY_GATE_REVIEW")
+	}
+	if !contains(contentStr, "gates/QUALITY_GATE_ITERATE") {
+		t.Error("fest.yaml should contain gates/QUALITY_GATE_ITERATE")
+	}
+
+	// Verify quality_gates.enabled is true
+	if !contains(contentStr, "enabled: true") {
+		t.Error("fest.yaml should have quality_gates.enabled: true")
+	}
+}
+
+// TestCreateFestival_GatesConfigHasCorrectStructure verifies the generated config
+func TestCreateFestival_GatesConfigHasCorrectStructure(t *testing.T) {
+	cfg := defaultFestivalGatesConfig()
+
+	// Verify quality gates are enabled
+	if !cfg.QualityGates.Enabled {
+		t.Error("quality gates should be enabled by default")
+	}
+
+	// Verify we have 3 default gates
+	if len(cfg.QualityGates.Tasks) != 3 {
+		t.Errorf("expected 3 quality gate tasks, got %d", len(cfg.QualityGates.Tasks))
+	}
+
+	// Verify all gates use gates/ prefix
+	expectedTemplates := map[string]bool{
+		"gates/QUALITY_GATE_TESTING": false,
+		"gates/QUALITY_GATE_REVIEW":  false,
+		"gates/QUALITY_GATE_ITERATE": false,
+	}
+
+	for _, task := range cfg.QualityGates.Tasks {
+		if _, ok := expectedTemplates[task.Template]; !ok {
+			t.Errorf("unexpected template path: %s", task.Template)
+		} else {
+			expectedTemplates[task.Template] = true
+		}
+		if !task.Enabled {
+			t.Errorf("expected task %s to be enabled", task.ID)
+		}
+	}
+
+	for tmpl, found := range expectedTemplates {
+		if !found {
+			t.Errorf("expected template %s not found in config", tmpl)
+		}
+	}
+}
+
+// contains checks if substr is in s (simple substring check)
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && findSubstr(s, substr)
+}
+
+func findSubstr(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
