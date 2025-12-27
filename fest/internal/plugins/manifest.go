@@ -2,10 +2,11 @@
 package plugins
 
 import (
-	"fmt"
 	"os"
 
 	"gopkg.in/yaml.v3"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 const (
@@ -34,12 +35,12 @@ type PluginManifest struct {
 func LoadManifest(path string) (*PluginManifest, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read manifest: %w", err)
+		return nil, errors.IO("reading manifest", err).WithField("path", path)
 	}
 
 	var manifest PluginManifest
 	if err := yaml.Unmarshal(data, &manifest); err != nil {
-		return nil, fmt.Errorf("failed to parse manifest: %w", err)
+		return nil, errors.Parse("parsing manifest", err).WithField("path", path)
 	}
 
 	// Apply defaults
@@ -54,11 +55,11 @@ func LoadManifest(path string) (*PluginManifest, error) {
 func SaveManifest(path string, manifest *PluginManifest) error {
 	data, err := yaml.Marshal(manifest)
 	if err != nil {
-		return fmt.Errorf("failed to marshal manifest: %w", err)
+		return errors.Wrap(err, "marshaling manifest")
 	}
 
 	if err := os.WriteFile(path, data, 0644); err != nil {
-		return fmt.Errorf("failed to write manifest: %w", err)
+		return errors.IO("writing manifest", err).WithField("path", path)
 	}
 
 	return nil

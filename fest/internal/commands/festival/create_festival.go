@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
@@ -48,7 +49,7 @@ func NewCreateFestivalCommand() *cobra.Command {
 			}
 			// Otherwise, require name and proceed
 			if strings.TrimSpace(opts.Name) == "" {
-				return fmt.Errorf("--name is required (or run without flags to open TUI)")
+				return errors.Validation("--name is required (or run without flags to open TUI)")
 			}
 			return RunCreateFestival(cmd.Context(), opts)
 		},
@@ -66,7 +67,7 @@ func NewCreateFestivalCommand() *cobra.Command {
 func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 	// Check context early
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("RunCreateFestival")
 	}
 
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
@@ -75,7 +76,7 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 	// Resolve festivals root and template root
 	festivalsRoot, err := tpl.FindFestivalsRoot(cwd)
 	if err != nil {
-		return emitCreateFestivalError(opts, fmt.Errorf("%w", err))
+		return emitCreateFestivalError(opts, err)
 	}
 	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
 	if err != nil {
@@ -87,7 +88,7 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 	if strings.TrimSpace(opts.VarsFile) != "" {
 		v, err := loadVarsFile(opts.VarsFile)
 		if err != nil {
-			return emitCreateFestivalError(opts, fmt.Errorf("failed to read vars-file: %w", err))
+			return emitCreateFestivalError(opts, errors.Wrap(err, "reading vars-file").WithField("path", opts.VarsFile))
 		}
 		vars = v
 	}
@@ -107,7 +108,7 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 	}
 	destDir := filepath.Join(festivalsRoot, destCategory, slug)
 	if err := os.MkdirAll(destDir, 0755); err != nil {
-		return emitCreateFestivalError(opts, fmt.Errorf("failed to create festival directory: %w", err))
+		return emitCreateFestivalError(opts, errors.IO("creating festival directory", err).WithField("path", destDir))
 	}
 
 	// Render/copy core files
@@ -131,7 +132,7 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 		loader := tpl.NewLoader()
 		t, err := loader.Load(ctx, tpath)
 		if err != nil {
-			return emitCreateFestivalError(opts, fmt.Errorf("failed to load template %s: %w", c.Template, err))
+			return emitCreateFestivalError(opts, errors.Wrap(err, "loading template").WithField("template", c.Template))
 		}
 		outPath := filepath.Join(destDir, c.Out)
 		// If template appears to require variables, render; else copy
@@ -139,14 +140,14 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 		if requires || strings.Contains(t.Content, "{{") {
 			out, err := mgr.Render(t, tmplCtx)
 			if err != nil {
-				return emitCreateFestivalError(opts, fmt.Errorf("failed to render %s: %w", c.Template, err))
+				return emitCreateFestivalError(opts, errors.Wrap(err, "rendering template").WithField("template", c.Template))
 			}
 			if err := os.WriteFile(outPath, []byte(out), 0644); err != nil {
-				return emitCreateFestivalError(opts, fmt.Errorf("failed to write %s: %w", outPath, err))
+				return emitCreateFestivalError(opts, errors.IO("writing file", err).WithField("path", outPath))
 			}
 		} else {
 			if err := os.WriteFile(outPath, []byte(t.Content), 0644); err != nil {
-				return emitCreateFestivalError(opts, fmt.Errorf("failed to write %s: %w", outPath, err))
+				return emitCreateFestivalError(opts, errors.IO("writing file", err).WithField("path", outPath))
 			}
 		}
 		created = append(created, outPath)

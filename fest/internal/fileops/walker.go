@@ -2,11 +2,12 @@ package fileops
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 
 	gitignore "github.com/sabhiram/go-gitignore"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // WalkResult contains information about walked files
@@ -35,7 +36,7 @@ func WalkDirectory(ctx context.Context, rootPath string) (*WalkResult, error) {
 	if _, err := os.Stat(gitignoreFile); err == nil {
 		gi, err = gitignore.CompileIgnoreFile(gitignoreFile)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse .gitignore: %w", err)
+			return nil, errors.Parse("parsing .gitignore", err).WithField("path", gitignoreFile)
 		}
 	}
 
@@ -91,7 +92,7 @@ func WalkDirectory(ctx context.Context, rootPath string) (*WalkResult, error) {
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to walk directory: %w", err)
+		return nil, errors.IO("walking directory", err).WithField("path", rootPath)
 	}
 
 	return result, nil
@@ -114,7 +115,7 @@ func AggregateFileContents(ctx context.Context, files []string) ([]byte, error) 
 
 		content, err := os.ReadFile(file)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read file %s: %w", file, err)
+			return nil, errors.IO("reading file", err).WithField("path", file)
 		}
 		totalContent = append(totalContent, content...)
 	}

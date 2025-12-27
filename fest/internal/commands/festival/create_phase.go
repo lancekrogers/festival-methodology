@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -46,7 +47,7 @@ func NewCreatePhaseCommand() *cobra.Command {
 				return shared.StartCreatePhaseTUI()
 			}
 			if strings.TrimSpace(opts.Name) == "" {
-				return fmt.Errorf("--name is required (or run without flags to open TUI)")
+				return errors.Validation("--name is required (or run without flags to open TUI)")
 			}
 			return RunCreatePhase(cmd.Context(), opts)
 		},
@@ -64,7 +65,7 @@ func NewCreatePhaseCommand() *cobra.Command {
 func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 	// Check context early
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("RunCreatePhase")
 	}
 
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
@@ -77,13 +78,13 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 
 	absPath, err := filepath.Abs(opts.Path)
 	if err != nil {
-		return emitCreatePhaseError(opts, fmt.Errorf("invalid path: %w", err))
+		return emitCreatePhaseError(opts, errors.Wrap(err, "resolving path").WithField("path", opts.Path))
 	}
 
 	// Insert phase
 	ren := festival.NewRenumberer(festival.RenumberOptions{AutoApprove: true, Quiet: true})
 	if err := ren.InsertPhase(ctx, absPath, opts.After, opts.Name); err != nil {
-		return emitCreatePhaseError(opts, fmt.Errorf("failed to insert phase: %w", err))
+		return emitCreatePhaseError(opts, errors.Wrap(err, "inserting phase"))
 	}
 
 	// Compute new phase id
@@ -96,7 +97,7 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 	if strings.TrimSpace(opts.VarsFile) != "" {
 		v, err := loadVarsFile(opts.VarsFile)
 		if err != nil {
-			return emitCreatePhaseError(opts, fmt.Errorf("failed to read vars-file: %w", err))
+			return emitCreatePhaseError(opts, errors.Wrap(err, "reading vars-file").WithField("path", opts.VarsFile))
 		}
 		vars = v
 	}
@@ -133,13 +134,13 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 			loader := tpl.NewLoader()
 			t, err := loader.Load(ctx, tpath)
 			if err != nil {
-				return emitCreatePhaseError(opts, fmt.Errorf("failed to load phase goal template: %w", err))
+				return emitCreatePhaseError(opts, errors.Wrap(err, "loading phase goal template").WithField("template", templateFilename))
 			}
 			// Render if it appears templated; else copy
 			if strings.Contains(t.Content, "{{") {
 				out, err := mgr.Render(t, tmplCtx)
 				if err != nil {
-					return emitCreatePhaseError(opts, fmt.Errorf("failed to render phase goal: %w", err))
+					return emitCreatePhaseError(opts, errors.Wrap(err, "rendering phase goal"))
 				}
 				content = out
 			} else {
@@ -150,12 +151,12 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 
 	// Ensure dir and write file
 	if err := os.MkdirAll(phaseDir, 0755); err != nil {
-		return emitCreatePhaseError(opts, fmt.Errorf("failed to create phase dir: %w", err))
+		return emitCreatePhaseError(opts, errors.IO("creating phase dir", err).WithField("path", phaseDir))
 	}
 	goalPath := filepath.Join(phaseDir, "PHASE_GOAL.md")
 	if content != "" {
 		if err := os.WriteFile(goalPath, []byte(content), 0644); err != nil {
-			return emitCreatePhaseError(opts, fmt.Errorf("failed to write phase goal: %w", err))
+			return emitCreatePhaseError(opts, errors.IO("writing phase goal", err).WithField("path", goalPath))
 		}
 	}
 

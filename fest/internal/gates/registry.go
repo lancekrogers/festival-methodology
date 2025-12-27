@@ -2,12 +2,13 @@
 package gates
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // PolicyInfo describes a named policy
@@ -155,7 +156,8 @@ func (r *PolicyRegistry) GetPolicy(name string) (*GatePolicy, error) {
 	r.mu.RUnlock()
 
 	if !ok {
-		return nil, fmt.Errorf("policy not found: %s", name)
+		return nil, errors.NotFound("policy").
+			WithField("name", name)
 	}
 
 	// Built-in policies
@@ -177,7 +179,8 @@ func (r *PolicyRegistry) getBuiltinPolicy(name string) (*GatePolicy, error) {
 	case "lightweight":
 		return LightweightPolicy(), nil
 	default:
-		return nil, fmt.Errorf("unknown built-in policy: %s", name)
+		return nil, errors.NotFound("built-in policy").
+			WithField("name", name)
 	}
 }
 

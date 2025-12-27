@@ -9,6 +9,7 @@ import (
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/config"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/fileops"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -77,29 +78,29 @@ func runUpdate(ctx context.Context, targetPath string, opts *updateOptions) erro
 	// Resolve festivals root from targetPath (works from any subdirectory under festivals/)
 	absTarget, err := filepath.Abs(targetPath)
 	if err != nil {
-		return fmt.Errorf("failed to resolve path: %w", err)
+		return errors.Wrap(err, "resolving path").WithField("path", targetPath)
 	}
 	festivalsRoot, err := tpl.FindFestivalsRoot(absTarget)
 	if err != nil {
-		return fmt.Errorf("%w", err)
+		return err
 	}
 	festivalDir := filepath.Join(festivalsRoot, ".festival")
 
 	// Load checksums (stored in .festival/ directory)
 	checksumFile := filepath.Join(festivalDir, ".fest-checksums.json")
 	if !fileops.Exists(checksumFile) {
-		return fmt.Errorf("no checksum file found. Run 'fest init' first")
+		return errors.NotFound("checksum file").WithField("path", checksumFile).WithField("hint", "run 'fest init' first")
 	}
 
 	storedChecksums, err := fileops.LoadChecksums(ctx, checksumFile)
 	if err != nil {
-		return fmt.Errorf("failed to load checksums: %w", err)
+		return errors.IO("loading checksums", err).WithField("path", checksumFile)
 	}
 
 	// Get source directory (.festival only)
 	sourceDir := filepath.Join(config.ConfigDir(), "festivals", ".festival")
 	if !fileops.Exists(sourceDir) {
-		return fmt.Errorf("no cached .festival templates found. Run 'fest system sync' first")
+		return errors.NotFound(".festival templates").WithField("path", sourceDir).WithField("hint", "run 'fest system sync' first")
 	}
 
 	display.Info("Analyzing .festival methodology files...")
@@ -107,7 +108,7 @@ func runUpdate(ctx context.Context, targetPath string, opts *updateOptions) erro
 	// Calculate current checksums for the .festival directory only
 	currentChecksums, err := fileops.GenerateChecksums(ctx, festivalDir)
 	if err != nil {
-		return fmt.Errorf("failed to generate checksums: %w", err)
+		return errors.Wrap(err, "generating checksums").WithField("path", festivalDir)
 	}
 
 	// Categorize files
@@ -144,7 +145,7 @@ func runUpdate(ctx context.Context, targetPath string, opts *updateOptions) erro
 		backupDir := filepath.Join(festivalDir, ".fest-backup", timeStamp())
 		display.Info("\nCreating backup at %s...", backupDir)
 		if err := fileops.CreateBackup(ctx, festivalDir, backupDir); err != nil {
-			return fmt.Errorf("failed to create backup: %w", err)
+			return errors.IO("creating backup", err).WithField("path", backupDir)
 		}
 	}
 

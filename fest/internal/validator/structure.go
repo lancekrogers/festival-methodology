@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 )
 
@@ -25,7 +26,7 @@ func ValidateStructure(ctx context.Context, festivalPath string) ([]Issue, error
 	parser := festival.NewParser()
 	phases, err := parser.ParsePhases(ctx, festivalPath)
 	if err != nil {
-		return issues, fmt.Errorf("parse phases: %w", err)
+		return issues, errors.Wrap(err, "parsing phases").WithField("path", festivalPath)
 	}
 
 	phaseRe := regexp.MustCompile(`^\d{3}_(.+)$`)
@@ -55,7 +56,7 @@ func ValidateStructure(ctx context.Context, festivalPath string) ([]Issue, error
 
 		sequences, err := parser.ParseSequences(ctx, phase.Path)
 		if err != nil {
-			return issues, fmt.Errorf("parse sequences: %w", err)
+			return issues, errors.Wrap(err, "parsing sequences").WithField("phase", phase.Name)
 		}
 		for _, seq := range sequences {
 			// Sequence directory must be NN_lowercase

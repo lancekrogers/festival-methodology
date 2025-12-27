@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/lancekrogers/festival-methodology/fest/internal/validator"
 	"github.com/spf13/cobra"
@@ -73,7 +74,7 @@ func runValidateOrdering(opts *validateOptions) error {
 	if opts.jsonOutput {
 		if !result.Valid {
 			emitValidateJSON(result)
-			return fmt.Errorf("ordering validation failed with %d issue(s)", len(result.Issues))
+			return errors.Validation("ordering validation failed").WithField("issue_count", len(result.Issues))
 		}
 		return emitValidateJSON(result)
 	}
@@ -81,7 +82,7 @@ func runValidateOrdering(opts *validateOptions) error {
 	printValidationSection(display, "ORDERING (Gap Detection)", result.Issues)
 
 	if !result.Valid {
-		return fmt.Errorf("ordering validation failed with %d issue(s)", len(result.Issues))
+		return errors.Validation("ordering validation failed").WithField("issue_count", len(result.Issues))
 	}
 	return nil
 }

@@ -2,11 +2,11 @@ package template
 
 import (
 	"bytes"
-	"fmt"
 	"strings"
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // Renderer renders templates with variable substitution
@@ -39,7 +39,7 @@ func (r *rendererImpl) RenderString(content string, ctx *Context) (string, error
 		Funcs(sprig.TxtFuncMap()).
 		Parse(content)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse template: %w", err)
+		return "", errors.Parse("parsing template", err)
 	}
 
 	// Convert context to template data for execution
@@ -48,7 +48,8 @@ func (r *rendererImpl) RenderString(content string, ctx *Context) (string, error
 	// Execute template
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, vars); err != nil {
-		return "", fmt.Errorf("failed to execute template: %w", err)
+		return "", errors.Wrap(err, "executing template").
+			WithCode(errors.ErrCodeTemplate)
 	}
 
 	return buf.String(), nil
@@ -70,7 +71,8 @@ func ValidateTemplate(tmpl *Template, ctx *Context) error {
 	}
 
 	if len(missing) > 0 {
-		return fmt.Errorf("missing required variables: %s", strings.Join(missing, ", "))
+		return errors.Validation("missing required variables: " + strings.Join(missing, ", ")).
+			WithOp("ValidateTemplate")
 	}
 
 	return nil

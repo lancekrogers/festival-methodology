@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/config"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/extensions"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/festival"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/gates"
@@ -103,7 +104,7 @@ func init() {
 		cwd, _ := os.Getwd()
 		if _, err := tpl.FindFestivalsRoot(cwd); err != nil {
 			// Standardize the message expected by callers
-			return fmt.Errorf("no festivals/ directory detected")
+			return errors.NotFound("festivals/ directory")
 		}
 		return nil
 	}

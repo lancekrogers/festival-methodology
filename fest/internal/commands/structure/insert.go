@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	"github.com/spf13/cobra"
 )
@@ -58,7 +59,7 @@ The new phase will be created with the proper 3-digit numbering format.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.name == "" {
-				return fmt.Errorf("--name flag is required")
+				return errors.Validation("--name flag is required")
 			}
 
 			festivalDir := "."
@@ -69,7 +70,7 @@ The new phase will be created with the proper 3-digit numbering format.`,
 			// Convert to absolute path
 			absPath, err := filepath.Abs(festivalDir)
 			if err != nil {
-				return fmt.Errorf("failed to resolve path: %w", err)
+				return errors.Wrap(err, "resolving path").WithField("path", festivalDir)
 			}
 
 			// Validate name (no spaces, special chars)
@@ -110,16 +111,16 @@ The new sequence will be created with the proper 2-digit numbering format.`,
   fest insert sequence --phase ./003_IMPLEMENT --after 0 --name "setup"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.name == "" {
-				return fmt.Errorf("--name flag is required")
+				return errors.Validation("--name flag is required")
 			}
 			if phaseDir == "" {
-				return fmt.Errorf("--phase flag is required")
+				return errors.Validation("--phase flag is required")
 			}
 
 			// Convert to absolute path
 			absPath, err := filepath.Abs(phaseDir)
 			if err != nil {
-				return fmt.Errorf("failed to resolve path: %w", err)
+				return errors.Wrap(err, "resolving path").WithField("path", phaseDir)
 			}
 
 			// Validate name
@@ -163,16 +164,16 @@ Note: Tasks are markdown files, so .md extension will be added automatically.`,
   fest insert task --sequence ./path/to/sequence --after 0 --name "setup"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.name == "" {
-				return fmt.Errorf("--name flag is required")
+				return errors.Validation("--name flag is required")
 			}
 			if sequenceDir == "" {
-				return fmt.Errorf("--sequence flag is required")
+				return errors.Validation("--sequence flag is required")
 			}
 
 			// Convert to absolute path
 			absPath, err := filepath.Abs(sequenceDir)
 			if err != nil {
-				return fmt.Errorf("failed to resolve path: %w", err)
+				return errors.Wrap(err, "resolving path").WithField("path", sequenceDir)
 			}
 
 			// Validate and clean name
@@ -188,14 +189,14 @@ Note: Tasks are markdown files, so .md extension will be added automatically.`,
 
 			// For now, return a message since task insertion needs file creation
 			if !opts.dryRun {
-				return fmt.Errorf("task insertion not yet fully implemented")
+				return errors.Validation("task insertion not yet fully implemented")
 			}
 
 			// Show what would happen
 			parser := festival.NewParser()
 			tasks, err := parser.ParseTasks(cmd.Context(), absPath)
 			if err != nil {
-				return fmt.Errorf("failed to parse tasks: %w", err)
+				return errors.Wrap(err, "parsing tasks").WithField("path", absPath)
 			}
 
 			fmt.Println("\nTask insertion preview:")

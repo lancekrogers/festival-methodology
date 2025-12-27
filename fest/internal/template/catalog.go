@@ -2,7 +2,8 @@ package template
 
 import (
 	"context"
-	"fmt"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // Catalog maps template IDs (and aliases) to file paths
@@ -14,7 +15,8 @@ type Catalog struct {
 func LoadCatalog(ctx context.Context, templateRoot string) (*Catalog, error) {
 	// Check context early
 	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, errors.Wrap(err, "context cancelled").
+			WithOp("LoadCatalog")
 	}
 
 	l := NewLoader()
@@ -49,15 +51,18 @@ func (c *Catalog) Resolve(id string) (string, bool) {
 func (m *Manager) RenderByID(ctx context.Context, catalog *Catalog, id string, tmplCtx *Context) (string, error) {
 	// Check context early
 	if err := ctx.Err(); err != nil {
-		return "", fmt.Errorf("context cancelled: %w", err)
+		return "", errors.Wrap(err, "context cancelled").
+			WithOp("Manager.RenderByID")
 	}
 
 	if catalog == nil {
-		return "", fmt.Errorf("template catalog is nil")
+		return "", errors.Validation("template catalog is nil").
+			WithOp("Manager.RenderByID")
 	}
 	path, ok := catalog.Resolve(id)
 	if !ok {
-		return "", fmt.Errorf("unknown template id: %s", id)
+		return "", errors.NotFound("template").
+			WithField("id", id)
 	}
 	return m.RenderFile(ctx, path, tmplCtx)
 }

@@ -1,9 +1,10 @@
 package template
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // FindWorkspaceRoot walks up from startDir until it finds a directory containing .festival/
@@ -25,7 +26,8 @@ func FindWorkspaceRoot(startDir string) (string, error) {
 		}
 		dir = parent
 	}
-	return "", fmt.Errorf("not a festival workspace (missing .festival/)")
+	return "", errors.NotFound("festival workspace").
+		WithField("start_dir", startDir)
 }
 
 // FindFestivalsRoot walks up from startDir until it finds the festivals directory
@@ -43,7 +45,8 @@ func FindFestivalsRoot(startDir string) (string, error) {
 				return dir, nil
 			}
 			// Found a festivals dir but missing .festival metadata
-			return "", fmt.Errorf("detected festivals/ but missing .festival directory; run 'fest init'")
+			return "", errors.Validation("detected festivals/ but missing .festival directory; run 'fest init'").
+				WithField("dir", dir)
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
@@ -51,7 +54,8 @@ func FindFestivalsRoot(startDir string) (string, error) {
 		}
 		dir = parent
 	}
-	return "", fmt.Errorf("no festivals/ directory detected")
+	return "", errors.NotFound("festivals directory").
+		WithField("start_dir", startDir)
 }
 
 // LocalTemplateRoot returns <festivals_root>/.festival/templates

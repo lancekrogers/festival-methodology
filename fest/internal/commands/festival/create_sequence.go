@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -74,7 +75,7 @@ Run 'fest validate tasks' to verify task files exist.`,
 				return shared.StartCreateSequenceTUI()
 			}
 			if strings.TrimSpace(opts.Name) == "" {
-				return fmt.Errorf("--name is required (or run without flags to open TUI)")
+				return errors.Validation("--name is required (or run without flags to open TUI)")
 			}
 			return RunCreateSequence(cmd.Context(), opts)
 		},
@@ -92,7 +93,7 @@ Run 'fest validate tasks' to verify task files exist.`,
 func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 	// Check context early
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("RunCreateSequence")
 	}
 
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
@@ -106,13 +107,13 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 
 	absPath, err := filepath.Abs(opts.Path)
 	if err != nil {
-		return emitCreateSequenceError(opts, fmt.Errorf("invalid path: %w", err))
+		return emitCreateSequenceError(opts, errors.Wrap(err, "resolving path").WithField("path", opts.Path))
 	}
 
 	// Insert sequence
 	ren := festival.NewRenumberer(festival.RenumberOptions{AutoApprove: true, Quiet: true})
 	if err := ren.InsertSequence(ctx, absPath, opts.After, opts.Name); err != nil {
-		return emitCreateSequenceError(opts, fmt.Errorf("failed to insert sequence: %w", err))
+		return emitCreateSequenceError(opts, errors.Wrap(err, "inserting sequence"))
 	}
 
 	// Compute new sequence id
@@ -125,7 +126,7 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 	if strings.TrimSpace(opts.VarsFile) != "" {
 		v, err := loadVarsFile(opts.VarsFile)
 		if err != nil {
-			return emitCreateSequenceError(opts, fmt.Errorf("failed to read vars-file: %w", err))
+			return emitCreateSequenceError(opts, errors.Wrap(err, "reading vars-file").WithField("path", opts.VarsFile))
 		}
 		vars = v
 	}
@@ -152,13 +153,13 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 			loader := tpl.NewLoader()
 			t, err := loader.Load(ctx, tpath)
 			if err != nil {
-				return emitCreateSequenceError(opts, fmt.Errorf("failed to load sequence goal template: %w", err))
+				return emitCreateSequenceError(opts, errors.Wrap(err, "loading sequence goal template"))
 			}
 			// Render if it appears templated; else copy
 			if strings.Contains(t.Content, "{{") {
 				out, err := mgr.Render(t, tmplCtx)
 				if err != nil {
-					return emitCreateSequenceError(opts, fmt.Errorf("failed to render sequence goal: %w", err))
+					return emitCreateSequenceError(opts, errors.Wrap(err, "rendering sequence goal"))
 				}
 				content = out
 			} else {
@@ -169,12 +170,12 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 
 	// Ensure dir and write file
 	if err := os.MkdirAll(seqDir, 0755); err != nil {
-		return emitCreateSequenceError(opts, fmt.Errorf("failed to create sequence dir: %w", err))
+		return emitCreateSequenceError(opts, errors.IO("creating sequence dir", err).WithField("path", seqDir))
 	}
 	goalPath := filepath.Join(seqDir, "SEQUENCE_GOAL.md")
 	if content != "" {
 		if err := os.WriteFile(goalPath, []byte(content), 0644); err != nil {
-			return emitCreateSequenceError(opts, fmt.Errorf("failed to write sequence goal: %w", err))
+			return emitCreateSequenceError(opts, errors.IO("writing sequence goal", err).WithField("path", goalPath))
 		}
 	}
 

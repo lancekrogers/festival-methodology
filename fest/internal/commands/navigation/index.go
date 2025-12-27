@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/index"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
@@ -50,7 +51,7 @@ Use --output to write to a different location.`,
 			writer := index.NewIndexWriter(festivalRoot)
 			idx, err := writer.Generate()
 			if err != nil {
-				return fmt.Errorf("failed to generate index: %w", err)
+				return errors.Wrap(err, "generating index")
 			}
 
 			// Determine output path
@@ -60,12 +61,12 @@ Use --output to write to a different location.`,
 
 			// Ensure parent directory exists
 			if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
-				return fmt.Errorf("failed to create output directory: %w", err)
+				return errors.IO("creating output directory", err).WithField("path", filepath.Dir(outputPath))
 			}
 
 			// Save the index
 			if err := idx.Save(outputPath); err != nil {
-				return fmt.Errorf("failed to save index: %w", err)
+				return errors.IO("saving index", err).WithField("path", outputPath)
 			}
 
 			summary := idx.Summary()
@@ -114,12 +115,12 @@ Reports:
 
 			// Check if index exists
 			if _, err := os.Stat(indexPath); os.IsNotExist(err) {
-				return fmt.Errorf("index file not found: %s\nRun 'fest index write' to generate it", indexPath)
+				return errors.NotFound("index file").WithField("path", indexPath).WithField("hint", "run 'fest index write' to generate it")
 			}
 
 			result, err := index.ValidateFromFile(festivalRoot, indexPath)
 			if err != nil {
-				return fmt.Errorf("failed to validate index: %w", err)
+				return errors.Wrap(err, "validating index")
 			}
 
 			// Print results
@@ -150,7 +151,7 @@ Reports:
 			}
 
 			if !result.Valid {
-				return fmt.Errorf("index validation failed")
+				return errors.Validation("index validation failed")
 			}
 
 			return nil
@@ -180,18 +181,18 @@ func newIndexShowCommand() *cobra.Command {
 
 			// Check if index exists
 			if _, err := os.Stat(indexPath); os.IsNotExist(err) {
-				return fmt.Errorf("index file not found: %s\nRun 'fest index write' to generate it", indexPath)
+				return errors.NotFound("index file").WithField("path", indexPath).WithField("hint", "run 'fest index write' to generate it")
 			}
 
 			idx, err := index.LoadIndex(indexPath)
 			if err != nil {
-				return fmt.Errorf("failed to load index: %w", err)
+				return errors.IO("loading index", err).WithField("path", indexPath)
 			}
 
 			if showJSON {
 				data, err := json.MarshalIndent(idx, "", "  ")
 				if err != nil {
-					return fmt.Errorf("failed to format index: %w", err)
+					return errors.Wrap(err, "formatting index as JSON")
 				}
 				fmt.Println(string(data))
 				return nil
@@ -239,7 +240,7 @@ func resolveFestivalRoot(args []string) (string, error) {
 	if len(args) > 0 {
 		absPath, err := filepath.Abs(args[0])
 		if err != nil {
-			return "", fmt.Errorf("invalid path: %w", err)
+			return "", errors.Wrap(err, "resolving path").WithField("path", args[0])
 		}
 		return absPath, nil
 	}
@@ -247,7 +248,7 @@ func resolveFestivalRoot(args []string) (string, error) {
 	// Try to find festival root from current directory
 	cwd, err := os.Getwd()
 	if err != nil {
-		return "", fmt.Errorf("failed to get working directory: %w", err)
+		return "", errors.IO("getting working directory", err)
 	}
 
 	// Look for festivals/ parent or a festival indicator

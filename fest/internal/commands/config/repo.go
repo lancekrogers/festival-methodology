@@ -8,6 +8,7 @@ import (
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/config"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
@@ -57,7 +58,7 @@ func runConfigAdd(ctx context.Context, name, source string) error {
 
 	rm, err := config.NewRepoManager(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to initialize repo manager: %w", err)
+		return errors.Wrap(err, "initializing repo manager")
 	}
 
 	display.Info("Adding config repo '%s' from %s...", name, source)
@@ -102,7 +103,7 @@ func runConfigSync(ctx context.Context, name string) error {
 
 	rm, err := config.NewRepoManager(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to initialize repo manager: %w", err)
+		return errors.Wrap(err, "initializing repo manager")
 	}
 
 	display.Info("Syncing config repo '%s'...", name)
@@ -120,7 +121,7 @@ func runConfigSyncAll(ctx context.Context) error {
 
 	rm, err := config.NewRepoManager(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to initialize repo manager: %w", err)
+		return errors.Wrap(err, "initializing repo manager")
 	}
 
 	repos := rm.List()
@@ -162,7 +163,7 @@ func runConfigUse(ctx context.Context, name string) error {
 
 	rm, err := config.NewRepoManager(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to initialize repo manager: %w", err)
+		return errors.Wrap(err, "initializing repo manager")
 	}
 
 	if err := rm.Use(ctx, name); err != nil {
@@ -196,7 +197,7 @@ func runConfigShow(ctx context.Context, jsonOutput bool) error {
 
 	rm, err := config.NewRepoManager(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to initialize repo manager: %w", err)
+		return errors.Wrap(err, "initializing repo manager")
 	}
 
 	active := rm.GetActive()
@@ -264,7 +265,7 @@ func runConfigList(ctx context.Context, jsonOutput bool) error {
 
 	rm, err := config.NewRepoManager(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to initialize repo manager: %w", err)
+		return errors.Wrap(err, "initializing repo manager")
 	}
 
 	repos := rm.List()
@@ -336,12 +337,12 @@ func runConfigRemove(ctx context.Context, name string, force bool) error {
 
 	rm, err := config.NewRepoManager(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to initialize repo manager: %w", err)
+		return errors.Wrap(err, "initializing repo manager")
 	}
 
 	repo := rm.Manifest().GetRepo(name)
 	if repo == nil {
-		return fmt.Errorf("config repo '%s' not found", name)
+		return errors.NotFound("config repo").WithField("name", name)
 	}
 
 	if !force {

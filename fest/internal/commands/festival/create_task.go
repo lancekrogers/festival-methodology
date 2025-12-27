@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -78,12 +79,12 @@ Run 'fest validate tasks' to verify task files exist in implementation sequences
 				return shared.StartCreateTaskTUI()
 			}
 			if len(opts.Names) == 0 {
-				return fmt.Errorf("--name is required (or run without flags to open TUI)")
+				return errors.Validation("--name is required (or run without flags to open TUI)")
 			}
 			// Validate all names are non-empty
 			for _, name := range opts.Names {
 				if strings.TrimSpace(name) == "" {
-					return fmt.Errorf("task names cannot be empty")
+					return errors.Validation("task names cannot be empty")
 				}
 			}
 			return RunCreateTask(cmd.Context(), opts)
@@ -101,7 +102,7 @@ Run 'fest validate tasks' to verify task files exist in implementation sequences
 func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 	// Check context early
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("RunCreateTask")
 	}
 
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
@@ -115,7 +116,7 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 
 	absPath, err := filepath.Abs(opts.Path)
 	if err != nil {
-		return emitCreateTaskError(opts, fmt.Errorf("invalid path: %w", err))
+		return emitCreateTaskError(opts, errors.Wrap(err, "resolving path").WithField("path", opts.Path))
 	}
 
 	// Load vars once for all tasks
@@ -123,7 +124,7 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 	if strings.TrimSpace(opts.VarsFile) != "" {
 		v, err := loadVarsFile(opts.VarsFile)
 		if err != nil {
-			return emitCreateTaskError(opts, fmt.Errorf("failed to read vars-file: %w", err))
+			return emitCreateTaskError(opts, errors.Wrap(err, "reading vars-file").WithField("path", opts.VarsFile))
 		}
 		vars = v
 	}
@@ -142,13 +143,13 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 	for _, name := range opts.Names {
 		// Check context on each iteration
 		if ctxErr := ctx.Err(); ctxErr != nil {
-			return fmt.Errorf("context cancelled: %w", ctxErr)
+			return errors.Wrap(ctxErr, "context cancelled").WithOp("RunCreateTask")
 		}
 
 		// Insert task at current position
 		ren := festival.NewRenumberer(festival.RenumberOptions{AutoApprove: true, Quiet: true})
 		if err := ren.InsertTask(ctx, absPath, currentAfter, name); err != nil {
-			return emitCreateTaskError(opts, fmt.Errorf("failed to insert task %q: %w", name, err))
+			return emitCreateTaskError(opts, errors.Wrap(err, "inserting task").WithField("name", name))
 		}
 
 		// Compute new task id
@@ -175,13 +176,13 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 			if _, err := os.Stat(tpath); err == nil {
 				t, err := loader.Load(ctx, tpath)
 				if err != nil {
-					return emitCreateTaskError(opts, fmt.Errorf("failed to load task template: %w", err))
+					return emitCreateTaskError(opts, errors.Wrap(err, "loading task template"))
 				}
 				// Render if it appears templated; else copy
 				if strings.Contains(t.Content, "{{") {
 					out, err := mgr.Render(t, tmplCtx)
 					if err != nil {
-						return emitCreateTaskError(opts, fmt.Errorf("failed to render task: %w", err))
+						return emitCreateTaskError(opts, errors.Wrap(err, "rendering task"))
 					}
 					content = out
 				} else {
@@ -193,7 +194,7 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 		// Write task file (the file was created by InsertTask, but we need to write content)
 		if content != "" {
 			if err := os.WriteFile(taskPath, []byte(content), 0644); err != nil {
-				return emitCreateTaskError(opts, fmt.Errorf("failed to write task: %w", err))
+				return emitCreateTaskError(opts, errors.IO("writing task", err).WithField("path", taskPath))
 			}
 		}
 

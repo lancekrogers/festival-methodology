@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"unicode"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // CountResult represents the result of token counting
@@ -94,7 +96,7 @@ func (c *Counter) Count(text string, model string, all bool) (*CountResult, erro
 		// Use specific model
 		methods, err := c.countSpecificModel(text, model)
 		if err != nil {
-			return nil, fmt.Errorf("failed to count for model %s: %w", model, err)
+			return nil, errors.Wrap(err, "counting tokens for model").WithField("model", model)
 		}
 		result.Methods = methods
 	}

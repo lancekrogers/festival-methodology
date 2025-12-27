@@ -2,12 +2,12 @@ package gates
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	gatescore "github.com/lancekrogers/festival-methodology/fest/internal/gates"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -97,25 +97,25 @@ Quality gates are only added to sequences not matching excluded_patterns.`,
 
 func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) error {
 	if err := ctx.Err(); err != nil {
-		return emitApplyError(opts, fmt.Errorf("context cancelled: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "context cancelled").WithOp("runGatesApply"))
 	}
 
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("getting working directory: %w", err))
+		return emitApplyError(opts, errors.IO("getting working directory", err))
 	}
 
 	festivalsRoot, err := tpl.FindFestivalsRoot(cwd)
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("finding festivals root: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "finding festivals root").WithOp("runGatesApply"))
 	}
 
 	// Resolve paths
 	festivalPath, phasePath, sequencePath, err := resolvePaths(festivalsRoot, cwd, opts.phase, opts.sequence)
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("resolving paths: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "resolving paths").WithOp("runGatesApply"))
 	}
 
 	// If policy-only mode with a named policy, just write the policy file
@@ -126,12 +126,12 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 	// Create merger and load effective policy
 	registry, err := gatescore.NewPolicyRegistry(festivalsRoot, getConfigRoot())
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("creating policy registry: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "creating policy registry").WithOp("runGatesApply"))
 	}
 
 	merger, err := gatescore.NewConfigMerger(festivalsRoot, registry)
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("creating config merger: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "creating config merger").WithOp("runGatesApply"))
 	}
 
 	// If a named policy is specified, we need to handle it differently
@@ -142,7 +142,7 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 		// Get the named policy and use it instead of fest.yaml
 		policy, err := registry.GetPolicy(opts.policyName)
 		if err != nil {
-			return emitApplyError(opts, fmt.Errorf("policy %q not found: %w", opts.policyName, err))
+			return emitApplyError(opts, errors.Wrap(err, "policy not found").WithField("policy", opts.policyName))
 		}
 
 		// Use named policy gates
@@ -161,7 +161,7 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 			mergedPolicy, err = merger.MergeForFestival(ctx, festivalPath, mergeOpts)
 		}
 		if err != nil {
-			return emitApplyError(opts, fmt.Errorf("loading gate configuration: %w", err))
+			return emitApplyError(opts, errors.Wrap(err, "loading gate configuration").WithOp("runGatesApply"))
 		}
 	}
 
@@ -189,7 +189,7 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 		// Find all implementation sequences
 		sequences, err = gatescore.FindSequencesWithInfo(festivalPath, mergedPolicy.ExcludePatterns)
 		if err != nil {
-			return emitApplyError(opts, fmt.Errorf("finding sequences: %w", err))
+			return emitApplyError(opts, errors.Wrap(err, "finding sequences").WithOp("runGatesApply"))
 		}
 	}
 
@@ -205,13 +205,13 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 	// Get template root
 	tmplRoot, err := tpl.LocalTemplateRoot(festivalPath)
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("finding template root: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "finding template root").WithOp("runGatesApply"))
 	}
 
 	// Create generator
 	generator, err := gatescore.NewTaskGenerator(ctx, tmplRoot)
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("creating task generator: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "creating task generator").WithOp("runGatesApply"))
 	}
 
 	// Process each sequence
@@ -298,13 +298,14 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 func runPolicyOnlyApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions, festivalsRoot, festivalPath, phasePath, sequencePath string) error {
 	registry, err := gatescore.NewPolicyRegistry(festivalsRoot, getConfigRoot())
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("creating policy registry: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "creating policy registry").WithOp("runPolicyOnlyApply"))
 	}
 
 	// Verify policy exists
 	info, ok := registry.Get(opts.policyName)
 	if !ok {
-		return emitApplyError(opts, fmt.Errorf("policy %q not found; run 'fest gates list' to see available policies", opts.policyName))
+		return emitApplyError(opts, errors.NotFound("policy").WithField("policy", opts.policyName).
+			WithField("hint", "run 'fest gates list' to see available policies"))
 	}
 
 	// Determine target path
@@ -321,193 +322,22 @@ func runPolicyOnlyApply(ctx context.Context, cmd *cobra.Command, opts *applyOpti
 	// Get the policy
 	policy, err := registry.GetPolicy(opts.policyName)
 	if err != nil {
-		return emitApplyError(opts, fmt.Errorf("loading policy: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "loading policy").WithField("policy", opts.policyName))
 	}
 
 	// Ensure parent directory exists for festival-level override
 	if sequencePath == "" && phasePath == "" {
 		gatesDir := filepath.Join(festivalPath, ".festival")
 		if err := os.MkdirAll(gatesDir, 0755); err != nil {
-			return emitApplyError(opts, fmt.Errorf("creating .festival directory: %w", err))
+			return emitApplyError(opts, errors.IO("creating .festival directory", err).WithField("path", gatesDir))
 		}
 	}
 
 	// Write the override file
 	if err := gatescore.SavePolicy(overridePath, policy); err != nil {
-		return emitApplyError(opts, fmt.Errorf("saving policy: %w", err))
+		return emitApplyError(opts, errors.Wrap(err, "saving policy").WithField("path", overridePath))
 	}
 
 	fmt.Fprintf(out, "Applied policy %q to %s\n", opts.policyName, overridePath)
-	return nil
-}
-
-func newGatesInitCmd() *cobra.Command {
-	var phase, sequence string
-
-	cmd := &cobra.Command{
-		Use:   "init",
-		Short: "Initialize a gate configuration file",
-		Long: `Create a template configuration file at the specified level.
-
-At festival level, creates fest.yaml with quality gate settings.
-At phase/sequence level, creates .fest.gates.yml override file.`,
-		Example: `  fest gates init
-  fest gates init --phase 002_IMPLEMENT
-  fest gates init --sequence 002_IMPLEMENT/01_core`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return runGatesInit(cmd.Context(), cmd, phase, sequence)
-		},
-	}
-
-	cmd.Flags().StringVar(&phase, "phase", "", "Initialize for specific phase")
-	cmd.Flags().StringVar(&sequence, "sequence", "", "Initialize for specific sequence (format: phase/sequence)")
-
-	return cmd
-}
-
-func runGatesInit(ctx context.Context, cmd *cobra.Command, phase, sequence string) error {
-	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
-	}
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("getting working directory: %w", err)
-	}
-
-	festivalsRoot, err := tpl.FindFestivalsRoot(cwd)
-	if err != nil {
-		return fmt.Errorf("finding festivals root: %w", err)
-	}
-
-	festivalPath, phasePath, sequencePath, err := resolvePaths(festivalsRoot, cwd, phase, sequence)
-	if err != nil {
-		return fmt.Errorf("resolving paths: %w", err)
-	}
-
-	// Determine what to create
-	if sequencePath != "" || phasePath != "" {
-		// Phase or sequence level: create .fest.gates.yml
-		return createPhaseOverrideFile(cmd, festivalPath, phasePath, sequencePath)
-	}
-
-	// Festival level: create fest.yaml
-	return createFestYAMLFile(cmd, festivalPath)
-}
-
-func createPhaseOverrideFile(cmd *cobra.Command, festivalPath, phasePath, sequencePath string) error {
-	targetPath, overrideFile := resolveTargetPath(festivalPath, phasePath, sequencePath)
-	overridePath := filepath.Join(targetPath, overrideFile)
-
-	// Check if file already exists
-	if _, err := os.Stat(overridePath); err == nil {
-		return fmt.Errorf("override file already exists: %s", overridePath)
-	}
-
-	// Ensure parent directory exists
-	parentDir := filepath.Dir(overridePath)
-	if err := os.MkdirAll(parentDir, 0755); err != nil {
-		return fmt.Errorf("creating directory: %w", err)
-	}
-
-	template := `# Gate policy override file
-# See: fest understand gates
-
-version: 1
-inherit: true  # Set to false to not inherit from parent levels
-
-# Add gates (insert after inherited gates)
-# append:
-#   - id: security_audit
-#     template: SECURITY_AUDIT
-#     enabled: true
-
-# Exclude patterns for this level
-# exclude_patterns:
-#   - "*_docs"
-`
-
-	if err := os.WriteFile(overridePath, []byte(template), 0644); err != nil {
-		return fmt.Errorf("writing override file: %w", err)
-	}
-
-	fmt.Fprintf(cmd.OutOrStdout(), "Created override file: %s\n", overridePath)
-	return nil
-}
-
-func createFestYAMLFile(cmd *cobra.Command, festivalPath string) error {
-	festYAMLPath := filepath.Join(festivalPath, "fest.yaml")
-
-	// Check if file already exists
-	if _, err := os.Stat(festYAMLPath); err == nil {
-		return fmt.Errorf("fest.yaml already exists: %s", festYAMLPath)
-	}
-
-	template := `# Festival Configuration
-# See: fest understand config
-
-version: "1.0"
-
-quality_gates:
-  enabled: true
-  auto_append: true
-  tasks:
-    - id: testing_and_verify
-      template: QUALITY_GATE_TESTING
-      name: Testing and Verification
-      enabled: true
-
-    - id: code_review
-      template: QUALITY_GATE_REVIEW
-      name: Code Review
-      enabled: true
-
-    - id: review_results_iterate
-      template: QUALITY_GATE_ITERATE
-      name: Review Results and Iterate
-      enabled: true
-
-excluded_patterns:
-  - "*_planning"
-  - "*_research"
-  - "*_requirements"
-
-templates:
-  task_default: TASK_TEMPLATE_SIMPLE
-  prefer_simple: true
-
-tracking:
-  enabled: true
-  checksum_file: .festival-checksums.json
-`
-
-	if err := os.WriteFile(festYAMLPath, []byte(template), 0644); err != nil {
-		return fmt.Errorf("writing fest.yaml: %w", err)
-	}
-
-	fmt.Fprintf(cmd.OutOrStdout(), "Created fest.yaml: %s\n", festYAMLPath)
-	return nil
-}
-
-func emitApplyError(opts *applyOptions, err error) error {
-	if opts.jsonOutput {
-		return emitApplyResult(opts, applyResult{
-			OK:     false,
-			Action: "gates_apply",
-			Errors: []map[string]any{{
-				"code":    "error",
-				"message": err.Error(),
-			}},
-		})
-	}
-	return err
-}
-
-func emitApplyResult(opts *applyOptions, result applyResult) error {
-	if opts.jsonOutput {
-		enc := json.NewEncoder(os.Stdout)
-		enc.SetIndent("", "  ")
-		return enc.Encode(result)
-	}
 	return nil
 }

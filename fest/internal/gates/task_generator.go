@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 )
@@ -22,7 +23,8 @@ type TaskGenerator struct {
 // NewTaskGenerator creates a task generator with the given template root.
 func NewTaskGenerator(ctx context.Context, templateRoot string) (*TaskGenerator, error) {
 	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, errors.Wrap(err, "context cancelled").
+			WithOp("NewTaskGenerator")
 	}
 
 	catalog, _ := tpl.LoadCatalog(ctx, templateRoot)
@@ -66,7 +68,8 @@ func (g *TaskGenerator) GenerateForSequence(
 	opts GenerateOptions,
 ) ([]GenerateResult, []string, error) {
 	if err := ctx.Err(); err != nil {
-		return nil, nil, fmt.Errorf("context cancelled: %w", err)
+		return nil, nil, errors.Wrap(err, "context cancelled").
+			WithOp("TaskGenerator.GenerateForSequence")
 	}
 
 	var results []GenerateResult
@@ -75,7 +78,8 @@ func (g *TaskGenerator) GenerateForSequence(
 	// Get existing tasks in sequence
 	entries, err := os.ReadDir(sequencePath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("reading sequence directory: %w", err)
+		return nil, nil, errors.IO("reading sequence directory", err).
+			WithField("path", sequencePath)
 	}
 
 	// Find highest task number and existing task IDs
@@ -253,7 +257,8 @@ func FindFestivalRoot(startPath string) (string, error) {
 		}
 		path = parent
 	}
-	return "", fmt.Errorf("no festival root found")
+	return "", errors.NotFound("festival root").
+		WithField("start_path", startPath)
 }
 
 // FindImplementationSequences finds all implementation sequences in a festival.
@@ -262,7 +267,8 @@ func FindImplementationSequences(festivalRoot string, excludePatterns []string) 
 
 	entries, err := os.ReadDir(festivalRoot)
 	if err != nil {
-		return nil, fmt.Errorf("reading festival root: %w", err)
+		return nil, errors.IO("reading festival root", err).
+			WithField("path", festivalRoot)
 	}
 
 	for _, entry := range entries {
@@ -332,7 +338,8 @@ func FindSequencesWithInfo(festivalRoot string, excludePatterns []string) ([]Seq
 
 	entries, err := os.ReadDir(festivalRoot)
 	if err != nil {
-		return nil, fmt.Errorf("reading festival root: %w", err)
+		return nil, errors.IO("reading festival root", err).
+			WithField("path", festivalRoot)
 	}
 
 	for _, entry := range entries {

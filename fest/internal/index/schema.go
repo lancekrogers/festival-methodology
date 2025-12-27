@@ -3,9 +3,10 @@ package index
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"time"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 const (
@@ -62,12 +63,12 @@ func NewFestivalIndex(festivalID string) *FestivalIndex {
 func LoadIndex(path string) (*FestivalIndex, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read index: %w", err)
+		return nil, errors.IO("reading index", err).WithField("path", path)
 	}
 
 	var index FestivalIndex
 	if err := json.Unmarshal(data, &index); err != nil {
-		return nil, fmt.Errorf("failed to parse index: %w", err)
+		return nil, errors.Parse("parsing index", err).WithField("path", path)
 	}
 
 	return &index, nil
@@ -77,11 +78,11 @@ func LoadIndex(path string) (*FestivalIndex, error) {
 func (idx *FestivalIndex) Save(path string) error {
 	data, err := json.MarshalIndent(idx, "", "  ")
 	if err != nil {
-		return fmt.Errorf("failed to marshal index: %w", err)
+		return errors.Wrap(err, "marshaling index")
 	}
 
 	if err := os.WriteFile(path, data, 0644); err != nil {
-		return fmt.Errorf("failed to write index: %w", err)
+		return errors.IO("writing index", err).WithField("path", path)
 	}
 
 	return nil

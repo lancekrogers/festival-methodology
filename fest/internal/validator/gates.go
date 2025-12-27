@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	"github.com/lancekrogers/festival-methodology/fest/internal/gates"
 )
@@ -17,7 +18,7 @@ func ValidateQualityGates(ctx context.Context, festivalPath string) ([]Issue, er
 	parser := festival.NewParser()
 	phases, err := parser.ParsePhases(ctx, festivalPath)
 	if err != nil {
-		return issues, fmt.Errorf("parse phases: %w", err)
+		return issues, errors.Wrap(err, "parsing phases").WithField("path", festivalPath)
 	}
 
 	policy := gates.DefaultPolicy()
@@ -35,7 +36,7 @@ func ValidateQualityGates(ctx context.Context, festivalPath string) ([]Issue, er
 		}
 		sequences, err := parser.ParseSequences(ctx, phase.Path)
 		if err != nil {
-			return issues, fmt.Errorf("parse sequences: %w", err)
+			return issues, errors.Wrap(err, "parsing sequences").WithField("phase", phase.Name)
 		}
 		for _, seq := range sequences {
 			if isExcludedSequence(seq.Name, policy.ExcludePatterns) {
@@ -44,7 +45,7 @@ func ValidateQualityGates(ctx context.Context, festivalPath string) ([]Issue, er
 
 			tasks, err := parser.ParseTasks(ctx, seq.Path)
 			if err != nil {
-				return issues, fmt.Errorf("parse tasks: %w", err)
+				return issues, errors.Wrap(err, "parsing tasks").WithField("sequence", seq.Name)
 			}
 			hasGates := false
 			for _, task := range tasks {

@@ -2,8 +2,9 @@ package template
 
 import (
 	"context"
-	"fmt"
 	"os"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // RenderByIDOrFallback renders a template by catalog ID if available, otherwise
@@ -13,7 +14,8 @@ import (
 func RenderByIDOrFallback(ctx context.Context, catalog *Catalog, id string, fallbackPath string, tmplCtx *Context) (string, error) {
 	// Check context early
 	if err := ctx.Err(); err != nil {
-		return "", fmt.Errorf("context cancelled: %w", err)
+		return "", errors.Wrap(err, "context cancelled").
+			WithOp("RenderByIDOrFallback")
 	}
 
 	mgr := NewManager()

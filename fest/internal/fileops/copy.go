@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // Copier handles file copying operations
@@ -33,16 +35,16 @@ func (c *Copier) CopyDirectory(ctx context.Context, src, dst string) error {
 	// Get source directory info
 	srcInfo, err := os.Stat(src)
 	if err != nil {
-		return fmt.Errorf("failed to stat source: %w", err)
+		return errors.IO("reading source directory", err).WithField("path", src)
 	}
 
 	if !srcInfo.IsDir() {
-		return fmt.Errorf("source is not a directory: %s", src)
+		return errors.Validation("source is not a directory").WithField("path", src)
 	}
 
 	// Create destination directory
 	if err := os.MkdirAll(dst, srcInfo.Mode()); err != nil {
-		return fmt.Errorf("failed to create destination directory: %w", err)
+		return errors.IO("creating destination directory", err).WithField("path", dst)
 	}
 
 	// Walk source directory
@@ -81,7 +83,7 @@ func (c *Copier) CopyDirectory(ctx context.Context, src, dst string) error {
 		// Handle directories
 		if info.IsDir() {
 			if err := os.MkdirAll(dstPath, info.Mode()); err != nil {
-				return fmt.Errorf("failed to create directory %s: %w", dstPath, err)
+				return errors.IO("creating directory", err).WithField("path", dstPath)
 			}
 			return nil
 		}
@@ -106,31 +108,31 @@ func (c *Copier) copyFile(ctx context.Context, src, dst string, mode os.FileMode
 	// Open source file
 	srcFile, err := os.Open(src)
 	if err != nil {
-		return fmt.Errorf("failed to open source file: %w", err)
+		return errors.IO("opening source file", err).WithField("path", src)
 	}
 	defer srcFile.Close()
 
 	// Create destination directory if needed
 	dstDir := filepath.Dir(dst)
 	if err := os.MkdirAll(dstDir, 0755); err != nil {
-		return fmt.Errorf("failed to create destination directory: %w", err)
+		return errors.IO("creating destination directory", err).WithField("path", dstDir)
 	}
 
 	// Create destination file
 	dstFile, err := os.Create(dst)
 	if err != nil {
-		return fmt.Errorf("failed to create destination file: %w", err)
+		return errors.IO("creating destination file", err).WithField("path", dst)
 	}
 	defer dstFile.Close()
 
 	// Copy content
 	if _, err := io.Copy(dstFile, srcFile); err != nil {
-		return fmt.Errorf("failed to copy file content: %w", err)
+		return errors.IO("copying file content", err).WithField("src", src).WithField("dst", dst)
 	}
 
 	// Sync to ensure write
 	if err := dstFile.Sync(); err != nil {
-		return fmt.Errorf("failed to sync file: %w", err)
+		return errors.IO("syncing file", err).WithField("path", dst)
 	}
 
 	// Set permissions if preserving
@@ -164,13 +166,13 @@ func CreateBackup(ctx context.Context, src, backupDir string) error {
 
 	// Create backup directory
 	if err := os.MkdirAll(backupDir, 0755); err != nil {
-		return fmt.Errorf("failed to create backup directory: %w", err)
+		return errors.IO("creating backup directory", err).WithField("path", backupDir)
 	}
 
 	// Copy directory to backup
 	copier := NewCopier()
 	if err := copier.CopyDirectory(ctx, src, backupDir); err != nil {
-		return fmt.Errorf("failed to copy to backup: %w", err)
+		return errors.Wrap(err, "copying to backup").WithField("src", src).WithField("dst", backupDir)
 	}
 
 	// Create manifest
@@ -215,13 +217,13 @@ func (u *Updater) UpdateFile(ctx context.Context, relPath string) error {
 
 	// Check if source file exists
 	if !Exists(srcPath) {
-		return fmt.Errorf("source file does not exist: %s", srcPath)
+		return errors.NotFound("source file").WithField("path", srcPath)
 	}
 
 	// Get source file info
 	srcInfo, err := os.Stat(srcPath)
 	if err != nil {
-		return fmt.Errorf("failed to stat source file: %w", err)
+		return errors.IO("reading source file", err).WithField("path", srcPath)
 	}
 
 	// Copy file

@@ -2,11 +2,12 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // RepoManager handles config repo operations
@@ -36,13 +37,13 @@ func (rm *RepoManager) Add(ctx context.Context, name, source string) (*ConfigRep
 
 	// Check if name already exists
 	if existing := rm.manifest.GetRepo(name); existing != nil {
-		return nil, fmt.Errorf("config repo '%s' already exists", name)
+		return nil, errors.Validation("config repo already exists").WithField("name", name)
 	}
 
 	// Ensure config-repos directory exists
 	reposDir := ConfigReposPath()
 	if err := os.MkdirAll(reposDir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create config-repos directory: %w", err)
+		return nil, errors.IO("creating config-repos directory", err).WithField("path", reposDir)
 	}
 
 	localPath := RepoLocalPath(name)
@@ -54,27 +55,27 @@ func (rm *RepoManager) Add(ctx context.Context, name, source string) (*ConfigRep
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
-			return nil, fmt.Errorf("failed to clone repo: %w", err)
+			return nil, errors.IO("cloning repo", err).WithField("source", source)
 		}
 	} else {
 		// Local path - create symlink
 		absSource, err := filepath.Abs(source)
 		if err != nil {
-			return nil, fmt.Errorf("failed to resolve source path: %w", err)
+			return nil, errors.IO("resolving source path", err).WithField("source", source)
 		}
 
 		// Verify source exists
 		info, err := os.Stat(absSource)
 		if err != nil {
-			return nil, fmt.Errorf("source path does not exist: %w", err)
+			return nil, errors.NotFound("source path").WithField("path", absSource)
 		}
 		if !info.IsDir() {
-			return nil, fmt.Errorf("source path is not a directory")
+			return nil, errors.Validation("source path is not a directory").WithField("path", absSource)
 		}
 
 		// Create symlink
 		if err := os.Symlink(absSource, localPath); err != nil {
-			return nil, fmt.Errorf("failed to create symlink: %w", err)
+			return nil, errors.IO("creating symlink", err).WithField("source", absSource).WithField("target", localPath)
 		}
 	}
 
@@ -102,7 +103,7 @@ func (rm *RepoManager) Sync(ctx context.Context, name string) error {
 
 	repo := rm.manifest.GetRepo(name)
 	if repo == nil {
-		return fmt.Errorf("config repo '%s' not found", name)
+		return errors.NotFound("config repo").WithField("name", name)
 	}
 
 	if !repo.IsGitRepo {
@@ -117,7 +118,7 @@ func (rm *RepoManager) Sync(ctx context.Context, name string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to sync repo: %w", err)
+		return errors.IO("syncing repo", err).WithField("name", name)
 	}
 
 	repo.LastSync = time.Now().UTC()
@@ -151,12 +152,12 @@ func (rm *RepoManager) Use(ctx context.Context, name string) error {
 
 	repo := rm.manifest.GetRepo(name)
 	if repo == nil {
-		return fmt.Errorf("config repo '%s' not found", name)
+		return errors.NotFound("config repo").WithField("name", name)
 	}
 
 	// Verify local path exists
 	if _, err := os.Stat(repo.LocalPath); err != nil {
-		return fmt.Errorf("repo local path does not exist: %w", err)
+		return errors.NotFound("repo local path").WithField("path", repo.LocalPath)
 	}
 
 	activePath := ActiveConfigPath()
@@ -164,13 +165,13 @@ func (rm *RepoManager) Use(ctx context.Context, name string) error {
 	// Remove existing symlink if present
 	if _, err := os.Lstat(activePath); err == nil {
 		if err := os.Remove(activePath); err != nil {
-			return fmt.Errorf("failed to remove existing active symlink: %w", err)
+			return errors.IO("removing existing active symlink", err).WithField("path", activePath)
 		}
 	}
 
 	// Create new symlink
 	if err := os.Symlink(repo.LocalPath, activePath); err != nil {
-		return fmt.Errorf("failed to create active symlink: %w", err)
+		return errors.IO("creating active symlink", err).WithField("source", repo.LocalPath).WithField("target", activePath)
 	}
 
 	rm.manifest.Active = name
@@ -185,7 +186,7 @@ func (rm *RepoManager) Remove(ctx context.Context, name string) error {
 
 	repo := rm.manifest.GetRepo(name)
 	if repo == nil {
-		return fmt.Errorf("config repo '%s' not found", name)
+		return errors.NotFound("config repo").WithField("name", name)
 	}
 
 	// If this is the active repo, remove the active symlink first
@@ -193,7 +194,7 @@ func (rm *RepoManager) Remove(ctx context.Context, name string) error {
 		activePath := ActiveConfigPath()
 		if _, err := os.Lstat(activePath); err == nil {
 			if err := os.Remove(activePath); err != nil {
-				return fmt.Errorf("failed to remove active symlink: %w", err)
+				return errors.IO("removing active symlink", err).WithField("path", activePath)
 			}
 		}
 		rm.manifest.Active = ""
@@ -202,12 +203,12 @@ func (rm *RepoManager) Remove(ctx context.Context, name string) error {
 	// Remove local path (only if it's a cloned repo, not a symlink to user's dir)
 	if repo.IsGitRepo {
 		if err := os.RemoveAll(repo.LocalPath); err != nil {
-			return fmt.Errorf("failed to remove repo directory: %w", err)
+			return errors.IO("removing repo directory", err).WithField("path", repo.LocalPath)
 		}
 	} else {
 		// For symlinks, just remove the symlink
 		if err := os.Remove(repo.LocalPath); err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("failed to remove repo symlink: %w", err)
+			return errors.IO("removing repo symlink", err).WithField("path", repo.LocalPath)
 		}
 	}
 

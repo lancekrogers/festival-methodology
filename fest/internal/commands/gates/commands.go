@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	gatescore "github.com/lancekrogers/festival-methodology/fest/internal/gates"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
@@ -68,33 +69,33 @@ Shows which gates are active and where each gate originated from.`,
 
 func runGatesShow(ctx context.Context, cmd *cobra.Command, phase, sequence string, jsonOutput bool) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("runGatesShow")
 	}
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("getting working directory: %w", err)
+		return errors.IO("getting working directory", err)
 	}
 
 	festivalsRoot, err := tpl.FindFestivalsRoot(cwd)
 	if err != nil {
-		return fmt.Errorf("finding festivals root: %w", err)
+		return errors.Wrap(err, "finding festivals root").WithOp("runGatesShow")
 	}
 
 	festivalPath, phasePath, sequencePath, err := resolvePaths(festivalsRoot, cwd, phase, sequence)
 	if err != nil {
-		return fmt.Errorf("resolving paths: %w", err)
+		return errors.Wrap(err, "resolving paths").WithOp("runGatesShow")
 	}
 
 	registry, err := gatescore.NewPolicyRegistry(festivalsRoot, getConfigRoot())
 	if err != nil {
-		return fmt.Errorf("creating policy registry: %w", err)
+		return errors.Wrap(err, "creating policy registry").WithOp("runGatesShow")
 	}
 
 	// Use ConfigMerger to show merged configuration from fest.yaml + policy files
 	merger, err := gatescore.NewConfigMerger(festivalsRoot, registry)
 	if err != nil {
-		return fmt.Errorf("creating config merger: %w", err)
+		return errors.Wrap(err, "creating config merger").WithOp("runGatesShow")
 	}
 
 	opts := gatescore.DefaultMergeOptions()
@@ -107,7 +108,7 @@ func runGatesShow(ctx context.Context, cmd *cobra.Command, phase, sequence strin
 		merged, err = merger.MergeForFestival(ctx, festivalPath, opts)
 	}
 	if err != nil {
-		return fmt.Errorf("loading merged policy: %w", err)
+		return errors.Wrap(err, "loading merged policy").WithOp("runGatesShow")
 	}
 
 	if jsonOutput {
@@ -251,22 +252,22 @@ func newGatesListCmd() *cobra.Command {
 
 func runGatesList(ctx context.Context, cmd *cobra.Command, jsonOutput bool) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("runGatesList")
 	}
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("getting working directory: %w", err)
+		return errors.IO("getting working directory", err)
 	}
 
 	festivalsRoot, err := tpl.FindFestivalsRoot(cwd)
 	if err != nil {
-		return fmt.Errorf("finding festivals root: %w", err)
+		return errors.Wrap(err, "finding festivals root").WithOp("runGatesList")
 	}
 
 	registry, err := gatescore.NewPolicyRegistry(festivalsRoot, getConfigRoot())
 	if err != nil {
-		return fmt.Errorf("creating policy registry: %w", err)
+		return errors.Wrap(err, "creating policy registry").WithOp("runGatesList")
 	}
 
 	policies := registry.ListInfo()
@@ -318,17 +319,17 @@ func newGatesValidateCmd() *cobra.Command {
 
 func runGatesValidate(ctx context.Context, cmd *cobra.Command, fix, jsonOutput bool) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("runGatesValidate")
 	}
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("getting working directory: %w", err)
+		return errors.IO("getting working directory", err)
 	}
 
 	festivalsRoot, err := tpl.FindFestivalsRoot(cwd)
 	if err != nil {
-		return fmt.Errorf("finding festivals root: %w", err)
+		return errors.Wrap(err, "finding festivals root").WithOp("runGatesValidate")
 	}
 
 	var issues []validationIssue
@@ -353,7 +354,7 @@ func runGatesValidate(ctx context.Context, cmd *cobra.Command, fix, jsonOutput b
 	})
 
 	if err != nil {
-		return fmt.Errorf("walking directory: %w", err)
+		return errors.IO("walking directory", err).WithField("path", festivalsRoot)
 	}
 
 	if jsonOutput {

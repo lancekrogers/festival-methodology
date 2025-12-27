@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
 )
@@ -63,15 +64,15 @@ Available document types:
 
 func runResearchCreate(ctx context.Context, cmd *cobra.Command, docType, title, path string, jsonOutput bool) error {
 	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("context cancelled: %w", err)
+		return errors.Wrap(err, "context cancelled").WithOp("runResearchCreate")
 	}
 
 	// Validate inputs
 	if strings.TrimSpace(title) == "" {
-		return fmt.Errorf("--title is required")
+		return errors.Validation("--title is required")
 	}
 	if strings.TrimSpace(docType) == "" {
-		return fmt.Errorf("--type is required (investigation|comparison|analysis|specification)")
+		return errors.Validation("--type is required (investigation|comparison|analysis|specification)")
 	}
 
 	// Validate document type
@@ -84,24 +85,24 @@ func runResearchCreate(ctx context.Context, cmd *cobra.Command, docType, title, 
 		}
 	}
 	if !validType {
-		return fmt.Errorf("invalid document type %q: must be one of %v", docType, validResearchTypes)
+		return errors.Validation("invalid document type").WithField("type", docType).WithField("valid_types", validResearchTypes)
 	}
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("getting working directory: %w", err)
+		return errors.IO("getting working directory", err)
 	}
 
 	// Resolve template root
 	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
 	if err != nil {
-		return fmt.Errorf("finding template root: %w", err)
+		return errors.Wrap(err, "finding template root")
 	}
 
 	// Resolve destination path
 	absPath, err := filepath.Abs(path)
 	if err != nil {
-		return fmt.Errorf("invalid path: %w", err)
+		return errors.Wrap(err, "resolving path").WithField("path", path)
 	}
 
 	// Determine template file
@@ -119,7 +120,7 @@ func runResearchCreate(ctx context.Context, cmd *cobra.Command, docType, title, 
 	loader := tpl.NewLoader()
 	t, err := loader.Load(ctx, templatePath)
 	if err != nil {
-		return fmt.Errorf("failed to load template %s: %w", templateFile, err)
+		return errors.Wrap(err, "loading template").WithCode(errors.ErrCodeTemplate).WithField("template", templateFile)
 	}
 
 	// Build context
@@ -141,7 +142,7 @@ func runResearchCreate(ctx context.Context, cmd *cobra.Command, docType, title, 
 	mgr := tpl.NewManager()
 	content, err := mgr.Render(t, researchCtx)
 	if err != nil {
-		return fmt.Errorf("failed to render template: %w", err)
+		return errors.Wrap(err, "rendering template").WithCode(errors.ErrCodeTemplate)
 	}
 
 	// Create output file
@@ -151,12 +152,12 @@ func runResearchCreate(ctx context.Context, cmd *cobra.Command, docType, title, 
 
 	// Ensure directory exists
 	if err := os.MkdirAll(absPath, 0755); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
+		return errors.IO("creating directory", err).WithField("path", absPath)
 	}
 
 	// Write file
 	if err := os.WriteFile(outputPath, []byte(content), 0644); err != nil {
-		return fmt.Errorf("failed to write file: %w", err)
+		return errors.IO("writing file", err).WithField("path", outputPath)
 	}
 
 	if jsonOutput {
