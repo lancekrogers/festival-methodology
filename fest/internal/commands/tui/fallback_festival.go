@@ -14,7 +14,10 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 )
 
-func tuiCreateFestival(display *ui.UI) error {
+func tuiCreateFestival(ctx context.Context, display *ui.UI) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	cwd, _ := os.Getwd()
 	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
 	if err != nil {
@@ -33,7 +36,7 @@ func tuiCreateFestival(display *ui.UI) error {
 	}
 
 	// Collect additional variables required by core festival templates
-	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, defaultFestivalTemplatePaths(tmplRoot)))
+	required := uniqueStrings(collectRequiredVars(ctx, tmplRoot, defaultFestivalTemplatePaths(tmplRoot)))
 
 	vars := map[string]interface{}{}
 	// Pre-populate typical variables
@@ -71,11 +74,14 @@ func tuiCreateFestival(display *ui.UI) error {
 		VarsFile: varsFile,
 		Dest:     dest,
 	}
-	return shared.RunCreateFestival(context.TODO(), opts)
+	return shared.RunCreateFestival(ctx, opts)
 }
 
 // Wizard: create festival then optionally add phases
-func tuiPlanFestivalWizard(display *ui.UI) error {
+func tuiPlanFestivalWizard(ctx context.Context, display *ui.UI) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	cwd, _ := os.Getwd()
 	festivalsRoot, err := tpl.FindFestivalsRoot(cwd)
 	if err != nil {
@@ -98,7 +104,7 @@ func tuiPlanFestivalWizard(display *ui.UI) error {
 	}
 
 	// gather extra vars from templates
-	required := uniqueStrings(collectRequiredVars(context.TODO(), cwdTmpl, defaultFestivalTemplatePaths(cwdTmpl)))
+	required := uniqueStrings(collectRequiredVars(ctx, cwdTmpl, defaultFestivalTemplatePaths(cwdTmpl)))
 	vars := map[string]interface{}{"festival_name": name, "festival_goal": goal}
 	if tags != "" {
 		vars["festival_tags"] = strings.Split(tags, ",")
@@ -117,7 +123,7 @@ func tuiPlanFestivalWizard(display *ui.UI) error {
 		return err
 	}
 
-	if err := shared.RunCreateFestival(context.TODO(), &shared.CreateFestivalOpts{Name: name, Goal: goal, Tags: tags, VarsFile: varsFile, Dest: dest}); err != nil {
+	if err := shared.RunCreateFestival(ctx, &shared.CreateFestivalOpts{Name: name, Goal: goal, Tags: tags, VarsFile: varsFile, Dest: dest}); err != nil {
 		return err
 	}
 
@@ -131,6 +137,9 @@ func tuiPlanFestivalWizard(display *ui.UI) error {
 		count := atoiDefault(countStr, 0)
 		after := 0
 		for i := 0; i < count; i++ {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
 			pname := strings.TrimSpace(display.Prompt(fmt.Sprintf("Phase %d name (e.g., PLAN)", i+1)))
 			if pname == "" {
 				pname = fmt.Sprintf("PHASE_%d", i+1)
@@ -139,7 +148,7 @@ func tuiPlanFestivalWizard(display *ui.UI) error {
 			if ptype == "" {
 				ptype = "planning"
 			}
-			if err := shared.RunCreatePhase(context.TODO(), &shared.CreatePhaseOpts{After: after, Name: pname, PhaseType: ptype, Path: festivalDir}); err != nil {
+			if err := shared.RunCreatePhase(ctx, &shared.CreatePhaseOpts{After: after, Name: pname, PhaseType: ptype, Path: festivalDir}); err != nil {
 				return err
 			}
 			after++

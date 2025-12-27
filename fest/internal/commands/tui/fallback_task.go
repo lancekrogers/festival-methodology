@@ -14,7 +14,10 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 )
 
-func tuiCreateTask(display *ui.UI) error {
+func tuiCreateTask(ctx context.Context, display *ui.UI) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	cwd, _ := os.Getwd()
 	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
 	if err != nil {
@@ -105,7 +108,7 @@ func tuiCreateTask(display *ui.UI) error {
 		}
 	}
 	// Default to append after last task in resolved sequence
-	defAfter := nextTaskAfter(resolvedSeq)
+	defAfter := nextTaskAfter(ctx, resolvedSeq)
 	after := defAfter
 	if !display.Confirm("Append at end?") {
 		afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", fmt.Sprintf("%d", defAfter)))
@@ -113,7 +116,7 @@ func tuiCreateTask(display *ui.UI) error {
 	}
 
 	// Prefer TASK_TEMPLATE.md for required vars
-	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, []string{
+	required := uniqueStrings(collectRequiredVars(ctx, tmplRoot, []string{
 		filepath.Join(tmplRoot, "TASK_TEMPLATE.md"),
 	}))
 	vars := map[string]interface{}{}
@@ -137,5 +140,5 @@ func tuiCreateTask(display *ui.UI) error {
 		Path:     resolvedSeq,
 		VarsFile: varsFile,
 	}
-	return shared.RunCreateTask(context.TODO(), opts)
+	return shared.RunCreateTask(ctx, opts)
 }

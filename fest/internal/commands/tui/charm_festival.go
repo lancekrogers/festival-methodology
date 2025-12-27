@@ -14,7 +14,11 @@ import (
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 )
 
-func charmCreateFestival() error {
+func charmCreateFestival(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	cwd, _ := os.Getwd()
 	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
 	if err != nil {
@@ -39,7 +43,7 @@ func charmCreateFestival() error {
 	}
 
 	// Additional variables from templates
-	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, defaultFestivalTemplatePaths(tmplRoot)))
+	required := uniqueStrings(collectRequiredVars(ctx, tmplRoot, defaultFestivalTemplatePaths(tmplRoot)))
 	vars := map[string]interface{}{"festival_name": name, "festival_goal": goal}
 	if strings.TrimSpace(tags) != "" {
 		vars["festival_tags"] = strings.Split(tags, ",")
@@ -64,10 +68,14 @@ func charmCreateFestival() error {
 	}
 
 	opts := &shared.CreateFestivalOpts{Name: name, Goal: goal, Tags: tags, VarsFile: varsFile, Dest: dest}
-	return shared.RunCreateFestival(context.TODO(), opts)
+	return shared.RunCreateFestival(ctx, opts)
 }
 
-func charmPlanFestivalWizard() error {
+func charmPlanFestivalWizard(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	cwd, _ := os.Getwd()
 	festivalsRoot, err := tpl.FindFestivalsRoot(cwd)
 	if err != nil {
@@ -94,7 +102,7 @@ func charmPlanFestivalWizard() error {
 		return err
 	}
 
-	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, defaultFestivalTemplatePaths(tmplRoot)))
+	required := uniqueStrings(collectRequiredVars(ctx, tmplRoot, defaultFestivalTemplatePaths(tmplRoot)))
 	vars := map[string]interface{}{"festival_name": name, "festival_goal": goal}
 	if strings.TrimSpace(tags) != "" {
 		vars["festival_tags"] = strings.Split(tags, ",")
@@ -116,7 +124,7 @@ func charmPlanFestivalWizard() error {
 		return err
 	}
 
-	if err := shared.RunCreateFestival(context.TODO(), &shared.CreateFestivalOpts{Name: name, Goal: goal, Tags: tags, VarsFile: varsFile, Dest: dest}); err != nil {
+	if err := shared.RunCreateFestival(ctx, &shared.CreateFestivalOpts{Name: name, Goal: goal, Tags: tags, VarsFile: varsFile, Dest: dest}); err != nil {
 		return err
 	}
 	slug := slugify(name)
@@ -138,6 +146,9 @@ func charmPlanFestivalWizard() error {
 	if addPhases && count > 0 {
 		after := 0
 		for i := 0; i < count; i++ {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
 			var pname, ptype string
 			ptype = "planning"
 			pf := huh.NewForm(
@@ -149,7 +160,7 @@ func charmPlanFestivalWizard() error {
 			if err := pf.Run(); err != nil {
 				return err
 			}
-			if err := shared.RunCreatePhase(context.TODO(), &shared.CreatePhaseOpts{After: after, Name: pname, PhaseType: ptype, Path: festivalDir}); err != nil {
+			if err := shared.RunCreatePhase(ctx, &shared.CreatePhaseOpts{After: after, Name: pname, PhaseType: ptype, Path: festivalDir}); err != nil {
 				return err
 			}
 			after++

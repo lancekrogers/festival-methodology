@@ -312,9 +312,9 @@ func exists(p string) bool {
 
 // nextPhaseAfter returns the number to use for --after when inserting a new phase
 // so that the new phase is appended at the end. If no phases exist, returns 0.
-func nextPhaseAfter(festivalDir string) int {
+func nextPhaseAfter(ctx context.Context, festivalDir string) int {
 	parser := festival.NewParser()
-	phases, err := parser.ParsePhases(context.TODO(), festivalDir)
+	phases, err := parser.ParsePhases(ctx, festivalDir)
 	if err != nil || len(phases) == 0 {
 		return 0
 	}
@@ -328,9 +328,9 @@ func nextPhaseAfter(festivalDir string) int {
 }
 
 // nextSequenceAfter returns the number to use for --after when inserting a sequence in a phase
-func nextSequenceAfter(phaseDir string) int {
+func nextSequenceAfter(ctx context.Context, phaseDir string) int {
 	parser := festival.NewParser()
-	seqs, err := parser.ParseSequences(context.TODO(), phaseDir)
+	seqs, err := parser.ParseSequences(ctx, phaseDir)
 	if err != nil || len(seqs) == 0 {
 		return 0
 	}
@@ -344,9 +344,9 @@ func nextSequenceAfter(phaseDir string) int {
 }
 
 // nextTaskAfter returns the number to use for --after when inserting a task in a sequence
-func nextTaskAfter(seqDir string) int {
+func nextTaskAfter(ctx context.Context, seqDir string) int {
 	parser := festival.NewParser()
-	tasks, err := parser.ParseTasks(context.TODO(), seqDir)
+	tasks, err := parser.ParseTasks(ctx, seqDir)
 	if err != nil || len(tasks) == 0 {
 		return 0
 	}

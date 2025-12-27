@@ -44,7 +44,7 @@ func NewCreatePhaseCommand() *cobra.Command {
 		Short: "Insert a new phase and render its goal file",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flags().NFlag() == 0 {
-				return shared.StartCreatePhaseTUI()
+				return shared.StartCreatePhaseTUI(cmd.Context())
 			}
 			if strings.TrimSpace(opts.Name) == "" {
 				return errors.Validation("--name is required (or run without flags to open TUI)")

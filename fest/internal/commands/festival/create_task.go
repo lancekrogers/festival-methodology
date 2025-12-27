@@ -76,7 +76,7 @@ Run 'fest understand tasks' for detailed guidance on task file creation.
 Run 'fest validate tasks' to verify task files exist in implementation sequences.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flags().NFlag() == 0 {
-				return shared.StartCreateTaskTUI()
+				return shared.StartCreateTaskTUI(cmd.Context())
 			}
 			if len(opts.Names) == 0 {
 				return errors.Validation("--name is required (or run without flags to open TUI)")

@@ -589,7 +589,7 @@ func TestResolveSequenceDirInput(t *testing.T) {
 func TestNextPhaseAfter(t *testing.T) {
 	t.Run("empty festival returns 0", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		got := nextPhaseAfter(tmpDir)
+		got := nextPhaseAfter(context.Background(), tmpDir)
 		if got != 0 {
 			t.Errorf("nextPhaseAfter on empty dir = %d, want 0", got)
 		}
@@ -598,7 +598,7 @@ func TestNextPhaseAfter(t *testing.T) {
 	t.Run("single phase returns its number", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		os.MkdirAll(filepath.Join(tmpDir, "001_PLANNING"), 0755)
-		got := nextPhaseAfter(tmpDir)
+		got := nextPhaseAfter(context.Background(), tmpDir)
 		if got != 1 {
 			t.Errorf("nextPhaseAfter with one phase = %d, want 1", got)
 		}
@@ -609,7 +609,7 @@ func TestNextPhaseAfter(t *testing.T) {
 		os.MkdirAll(filepath.Join(tmpDir, "001_PLANNING"), 0755)
 		os.MkdirAll(filepath.Join(tmpDir, "002_IMPLEMENT"), 0755)
 		os.MkdirAll(filepath.Join(tmpDir, "003_REVIEW"), 0755)
-		got := nextPhaseAfter(tmpDir)
+		got := nextPhaseAfter(context.Background(), tmpDir)
 		if got != 3 {
 			t.Errorf("nextPhaseAfter with three phases = %d, want 3", got)
 		}
@@ -619,7 +619,7 @@ func TestNextPhaseAfter(t *testing.T) {
 		tmpDir := t.TempDir()
 		os.MkdirAll(filepath.Join(tmpDir, "001_PLANNING"), 0755)
 		os.MkdirAll(filepath.Join(tmpDir, "005_DEPLOY"), 0755)
-		got := nextPhaseAfter(tmpDir)
+		got := nextPhaseAfter(context.Background(), tmpDir)
 		if got != 5 {
 			t.Errorf("nextPhaseAfter with gap = %d, want 5", got)
 		}
@@ -629,7 +629,7 @@ func TestNextPhaseAfter(t *testing.T) {
 func TestNextSequenceAfter(t *testing.T) {
 	t.Run("empty phase returns 0", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		got := nextSequenceAfter(tmpDir)
+		got := nextSequenceAfter(context.Background(), tmpDir)
 		if got != 0 {
 			t.Errorf("nextSequenceAfter on empty dir = %d, want 0", got)
 		}
@@ -640,7 +640,7 @@ func TestNextSequenceAfter(t *testing.T) {
 		os.MkdirAll(filepath.Join(tmpDir, "01_req"), 0755)
 		os.MkdirAll(filepath.Join(tmpDir, "02_design"), 0755)
 		os.MkdirAll(filepath.Join(tmpDir, "03_impl"), 0755)
-		got := nextSequenceAfter(tmpDir)
+		got := nextSequenceAfter(context.Background(), tmpDir)
 		if got != 3 {
 			t.Errorf("nextSequenceAfter = %d, want 3", got)
 		}
@@ -650,7 +650,7 @@ func TestNextSequenceAfter(t *testing.T) {
 func TestNextTaskAfter(t *testing.T) {
 	t.Run("empty sequence returns 0", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		got := nextTaskAfter(tmpDir)
+		got := nextTaskAfter(context.Background(), tmpDir)
 		if got != 0 {
 			t.Errorf("nextTaskAfter on empty dir = %d, want 0", got)
 		}
@@ -661,7 +661,7 @@ func TestNextTaskAfter(t *testing.T) {
 		os.WriteFile(filepath.Join(tmpDir, "01_task_a.md"), []byte("task"), 0644)
 		os.WriteFile(filepath.Join(tmpDir, "02_task_b.md"), []byte("task"), 0644)
 		os.WriteFile(filepath.Join(tmpDir, "03_task_c.md"), []byte("task"), 0644)
-		got := nextTaskAfter(tmpDir)
+		got := nextTaskAfter(context.Background(), tmpDir)
 		if got != 3 {
 			t.Errorf("nextTaskAfter = %d, want 3", got)
 		}

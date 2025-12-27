@@ -85,23 +85,23 @@ func runCharmTUI(ctx context.Context) error {
 
 		switch action {
 		case "plan_festival":
-			if err := charmPlanFestivalWizard(); err != nil {
+			if err := charmPlanFestivalWizard(ctx); err != nil {
 				return err
 			}
 		case "create_festival":
-			if err := charmCreateFestival(); err != nil {
+			if err := charmCreateFestival(ctx); err != nil {
 				return err
 			}
 		case "create_phase":
-			if err := charmCreatePhase(); err != nil {
+			if err := charmCreatePhase(ctx); err != nil {
 				return err
 			}
 		case "create_sequence":
-			if err := charmCreateSequence(); err != nil {
+			if err := charmCreateSequence(ctx); err != nil {
 				return err
 			}
 		case "create_task":
-			if err := charmCreateTask(); err != nil {
+			if err := charmCreateTask(ctx); err != nil {
 				return err
 			}
 		case "festival_goal":
@@ -149,8 +149,13 @@ func fallbackDot(s string) string {
 }
 
 // StartCreateTUI shows a create-only menu (Charm implementation)
-func StartCreateTUI() error {
+func StartCreateTUI(ctx context.Context) error {
 	for {
+		// Check context cancellation
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		var action string
 		menu := huh.NewForm(
 			huh.NewGroup(
@@ -171,19 +176,19 @@ func StartCreateTUI() error {
 		}
 		switch action {
 		case "festival":
-			if err := charmCreateFestival(); err != nil {
+			if err := charmCreateFestival(ctx); err != nil {
 				return err
 			}
 		case "phase":
-			if err := charmCreatePhase(); err != nil {
+			if err := charmCreatePhase(ctx); err != nil {
 				return err
 			}
 		case "sequence":
-			if err := charmCreateSequence(); err != nil {
+			if err := charmCreateSequence(ctx); err != nil {
 				return err
 			}
 		case "task":
-			if err := charmCreateTask(); err != nil {
+			if err := charmCreateTask(ctx); err != nil {
 				return err
 			}
 		default:
@@ -193,13 +198,13 @@ func StartCreateTUI() error {
 }
 
 // StartCreateFestivalTUI starts the festival creation TUI directly
-func StartCreateFestivalTUI() error { return charmCreateFestival() }
+func StartCreateFestivalTUI(ctx context.Context) error { return charmCreateFestival(ctx) }
 
 // StartCreatePhaseTUI starts the phase creation TUI directly
-func StartCreatePhaseTUI() error { return charmCreatePhase() }
+func StartCreatePhaseTUI(ctx context.Context) error { return charmCreatePhase(ctx) }
 
 // StartCreateSequenceTUI starts the sequence creation TUI directly
-func StartCreateSequenceTUI() error { return charmCreateSequence() }
+func StartCreateSequenceTUI(ctx context.Context) error { return charmCreateSequence(ctx) }
 
 // StartCreateTaskTUI starts the task creation TUI directly
-func StartCreateTaskTUI() error { return charmCreateTask() }
+func StartCreateTaskTUI(ctx context.Context) error { return charmCreateTask(ctx) }

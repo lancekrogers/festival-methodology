@@ -14,7 +14,10 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 )
 
-func tuiCreatePhase(display *ui.UI) error {
+func tuiCreatePhase(ctx context.Context, display *ui.UI) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	cwd, _ := os.Getwd()
 	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
 	if err != nil {
@@ -39,14 +42,14 @@ func tuiCreatePhase(display *ui.UI) error {
 	if festDir == "." || festDir == "" {
 		festDir = findFestivalDir(cwd)
 	}
-	defAfter := nextPhaseAfter(festDir)
+	defAfter := nextPhaseAfter(ctx, festDir)
 	after := defAfter
 	if !display.Confirm("Append at end?") {
 		afterStr := strings.TrimSpace(display.PromptDefault("Insert after number (0 to insert at beginning)", fmt.Sprintf("%d", defAfter)))
 		after = atoiDefault(afterStr, defAfter)
 	}
 
-	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, []string{
+	required := uniqueStrings(collectRequiredVars(ctx, tmplRoot, []string{
 		filepath.Join(tmplRoot, "PHASE_GOAL_TEMPLATE.md"),
 	}))
 	vars := map[string]interface{}{}
@@ -73,5 +76,5 @@ func tuiCreatePhase(display *ui.UI) error {
 		Path:      path,
 		VarsFile:  varsFile,
 	}
-	return shared.RunCreatePhase(context.TODO(), opts)
+	return shared.RunCreatePhase(ctx, opts)
 }
