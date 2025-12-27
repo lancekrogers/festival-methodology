@@ -14,7 +14,10 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 )
 
-func tuiCreatePhase(display *ui.UI) error {
+func tuiCreatePhase(ctx context.Context, display *ui.UI) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	cwd, _ := os.Getwd()
 	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
 	if err != nil {
@@ -46,7 +49,7 @@ func tuiCreatePhase(display *ui.UI) error {
 		after = atoiDefault(afterStr, defAfter)
 	}
 
-	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, []string{
+	required := uniqueStrings(collectRequiredVars(ctx, tmplRoot, []string{
 		filepath.Join(tmplRoot, "PHASE_GOAL_TEMPLATE.md"),
 	}))
 	vars := map[string]interface{}{}
@@ -73,5 +76,5 @@ func tuiCreatePhase(display *ui.UI) error {
 		Path:      path,
 		VarsFile:  varsFile,
 	}
-	return shared.RunCreatePhase(context.TODO(), opts)
+	return shared.RunCreatePhase(ctx, opts)
 }

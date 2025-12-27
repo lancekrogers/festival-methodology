@@ -14,7 +14,11 @@ import (
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 )
 
-func charmCreateTask() error {
+func charmCreateTask(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	cwd, _ := os.Getwd()
 	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
 	if err != nil {
@@ -156,7 +160,7 @@ func charmCreateTask() error {
 	}
 	after := atoiDefault(afterStr, 0)
 
-	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, []string{filepath.Join(tmplRoot, "TASK_TEMPLATE.md")}))
+	required := uniqueStrings(collectRequiredVars(ctx, tmplRoot, []string{filepath.Join(tmplRoot, "TASK_TEMPLATE.md")}))
 	vars := map[string]interface{}{}
 	for _, k := range required {
 		if k == "task_number" || k == "task_name" {
@@ -186,5 +190,5 @@ func charmCreateTask() error {
 		resolvedSeq = rs
 	}
 	opts := &shared.CreateTaskOpts{After: after, Names: []string{name}, Path: fallbackDot(resolvedSeq), VarsFile: varsFile}
-	return shared.RunCreateTask(context.TODO(), opts)
+	return shared.RunCreateTask(ctx, opts)
 }

@@ -14,7 +14,11 @@ import (
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 )
 
-func charmCreatePhase() error {
+func charmCreatePhase(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	cwd, _ := os.Getwd()
 	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
 	if err != nil {
@@ -62,7 +66,7 @@ func charmCreatePhase() error {
 	}
 	after := atoiDefault(afterStr, defAfter)
 
-	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, []string{filepath.Join(tmplRoot, "PHASE_GOAL_TEMPLATE.md")}))
+	required := uniqueStrings(collectRequiredVars(ctx, tmplRoot, []string{filepath.Join(tmplRoot, "PHASE_GOAL_TEMPLATE.md")}))
 	vars := map[string]interface{}{}
 	for _, k := range required {
 		if k == "phase_number" || k == "phase_name" || k == "phase_type" {
@@ -82,5 +86,5 @@ func charmCreatePhase() error {
 		return err
 	}
 	opts := &shared.CreatePhaseOpts{After: after, Name: name, PhaseType: phaseType, Path: fallbackDot(path), VarsFile: varsFile}
-	return shared.RunCreatePhase(context.TODO(), opts)
+	return shared.RunCreatePhase(ctx, opts)
 }

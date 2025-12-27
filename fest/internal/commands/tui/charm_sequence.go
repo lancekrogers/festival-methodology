@@ -14,7 +14,11 @@ import (
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 )
 
-func charmCreateSequence() error {
+func charmCreateSequence(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	cwd, _ := os.Getwd()
 	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
 	if err != nil {
@@ -122,7 +126,7 @@ func charmCreateSequence() error {
 		resolvedPath = rp
 	}
 
-	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, []string{filepath.Join(tmplRoot, "SEQUENCE_GOAL_TEMPLATE.md")}))
+	required := uniqueStrings(collectRequiredVars(ctx, tmplRoot, []string{filepath.Join(tmplRoot, "SEQUENCE_GOAL_TEMPLATE.md")}))
 	vars := map[string]interface{}{}
 	for _, k := range required {
 		if k == "sequence_number" || k == "sequence_name" {
@@ -142,5 +146,5 @@ func charmCreateSequence() error {
 		return err
 	}
 	opts := &shared.CreateSequenceOpts{After: after, Name: name, Path: fallbackDot(resolvedPath), VarsFile: varsFile}
-	return shared.RunCreateSequence(context.TODO(), opts)
+	return shared.RunCreateSequence(ctx, opts)
 }

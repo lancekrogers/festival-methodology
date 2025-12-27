@@ -72,7 +72,7 @@ NEXT STEPS after creating a sequence:
 Run 'fest validate tasks' to verify task files exist.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flags().NFlag() == 0 {
-				return shared.StartCreateSequenceTUI()
+				return shared.StartCreateSequenceTUI(cmd.Context())
 			}
 			if strings.TrimSpace(opts.Name) == "" {
 				return errors.Validation("--name is required (or run without flags to open TUI)")

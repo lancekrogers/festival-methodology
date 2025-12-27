@@ -80,19 +80,19 @@ type ApplyOpts struct {
 // These are initialized by the tui package's init() function.
 var (
 	// StartCreateTUI launches the TUI for 'create' subcommand selection.
-	StartCreateTUI func() error
+	StartCreateTUI func(ctx context.Context) error
 
 	// StartCreateFestivalTUI launches the TUI for creating a festival.
-	StartCreateFestivalTUI func() error
+	StartCreateFestivalTUI func(ctx context.Context) error
 
 	// StartCreatePhaseTUI launches the TUI for creating a phase.
-	StartCreatePhaseTUI func() error
+	StartCreatePhaseTUI func(ctx context.Context) error
 
 	// StartCreateSequenceTUI launches the TUI for creating a sequence.
-	StartCreateSequenceTUI func() error
+	StartCreateSequenceTUI func(ctx context.Context) error
 
 	// StartCreateTaskTUI launches the TUI for creating a task.
-	StartCreateTaskTUI func() error
+	StartCreateTaskTUI func(ctx context.Context) error
 
 	// NewTUICommand creates the TUI cobra command.
 	// Set by tui package's init() function.

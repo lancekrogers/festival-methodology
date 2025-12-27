@@ -14,7 +14,10 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 )
 
-func tuiCreateSequence(display *ui.UI) error {
+func tuiCreateSequence(ctx context.Context, display *ui.UI) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	cwd, _ := os.Getwd()
 	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
 	if err != nil {
@@ -63,7 +66,7 @@ func tuiCreateSequence(display *ui.UI) error {
 		after = atoiDefault(afterStr, defAfter)
 	}
 
-	required := uniqueStrings(collectRequiredVars(context.TODO(), tmplRoot, []string{
+	required := uniqueStrings(collectRequiredVars(ctx, tmplRoot, []string{
 		filepath.Join(tmplRoot, "SEQUENCE_GOAL_TEMPLATE.md"),
 	}))
 	vars := map[string]interface{}{}
@@ -87,5 +90,5 @@ func tuiCreateSequence(display *ui.UI) error {
 		Path:     resolvedPhase,
 		VarsFile: varsFile,
 	}
-	return shared.RunCreateSequence(context.TODO(), opts)
+	return shared.RunCreateSequence(ctx, opts)
 }

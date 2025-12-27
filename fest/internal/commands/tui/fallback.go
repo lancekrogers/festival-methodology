@@ -64,23 +64,23 @@ func runTUI(ctx context.Context) error {
 
 		switch choice {
 		case 0:
-			if err := tuiPlanFestivalWizard(display); err != nil {
+			if err := tuiPlanFestivalWizard(ctx, display); err != nil {
 				return err
 			}
 		case 1:
-			if err := tuiCreateFestival(display); err != nil {
+			if err := tuiCreateFestival(ctx, display); err != nil {
 				return err
 			}
 		case 2:
-			if err := tuiCreatePhase(display); err != nil {
+			if err := tuiCreatePhase(ctx, display); err != nil {
 				return err
 			}
 		case 3:
-			if err := tuiCreateSequence(display); err != nil {
+			if err := tuiCreateSequence(ctx, display); err != nil {
 				return err
 			}
 		case 4:
-			if err := tuiCreateTask(display); err != nil {
+			if err := tuiCreateTask(ctx, display); err != nil {
 				return err
 			}
 		case 5:
@@ -99,9 +99,12 @@ func runTUI(ctx context.Context) error {
 }
 
 // StartCreateTUI shows a create-only menu (fallback implementation)
-func StartCreateTUI() error {
+func StartCreateTUI(ctx context.Context) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		choice := display.Choose("Create what?", []string{
 			"Festival",
 			"Phase",
@@ -111,19 +114,19 @@ func StartCreateTUI() error {
 		})
 		switch choice {
 		case 0:
-			if err := tuiCreateFestival(display); err != nil {
+			if err := tuiCreateFestival(ctx, display); err != nil {
 				return err
 			}
 		case 1:
-			if err := tuiCreatePhase(display); err != nil {
+			if err := tuiCreatePhase(ctx, display); err != nil {
 				return err
 			}
 		case 2:
-			if err := tuiCreateSequence(display); err != nil {
+			if err := tuiCreateSequence(ctx, display); err != nil {
 				return err
 			}
 		case 3:
-			if err := tuiCreateTask(display); err != nil {
+			if err := tuiCreateTask(ctx, display); err != nil {
 				return err
 			}
 		default:
@@ -136,25 +139,25 @@ func StartCreateTUI() error {
 }
 
 // StartCreateFestivalTUI starts the festival creation TUI directly
-func StartCreateFestivalTUI() error {
+func StartCreateFestivalTUI(ctx context.Context) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
-	return tuiCreateFestival(display)
+	return tuiCreateFestival(ctx, display)
 }
 
 // StartCreatePhaseTUI starts the phase creation TUI directly
-func StartCreatePhaseTUI() error {
+func StartCreatePhaseTUI(ctx context.Context) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
-	return tuiCreatePhase(display)
+	return tuiCreatePhase(ctx, display)
 }
 
 // StartCreateSequenceTUI starts the sequence creation TUI directly
-func StartCreateSequenceTUI() error {
+func StartCreateSequenceTUI(ctx context.Context) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
-	return tuiCreateSequence(display)
+	return tuiCreateSequence(ctx, display)
 }
 
 // StartCreateTaskTUI starts the task creation TUI directly
-func StartCreateTaskTUI() error {
+func StartCreateTaskTUI(ctx context.Context) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
-	return tuiCreateTask(display)
+	return tuiCreateTask(ctx, display)
 }

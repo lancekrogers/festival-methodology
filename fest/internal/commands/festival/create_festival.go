@@ -45,7 +45,7 @@ func NewCreateFestivalCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no flags were provided, open TUI for this flow
 			if cmd.Flags().NFlag() == 0 {
-				return shared.StartCreateFestivalTUI()
+				return shared.StartCreateFestivalTUI(cmd.Context())
 			}
 			// Otherwise, require name and proceed
 			if strings.TrimSpace(opts.Name) == "" {
