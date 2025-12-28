@@ -30,10 +30,12 @@ SETUP (one-time):
 After setup, reload your shell or run: source ~/.zshrc
 
 USAGE:
-  fgo              Navigate to festivals root
+  fgo              Smart navigation (linked project ↔ festival, or festivals root)
   fgo 002          Navigate to phase 002
   fgo 2/1          Navigate to phase 2, sequence 1
   fgo active       Navigate to active directory
+  fgo link         Link current festival to project (or vice versa)
+  fgo --help       Show this help message
 
 The 'fgo' function calls 'fest go' internally and uses cd to change
 directories. Without shell integration, use: cd $(fest go)`,
@@ -75,6 +77,14 @@ func bashZshInit() string {
 
 fgo() {
     case "$1" in
+        --help|-h|help)
+            # Show help for fgo/fest go
+            command fest go --help
+            ;;
+        link)
+            # Context-aware linking (no cd needed, shows TUI if needed)
+            command fest go "$@"
+            ;;
         map|unmap|list)
             # Pass through to fest go subcommands (no cd needed)
             command fest go "$@"
@@ -142,6 +152,12 @@ func fishInit() string {
 
 function fgo
     switch $argv[1]
+        case --help -h help
+            # Show help for fgo/fest go
+            command fest go --help
+        case link
+            # Context-aware linking (no cd needed, shows TUI if needed)
+            command fest go $argv
         case map unmap list
             # Pass through to fest go subcommands (no cd needed)
             command fest go $argv

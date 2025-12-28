@@ -6,7 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	"github.com/lancekrogers/festival-methodology/fest/internal/navigation"
 	"github.com/lancekrogers/festival-methodology/fest/internal/workspace"
 	"github.com/spf13/cobra"
 )
@@ -66,6 +68,7 @@ If no registered festivals are found, falls back to nearest festivals/.`,
 	cmd.AddCommand(NewGoShortcutCommand())
 	cmd.AddCommand(NewGoProjectCommand())
 	cmd.AddCommand(NewGoFestCommand())
+	cmd.AddCommand(NewGoLinkCommand())
 
 	return cmd
 }
@@ -96,24 +99,75 @@ func runGo(target string, opts *goOptions) error {
 		return runGoWorkspace(festivalsDir, opts)
 	}
 
-	// Resolve target if provided
-	resultPath := festivalsDir
-	if target != "" {
-		resolved, err := resolveGoTarget(target, festivalsDir)
-		if err != nil {
-			return err
+	// Smart navigation: no target provided
+	if target == "" {
+		// Try smart bidirectional navigation
+		if resultPath := trySmartNavigation(cwd, festivalsDir); resultPath != "" {
+			if opts.json {
+				fmt.Printf(`{"path": "%s"}%s`, resultPath, "\n")
+			} else {
+				fmt.Println(resultPath)
+			}
+			return nil
 		}
-		resultPath = resolved
+		// Fall back to festivals root
+		if opts.json {
+			fmt.Printf(`{"path": "%s"}%s`, festivalsDir, "\n")
+		} else {
+			fmt.Println(festivalsDir)
+		}
+		return nil
+	}
+
+	// Resolve target if provided
+	resolved, err := resolveGoTarget(target, festivalsDir)
+	if err != nil {
+		return err
 	}
 
 	// Output the path
 	if opts.json {
-		fmt.Printf(`{"path": "%s"}%s`, resultPath, "\n")
+		fmt.Printf(`{"path": "%s"}%s`, resolved, "\n")
 	} else {
-		fmt.Println(resultPath)
+		fmt.Println(resolved)
 	}
 
 	return nil
+}
+
+// trySmartNavigation attempts bidirectional navigation based on current location
+func trySmartNavigation(cwd, festivalsDir string) string {
+	nav, err := navigation.LoadNavigation()
+	if err != nil {
+		return ""
+	}
+
+	// Check if we're inside a festival
+	if isInsideFestival(cwd) {
+		// Try to find the festival name
+		loc, err := show.DetectCurrentLocation(cwd)
+		if err == nil && loc != nil && loc.Festival != nil && loc.Festival.Name != "" {
+			// Check if there's a linked project
+			if projectPath := nav.GetLinkedProject(loc.Festival.Name); projectPath != "" {
+				// Verify the path exists
+				if info, err := os.Stat(projectPath); err == nil && info.IsDir() {
+					return projectPath
+				}
+			}
+		}
+		return "" // No linked project, fall through to default
+	}
+
+	// Check if we're in a linked project
+	if festivalName := nav.FindFestivalForPath(cwd); festivalName != "" {
+		// Find the festival's path
+		festPath := resolveFestivalPath(festivalsDir, festivalName)
+		if festPath != "" {
+			return festPath
+		}
+	}
+
+	return "" // No smart navigation available
 }
 
 func runGoAll(cwd string, opts *goOptions) error {
