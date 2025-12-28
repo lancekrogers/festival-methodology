@@ -197,6 +197,47 @@ func calculateFileChecksum(ctx context.Context, path string) (string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
+// ListFiles lists all files in a directory that would be included in checksum generation.
+// Returns relative paths from rootPath.
+func ListFiles(ctx context.Context, rootPath string) ([]string, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	var files []string
+
+	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
+
+		if err != nil {
+			return err
+		}
+
+		// Skip directories
+		if info.IsDir() {
+			return nil
+		}
+
+		// Skip files that would be skipped in checksum generation
+		if shouldSkipFile(path, rootPath) {
+			return nil
+		}
+
+		// Calculate relative path
+		relPath, err := filepath.Rel(rootPath, path)
+		if err != nil {
+			return err
+		}
+
+		files = append(files, relPath)
+		return nil
+	})
+
+	return files, err
+}
+
 // shouldSkipFile determines if a file should be skipped
 func shouldSkipFile(path, rootPath string) bool {
 	relPath, err := filepath.Rel(rootPath, path)

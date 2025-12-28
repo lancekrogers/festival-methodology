@@ -112,7 +112,7 @@ func runUpdate(ctx context.Context, targetPath string, opts *updateOptions) erro
 	}
 
 	// Categorize files
-	changes := categorizeChanges(storedChecksums, currentChecksums)
+	changes := categorizeChanges(ctx, storedChecksums, currentChecksums, sourceDir)
 
 	// Filter unchanged files to only those that exist in source
 	// (handles case where files were removed from upstream methodology)
@@ -129,10 +129,11 @@ func runUpdate(ctx context.Context, targetPath string, opts *updateOptions) erro
 
 	// Show summary
 	display.Info("\nMethodology file status:")
-	display.Info("  Unchanged: %d files (safe to update)", len(changes.unchanged))
-	display.Info("  Modified:  %d files (need decision)", len(changes.modified))
-	display.Info("  New:       %d files (user created, will skip)", len(changes.new))
-	display.Info("  Deleted:   %d files (user removed, will skip)", len(changes.deleted))
+	display.Info("  Unchanged:   %d files (safe to update)", len(changes.unchanged))
+	display.Info("  Modified:    %d files (need decision)", len(changes.modified))
+	display.Info("  New:         %d files (user created, will skip)", len(changes.new))
+	display.Info("  Deleted:     %d files (user removed, will skip)", len(changes.deleted))
+	display.Info("  From source: %d files (new upstream files)", len(changes.fromSource))
 
 	if opts.dryRun {
 		display.Warning("\nDRY RUN - No files will be modified")
@@ -204,6 +205,18 @@ func runUpdate(ctx context.Context, targetPath string, opts *updateOptions) erro
 		}
 	}
 
+	// Copy new files from source (these are new upstream files not in workspace yet)
+	for _, file := range changes.fromSource {
+		if shared.IsVerbose() {
+			display.Info("Adding new upstream file %s...", file)
+		}
+		if err := updater.UpdateFile(ctx, file); err != nil {
+			display.Warning("Failed to add %s: %v", file, err)
+		} else {
+			updatedFiles = append(updatedFiles, file)
+		}
+	}
+
 	// Update checksums for updated files
 	if len(updatedFiles) > 0 {
 		display.Info("\nUpdating .festival checksums...")
@@ -226,21 +239,23 @@ func runUpdate(ctx context.Context, targetPath string, opts *updateOptions) erro
 }
 
 type fileChanges struct {
-	unchanged []string
-	modified  []string
-	new       []string
-	deleted   []string
+	unchanged  []string
+	modified   []string
+	new        []string // User-created files (exist in workspace but not in stored checksums)
+	deleted    []string // User-deleted files (exist in stored checksums but not in workspace)
+	fromSource []string // New from source (exist in source but not in workspace or stored checksums)
 }
 
-func categorizeChanges(stored, current map[string]fileops.ChecksumEntry) fileChanges {
+func categorizeChanges(ctx context.Context, stored, current map[string]fileops.ChecksumEntry, sourceDir string) fileChanges {
 	changes := fileChanges{
-		unchanged: []string{},
-		modified:  []string{},
-		new:       []string{},
-		deleted:   []string{},
+		unchanged:  []string{},
+		modified:   []string{},
+		new:        []string{},
+		deleted:    []string{},
+		fromSource: []string{},
 	}
 
-	// Check existing files
+	// Check existing files in workspace
 	for path, currentEntry := range current {
 		if storedEntry, exists := stored[path]; exists {
 			if currentEntry.Hash == storedEntry.Hash {
@@ -253,10 +268,22 @@ func categorizeChanges(stored, current map[string]fileops.ChecksumEntry) fileCha
 		}
 	}
 
-	// Check deleted files
+	// Check deleted files (in stored but not in current)
 	for path := range stored {
 		if _, exists := current[path]; !exists {
 			changes.deleted = append(changes.deleted, path)
+		}
+	}
+
+	// Check for new files in source that don't exist locally or in stored checksums
+	sourceFiles, err := fileops.ListFiles(ctx, sourceDir)
+	if err == nil {
+		for _, file := range sourceFiles {
+			_, existsInCurrent := current[file]
+			_, existsInStored := stored[file]
+			if !existsInCurrent && !existsInStored {
+				changes.fromSource = append(changes.fromSource, file)
+			}
 		}
 	}
 
@@ -288,6 +315,13 @@ func displayChanges(display *ui.UI, changes fileChanges) {
 		display.Info("\nFiles to update:")
 		for _, file := range changes.unchanged {
 			display.Info("  + %s", file)
+		}
+	}
+
+	if len(changes.fromSource) > 0 {
+		display.Info("\nNew files from upstream to add:")
+		for _, file := range changes.fromSource {
+			display.Info("  ++ %s", file)
 		}
 	}
 
