@@ -321,4 +321,3 @@ When customizing this template for your specific agent:
 - Provides data access patterns and repositories
 
 Remember: This template should be adapted to your specific orchestration needs and technical requirements.
-

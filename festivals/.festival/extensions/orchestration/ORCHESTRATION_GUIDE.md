@@ -448,4 +448,3 @@ Before beginning orchestration:
 ```
 
 Remember: Orchestration requires upfront planning but pays dividends in execution speed and quality for complex festivals.
-

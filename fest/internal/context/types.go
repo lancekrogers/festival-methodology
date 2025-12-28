@@ -14,15 +14,15 @@ const (
 
 // Location represents the current position in the festival hierarchy
 type Location struct {
-	FestivalPath  string `json:"festival_path"`
-	FestivalName  string `json:"festival_name"`
-	PhasePath     string `json:"phase_path,omitempty"`
-	PhaseName     string `json:"phase_name,omitempty"`
-	SequencePath  string `json:"sequence_path,omitempty"`
-	SequenceName  string `json:"sequence_name,omitempty"`
-	TaskPath      string `json:"task_path,omitempty"`
-	TaskName      string `json:"task_name,omitempty"`
-	Level         string `json:"level"` // festival, phase, sequence, task
+	FestivalPath string `json:"festival_path"`
+	FestivalName string `json:"festival_name"`
+	PhasePath    string `json:"phase_path,omitempty"`
+	PhaseName    string `json:"phase_name,omitempty"`
+	SequencePath string `json:"sequence_path,omitempty"`
+	SequenceName string `json:"sequence_name,omitempty"`
+	TaskPath     string `json:"task_path,omitempty"`
+	TaskName     string `json:"task_name,omitempty"`
+	Level        string `json:"level"` // festival, phase, sequence, task
 }
 
 // GoalContext holds parsed information from a goal file

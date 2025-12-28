@@ -31,9 +31,9 @@ func Format(entity interface{}, format string, compact bool) ([]byte, error) {
 
 // FlattenedResult holds flattened entities for filtered queries
 type FlattenedResult struct {
-	Query    string          `json:"query" yaml:"query"`
-	Count    int             `json:"count" yaml:"count"`
-	Entities []ParsedEntity  `json:"entities" yaml:"entities"`
+	Query    string         `json:"query" yaml:"query"`
+	Count    int            `json:"count" yaml:"count"`
+	Entities []ParsedEntity `json:"entities" yaml:"entities"`
 }
 
 // FlattenTasks extracts all tasks from a festival into a flat list
@@ -106,7 +106,7 @@ func FilterByStatus(entities []ParsedEntity, status string) []ParsedEntity {
 
 // AllFestivalsResult holds multiple parsed festivals
 type AllFestivalsResult struct {
-	Festivals []ParsedFestival `json:"festivals" yaml:"festivals"`
+	Festivals []ParsedFestival  `json:"festivals" yaml:"festivals"`
 	Summary   *WorkspaceSummary `json:"summary" yaml:"summary"`
 }
 

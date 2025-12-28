@@ -42,6 +42,7 @@ This document defines all system interfaces that must be established and finaliz
 ### System Boundaries and Data Flow
 
 **Architecture Overview:**
+
 ```
 Clients:
   - Web Browser
@@ -215,6 +216,7 @@ Services:
 ### Authentication Flow
 
 **Login Sequence:**
+
 ```
 1. User → Frontend: Login request
 2. Frontend → API Gateway: POST /auth/login

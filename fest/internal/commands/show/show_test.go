@@ -14,7 +14,7 @@ func TestHasNumericPrefix(t *testing.T) {
 		{"001_PLAN", true},
 		{"01_setup", true},
 		{"1_task", true},
-		{"001", false},    // No underscore
+		{"001", false}, // No underscore
 		{"abc_test", false},
 		{"a01_test", false},
 		{"", false},

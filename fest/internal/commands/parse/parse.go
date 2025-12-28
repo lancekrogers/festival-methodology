@@ -13,13 +13,13 @@ import (
 )
 
 var (
-	format      string
-	typeFilter  string
-	parseAll    bool
-	compact     bool
-	full        bool
+	format       string
+	typeFilter   string
+	parseAll     bool
+	compact      bool
+	full         bool
 	inferMissing bool
-	outputFile  string
+	outputFile   string
 )
 
 // NewParseCommand creates the fest parse command

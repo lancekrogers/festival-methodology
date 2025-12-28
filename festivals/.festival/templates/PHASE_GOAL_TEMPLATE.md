@@ -125,4 +125,3 @@ Track step completion against:
 | Stakeholder | Role | Sign-off Date | Notes |
 |-------------|------|---------------|-------|
 | [REPLACE: Name] | [REPLACE: Role] | [REPLACE: Date] | [REPLACE: Any conditions or notes] |
-

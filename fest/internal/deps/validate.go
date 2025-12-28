@@ -7,10 +7,10 @@ import (
 
 // ValidationResult holds the results of dependency validation
 type ValidationResult struct {
-	Valid    bool               `json:"valid"`
-	Errors   []ValidationError  `json:"errors,omitempty"`
-	Warnings []ValidationError  `json:"warnings,omitempty"`
-	Graph    *Graph             `json:"graph,omitempty"`
+	Valid    bool              `json:"valid"`
+	Errors   []ValidationError `json:"errors,omitempty"`
+	Warnings []ValidationError `json:"warnings,omitempty"`
+	Graph    *Graph            `json:"graph,omitempty"`
 }
 
 // Validate checks all dependency declarations in a festival

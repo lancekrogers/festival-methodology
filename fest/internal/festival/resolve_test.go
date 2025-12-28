@@ -101,7 +101,7 @@ func TestResolvePhase(t *testing.T) {
 		{"002", phase2, false},
 		{phase1, phase1, false}, // Full path
 		{"001_PLANNING", phase1, false},
-		{"99", "", true},        // Not found
+		{"99", "", true}, // Not found
 	}
 
 	for _, tc := range tests {

@@ -181,21 +181,25 @@ The Festival Methodology provides four specialized research document templates:
 ### When to Use Each Document Type
 
 **Investigation** - Start here when facing unknowns:
+
 - "How does the current system work?"
 - "What are the existing patterns in the codebase?"
 - "What technologies are available?"
 
 **Comparison** - Use when choosing between options:
+
 - "Which database should we use?"
 - "Should we build or buy?"
 - "Which framework best fits our needs?"
 
 **Specification** - Use to define what will be built:
+
 - "What are the requirements for this feature?"
 - "How should this API be designed?"
 - "What are the acceptance criteria?"
 
 **Analysis** - Use for deep technical understanding:
+
 - "Why is the system slow?"
 - "What is causing these errors?"
 - "How secure is the current implementation?"

@@ -21,21 +21,21 @@ type ParseOptions struct {
 
 // ParsedEntity represents a generic parsed document
 type ParsedEntity struct {
-	Type       string                 `json:"type" yaml:"type"`
-	ID         string                 `json:"id" yaml:"id"`
-	Ref        string                 `json:"ref,omitempty" yaml:"ref,omitempty"`
-	Name       string                 `json:"name" yaml:"name"`
-	Status     string                 `json:"status" yaml:"status"`
-	Path       string                 `json:"path" yaml:"path"`
-	Order      int                    `json:"order,omitempty" yaml:"order,omitempty"`
+	Type        string                 `json:"type" yaml:"type"`
+	ID          string                 `json:"id" yaml:"id"`
+	Ref         string                 `json:"ref,omitempty" yaml:"ref,omitempty"`
+	Name        string                 `json:"name" yaml:"name"`
+	Status      string                 `json:"status" yaml:"status"`
+	Path        string                 `json:"path" yaml:"path"`
+	Order       int                    `json:"order,omitempty" yaml:"order,omitempty"`
 	Frontmatter map[string]interface{} `json:"frontmatter,omitempty" yaml:"frontmatter,omitempty"`
-	Content    string                 `json:"content,omitempty" yaml:"content,omitempty"`
+	Content     string                 `json:"content,omitempty" yaml:"content,omitempty"`
 }
 
 // ParsedFestival represents a parsed festival with hierarchy
 type ParsedFestival struct {
 	ParsedEntity `yaml:",inline"`
-	Phases       []ParsedPhase `json:"phases,omitempty" yaml:"phases,omitempty"`
+	Phases       []ParsedPhase    `json:"phases,omitempty" yaml:"phases,omitempty"`
 	Summary      *FestivalSummary `json:"summary,omitempty" yaml:"summary,omitempty"`
 }
 

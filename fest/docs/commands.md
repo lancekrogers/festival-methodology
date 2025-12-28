@@ -255,6 +255,7 @@ Manage quality gate policies and create gate task files.
 
 Quality gates are validation steps appended to implementation sequences.
 Configuration is merged from multiple sources with precedence:
+
 1. Built-in defaults
 2. `fest.yaml` `quality_gates.tasks`
 3. Festival-level policy (`.festival/gates.yml`)

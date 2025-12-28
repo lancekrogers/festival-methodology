@@ -144,4 +144,3 @@ TEMPLATE USAGE:
    - Update CONTEXT.md with key decisions
    - Track progress in TODO.md
    - Hold regular review checkpoints
-

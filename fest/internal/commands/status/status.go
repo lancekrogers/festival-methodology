@@ -34,9 +34,9 @@ var ValidStatuses = map[EntityType][]string{
 }
 
 type statusOptions struct {
-	json      bool
+	json       bool
 	entityType string
-	force     bool
+	force      bool
 }
 
 // NewStatusCommand creates the status command with all subcommands.

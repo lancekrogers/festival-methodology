@@ -15,18 +15,18 @@ const (
 
 // Task represents a task node in the dependency graph
 type Task struct {
-	ID            string        `json:"id"`             // Full path identifier
-	Name          string        `json:"name"`           // Task name from filename
-	Number        int           `json:"number"`         // Task number prefix
-	Path          string        `json:"path"`           // File path
-	SequencePath  string        `json:"sequence_path"`  // Parent sequence path
-	PhasePath     string        `json:"phase_path"`     // Parent phase path
-	ParallelGroup int           `json:"parallel_group"` // Tasks in same group can run in parallel
-	Status        string        `json:"status"`         // pending, in_progress, complete
-	Dependencies  []string      `json:"dependencies"`   // Explicit dependencies from frontmatter
-	SoftDeps      []string      `json:"soft_deps"`      // Soft dependencies (preferred but not required)
-	AutonomyLevel string        `json:"autonomy_level"` // high, medium, low
-	CompletedAt   *time.Time    `json:"completed_at,omitempty"`
+	ID            string     `json:"id"`             // Full path identifier
+	Name          string     `json:"name"`           // Task name from filename
+	Number        int        `json:"number"`         // Task number prefix
+	Path          string     `json:"path"`           // File path
+	SequencePath  string     `json:"sequence_path"`  // Parent sequence path
+	PhasePath     string     `json:"phase_path"`     // Parent phase path
+	ParallelGroup int        `json:"parallel_group"` // Tasks in same group can run in parallel
+	Status        string     `json:"status"`         // pending, in_progress, complete
+	Dependencies  []string   `json:"dependencies"`   // Explicit dependencies from frontmatter
+	SoftDeps      []string   `json:"soft_deps"`      // Soft dependencies (preferred but not required)
+	AutonomyLevel string     `json:"autonomy_level"` // high, medium, low
+	CompletedAt   *time.Time `json:"completed_at,omitempty"`
 }
 
 // Dependency represents an edge in the dependency graph
@@ -39,10 +39,10 @@ type Dependency struct {
 
 // Graph represents the dependency graph
 type Graph struct {
-	Tasks    map[string]*Task  `json:"tasks"`    // All tasks by ID
-	Edges    []*Dependency     `json:"edges"`    // All dependencies
-	Incoming map[string]int    `json:"-"`        // In-degree for each task (for topological sort)
-	Outgoing map[string][]*Task `json:"-"`       // Adjacency list
+	Tasks    map[string]*Task   `json:"tasks"` // All tasks by ID
+	Edges    []*Dependency      `json:"edges"` // All dependencies
+	Incoming map[string]int     `json:"-"`     // In-degree for each task (for topological sort)
+	Outgoing map[string][]*Task `json:"-"`     // Adjacency list
 }
 
 // NewGraph creates a new empty dependency graph

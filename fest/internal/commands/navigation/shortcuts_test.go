@@ -26,12 +26,12 @@ func TestIsValidShortcutName(t *testing.T) {
 
 		// Invalid names
 		{"", false},
-		{"foo bar", false},     // space
-		{"with-dash", false},   // dash
-		{"foo.bar", false},     // dot
-		{"foo/bar", false},     // slash
-		{"foo:bar", false},     // colon
-		{"foo@bar", false},     // at
+		{"foo bar", false},               // space
+		{"with-dash", false},             // dash
+		{"foo.bar", false},               // dot
+		{"foo/bar", false},               // slash
+		{"foo:bar", false},               // colon
+		{"foo@bar", false},               // at
 		{"123456789012345678901", false}, // too long (21 chars)
 	}
 

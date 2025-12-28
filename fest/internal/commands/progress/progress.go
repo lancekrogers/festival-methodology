@@ -307,7 +307,7 @@ func showProgressOverview(mgr *progress.Manager, loc *show.LocationInfo, opts *p
 }
 
 func progressBar(percentage int) string {
-	filled := percentage / 5  // 20 char bar
+	filled := percentage / 5 // 20 char bar
 	empty := 20 - filled
 	return "[" + strings.Repeat("█", filled) + strings.Repeat("░", empty) + "]"
 }

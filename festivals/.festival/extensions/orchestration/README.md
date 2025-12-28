@@ -27,35 +27,41 @@ Instead of a single agent handling all aspects of a complex festival, orchestrat
 ## Benefits of Orchestration
 
 ### Parallel Development
+
 - Multiple agents can work simultaneously on different components
 - Reduces overall festival completion time from sequential to parallel execution
 - Enables complex festivals that would be too large for a single agent
 
 ### Specialized Expertise
+
 - Each agent can focus on their area of expertise
 - Higher quality outcomes through deep specialization
 - Better handling of complex technical domains
 
 ### Scalability
+
 - Large festivals can be decomposed into manageable chunks
 - Work can be distributed across multiple agent sessions
 - Maintains architectural integrity across large codebases
 
 ### Quality Assurance
+
 - Built-in quality gates at agent handoff points
 - Specialized testing and validation at each layer
 - Comprehensive documentation through dedicated documentation agents
 
 ## When to Use Orchestration vs Single Agent
 
-### Use Orchestration When:
+### Use Orchestration When
+
 - Festival involves 5+ major components or services
 - Multiple technical domains are involved (frontend, backend, database, blockchain, etc.)
 - Parallel development can significantly reduce completion time
 - Quality requirements are high and need specialized validation
 - The festival will benefit from interface-first design principles
 
-### Use Single Agent When:
+### Use Single Agent When
+
 - Festival is focused on a single domain or component
 - Sequential execution is more appropriate
 - The scope is manageable for a single specialized agent
@@ -66,20 +72,23 @@ Instead of a single agent handling all aspects of a complex festival, orchestrat
 This directory contains the following orchestration resources:
 
 ### Core Templates
+
 - `templates/AGENT_TEMPLATE.md` - Standard template for creating specialized agents
 - `templates/ORCHESTRATION_PLAN_TEMPLATE.md` - Template for planning orchestrated festivals
 
 ### Implementation Guides
+
 - `ORCHESTRATION_GUIDE.md` - Step-by-step guide for implementing orchestration
 - `patterns/COMMON_PATTERNS.md` - Proven orchestration patterns
 - `patterns/AGENT_ARCHETYPES.md` - Reusable agent role definitions
 
 ### Case Studies
+
 - `examples/blockchain-verification-example.md` - Real-world orchestration example
 
 ## Adaptation Guidelines
 
-### For New Festivals:
+### For New Festivals
 
 1. **Analyze Complexity**: Determine if orchestration benefits outweigh coordination costs
 2. **Identify Domains**: Break the festival into logical technical domains
@@ -88,7 +97,7 @@ This directory contains the following orchestration resources:
 5. **Select Patterns**: Choose appropriate orchestration patterns from the library
 6. **Customize Agents**: Adapt agent templates to your specific technical domains
 
-### Key Principles:
+### Key Principles
 
 - **Interface-First Design**: Enable parallel development through well-defined contracts
 - **Quality Gates**: Establish clear handoff criteria between agents

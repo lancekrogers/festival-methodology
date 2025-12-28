@@ -11,18 +11,18 @@ import (
 
 // ExecutionState persists execution progress
 type ExecutionState struct {
-	FestivalPath  string            `yaml:"festival_path" json:"festival_path"`
-	CurrentPhase  int               `yaml:"current_phase" json:"current_phase"`
-	CurrentSeq    int               `yaml:"current_sequence" json:"current_sequence"`
-	CurrentStep   int               `yaml:"current_step" json:"current_step"`
-	Mode          ExecutionMode     `yaml:"mode" json:"mode"`
-	TaskStatuses  map[string]string `yaml:"task_statuses" json:"task_statuses"`
-	StartedAt     time.Time         `yaml:"started_at" json:"started_at"`
-	LastUpdated   time.Time         `yaml:"last_updated" json:"last_updated"`
-	TotalTasks    int               `yaml:"total_tasks" json:"total_tasks"`
-	CompletedTasks int              `yaml:"completed_tasks" json:"completed_tasks"`
-	SkippedTasks  int               `yaml:"skipped_tasks" json:"skipped_tasks"`
-	FailedTasks   int               `yaml:"failed_tasks" json:"failed_tasks"`
+	FestivalPath   string            `yaml:"festival_path" json:"festival_path"`
+	CurrentPhase   int               `yaml:"current_phase" json:"current_phase"`
+	CurrentSeq     int               `yaml:"current_sequence" json:"current_sequence"`
+	CurrentStep    int               `yaml:"current_step" json:"current_step"`
+	Mode           ExecutionMode     `yaml:"mode" json:"mode"`
+	TaskStatuses   map[string]string `yaml:"task_statuses" json:"task_statuses"`
+	StartedAt      time.Time         `yaml:"started_at" json:"started_at"`
+	LastUpdated    time.Time         `yaml:"last_updated" json:"last_updated"`
+	TotalTasks     int               `yaml:"total_tasks" json:"total_tasks"`
+	CompletedTasks int               `yaml:"completed_tasks" json:"completed_tasks"`
+	SkippedTasks   int               `yaml:"skipped_tasks" json:"skipped_tasks"`
+	FailedTasks    int               `yaml:"failed_tasks" json:"failed_tasks"`
 }
 
 // TaskStatus represents the status of a task

@@ -94,14 +94,14 @@ type ExecutionResult struct {
 
 // LoopState tracks the state of semi-autonomous execution
 type LoopState struct {
-	Mode           ExecutionMode       `json:"mode"`
-	TasksCompleted int                 `json:"tasks_completed"`
-	TasksRemaining int                 `json:"tasks_remaining"`
-	CurrentTask    *TaskInfo           `json:"current_task,omitempty"`
-	LastResult     *ExecutionResult    `json:"last_result,omitempty"`
-	Handoffs       []*HandoffEvent     `json:"handoffs,omitempty"`
-	StartedAt      time.Time           `json:"started_at"`
-	Config         *ExecutionConfig    `json:"config"`
+	Mode           ExecutionMode    `json:"mode"`
+	TasksCompleted int              `json:"tasks_completed"`
+	TasksRemaining int              `json:"tasks_remaining"`
+	CurrentTask    *TaskInfo        `json:"current_task,omitempty"`
+	LastResult     *ExecutionResult `json:"last_result,omitempty"`
+	Handoffs       []*HandoffEvent  `json:"handoffs,omitempty"`
+	StartedAt      time.Time        `json:"started_at"`
+	Config         *ExecutionConfig `json:"config"`
 }
 
 // ShouldContinue determines if the execution loop should continue

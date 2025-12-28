@@ -19,10 +19,10 @@ import (
 )
 
 var (
-	message  string
-	taskRef  string
-	noTag    bool
-	jsonOut  bool
+	message string
+	taskRef string
+	noTag   bool
+	jsonOut bool
 )
 
 // NewCommitCommand creates the fest commit command
@@ -59,11 +59,11 @@ Examples:
 
 // CommitResult represents the result of a commit operation
 type CommitResult struct {
-	Success   bool   `json:"success"`
-	Hash      string `json:"hash,omitempty"`
-	Message   string `json:"message"`
-	TaskRef   string `json:"task_ref,omitempty"`
-	Error     string `json:"error,omitempty"`
+	Success bool   `json:"success"`
+	Hash    string `json:"hash,omitempty"`
+	Message string `json:"message"`
+	TaskRef string `json:"task_ref,omitempty"`
+	Error   string `json:"error,omitempty"`
 }
 
 func runCommit(cmd *cobra.Command, args []string) error {

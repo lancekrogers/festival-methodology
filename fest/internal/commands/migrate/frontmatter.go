@@ -44,11 +44,11 @@ Examples:
 
 // MigrationResult holds the result of migrating a single file
 type MigrationResult struct {
-	Path      string
-	Action    string // "added", "updated", "skipped", "error"
-	Message   string
-	OldFM     *frontmatter.Frontmatter
-	NewFM     *frontmatter.Frontmatter
+	Path    string
+	Action  string // "added", "updated", "skipped", "error"
+	Message string
+	OldFM   *frontmatter.Frontmatter
+	NewFM   *frontmatter.Frontmatter
 }
 
 func runFrontmatterMigration(cmd *cobra.Command, args []string) error {

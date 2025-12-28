@@ -12,14 +12,14 @@ import (
 )
 
 var (
-	dryRun      bool
-	agentMode   bool
-	jsonOutput  bool
-	maxParallel int
+	dryRun       bool
+	agentMode    bool
+	jsonOutput   bool
+	maxParallel  int
 	continueExec bool
-	phaseName   string
-	seqName     string
-	reset       bool
+	phaseName    string
+	seqName      string
+	reset        bool
 )
 
 // NewExecuteCommand creates the execute command

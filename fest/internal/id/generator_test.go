@@ -79,9 +79,9 @@ func TestValidate(t *testing.T) {
 		{"FEST-000000", true},
 		{"FEST-zzz999", true},
 		{"FEST-abcdef", true},
-		{"fest-abc123", false}, // lowercase prefix
-		{"FEST-ABC123", false}, // uppercase hash
-		{"FEST-abc12", false},  // too short
+		{"fest-abc123", false},  // lowercase prefix
+		{"FEST-ABC123", false},  // uppercase hash
+		{"FEST-abc12", false},   // too short
 		{"FEST-abc1234", false}, // too long
 		{"FESTabc123", false},   // missing dash
 		{"ABC-abc123", false},   // wrong prefix
@@ -118,7 +118,7 @@ func TestFormat(t *testing.T) {
 		expected string
 	}{
 		{"abc123", "FEST-abc123"},
-		{"ABCDEF", "FEST-abcdef"}, // Should lowercase
+		{"ABCDEF", "FEST-abcdef"},     // Should lowercase
 		{"abc1234567", "FEST-abc123"}, // Should truncate
 	}
 

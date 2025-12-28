@@ -665,4 +665,3 @@ Agent archetypes provide a framework for understanding and organizing the divers
 4. **Scale Orchestration**: Apply proven archetype patterns to new festivals
 
 Remember that archetypes are guidelines, not rigid constraints. Adapt them to your specific context, and don't hesitate to create hybrid roles or new archetypes when your festival's needs require it.
-

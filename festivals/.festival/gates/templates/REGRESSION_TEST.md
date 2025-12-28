@@ -9,24 +9,28 @@ Verify that changes have not introduced regressions in existing functionality.
 ## Regression Testing Checklist
 
 ### Test Coverage
+
 - [ ] All existing tests pass
 - [ ] New tests added for changed functionality
 - [ ] Edge cases covered
 - [ ] Error conditions tested
 
 ### Functionality Verification
+
 - [ ] Core features still work as expected
 - [ ] UI/UX remains consistent
 - [ ] API contracts unchanged (or documented)
 - [ ] Database migrations tested
 
 ### Integration Points
+
 - [ ] External service integrations verified
 - [ ] Webhook handlers tested
 - [ ] Event subscriptions working
 - [ ] Third-party library compatibility confirmed
 
 ### Data Integrity
+
 - [ ] Data migrations preserve existing data
 - [ ] No data loss or corruption
 - [ ] Rollback procedures tested

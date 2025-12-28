@@ -43,15 +43,15 @@ description: Plan a sequence of related tasks within a phase
 
 ### Quality Verification Tasks
 
-4. **[04_testing_and_verify]** - Validate all sequence deliverables
+1. **[04_testing_and_verify]** - Validate all sequence deliverables
    - Dependencies: All core tasks
    - Parallel Group: None
 
-5. **[05_code_review]** - Review implementation quality
+2. **[05_code_review]** - Review implementation quality
    - Dependencies: Task 04
    - Parallel Group: None
 
-6. **[06_review_results_iterate]** - Address findings and iterate if needed
+3. **[06_review_results_iterate]** - Address findings and iterate if needed
    - Dependencies: Task 05
    - Parallel Group: None
 
@@ -87,4 +87,3 @@ description: Plan a sequence of related tasks within a phase
 ## Notes
 
 [Additional context, assumptions, constraints, or considerations]
-

@@ -11,9 +11,9 @@ import (
 
 // TreeIndex represents the complete workspace tree for Guild v3
 type TreeIndex struct {
-	Version   string           `json:"version"`
-	IndexedAt time.Time        `json:"indexed_at"`
-	Workspace WorkspaceInfo    `json:"workspace"`
+	Version   string            `json:"version"`
+	IndexedAt time.Time         `json:"indexed_at"`
+	Workspace WorkspaceInfo     `json:"workspace"`
 	Festivals FestivalsByStatus `json:"festivals"`
 }
 

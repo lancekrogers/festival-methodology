@@ -16,13 +16,13 @@ type ExecutionPlan struct {
 
 // PhaseExecution represents execution plan for a phase
 type PhaseExecution struct {
-	Name         string               `json:"name"`
-	Path         string               `json:"path"`
-	Number       int                  `json:"number"`
-	Sequences    []*SequenceExecution `json:"sequences"`
-	QualityGate  *QualityGateInfo     `json:"quality_gate,omitempty"`
-	TotalTasks   int                  `json:"total_tasks"`
-	Status       string               `json:"status"`
+	Name        string               `json:"name"`
+	Path        string               `json:"path"`
+	Number      int                  `json:"number"`
+	Sequences   []*SequenceExecution `json:"sequences"`
+	QualityGate *QualityGateInfo     `json:"quality_gate,omitempty"`
+	TotalTasks  int                  `json:"total_tasks"`
+	Status      string               `json:"status"`
 }
 
 // SequenceExecution represents execution plan for a sequence
@@ -65,12 +65,12 @@ type QualityGateInfo struct {
 
 // ExecutionSummary provides summary statistics for the plan
 type ExecutionSummary struct {
-	TotalPhases    int `json:"total_phases"`
-	TotalSequences int `json:"total_sequences"`
-	TotalTasks     int `json:"total_tasks"`
-	TotalSteps     int `json:"total_steps"`
-	ParallelGroups int `json:"parallel_groups"`
-	QualityGates   int `json:"quality_gates"`
+	TotalPhases    int    `json:"total_phases"`
+	TotalSequences int    `json:"total_sequences"`
+	TotalTasks     int    `json:"total_tasks"`
+	TotalSteps     int    `json:"total_steps"`
+	ParallelGroups int    `json:"parallel_groups"`
+	QualityGates   int    `json:"quality_gates"`
 	EstimatedTime  string `json:"estimated_time,omitempty"`
 }
 
