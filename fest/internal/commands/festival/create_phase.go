@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
@@ -28,6 +29,7 @@ type CreatePhaseOptions struct {
 	SkipMarkers bool   // Skip marker processing
 	DryRun      bool   // Show markers without creating file
 	JSONOutput  bool
+	AgentMode   bool // Strict mode for AI agents
 }
 
 type createPhaseResult struct {
@@ -39,6 +41,7 @@ type createPhaseResult struct {
 	Markers       []map[string]interface{} `json:"markers,omitempty"`
 	MarkersFilled int                      `json:"markers_filled,omitempty"`
 	MarkersTotal  int                      `json:"markers_total,omitempty"`
+	Validation    *ValidationSummary       `json:"validation,omitempty"`
 	Errors        []map[string]any         `json:"errors,omitempty"`
 	Warnings      []string                 `json:"warnings,omitempty"`
 }
@@ -69,6 +72,7 @@ func NewCreatePhaseCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.SkipMarkers, "skip-markers", false, "Skip REPLACE marker processing")
 	cmd.Flags().BoolVar(&opts.DryRun, "dry-run", false, "Show template markers without creating file")
 	cmd.Flags().BoolVar(&opts.JSONOutput, "json", false, "Emit JSON output")
+	cmd.Flags().BoolVar(&opts.AgentMode, "agent", false, "Strict mode: require markers, auto-validate, block on errors, JSON output")
 	return cmd
 }
 
@@ -79,8 +83,24 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 		return errors.Wrap(err, "context cancelled").WithOp("RunCreatePhase")
 	}
 
+	// Agent mode implies JSON output
+	if opts.AgentMode {
+		opts.JSONOutput = true
+	}
+
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	cwd, _ := os.Getwd()
+
+	// Resolve paths for config loading
+	festivalsRoot := ResolveFestivalsRoot(cwd)
+	festivalPath := ResolveFestivalPath(cwd)
+
+	// Load effective agent config (workspace + festival merged)
+	agentCfg := LoadEffectiveAgentConfig(festivalsRoot, festivalPath)
+
+	// Determine effective skip-markers behavior
+	effectiveSkipMarkers := config.EffectiveSkipMarkers(agentCfg, opts.AgentMode, opts.SkipMarkers)
+
 	// Resolve template root
 	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
 	if err != nil {
@@ -176,7 +196,7 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 			FilePath:    goalPath,
 			Markers:     opts.Markers,
 			MarkersFile: opts.MarkersFile,
-			SkipMarkers: opts.SkipMarkers,
+			SkipMarkers: effectiveSkipMarkers,
 			DryRun:      opts.DryRun,
 			JSONOutput:  opts.JSONOutput,
 		})
@@ -198,6 +218,26 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 		}
 	}
 
+	// Run post-create validation if configured
+	var validationResult *ValidationSummary
+	shouldValidate := config.ShouldValidate(agentCfg, opts.AgentMode)
+	if shouldValidate && festivalPath != "" {
+		validationResult, err = RunPostCreateValidation(ctx, festivalPath)
+		if err != nil {
+			// Don't fail on validation errors, just report
+			if !opts.JSONOutput {
+				display.Warning("Validation failed: %v", err)
+			}
+		}
+
+		// Block on errors if configured
+		if validationResult != nil && !validationResult.OK {
+			if config.ShouldBlockOnErrors(agentCfg, opts.AgentMode) {
+				return emitCreatePhaseError(opts, errors.Validation("validation errors detected - fix issues before proceeding"))
+			}
+		}
+	}
+
 	if opts.JSONOutput {
 		return emitCreatePhaseJSON(opts, createPhaseResult{
 			OK:     true,
@@ -212,6 +252,7 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 			Renumber:      []string{},
 			MarkersFilled: markersFilled,
 			MarkersTotal:  markersTotal,
+			Validation:    validationResult,
 			Warnings: []string{
 				"Next: Create sequences with 'fest create sequence --name SEQUENCE_NAME'",
 			},

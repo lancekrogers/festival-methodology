@@ -20,6 +20,7 @@ type FestivalConfig struct {
 	ExcludedPatterns []string           `yaml:"excluded_patterns"`
 	Templates        TemplatePrefs      `yaml:"templates"`
 	Tracking         TrackingConfig     `yaml:"tracking"`
+	Agent            AgentConfig        `yaml:"agent,omitempty"`
 }
 
 // QualityGatesConfig contains quality gate settings

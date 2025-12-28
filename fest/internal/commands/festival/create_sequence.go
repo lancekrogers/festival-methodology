@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
@@ -28,6 +29,7 @@ type CreateSequenceOptions struct {
 	DryRun      bool   // Show markers without creating file
 	JSONOutput  bool
 	NoPrompt    bool
+	AgentMode   bool // Strict mode for AI agents
 }
 
 type createSequenceResult struct {
@@ -39,6 +41,7 @@ type createSequenceResult struct {
 	Markers       []map[string]interface{} `json:"markers,omitempty"`
 	MarkersFilled int                      `json:"markers_filled,omitempty"`
 	MarkersTotal  int                      `json:"markers_total,omitempty"`
+	Validation    *ValidationSummary       `json:"validation,omitempty"`
 	Errors        []map[string]any         `json:"errors,omitempty"`
 	Warnings      []string                 `json:"warnings,omitempty"`
 }
@@ -97,6 +100,7 @@ Run 'fest validate tasks' to verify task files exist.`,
 	cmd.Flags().BoolVar(&opts.DryRun, "dry-run", false, "Show template markers without creating file")
 	cmd.Flags().BoolVar(&opts.JSONOutput, "json", false, "Emit JSON output")
 	cmd.Flags().BoolVar(&opts.NoPrompt, "no-prompt", false, "Skip interactive prompts")
+	cmd.Flags().BoolVar(&opts.AgentMode, "agent", false, "Strict mode: require markers, auto-validate, block on errors, JSON output")
 	return cmd
 }
 
@@ -107,8 +111,24 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 		return errors.Wrap(err, "context cancelled").WithOp("RunCreateSequence")
 	}
 
+	// Agent mode implies JSON output and no prompts
+	if opts.AgentMode {
+		opts.JSONOutput = true
+		opts.NoPrompt = true
+	}
+
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	cwd, _ := os.Getwd()
+
+	// Resolve paths for config loading
+	festivalsRoot := ResolveFestivalsRoot(cwd)
+	festivalPath := ResolveFestivalPath(cwd)
+
+	// Load effective agent config (workspace + festival merged)
+	agentCfg := LoadEffectiveAgentConfig(festivalsRoot, festivalPath)
+
+	// Determine effective skip-markers behavior
+	effectiveSkipMarkers := config.EffectiveSkipMarkers(agentCfg, opts.AgentMode, opts.SkipMarkers)
 
 	// Resolve template root
 	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
@@ -195,7 +215,7 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 			FilePath:    goalPath,
 			Markers:     opts.Markers,
 			MarkersFile: opts.MarkersFile,
-			SkipMarkers: opts.SkipMarkers,
+			SkipMarkers: effectiveSkipMarkers,
 			DryRun:      opts.DryRun,
 			JSONOutput:  opts.JSONOutput,
 		})
@@ -217,6 +237,26 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 		}
 	}
 
+	// Run post-create validation if configured
+	var validationResult *ValidationSummary
+	shouldValidate := config.ShouldValidate(agentCfg, opts.AgentMode)
+	if shouldValidate && festivalPath != "" {
+		validationResult, err = RunPostCreateValidation(ctx, festivalPath)
+		if err != nil {
+			// Don't fail on validation errors, just report
+			if !opts.JSONOutput {
+				display.Warning("Validation failed: %v", err)
+			}
+		}
+
+		// Block on errors if configured
+		if validationResult != nil && !validationResult.OK {
+			if config.ShouldBlockOnErrors(agentCfg, opts.AgentMode) {
+				return emitCreateSequenceError(opts, errors.Validation("validation errors detected - fix issues before proceeding"))
+			}
+		}
+	}
+
 	if opts.JSONOutput {
 		result := createSequenceResult{
 			OK:     true,
@@ -230,6 +270,7 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 			Renumber:      []string{},
 			MarkersFilled: markersFilled,
 			MarkersTotal:  markersTotal,
+			Validation:    validationResult,
 			Warnings: []string{
 				"Sequences need task files for AI execution. Goals define WHAT, tasks define HOW.",
 				"Create tasks with: fest create task --name \"...\"",

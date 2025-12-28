@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
@@ -27,6 +28,7 @@ type CreateTaskOptions struct {
 	SkipMarkers bool   // Skip marker processing
 	DryRun      bool   // Show markers without creating file
 	JSONOutput  bool
+	AgentMode   bool // Strict mode for AI agents
 }
 
 type createTaskResult struct {
@@ -38,6 +40,7 @@ type createTaskResult struct {
 	Markers       []map[string]interface{} `json:"markers,omitempty"`
 	MarkersFilled int                      `json:"markers_filled,omitempty"`
 	MarkersTotal  int                      `json:"markers_total,omitempty"`
+	Validation    *ValidationSummary       `json:"validation,omitempty"`
 	Errors        []map[string]any         `json:"errors,omitempty"`
 	Warnings      []string                 `json:"warnings,omitempty"`
 }
@@ -116,6 +119,7 @@ Run 'fest validate tasks' to verify task files exist in implementation sequences
 	cmd.Flags().BoolVar(&opts.SkipMarkers, "skip-markers", false, "Skip REPLACE marker processing")
 	cmd.Flags().BoolVar(&opts.DryRun, "dry-run", false, "Show template markers without creating file")
 	cmd.Flags().BoolVar(&opts.JSONOutput, "json", false, "Emit JSON output")
+	cmd.Flags().BoolVar(&opts.AgentMode, "agent", false, "Strict mode: require markers, auto-validate, block on errors, JSON output")
 	return cmd
 }
 
@@ -126,8 +130,23 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 		return errors.Wrap(err, "context cancelled").WithOp("RunCreateTask")
 	}
 
+	// Agent mode implies JSON output
+	if opts.AgentMode {
+		opts.JSONOutput = true
+	}
+
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 	cwd, _ := os.Getwd()
+
+	// Resolve paths for config loading
+	festivalsRoot := ResolveFestivalsRoot(cwd)
+	festivalPath := ResolveFestivalPath(cwd)
+
+	// Load effective agent config (workspace + festival merged)
+	agentCfg := LoadEffectiveAgentConfig(festivalsRoot, festivalPath)
+
+	// Determine effective skip-markers behavior
+	effectiveSkipMarkers := config.EffectiveSkipMarkers(agentCfg, opts.AgentMode, opts.SkipMarkers)
 
 	// Resolve template root
 	tmplRoot, err := tpl.LocalTemplateRoot(cwd)
@@ -224,7 +243,7 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 				FilePath:    taskPath,
 				Markers:     opts.Markers,
 				MarkersFile: opts.MarkersFile,
-				SkipMarkers: opts.SkipMarkers,
+				SkipMarkers: effectiveSkipMarkers,
 				DryRun:      opts.DryRun,
 				JSONOutput:  opts.JSONOutput,
 			})
@@ -259,6 +278,26 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 		currentAfter = newNumber
 	}
 
+	// Run post-create validation if configured
+	var validationResult *ValidationSummary
+	shouldValidate := config.ShouldValidate(agentCfg, opts.AgentMode)
+	if shouldValidate && festivalPath != "" {
+		validationResult, err = RunPostCreateValidation(ctx, festivalPath)
+		if err != nil {
+			// Don't fail on validation errors, just report
+			if !opts.JSONOutput {
+				display.Warning("Validation failed: %v", err)
+			}
+		}
+
+		// Block on errors if configured
+		if validationResult != nil && !validationResult.OK {
+			if config.ShouldBlockOnErrors(agentCfg, opts.AgentMode) {
+				return emitCreateTaskError(opts, errors.Validation("validation errors detected - fix issues before proceeding"))
+			}
+		}
+	}
+
 	// Output results
 	if opts.JSONOutput {
 		result := createTaskResult{
@@ -268,6 +307,7 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 			Renumber:      []string{},
 			MarkersFilled: totalMarkersFilled,
 			MarkersTotal:  totalMarkersCount,
+			Validation:    validationResult,
 		}
 		// For single task, use Task field for backward compatibility
 		if len(createdTasks) == 1 {
@@ -294,6 +334,19 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 		} else {
 			display.Warning("Filled %d/%d REPLACE markers (%d remaining)",
 				totalMarkersFilled, totalMarkersCount, totalMarkersCount-totalMarkersFilled)
+		}
+	}
+
+	// Report validation results
+	if validationResult != nil {
+		if validationResult.OK {
+			display.Success("Validation passed (score: %d)", validationResult.Score)
+		} else {
+			display.Warning("Validation issues found (score: %d, errors: %d, warnings: %d)",
+				validationResult.Score, validationResult.Errors, validationResult.Warnings)
+			for _, issue := range validationResult.Issues {
+				display.Info("  • [%s] %s: %s", issue.Level, issue.Path, issue.Message)
+			}
 		}
 	}
 
