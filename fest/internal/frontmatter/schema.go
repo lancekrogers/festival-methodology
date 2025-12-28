@@ -75,6 +75,7 @@ const (
 type Frontmatter struct {
 	Type     Type      `yaml:"fest_type" json:"fest_type"`
 	ID       string    `yaml:"fest_id" json:"fest_id"`
+	Ref      string    `yaml:"fest_ref,omitempty" json:"fest_ref,omitempty"` // Unique short-hash ID for commit tracing
 	Name     string    `yaml:"fest_name,omitempty" json:"fest_name,omitempty"`
 	Parent   string    `yaml:"fest_parent,omitempty" json:"fest_parent,omitempty"`
 	Order    int       `yaml:"fest_order,omitempty" json:"fest_order,omitempty"`

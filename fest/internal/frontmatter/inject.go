@@ -67,6 +67,9 @@ func MergeInto(existing, new *Frontmatter) *Frontmatter {
 	if new.ID != "" {
 		result.ID = new.ID
 	}
+	if new.Ref != "" {
+		result.Ref = new.Ref
+	}
 	if new.Name != "" {
 		result.Name = new.Name
 	}
@@ -122,6 +125,12 @@ func NewBuilder(docType Type) *Builder {
 // ID sets the document ID
 func (b *Builder) ID(id string) *Builder {
 	b.fm.ID = id
+	return b
+}
+
+// Ref sets the unique reference ID for commit tracing
+func (b *Builder) Ref(ref string) *Builder {
+	b.fm.Ref = ref
 	return b
 }
 

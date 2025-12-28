@@ -20,12 +20,16 @@ func NewIndexCommand() *cobra.Command {
 		Long: `Generate and validate festival indices for Guild integration.
 
 The index file (.festival/index.json) provides a machine-readable representation
-of the festival structure, including phases, sequences, and tasks.`,
+of the festival structure, including phases, sequences, and tasks.
+
+For workspace-wide indexing (Guild v3), use the 'tree' subcommand.`,
 	}
 
 	cmd.AddCommand(newIndexWriteCommand())
 	cmd.AddCommand(newIndexValidateCommand())
 	cmd.AddCommand(newIndexShowCommand())
+	cmd.AddCommand(newIndexTreeCommand())
+	cmd.AddCommand(newIndexDiffCommand())
 
 	return cmd
 }
@@ -230,6 +234,167 @@ func newIndexShowCommand() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().BoolVar(&showJSON, "json", false, "Output as JSON")
+
+	return cmd
+}
+
+func newIndexTreeCommand() *cobra.Command {
+	var outputPath string
+	var showJSON bool
+
+	cmd := &cobra.Command{
+		Use:   "tree",
+		Short: "Generate workspace-wide tree index",
+		Long: `Generate a tree index of all festivals in the workspace.
+
+The tree index groups festivals by status (planned, active, completed, dungeon)
+and provides a complete hierarchical view for Guild v3 integration.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cwd, err := os.Getwd()
+			if err != nil {
+				return errors.IO("getting working directory", err)
+			}
+
+			workspaceRoot, err := tpl.FindFestivalsRoot(cwd)
+			if err != nil {
+				return errors.NotFound("festivals/ directory")
+			}
+
+			syncer := index.NewTreeSyncer(workspaceRoot)
+			tree, err := syncer.Sync()
+			if err != nil {
+				return errors.Wrap(err, "syncing tree index")
+			}
+
+			// Save if output path specified
+			if outputPath != "" {
+				if err := tree.Save(outputPath); err != nil {
+					return errors.IO("saving tree index", err).WithField("path", outputPath)
+				}
+				fmt.Printf("Tree index written to: %s\n", outputPath)
+			}
+
+			if showJSON {
+				data, err := json.MarshalIndent(tree, "", "  ")
+				if err != nil {
+					return errors.Wrap(err, "formatting tree as JSON")
+				}
+				fmt.Println(string(data))
+				return nil
+			}
+
+			// Human-readable output
+			fmt.Printf("Workspace: %s\n", tree.Workspace.Path)
+			fmt.Printf("Festivals: %d\n", tree.Workspace.FestivalCount)
+			fmt.Printf("Tasks: %d/%d completed\n\n", tree.Workspace.CompletedTasks, tree.Workspace.TotalTasks)
+
+			printFestivalGroup("Planned", tree.Festivals.Planned)
+			printFestivalGroup("Active", tree.Festivals.Active)
+			printFestivalGroup("Completed", tree.Festivals.Completed)
+			printFestivalGroup("Dungeon", tree.Festivals.Dungeon)
+
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&outputPath, "output", "o", "", "Save tree index to file")
+	cmd.Flags().BoolVar(&showJSON, "json", false, "Output as JSON")
+
+	return cmd
+}
+
+func printFestivalGroup(name string, festivals []index.FestivalNode) {
+	if len(festivals) == 0 {
+		return
+	}
+	fmt.Printf("%s:\n", name)
+	for _, f := range festivals {
+		progress := int(f.Progress * 100)
+		fmt.Printf("  %s (%d phases, %d/%d tasks, %d%%)\n",
+			f.Name, f.PhaseCount, f.CompletedTasks, f.TaskCount, progress)
+	}
+	fmt.Println()
+}
+
+func newIndexDiffCommand() *cobra.Command {
+	var oldPath string
+	var showJSON bool
+
+	cmd := &cobra.Command{
+		Use:   "diff",
+		Short: "Compare tree indexes to detect changes",
+		Long: `Compare two tree indexes to detect changes between them.
+
+This is useful for tracking progress over time or detecting changes
+since the last sync.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if oldPath == "" {
+				return errors.Validation("--old flag is required")
+			}
+
+			// Load old index
+			oldTree, err := index.LoadTreeIndex(oldPath)
+			if err != nil {
+				return errors.IO("loading old tree index", err).WithField("path", oldPath)
+			}
+
+			// Generate current index
+			cwd, err := os.Getwd()
+			if err != nil {
+				return errors.IO("getting working directory", err)
+			}
+
+			workspaceRoot, err := tpl.FindFestivalsRoot(cwd)
+			if err != nil {
+				return errors.NotFound("festivals/ directory")
+			}
+
+			syncer := index.NewTreeSyncer(workspaceRoot)
+			newTree, err := syncer.Sync()
+			if err != nil {
+				return errors.Wrap(err, "syncing current tree index")
+			}
+
+			// Compute diff
+			diff := index.ComputeDiff(oldTree, newTree)
+
+			if showJSON {
+				data, err := json.MarshalIndent(diff, "", "  ")
+				if err != nil {
+					return errors.Wrap(err, "formatting diff as JSON")
+				}
+				fmt.Println(string(data))
+				return nil
+			}
+
+			// Human-readable output
+			if !diff.HasChanges() {
+				fmt.Println("No changes detected.")
+				return nil
+			}
+
+			fmt.Printf("Changes since %s:\n\n", oldTree.IndexedAt.Format("2006-01-02 15:04:05"))
+
+			s := diff.Summary
+			if s.FestivalsAdded > 0 || s.FestivalsRemoved > 0 || s.FestivalsMoved > 0 {
+				fmt.Printf("Festivals: +%d -%d ~%d moved\n", s.FestivalsAdded, s.FestivalsRemoved, s.FestivalsMoved)
+			}
+			if s.PhasesAdded > 0 || s.PhasesRemoved > 0 {
+				fmt.Printf("Phases: +%d -%d\n", s.PhasesAdded, s.PhasesRemoved)
+			}
+			if s.SequencesAdded > 0 || s.SequencesRemoved > 0 {
+				fmt.Printf("Sequences: +%d -%d\n", s.SequencesAdded, s.SequencesRemoved)
+			}
+			if s.TasksAdded > 0 || s.TasksRemoved > 0 || s.TasksCompleted > 0 {
+				fmt.Printf("Tasks: +%d -%d ✓%d completed\n", s.TasksAdded, s.TasksRemoved, s.TasksCompleted)
+			}
+
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVar(&oldPath, "old", "", "Path to old tree index file (required)")
 	cmd.Flags().BoolVar(&showJSON, "json", false, "Output as JSON")
 
 	return cmd
