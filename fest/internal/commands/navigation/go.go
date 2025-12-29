@@ -256,6 +256,11 @@ func resolveGoTarget(target, festivalsDir string) (string, error) {
 		}
 	}
 
+	// Try to resolve as festival name (searches active/, planned/, completed/)
+	if festPath := resolveFestivalByName(target, festivalsDir); festPath != "" {
+		return festPath, nil
+	}
+
 	// Treat as a relative path within festivals
 	fullPath := filepath.Join(festivalsDir, target)
 	if info, err := os.Stat(fullPath); err == nil && info.IsDir() {
@@ -263,6 +268,18 @@ func resolveGoTarget(target, festivalsDir string) (string, error) {
 	}
 
 	return "", errors.NotFound("target").WithField("target", target)
+}
+
+// resolveFestivalByName searches for a festival by name in status directories
+func resolveFestivalByName(name, festivalsDir string) string {
+	statusDirs := []string{"active", "planned", "completed"}
+	for _, status := range statusDirs {
+		festPath := filepath.Join(festivalsDir, status, name)
+		if info, err := os.Stat(festPath); err == nil && info.IsDir() {
+			return festPath
+		}
+	}
+	return ""
 }
 
 func isPhaseShortcut(s string) bool {
