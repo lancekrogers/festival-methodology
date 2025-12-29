@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
 )
 
 // FestivalInfo holds information about a festival.
@@ -192,8 +193,19 @@ func calculateSequenceStats(seqDir string) (*FestivalStats, error) {
 			// TODO: Parse file to determine actual status
 		} else {
 			stats.Tasks.Total++
-			stats.Tasks.Pending++ // Default to pending
-			// TODO: Parse frontmatter or task content to determine actual status
+			// Parse markdown file for checkbox status
+			taskPath := filepath.Join(seqDir, entry.Name())
+			status := progress.ParseTaskStatus(taskPath)
+			switch status {
+			case progress.StatusCompleted:
+				stats.Tasks.Completed++
+			case progress.StatusInProgress:
+				stats.Tasks.InProgress++
+			case progress.StatusBlocked:
+				stats.Tasks.Blocked++
+			default:
+				stats.Tasks.Pending++
+			}
 		}
 	}
 

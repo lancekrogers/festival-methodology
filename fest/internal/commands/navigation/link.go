@@ -25,29 +25,37 @@ func NewLinkCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "link [path]",
-		Short: "Link festival to project directory",
-		Long: `Link the current festival to a project directory.
+		Short: "Link festival to project directory (context-aware)",
+		Long: `Link a festival to a project directory with context-aware behavior.
 
-This creates an association between the festival (documentation) and
-its corresponding project code directory, enabling bidirectional navigation.
+When run inside a festival:
+  - Links the festival to the specified project path
+  - If no path provided, prompts for directory input
+
+When run inside a project directory (non-festival):
+  - Shows an interactive picker to select a festival to link
+  - Links the current project to the selected festival
+
+After linking, use 'fgo' to navigate between them.
 
 The link is stored centrally in ~/.config/fest/navigation.yaml.
-
 Use 'fest links' to see all festival-project links.
 Use 'fest unlink' to remove the link for current festival.`,
-		Example: `  fest link /path/to/project   # Link current festival to project
-  fest link .                  # Link to current working directory
+		Example: `  fest link /path/to/project   # Inside festival: link to project
+  fest link .                  # Inside festival: link to cwd
+  fest link                    # Inside festival: prompt for path
+  fest link                    # Inside project: show festival picker
   fest link --show             # Display current link`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.showLink {
 				return runLinkShow(opts)
 			}
-			if len(args) == 0 {
-				return errors.Validation("path required").
-					WithField("usage", "fest link <path>")
+			targetPath := ""
+			if len(args) > 0 {
+				targetPath = args[0]
 			}
-			return runLink(args[0], opts)
+			return runLink(targetPath, opts)
 		},
 	}
 
@@ -63,16 +71,26 @@ func runLink(targetPath string, opts *linkOptions) error {
 		return errors.IO("getting current directory", err)
 	}
 
-	// Detect current festival
-	loc, err := show.DetectCurrentLocation(cwd)
-	if err != nil {
-		return errors.Wrap(err, "detecting festival").
-			WithField("hint", "run from inside a festival directory")
+	// Detect context: are we inside a festival?
+	loc, _ := show.DetectCurrentLocation(cwd)
+
+	if loc == nil || loc.Festival == nil {
+		// Not in a festival - show picker to select festival to link
+		// Use targetPath as project directory, or cwd if not specified
+		projectDir := cwd
+		if targetPath != "" && targetPath != "." {
+			absPath, err := filepath.Abs(targetPath)
+			if err != nil {
+				return errors.IO("resolving path", err).WithField("path", targetPath)
+			}
+			projectDir = absPath
+		}
+		return linkProjectToFestival(projectDir)
 	}
 
-	if loc.Festival == nil {
-		return errors.NotFound("festival").
-			WithField("hint", "run from inside a festival directory")
+	// Inside a festival - if no path provided, use the TUI prompt from go_link
+	if targetPath == "" {
+		return linkFestivalToProject(cwd, "")
 	}
 
 	// Resolve target path

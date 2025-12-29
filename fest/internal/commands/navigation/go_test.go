@@ -249,3 +249,74 @@ func TestResolveGoTargetWithSequence(t *testing.T) {
 		}
 	}
 }
+
+func TestResolveFestivalByName(t *testing.T) {
+	tmpDir := t.TempDir()
+	festivalsDir := filepath.Join(tmpDir, "festivals")
+
+	// Create festivals in different status directories
+	activeFest := filepath.Join(festivalsDir, "active", "fest-cli")
+	plannedFest := filepath.Join(festivalsDir, "planned", "new-feature")
+	completedFest := filepath.Join(festivalsDir, "completed", "old-project")
+
+	for _, f := range []string{activeFest, plannedFest, completedFest} {
+		if err := os.MkdirAll(f, 0755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	tests := []struct {
+		name     string
+		expected string
+	}{
+		{"fest-cli", activeFest},
+		{"new-feature", plannedFest},
+		{"old-project", completedFest},
+		{"nonexistent", ""},
+	}
+
+	for _, tc := range tests {
+		result := resolveFestivalByName(tc.name, festivalsDir)
+		if result != tc.expected {
+			t.Errorf("resolveFestivalByName(%q) = %q, want %q", tc.name, result, tc.expected)
+		}
+	}
+}
+
+func TestResolveGoTargetWithFestivalName(t *testing.T) {
+	tmpDir := t.TempDir()
+	festivalsDir := filepath.Join(tmpDir, "festivals")
+
+	// Create a festival
+	festPath := filepath.Join(festivalsDir, "active", "my-festival")
+	if err := os.MkdirAll(festPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		target   string
+		expected string
+		wantErr  bool
+	}{
+		// Festival name resolution
+		{"my-festival", festPath, false},
+
+		// Non-existent festival
+		{"nonexistent", "", true},
+	}
+
+	for _, tc := range tests {
+		result, err := resolveGoTarget(tc.target, festivalsDir)
+		if tc.wantErr {
+			if err == nil {
+				t.Errorf("resolveGoTarget(%q) expected error, got nil", tc.target)
+			}
+		} else {
+			if err != nil {
+				t.Errorf("resolveGoTarget(%q) unexpected error: %v", tc.target, err)
+			} else if result != tc.expected {
+				t.Errorf("resolveGoTarget(%q) = %q, want %q", tc.target, result, tc.expected)
+			}
+		}
+	}
+}

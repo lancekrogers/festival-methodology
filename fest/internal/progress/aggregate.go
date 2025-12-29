@@ -179,7 +179,19 @@ func (m *Manager) GetSequenceProgress(seqPath string) (*SequenceProgress, error)
 		// Check if we have progress data for this task
 		task, exists := m.store.GetTask(taskID)
 		if !exists {
-			aggregate.Pending++
+			// No YAML data - parse markdown file for checkbox status
+			taskPath := filepath.Join(seqPath, entry.Name())
+			status := ParseTaskStatus(taskPath)
+			switch status {
+			case StatusCompleted:
+				aggregate.Completed++
+			case StatusInProgress:
+				aggregate.InProgress++
+			case StatusBlocked:
+				aggregate.Blocked++
+			default:
+				aggregate.Pending++
+			}
 			continue
 		}
 
