@@ -239,6 +239,13 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 	}
 
 	if opts.JSONOutput {
+		remainingMarkers := markersTotal - markersFilled
+		warnings := []string{}
+		if remainingMarkers > 0 {
+			warnings = append(warnings, fmt.Sprintf("%d template markers need attention", remainingMarkers))
+		}
+		warnings = append(warnings, "Next: Create sequences with 'fest create sequence --name SEQUENCE_NAME'")
+
 		return emitCreatePhaseJSON(opts, createPhaseResult{
 			OK:     true,
 			Action: "create_phase",
@@ -253,34 +260,33 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 			MarkersFilled: markersFilled,
 			MarkersTotal:  markersTotal,
 			Validation:    validationResult,
-			Warnings: []string{
-				"Next: Create sequences with 'fest create sequence --name SEQUENCE_NAME'",
-			},
+			Warnings:       warnings,
 		})
+	}
+
+	// Show marker warning FIRST (before success message) for visibility
+	remainingMarkers := markersTotal - markersFilled
+	if remainingMarkers > 0 {
+		fmt.Println()
+		display.Warning("⚠️  %d template markers need attention in PHASE_GOAL.md", remainingMarkers)
+		fmt.Println()
 	}
 
 	display.Success("Created phase: %s", phaseID)
 	display.Info("  └── %s", "PHASE_GOAL.md")
 
-	// Report marker filling status
-	if markersTotal > 0 {
-		if markersFilled == markersTotal {
-			display.Success("Filled %d/%d REPLACE markers", markersFilled, markersTotal)
-		} else {
-			display.Warning("Filled %d/%d REPLACE markers (%d remaining)",
-				markersFilled, markersTotal, markersTotal-markersFilled)
-		}
-	}
-
 	fmt.Println()
 	fmt.Println("   Next steps:")
 	fmt.Println("   1. cd", phaseDir)
+	if remainingMarkers > 0 {
+		fmt.Println("   2. Edit PHASE_GOAL.md to define phase objectives")
+	}
 	if opts.PhaseType == "research" {
-		fmt.Println("   2. Create subdirectories for research topics")
-		fmt.Println("   3. fest research create --type investigation --title \"topic\"")
+		fmt.Println("   3. Create subdirectories for research topics")
+		fmt.Println("   4. fest research create --type investigation --title \"topic\"")
 	} else {
-		fmt.Println("   2. fest create sequence --name \"requirements\"")
-		fmt.Println("   3. fest create sequence --name \"implementation\"")
+		fmt.Println("   3. fest create sequence --name \"requirements\" --after 0")
+		fmt.Println("   4. fest validate  (check completion status)")
 	}
 	return nil
 }

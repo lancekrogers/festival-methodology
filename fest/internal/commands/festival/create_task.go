@@ -299,7 +299,15 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 	}
 
 	// Output results
+	remainingMarkers := totalMarkersCount - totalMarkersFilled
+
 	if opts.JSONOutput {
+		warnings := []string{}
+		if remainingMarkers > 0 {
+			warnings = append(warnings, fmt.Sprintf("%d template markers need attention", remainingMarkers))
+		}
+		warnings = append(warnings, "Edit task file to define implementation steps")
+
 		result := createTaskResult{
 			OK:            true,
 			Action:        "create_task",
@@ -308,12 +316,20 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 			MarkersFilled: totalMarkersFilled,
 			MarkersTotal:  totalMarkersCount,
 			Validation:    validationResult,
+			Warnings:      warnings,
 		}
 		// For single task, use Task field for backward compatibility
 		if len(createdTasks) == 1 {
 			result.Task = createdTasks[0]
 		}
 		return emitCreateTaskJSON(opts, result)
+	}
+
+	// Show marker warning FIRST (before success message) for visibility
+	if remainingMarkers > 0 {
+		fmt.Println()
+		display.Warning("⚠️  %d template markers need attention in task file(s)", remainingMarkers)
+		fmt.Println()
 	}
 
 	// Human-readable output
@@ -324,16 +340,6 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 		display.Success("Created %d tasks:", len(createdTasks))
 		for _, task := range createdTasks {
 			display.Info("  └── %s", task["id"])
-		}
-	}
-
-	// Report marker filling status
-	if totalMarkersCount > 0 {
-		if totalMarkersFilled == totalMarkersCount {
-			display.Success("Filled %d/%d REPLACE markers", totalMarkersFilled, totalMarkersCount)
-		} else {
-			display.Warning("Filled %d/%d REPLACE markers (%d remaining)",
-				totalMarkersFilled, totalMarkersCount, totalMarkersCount-totalMarkersFilled)
 		}
 	}
 
@@ -352,8 +358,14 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 
 	fmt.Println()
 	fmt.Println("   Next steps:")
-	fmt.Println("   • Add more tasks: fest create task --name \"next_step\"")
+	if remainingMarkers > 0 {
+		fmt.Println("   1. Edit task file to define implementation steps")
+		fmt.Println("   2. fest create task --name \"next_step\" (add more tasks)")
+	} else {
+		fmt.Println("   • Add more tasks: fest create task --name \"next_step\"")
+	}
 	fmt.Println("   • Add quality gates: fest gates apply --approve")
+	fmt.Println("   • Validate progress: fest validate")
 	return nil
 }
 

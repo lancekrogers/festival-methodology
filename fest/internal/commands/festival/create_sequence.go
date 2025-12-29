@@ -258,6 +258,17 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 	}
 
 	if opts.JSONOutput {
+		remainingMarkers := markersTotal - markersFilled
+		warnings := []string{}
+		if remainingMarkers > 0 {
+			warnings = append(warnings, fmt.Sprintf("%d template markers need attention", remainingMarkers))
+		}
+		warnings = append(warnings,
+			"Sequences need task files for AI execution. Goals define WHAT, tasks define HOW.",
+			"Create tasks with: fest create task --name \"...\"",
+			"Learn more: fest understand tasks",
+		)
+
 		result := createSequenceResult{
 			OK:     true,
 			Action: "create_sequence",
@@ -271,27 +282,21 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 			MarkersFilled: markersFilled,
 			MarkersTotal:  markersTotal,
 			Validation:    validationResult,
-			Warnings: []string{
-				"Sequences need task files for AI execution. Goals define WHAT, tasks define HOW.",
-				"Create tasks with: fest create task --name \"...\"",
-				"Learn more: fest understand tasks",
-			},
+			Warnings:      warnings,
 		}
 		return emitCreateSequenceJSON(opts, result)
 	}
 
+	// Show marker warning FIRST (before success message) for visibility
+	remainingMarkers := markersTotal - markersFilled
+	if remainingMarkers > 0 {
+		fmt.Println()
+		display.Warning("⚠️  %d template markers need attention in SEQUENCE_GOAL.md", remainingMarkers)
+		fmt.Println()
+	}
+
 	display.Success("Created sequence: %s", seqID)
 	display.Info("  └── %s", "SEQUENCE_GOAL.md")
-
-	// Report marker filling status
-	if markersTotal > 0 {
-		if markersFilled == markersTotal {
-			display.Success("Filled %d/%d REPLACE markers", markersFilled, markersTotal)
-		} else {
-			display.Warning("Filled %d/%d REPLACE markers (%d remaining)",
-				markersFilled, markersTotal, markersTotal-markersFilled)
-		}
-	}
 
 	fmt.Println()
 
@@ -300,6 +305,13 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 	fmt.Println("   SEQUENCE_GOAL.md defines WHAT to accomplish.")
 	fmt.Println("   Task files (01_*.md, 02_*.md) define HOW to do it.")
 	fmt.Println()
+	fmt.Println("   Next steps:")
+	if remainingMarkers > 0 {
+		fmt.Println("   1. Edit SEQUENCE_GOAL.md to define sequence objectives")
+		fmt.Println("   2. fest create task --name \"your_task_name\"")
+	} else {
+		fmt.Println("   1. fest create task --name \"your_task_name\"")
+	}
 	fmt.Println("   💡 Run 'fest understand tasks' to learn more about task structure.")
 	fmt.Println()
 

@@ -30,17 +30,13 @@ type MarkerResult struct {
 
 // ProcessMarkers handles post-creation marker completion.
 // Returns a MarkerResult for JSON output integration.
+// Always counts markers even when SkipMarkers is true, to provide visibility.
 func ProcessMarkers(ctx context.Context, opts MarkerOptions) (*MarkerResult, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, errors.Wrap(err, "context cancelled").WithOp("ProcessMarkers")
 	}
 
-	// Skip marker processing if requested
-	if opts.SkipMarkers {
-		return nil, nil
-	}
-
-	// Parse markers from file
+	// Parse markers from file - always count for visibility
 	foundMarkers, err := markers.ParseFile(ctx, opts.FilePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing markers").WithField("path", opts.FilePath)
@@ -48,6 +44,15 @@ func ProcessMarkers(ctx context.Context, opts MarkerOptions) (*MarkerResult, err
 
 	if len(foundMarkers) == 0 {
 		return &MarkerResult{Total: 0}, nil
+	}
+
+	// If skip-markers is set, return count only (don't fill)
+	if opts.SkipMarkers {
+		return &MarkerResult{
+			Total:         len(foundMarkers),
+			Filled:        0,
+			UnfilledHints: markers.ExtractHints(foundMarkers),
+		}, nil
 	}
 
 	// Dry-run mode: just report markers without filling

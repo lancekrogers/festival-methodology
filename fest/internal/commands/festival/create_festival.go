@@ -580,6 +580,13 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 	}
 
 	if opts.JSONOutput {
+		remainingMarkers := totalMarkersCount - totalMarkersFilled
+		warnings := []string{}
+		if remainingMarkers > 0 {
+			warnings = append(warnings, fmt.Sprintf("%d template markers need attention", remainingMarkers))
+		}
+		warnings = append(warnings, "Next: Create phases with 'fest create phase --name PHASE_NAME --after 0'")
+
 		return emitCreateFestivalJSON(opts, createFestivalResult{
 			OK:     true,
 			Action: "create_festival",
@@ -595,25 +602,22 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 			MarkersFilled:  totalMarkersFilled,
 			MarkersTotal:   totalMarkersCount,
 			Validation:     validationResult,
-			Warnings: []string{
-				"Next: Create phases with 'fest create phase --name PHASE_NAME'",
-			},
+			Warnings:       warnings,
 		})
+	}
+
+	// Show marker warning FIRST (before success message) for visibility
+	remainingMarkers := totalMarkersCount - totalMarkersFilled
+	if remainingMarkers > 0 {
+		fmt.Println()
+		display.Warning("⚠️  %d template markers need attention", remainingMarkers)
+		display.Info("   Run 'fest validate' to see which files need editing")
+		fmt.Println()
 	}
 
 	display.Success("Created festival: %s (%s)", slug, destCategory)
 	for _, p := range created {
 		display.Info("  • %s", p)
-	}
-
-	// Report marker filling status
-	if totalMarkersCount > 0 {
-		if totalMarkersFilled == totalMarkersCount {
-			display.Success("Filled %d/%d REPLACE markers", totalMarkersFilled, totalMarkersCount)
-		} else {
-			display.Warning("Filled %d/%d REPLACE markers (%d remaining)",
-				totalMarkersFilled, totalMarkersCount, totalMarkersCount-totalMarkersFilled)
-		}
 	}
 
 	// Report gates setup
@@ -625,9 +629,15 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 	fmt.Println()
 	fmt.Println("   Next steps:")
 	fmt.Println("   1. cd", destDir)
-	fmt.Println("   2. fest create phase --name \"PLAN\"")
-	fmt.Println("   3. fest create phase --name \"IMPLEMENT\"")
-	fmt.Println("   4. After creating tasks: fest gates apply --approve")
+	if remainingMarkers > 0 {
+		fmt.Println("   2. Edit FESTIVAL_GOAL.md to define your objectives")
+		fmt.Println("   3. fest create phase --name \"PLAN\" --after 0")
+		fmt.Println("   4. fest validate  (check completion status)")
+	} else {
+		fmt.Println("   2. fest create phase --name \"PLAN\" --after 0")
+		fmt.Println("   3. fest create phase --name \"IMPLEMENT\" --after 1")
+		fmt.Println("   4. After creating tasks: fest gates apply --approve")
+	}
 	return nil
 }
 
