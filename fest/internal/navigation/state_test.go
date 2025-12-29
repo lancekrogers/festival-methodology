@@ -191,3 +191,112 @@ func TestNavigationPath(t *testing.T) {
 		t.Errorf("NavigationPath() = %q, want %q", path, expected)
 	}
 }
+
+func TestNavigation_BidirectionalLinks(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("FEST_CONFIG_DIR", tmpDir)
+
+	nav, err := LoadNavigation()
+	if err != nil {
+		t.Fatalf("LoadNavigation() error = %v", err)
+	}
+
+	// Set a bidirectional link
+	nav.SetLink("my-festival", "/path/to/project")
+
+	// Test GetLinkedProject
+	projectPath := nav.GetLinkedProject("my-festival")
+	if projectPath != "/path/to/project" {
+		t.Errorf("GetLinkedProject() = %q, want %q", projectPath, "/path/to/project")
+	}
+
+	// Test GetLinkedFestival (reverse lookup)
+	festivalName := nav.GetLinkedFestival("/path/to/project")
+	if festivalName != "my-festival" {
+		t.Errorf("GetLinkedFestival() = %q, want %q", festivalName, "my-festival")
+	}
+
+	// Test non-existent lookups
+	if nav.GetLinkedProject("nonexistent") != "" {
+		t.Error("GetLinkedProject() should return empty for non-existent festival")
+	}
+	if nav.GetLinkedFestival("/nonexistent/path") != "" {
+		t.Error("GetLinkedFestival() should return empty for non-existent path")
+	}
+}
+
+func TestNavigation_FindFestivalForPath(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("FEST_CONFIG_DIR", tmpDir)
+
+	// Create actual directories for the test
+	projectRoot := filepath.Join(tmpDir, "projects", "my-project")
+	subDir := filepath.Join(projectRoot, "src", "components")
+	if err := os.MkdirAll(subDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	nav, err := LoadNavigation()
+	if err != nil {
+		t.Fatalf("LoadNavigation() error = %v", err)
+	}
+
+	// Link festival to project root
+	nav.SetLink("my-festival", projectRoot)
+
+	tests := []struct {
+		path     string
+		expected string
+	}{
+		// Exact match
+		{projectRoot, "my-festival"},
+		// Subdirectory should find parent's linked festival
+		{subDir, "my-festival"},
+		// Unlinked path
+		{filepath.Join(tmpDir, "other"), ""},
+	}
+
+	for _, tc := range tests {
+		result := nav.FindFestivalForPath(tc.path)
+		if result != tc.expected {
+			t.Errorf("FindFestivalForPath(%q) = %q, want %q", tc.path, result, tc.expected)
+		}
+	}
+}
+
+func TestNavigation_SetLinkUpdatesReverse(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("FEST_CONFIG_DIR", tmpDir)
+
+	nav, err := LoadNavigation()
+	if err != nil {
+		t.Fatalf("LoadNavigation() error = %v", err)
+	}
+
+	// First link: festival-a -> project-a
+	nav.SetLink("festival-a", "/path/to/project-a")
+
+	// Verify both directions
+	if nav.GetLinkedProject("festival-a") != "/path/to/project-a" {
+		t.Error("Forward link not set correctly")
+	}
+	if nav.GetLinkedFestival("/path/to/project-a") != "festival-a" {
+		t.Error("Reverse link not set correctly")
+	}
+
+	// Now relink festival-a to a different project
+	nav.SetLink("festival-a", "/path/to/project-b")
+
+	// Old reverse link should be gone
+	if nav.GetLinkedFestival("/path/to/project-a") != "" {
+		t.Error("Old reverse link should be removed when festival is relinked")
+	}
+
+	// New links should be correct
+	if nav.GetLinkedProject("festival-a") != "/path/to/project-b" {
+		t.Error("Forward link not updated correctly")
+	}
+	if nav.GetLinkedFestival("/path/to/project-b") != "festival-a" {
+		t.Error("New reverse link not set correctly")
+	}
+}
