@@ -4,13 +4,22 @@ package tui
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
 	"github.com/charmbracelet/huh"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
-	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	festErrors "github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/navigation"
+)
+
+// Styles for list items
+var (
+	shortcutStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true) // Pink
+	linkStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true)  // Green
+	pathStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))            // Gray
 )
 
 func init() {
@@ -19,7 +28,7 @@ func init() {
 }
 
 // StartGoListTUI launches an interactive selector for navigation shortcuts and links.
-// Returns the selected path or an error if cancelled/failed.
+// Returns the selected path or empty string if cancelled.
 func StartGoListTUI(ctx context.Context) (string, error) {
 	// Check context
 	if err := ctx.Err(); err != nil {
@@ -29,7 +38,7 @@ func StartGoListTUI(ctx context.Context) (string, error) {
 	// Load navigation state
 	nav, err := navigation.LoadNavigation()
 	if err != nil {
-		return "", errors.Wrap(err, "loading navigation state")
+		return "", festErrors.Wrap(err, "loading navigation state")
 	}
 
 	// Build options list
@@ -44,7 +53,7 @@ func StartGoListTUI(ctx context.Context) (string, error) {
 
 	for _, name := range shortcutNames {
 		path := nav.Shortcuts[name]
-		label := fmt.Sprintf("-%-12s → %s", name, path)
+		label := shortcutStyle.Render(fmt.Sprintf("-%-12s", name)) + " → " + pathStyle.Render(path)
 		opts = append(opts, huh.NewOption(label, path))
 	}
 
@@ -57,13 +66,13 @@ func StartGoListTUI(ctx context.Context) (string, error) {
 
 	for _, festivalName := range linkNames {
 		link := nav.Links[festivalName]
-		label := fmt.Sprintf("%-13s → %s", festivalName, link.Path)
+		label := linkStyle.Render(fmt.Sprintf("%-13s", festivalName)) + " → " + pathStyle.Render(link.Path)
 		opts = append(opts, huh.NewOption(label, link.Path))
 	}
 
 	// Check if we have any options
 	if len(opts) == 0 {
-		return "", errors.Validation("no shortcuts or links configured").
+		return "", festErrors.Validation("no shortcuts or links configured").
 			WithField("hint", "use 'fest go map <name>' to create shortcuts or 'fest link <path>' to link festivals")
 	}
 
@@ -77,10 +86,13 @@ func StartGoListTUI(ctx context.Context) (string, error) {
 				Options(opts...).
 				Value(&selected),
 		),
-	).WithTheme(theme())
+	).WithTheme(huh.ThemeCharm())
 
 	if err := form.Run(); err != nil {
-		// User cancelled (Ctrl+C or Esc)
+		// Silent exit on user cancel (Ctrl-C or Esc)
+		if errors.Is(err, huh.ErrUserAborted) {
+			return "", nil
+		}
 		return "", err
 	}
 
