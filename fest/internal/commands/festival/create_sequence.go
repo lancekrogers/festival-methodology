@@ -90,7 +90,7 @@ Run 'fest validate tasks' to verify task files exist.`,
 			return RunCreateSequence(cmd.Context(), opts)
 		},
 	}
-	cmd.Flags().IntVar(&opts.After, "after", 0, "Insert after this number (0 inserts at beginning)")
+	cmd.Flags().IntVar(&opts.After, "after", -1, "Insert after this sequence number (-1 or omit to append at end)")
 	cmd.Flags().StringVar(&opts.Name, "name", "", "Sequence name (required)")
 	cmd.Flags().StringVar(&opts.Path, "path", ".", "Path to phase directory (directory containing numbered sequences)")
 	cmd.Flags().StringVar(&opts.VarsFile, "vars-file", "", "JSON vars for rendering")
@@ -139,6 +139,24 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 	absPath, err := filepath.Abs(opts.Path)
 	if err != nil {
 		return emitCreateSequenceError(opts, errors.Wrap(err, "resolving path").WithField("path", opts.Path))
+	}
+
+	// Auto-detect last sequence number when --after is not specified (default -1)
+	if opts.After == -1 {
+		parser := festival.NewParser()
+		sequences, parseErr := parser.ParseSequences(ctx, absPath)
+		if parseErr == nil && len(sequences) > 0 {
+			maxNum := 0
+			for _, s := range sequences {
+				if s.Number > maxNum {
+					maxNum = s.Number
+				}
+			}
+			opts.After = maxNum
+		} else {
+			// No existing sequences or parse error - insert at beginning
+			opts.After = 0
+		}
 	}
 
 	// Insert sequence

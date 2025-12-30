@@ -62,7 +62,7 @@ func NewCreatePhaseCommand() *cobra.Command {
 			return RunCreatePhase(cmd.Context(), opts)
 		},
 	}
-	cmd.Flags().IntVar(&opts.After, "after", 0, "Insert after this number (0 inserts at beginning)")
+	cmd.Flags().IntVar(&opts.After, "after", -1, "Insert after this phase number (-1 or omit to append at end)")
 	cmd.Flags().StringVar(&opts.Name, "name", "", "Phase name (required)")
 	cmd.Flags().StringVar(&opts.PhaseType, "type", "planning", "Phase type (planning|implementation|review|deployment|research)")
 	cmd.Flags().StringVar(&opts.Path, "path", ".", "Path to festival root (directory containing numbered phases)")
@@ -110,6 +110,24 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 	absPath, err := filepath.Abs(opts.Path)
 	if err != nil {
 		return emitCreatePhaseError(opts, errors.Wrap(err, "resolving path").WithField("path", opts.Path))
+	}
+
+	// Auto-detect last phase number when --after is not specified (default -1)
+	if opts.After == -1 {
+		parser := festival.NewParser()
+		phases, parseErr := parser.ParsePhases(ctx, absPath)
+		if parseErr == nil && len(phases) > 0 {
+			maxNum := 0
+			for _, p := range phases {
+				if p.Number > maxNum {
+					maxNum = p.Number
+				}
+			}
+			opts.After = maxNum
+		} else {
+			// No existing phases or parse error - insert at beginning
+			opts.After = 0
+		}
 	}
 
 	// Insert phase
