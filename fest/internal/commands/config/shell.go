@@ -85,9 +85,21 @@ fgo() {
             # Context-aware linking (no cd needed, shows TUI if needed)
             command fest go "$@"
             ;;
-        map|unmap|list)
+        map|unmap)
             # Pass through to fest go subcommands (no cd needed)
             command fest go "$@"
+            ;;
+        list)
+            # Interactive list - select and navigate to destination
+            local dest
+            dest=$(command fest go list --interactive 2>/dev/null)
+            local exit_code=$?
+            if [[ $exit_code -eq 0 && -n "$dest" && -d "$dest" ]]; then
+                cd "$dest"
+            elif [[ $exit_code -ne 0 ]]; then
+                # Fall back to non-interactive list on error (e.g., no TUI, cancelled)
+                command fest go list
+            fi
             ;;
         project)
             # Navigate to linked project
@@ -158,9 +170,19 @@ function fgo
         case link
             # Context-aware linking (no cd needed, shows TUI if needed)
             command fest go $argv
-        case map unmap list
+        case map unmap
             # Pass through to fest go subcommands (no cd needed)
             command fest go $argv
+        case list
+            # Interactive list - select and navigate to destination
+            set -l dest (command fest go list --interactive 2>/dev/null)
+            set -l exit_code $status
+            if test $exit_code -eq 0 -a -n "$dest" -a -d "$dest"
+                cd $dest
+            else if test $exit_code -ne 0
+                # Fall back to non-interactive list on error
+                command fest go list
+            end
         case project
             # Navigate to linked project
             set -l dest (command fest go project 2>&1)

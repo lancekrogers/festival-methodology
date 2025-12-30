@@ -1,6 +1,7 @@
 package navigation
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/navigation"
@@ -189,6 +191,7 @@ func runGoUnmap(name string, jsonOutput bool) error {
 // NewGoListCommand creates the go list subcommand
 func NewGoListCommand() *cobra.Command {
 	var jsonOutput bool
+	var interactive bool
 
 	cmd := &cobra.Command{
 		Use:   "list",
@@ -196,17 +199,43 @@ func NewGoListCommand() *cobra.Command {
 		Long: `Display all navigation shortcuts and festival-project links.
 
 SHORTCUTS are user-defined with 'fest go map'.
-LINKS are festival-project associations created with 'fest link'.`,
-		Example: `  fest go list        # List all shortcuts and links
-  fest go list --json # Output in JSON format`,
+LINKS are festival-project associations created with 'fest link'.
+
+Use --interactive (-i) to select a destination with an interactive picker.
+When used with shell integration (fgo list), this will navigate to the selected path.`,
+		Example: `  fest go list           # List all shortcuts and links
+  fest go list --json    # Output in JSON format
+  fest go list -i        # Interactive picker (with fgo: navigates to selection)`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if interactive {
+				return runGoListInteractive(cmd.Context())
+			}
 			return runGoList(jsonOutput)
 		},
 	}
 
 	cmd.Flags().BoolVar(&jsonOutput, "json", false, "output in JSON format")
+	cmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "interactive picker mode")
 
 	return cmd
+}
+
+// runGoListInteractive runs the TUI selector and outputs the selected path
+func runGoListInteractive(ctx context.Context) error {
+	if shared.StartGoListTUI == nil {
+		return errors.Validation("TUI not available - build with charm support or use non-interactive mode")
+	}
+
+	selected, err := shared.StartGoListTUI(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Output the selected path for shell wrapper to cd to
+	if selected != "" {
+		fmt.Println(selected)
+	}
+	return nil
 }
 
 func runGoList(jsonOutput bool) error {

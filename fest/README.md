@@ -83,6 +83,26 @@ Register a workspace for cross-project navigation:
 fest init --register /path/to/project/festivals
 ```
 
+### Shell Completion
+
+Enable tab completion for fest commands:
+
+```bash
+# Bash - add to ~/.bashrc:
+source <(fest completion bash)
+
+# Zsh - add to ~/.zshrc:
+source <(fest completion zsh)
+
+# Fish:
+fest completion fish | source
+
+# PowerShell:
+fest completion powershell | Out-String | Invoke-Expression
+```
+
+This enables tab completion for commands, flags, and arguments.
+
 ### Initialize a new festival directory
 
 ```bash

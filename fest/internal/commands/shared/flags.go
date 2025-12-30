@@ -97,6 +97,10 @@ var (
 	// NewTUICommand creates the TUI cobra command.
 	// Set by tui package's init() function.
 	NewTUICommand func() *cobra.Command
+
+	// StartGoListTUI launches interactive selector for navigation shortcuts/links.
+	// Returns the selected path or empty string if cancelled.
+	StartGoListTUI func(ctx context.Context) (string, error)
 )
 
 // Command execution hooks - set by commands package to break import cycle.
