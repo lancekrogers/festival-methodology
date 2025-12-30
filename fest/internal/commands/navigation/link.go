@@ -236,11 +236,15 @@ func NewUnlinkCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "unlink",
-		Short: "Remove festival-project link",
-		Long: `Remove the project link for the current festival.
+		Short: "Remove festival-project link (context-aware)",
+		Long: `Remove the project link for the current location.
+
+Context-aware behavior:
+  - Inside a festival: unlinks that festival from its project
+  - Inside a linked project: unlinks the project from its festival
 
 This removes the association between the festival and its project directory.`,
-		Example: `  fest unlink   # Remove link for current festival`,
+		Example: `  fest unlink   # Remove link for current festival or project`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runUnlink(jsonOutput)
 		},
@@ -257,24 +261,35 @@ func runUnlink(jsonOutput bool) error {
 		return errors.IO("getting current directory", err)
 	}
 
-	// Detect current festival
-	loc, err := show.DetectCurrentLocation(cwd)
-	if err != nil {
-		return errors.Wrap(err, "detecting festival")
-	}
-
-	if loc.Festival == nil {
-		return errors.NotFound("festival").
-			WithField("hint", "run from inside a festival directory")
-	}
-
-	// Load navigation state
+	// Load navigation state first - we need it for both paths
 	nav, err := navigation.LoadNavigation()
 	if err != nil {
 		return errors.Wrap(err, "loading navigation state")
 	}
 
-	festivalName := loc.Festival.Name
+	var festivalName string
+
+	// Try to detect current festival
+	loc, _ := show.DetectCurrentLocation(cwd)
+
+	if loc != nil && loc.Festival != nil {
+		// Inside a festival - unlink it
+		festivalName = loc.Festival.Name
+	} else {
+		// Not in a festival - check if we're in a linked project
+		for name, link := range nav.Links {
+			if strings.HasPrefix(cwd, link.Path) || cwd == link.Path {
+				festivalName = name
+				break
+			}
+		}
+
+		if festivalName == "" {
+			return errors.NotFound("link").
+				WithField("hint", "run from inside a festival or linked project directory")
+		}
+	}
+
 	removed := nav.RemoveLink(festivalName)
 
 	if removed {
