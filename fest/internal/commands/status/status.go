@@ -37,6 +37,7 @@ type statusOptions struct {
 	json       bool
 	entityType string
 	force      bool
+	path       string
 }
 
 // NewStatusCommand creates the status command with all subcommands.
@@ -44,19 +45,28 @@ func NewStatusCommand() *cobra.Command {
 	opts := &statusOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "status",
+		Use:   "status [path]",
 		Short: "Manage and query festival entity statuses",
 		Long: `Manage and query status for festivals, phases, sequences, tasks, and gates.
 
-When run without subcommands, shows the status of the current entity based on
+When run without arguments, shows the status of the current entity based on
 your working directory location.
+
+EXAMPLES:
+  fest status                                  # Status from current directory
+  fest status ./festivals/active/my-festival   # Status for specific path
+  fest status active/my-festival               # Relative to festivals/ root
 
 SUBCOMMANDS:
   fest status              Show current entity status
   fest status set <status> Change entity status
   fest status list         List entities by status
   fest status history      View status change history`,
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				opts.path = args[0]
+			}
 			return runStatusShow(cmd, opts)
 		},
 	}
@@ -73,13 +83,17 @@ SUBCOMMANDS:
 }
 
 func runStatusShow(cmd *cobra.Command, opts *statusOptions) error {
-	cwd, err := os.Getwd()
+	// Resolve target path
+	targetPath, err := resolveStatusPath(opts.path)
 	if err != nil {
-		return errors.IO("getting current directory", err)
+		if opts.json {
+			return emitErrorJSON(err.Error())
+		}
+		return err
 	}
 
 	// Detect current location
-	loc, err := show.DetectCurrentLocation(cwd)
+	loc, err := show.DetectCurrentLocation(targetPath)
 	if err != nil {
 		if opts.json {
 			return emitErrorJSON("not in a festival directory")
@@ -91,6 +105,70 @@ func runStatusShow(cmd *cobra.Command, opts *statusOptions) error {
 		return emitLocationJSON(loc)
 	}
 	return emitLocationText(loc)
+}
+
+// resolveStatusPath resolves the target path for status commands.
+// If pathArg is empty, uses current working directory.
+// If pathArg is relative to a festivals/ root (e.g., "active/my-festival"),
+// it resolves from the festivals root.
+func resolveStatusPath(pathArg string) (string, error) {
+	if pathArg == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return "", errors.IO("getting current directory", err)
+		}
+		return cwd, nil
+	}
+
+	// Try as absolute or relative path first
+	absPath, err := filepath.Abs(pathArg)
+	if err != nil {
+		return "", errors.Wrap(err, "resolving path").WithField("path", pathArg)
+	}
+
+	// Check if path exists
+	if _, err := os.Stat(absPath); err == nil {
+		return absPath, nil
+	}
+
+	// Try resolving relative to festivals/ root
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", errors.IO("getting current directory", err)
+	}
+
+	// Find festivals root and try pathArg relative to it
+	festivalsRoot := findFestivalsRoot(cwd)
+	if festivalsRoot != "" {
+		candidatePath := filepath.Join(festivalsRoot, pathArg)
+		if _, err := os.Stat(candidatePath); err == nil {
+			return candidatePath, nil
+		}
+	}
+
+	return "", errors.NotFound("path").WithField("path", pathArg)
+}
+
+// findFestivalsRoot walks up from startPath looking for a festivals/ directory
+func findFestivalsRoot(startPath string) string {
+	current := startPath
+	for {
+		// Check if current is festivals/ or contains festivals/
+		if filepath.Base(current) == "festivals" {
+			return current
+		}
+		festivalsDir := filepath.Join(current, "festivals")
+		if info, err := os.Stat(festivalsDir); err == nil && info.IsDir() {
+			return festivalsDir
+		}
+
+		parent := filepath.Dir(current)
+		if parent == current {
+			break
+		}
+		current = parent
+	}
+	return ""
 }
 
 func emitErrorJSON(message string) error {

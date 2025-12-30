@@ -84,14 +84,21 @@ func Execute() error {
 }
 
 func init() {
-	// Disable the completion command - defaults are not useful for fest
+	// Disable the default completion command - we provide our own with better docs
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
+
+	// Add custom completion command with better documentation
+	completionCmd := system.NewCompletionCommand(rootCmd)
+	completionCmd.GroupID = "system"
+	rootCmd.AddCommand(completionCmd)
 
 	// Define command groups for organized help output
 	rootCmd.AddGroup(
 		&cobra.Group{ID: "learning", Title: "Learning Commands:"},
 		&cobra.Group{ID: "creation", Title: "Creation Commands:"},
 		&cobra.Group{ID: "structure", Title: "Structure Commands:"},
+		&cobra.Group{ID: "workflow", Title: "Workflow Commands:"},
+		&cobra.Group{ID: "query", Title: "Query Commands:"},
 		&cobra.Group{ID: "navigation", Title: "Navigation Commands:"},
 		&cobra.Group{ID: "system", Title: "System Commands:"},
 	)
@@ -103,13 +110,13 @@ func init() {
 		shared.SetNoColor(noColor)
 		shared.SetConfigFile(configFile)
 
-		// Allow root (help/version), init, system, count, go, shell-init, understand, config, extension, index, gates, research, show, status, progress, context, deps, next, execute, migrate, link, unlink, links, commit, commits, parse, and validate to run anywhere
+		// Allow root (help/version), init, system, count, go, shell-init, understand, config, extension, index, gates, research, show, status, progress, context, deps, next, execute, migrate, link, unlink, links, commit, commits, parse, completion, and validate to run anywhere
 		// Also allow subcommands of system, understand, config, extension, index, gates, research, show, status, progress, context, deps, next, execute, migrate, remove, renumber, reorder, and validate
-		if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "system" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" || cmd.Name() == "go" || cmd.Name() == "shell-init" || cmd.Name() == "understand" || cmd.Name() == "config" || cmd.Name() == "extension" || cmd.Name() == "index" || cmd.Name() == "gates" || cmd.Name() == "research" || cmd.Name() == "show" || cmd.Name() == "status" || cmd.Name() == "progress" || cmd.Name() == "context" || cmd.Name() == "deps" || cmd.Name() == "next" || cmd.Name() == "execute" || cmd.Name() == "migrate" || cmd.Name() == "link" || cmd.Name() == "unlink" || cmd.Name() == "links" || cmd.Name() == "commit" || cmd.Name() == "commits" || cmd.Name() == "parse" || cmd.Name() == "remove" || cmd.Name() == "renumber" || cmd.Name() == "reorder" || cmd.Name() == "validate" || cmd.Name() == "wizard" {
+		if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "system" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" || cmd.Name() == "go" || cmd.Name() == "shell-init" || cmd.Name() == "understand" || cmd.Name() == "config" || cmd.Name() == "extension" || cmd.Name() == "index" || cmd.Name() == "gates" || cmd.Name() == "research" || cmd.Name() == "show" || cmd.Name() == "status" || cmd.Name() == "progress" || cmd.Name() == "context" || cmd.Name() == "deps" || cmd.Name() == "next" || cmd.Name() == "execute" || cmd.Name() == "migrate" || cmd.Name() == "link" || cmd.Name() == "unlink" || cmd.Name() == "links" || cmd.Name() == "commit" || cmd.Name() == "commits" || cmd.Name() == "parse" || cmd.Name() == "remove" || cmd.Name() == "renumber" || cmd.Name() == "reorder" || cmd.Name() == "validate" || cmd.Name() == "wizard" || cmd.Name() == "completion" {
 			return nil
 		}
-		// Check if parent is system, understand, config, extension, index, gates, research, show, status, context, deps, next, execute, migrate, remove, renumber, reorder, validate, or wizard (for subcommands)
-		if cmd.Parent() != nil && (cmd.Parent().Name() == "system" || cmd.Parent().Name() == "understand" || cmd.Parent().Name() == "config" || cmd.Parent().Name() == "extension" || cmd.Parent().Name() == "index" || cmd.Parent().Name() == "gates" || cmd.Parent().Name() == "research" || cmd.Parent().Name() == "show" || cmd.Parent().Name() == "status" || cmd.Parent().Name() == "context" || cmd.Parent().Name() == "deps" || cmd.Parent().Name() == "next" || cmd.Parent().Name() == "execute" || cmd.Parent().Name() == "migrate" || cmd.Parent().Name() == "remove" || cmd.Parent().Name() == "renumber" || cmd.Parent().Name() == "reorder" || cmd.Parent().Name() == "validate" || cmd.Parent().Name() == "wizard") {
+		// Check if parent is system, understand, config, extension, index, gates, research, show, status, context, deps, next, execute, migrate, remove, renumber, reorder, validate, wizard, or go (for subcommands)
+		if cmd.Parent() != nil && (cmd.Parent().Name() == "system" || cmd.Parent().Name() == "understand" || cmd.Parent().Name() == "config" || cmd.Parent().Name() == "extension" || cmd.Parent().Name() == "index" || cmd.Parent().Name() == "gates" || cmd.Parent().Name() == "research" || cmd.Parent().Name() == "show" || cmd.Parent().Name() == "status" || cmd.Parent().Name() == "context" || cmd.Parent().Name() == "deps" || cmd.Parent().Name() == "next" || cmd.Parent().Name() == "execute" || cmd.Parent().Name() == "migrate" || cmd.Parent().Name() == "remove" || cmd.Parent().Name() == "renumber" || cmd.Parent().Name() == "reorder" || cmd.Parent().Name() == "validate" || cmd.Parent().Name() == "wizard" || cmd.Parent().Name() == "go") {
 			return nil
 		}
 		cwd, _ := os.Getwd()
@@ -175,18 +182,6 @@ func init() {
 	goCmd.GroupID = "navigation"
 	rootCmd.AddCommand(goCmd)
 
-	indexCmd := navigation.NewIndexCommand()
-	indexCmd.GroupID = "navigation"
-	rootCmd.AddCommand(indexCmd)
-
-	showCmd := show.NewShowCommand()
-	showCmd.GroupID = "navigation"
-	rootCmd.AddCommand(showCmd)
-
-	statusCmd := status.NewStatusCommand()
-	statusCmd.GroupID = "navigation"
-	rootCmd.AddCommand(statusCmd)
-
 	linkCmd := navigation.NewLinkCommand()
 	linkCmd.GroupID = "navigation"
 	rootCmd.AddCommand(linkCmd)
@@ -199,25 +194,39 @@ func init() {
 	linksCmd.GroupID = "navigation"
 	rootCmd.AddCommand(linksCmd)
 
+	// === WORKFLOW COMMANDS ===
+	executeCmd := executecmd.NewExecuteCommand()
+	executeCmd.GroupID = "workflow"
+	rootCmd.AddCommand(executeCmd)
+
+	nextCmd := nextcmd.NewNextCommand()
+	nextCmd.GroupID = "workflow"
+	rootCmd.AddCommand(nextCmd)
+
 	progressCmd := progresscmd.NewProgressCommand()
-	progressCmd.GroupID = "navigation"
+	progressCmd.GroupID = "workflow"
 	rootCmd.AddCommand(progressCmd)
 
+	// === QUERY COMMANDS ===
+	showCmd := show.NewShowCommand()
+	showCmd.GroupID = "query"
+	rootCmd.AddCommand(showCmd)
+
+	statusCmd := status.NewStatusCommand()
+	statusCmd.GroupID = "query"
+	rootCmd.AddCommand(statusCmd)
+
 	contextCmd := contextcmd.NewContextCommand()
-	contextCmd.GroupID = "navigation"
+	contextCmd.GroupID = "query"
 	rootCmd.AddCommand(contextCmd)
 
 	depsCmd := depscmd.NewDepsCommand()
-	depsCmd.GroupID = "navigation"
+	depsCmd.GroupID = "query"
 	rootCmd.AddCommand(depsCmd)
 
-	nextCmd := nextcmd.NewNextCommand()
-	nextCmd.GroupID = "navigation"
-	rootCmd.AddCommand(nextCmd)
-
-	executeCmd := executecmd.NewExecuteCommand()
-	executeCmd.GroupID = "navigation"
-	rootCmd.AddCommand(executeCmd)
+	indexCmd := navigation.NewIndexCommand()
+	indexCmd.GroupID = "system"
+	rootCmd.AddCommand(indexCmd)
 
 	migrateCmd := migrate.NewMigrateCommand()
 	migrateCmd.GroupID = "system"
@@ -266,16 +275,16 @@ func init() {
 
 	// Commit traceability commands
 	commitCmd := commitcmd.NewCommitCommand()
-	commitCmd.GroupID = "navigation"
+	commitCmd.GroupID = "workflow"
 	rootCmd.AddCommand(commitCmd)
 
 	commitsCmd := commitcmd.NewCommitsCommand()
-	commitsCmd.GroupID = "navigation"
+	commitsCmd.GroupID = "query"
 	rootCmd.AddCommand(commitsCmd)
 
 	// Parse command for structured output
 	parseCmd := parsecmd.NewParseCommand()
-	parseCmd.GroupID = "navigation"
+	parseCmd.GroupID = "query"
 	rootCmd.AddCommand(parseCmd)
 
 	// Wizard command for guided assistance
