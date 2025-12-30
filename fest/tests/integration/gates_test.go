@@ -16,9 +16,8 @@ func TestGatesCommands(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 
-	container, err := NewTestContainer(t)
-	require.NoError(t, err, "Failed to create test container")
-	defer container.Cleanup()
+	// Get shared container (reset between tests)
+	container := GetSharedContainer(t)
 
 	// Setup: Create festivals directory structure with .festival/gates
 	t.Run("Setup", func(t *testing.T) {

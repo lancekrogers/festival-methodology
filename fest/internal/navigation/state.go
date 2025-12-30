@@ -20,7 +20,7 @@ const (
 type Navigation struct {
 	Version      int               `yaml:"version"`
 	UpdatedAt    time.Time         `yaml:"updated_at"`
-	Links        map[string]*Link  `yaml:"links"`                  // festival name -> project path
+	Links        map[string]*Link  `yaml:"links"`                   // festival name -> project path
 	ProjectLinks map[string]string `yaml:"project_links,omitempty"` // project path -> festival name (reverse lookup)
 	Shortcuts    map[string]string `yaml:"shortcuts,omitempty"`
 }

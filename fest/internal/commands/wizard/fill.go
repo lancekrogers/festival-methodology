@@ -23,14 +23,14 @@ type FillOptions struct {
 }
 
 type fillResult struct {
-	OK       bool              `json:"ok"`
-	Action   string            `json:"action"`
-	File     string            `json:"file"`
-	Filled   int               `json:"filled"`
-	Total    int               `json:"total"`
-	Skipped  int               `json:"skipped"`
-	Changes  []fillChange      `json:"changes,omitempty"`
-	Errors   []map[string]any  `json:"errors,omitempty"`
+	OK      bool             `json:"ok"`
+	Action  string           `json:"action"`
+	File    string           `json:"file"`
+	Filled  int              `json:"filled"`
+	Total   int              `json:"total"`
+	Skipped int              `json:"skipped"`
+	Changes []fillChange     `json:"changes,omitempty"`
+	Errors  []map[string]any `json:"errors,omitempty"`
 }
 
 type fillChange struct {

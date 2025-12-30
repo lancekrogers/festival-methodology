@@ -15,10 +15,8 @@ func TestFestGoAndWorkspaceCommands(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 
-	// Create test container
-	container, err := NewTestContainer(t)
-	require.NoError(t, err, "Failed to create test container")
-	defer container.Cleanup()
+	// Get shared container (reset between tests)
+	container := GetSharedContainer(t)
 
 	// Test 1: Test go command help
 	t.Run("GoCommandHelp", func(t *testing.T) {

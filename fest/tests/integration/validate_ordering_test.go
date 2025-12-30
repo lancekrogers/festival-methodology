@@ -15,12 +15,11 @@ func TestValidateOrderingIntegration(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 
-	container, err := NewTestContainer(t)
-	require.NoError(t, err, "Failed to create test container")
-	defer container.Cleanup()
+	// Get shared container (reset between tests)
+	container := GetSharedContainer(t)
 
 	// Create base festivals directory
-	_, _, err = container.container.Exec(container.ctx, []string{"mkdir", "-p", "/festivals"})
+	_, _, err := container.container.Exec(container.ctx, []string{"mkdir", "-p", "/festivals"})
 	require.NoError(t, err)
 
 	t.Run("ValidOrderingPasses", func(t *testing.T) {

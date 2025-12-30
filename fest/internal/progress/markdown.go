@@ -14,10 +14,10 @@ var (
 	uncheckedBoxPattern = regexp.MustCompile(`^[\s]*[-*]\s*\[\s*\]`)
 
 	// Emoji checkboxes (per PROJECT_MANAGEMENT_SYSTEM.md)
-	emojiCompletedPattern   = regexp.MustCompile(`\[✅\]`)
-	emojiInProgressPattern  = regexp.MustCompile(`\[🚧\]`)
-	emojiBlockedPattern     = regexp.MustCompile(`\[❌\]`)
-	emojiNotStartedPattern  = regexp.MustCompile(`\[\s*\]`)
+	emojiCompletedPattern  = regexp.MustCompile(`\[✅\]`)
+	emojiInProgressPattern = regexp.MustCompile(`\[🚧\]`)
+	emojiBlockedPattern    = regexp.MustCompile(`\[❌\]`)
+	emojiNotStartedPattern = regexp.MustCompile(`\[\s*\]`)
 
 	// Section headers to look for (in priority order)
 	statusSections = []string{

@@ -278,7 +278,7 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 			MarkersFilled: markersFilled,
 			MarkersTotal:  markersTotal,
 			Validation:    validationResult,
-			Warnings:       warnings,
+			Warnings:      warnings,
 		})
 	}
 

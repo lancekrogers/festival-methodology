@@ -425,6 +425,106 @@ func (tc *TestContainer) Cleanup() {
  }
 }
 
+// NewSharedContainer creates a test container for shared use across tests.
+// Unlike NewTestContainer, it doesn't require a *testing.T during creation.
+func NewSharedContainer() (*TestContainer, error) {
+ ctx := context.Background()
+
+ festBinary, err := buildFestBinaryShared()
+ if err != nil {
+  return nil, fmt.Errorf("failed to build fest binary: %w", err)
+ }
+
+ req := testcontainers.ContainerRequest{
+  Image:      "alpine:latest",
+  Cmd:        []string{"sleep", "3600"},
+  WaitingFor: wait.ForExec([]string{"true"}).WithStartupTimeout(30 * time.Second),
+  AutoRemove: true,
+  Mounts: testcontainers.ContainerMounts{
+   {
+    Source:   testcontainers.GenericBindMountSource{HostPath: festBinary},
+    Target:   "/fest",
+    ReadOnly: false,
+   },
+  },
+ }
+
+ container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+  ContainerRequest: req,
+  Started:          true,
+ })
+ if err != nil {
+  return nil, fmt.Errorf("failed to start container: %w", err)
+ }
+
+ // Make binary executable
+ exitCode, _, err := container.Exec(ctx, []string{"chmod", "+x", "/fest"})
+ if err != nil || exitCode != 0 {
+  container.Terminate(ctx)
+  return nil, fmt.Errorf("failed to make binary executable: %w", err)
+ }
+
+ return &TestContainer{
+  container: container,
+  ctx:       ctx,
+  t:         nil,
+ }, nil
+}
+
+// buildFestBinaryShared returns the path to the fest binary without testing.T
+func buildFestBinaryShared() (string, error) {
+ cwd, err := os.Getwd()
+ if err != nil {
+  return "", fmt.Errorf("failed to get working directory: %w", err)
+ }
+ festBinaryPath := filepath.Join(cwd, "../../bin/linux", "fest")
+ festBinaryPath, err = filepath.Abs(festBinaryPath)
+ if err != nil {
+  return "", fmt.Errorf("failed to get absolute path: %w", err)
+ }
+
+ // Check if binary exists
+ if _, err := os.Stat(festBinaryPath); err != nil {
+  return "", fmt.Errorf("fest binary not found at %s - run 'just build-linux' first: %w", festBinaryPath, err)
+ }
+
+ return festBinaryPath, nil
+}
+
+// Reset clears container state between tests.
+// This removes all test artifacts while keeping the container and binary intact.
+func (tc *TestContainer) Reset() error {
+ exitCode, _, err := tc.container.Exec(tc.ctx, []string{
+  "sh", "-c", "rm -rf /test /output /festivals /workspace /tmp/* 2>/dev/null; mkdir -p /test",
+ })
+ if err != nil {
+  return fmt.Errorf("failed to reset container: %w", err)
+ }
+ if exitCode != 0 {
+  return fmt.Errorf("reset command failed with exit code %d", exitCode)
+ }
+ return nil
+}
+
+// GetSharedContainer returns the shared container, resetting state first.
+// This should be called at the start of each test to ensure clean state.
+func GetSharedContainer(t *testing.T) *TestContainer {
+ t.Helper()
+ if sharedContainer == nil {
+  t.Fatal("shared container not initialized - TestMain not called?")
+ }
+
+ if err := sharedContainer.Reset(); err != nil {
+  t.Fatalf("failed to reset container: %v", err)
+ }
+
+ return &TestContainer{
+  container: sharedContainer.container,
+  ctx:       sharedContainer.ctx,
+  t:         t,
+ }
+}
+
 // ListDirectories lists directories in a path (sorted by name)
 func (tc *TestContainer) ListDirectories(path string) ([]string, error) {
  exitCode, reader, err := tc.container.Exec(tc.ctx, []string{
