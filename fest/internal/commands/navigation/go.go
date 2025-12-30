@@ -69,6 +69,7 @@ If no registered festivals are found, falls back to nearest festivals/.`,
 	cmd.AddCommand(NewGoProjectCommand())
 	cmd.AddCommand(NewGoFestCommand())
 	cmd.AddCommand(NewGoLinkCommand())
+	cmd.AddCommand(NewGoCompletionsCommand())
 
 	return cmd
 }

@@ -75,6 +75,26 @@ func bashZshInit() string {
 # Add to ~/.zshrc or ~/.bashrc:
 #   eval "$(fest shell-init zsh)"
 
+# Tab completion for fgo
+_fgo_completions() {
+    local completions
+    completions=$(command fest go completions 2>/dev/null)
+    COMPREPLY=($(compgen -W "$completions" -- "${COMP_WORDS[COMP_CWORD]}"))
+}
+
+# Register completion (works for both bash and zsh with bashcompinit)
+complete -F _fgo_completions fgo
+
+# Zsh-specific: use compdef if available for better integration
+if [[ -n "$ZSH_VERSION" ]]; then
+    _fgo_zsh() {
+        local -a completions
+        completions=(${(f)"$(command fest go completions 2>/dev/null)"})
+        _describe 'fgo targets' completions
+    }
+    compdef _fgo_zsh fgo 2>/dev/null
+fi
+
 fgo() {
     case "$1" in
         --help|-h|help)
@@ -161,6 +181,9 @@ func fishInit() string {
 	return `# fest shell integration - directory navigation
 # Add to ~/.config/fish/config.fish:
 #   fest shell-init fish | source
+
+# Tab completion for fgo
+complete -c fgo -f -a "(command fest go completions 2>/dev/null)"
 
 function fgo
     switch $argv[1]
