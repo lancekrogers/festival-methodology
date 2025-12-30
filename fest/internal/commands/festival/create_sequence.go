@@ -44,6 +44,7 @@ type createSequenceResult struct {
 	Validation    *ValidationSummary       `json:"validation,omitempty"`
 	Errors        []map[string]any         `json:"errors,omitempty"`
 	Warnings      []string                 `json:"warnings,omitempty"`
+	Suggestions   []string                 `json:"suggestions,omitempty"`
 }
 
 // NewCreateSequenceCommand adds 'create sequence'
@@ -222,6 +223,12 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 		return emitCreateSequenceError(opts, errors.IO("creating sequence dir", err).WithField("path", seqDir))
 	}
 	goalPath := filepath.Join(seqDir, "SEQUENCE_GOAL.md")
+
+	// If no template content was found, create a minimal placeholder
+	if content == "" {
+		content = fmt.Sprintf("# Sequence Goal: %s\n\n**Sequence:** %s | **Status:** Planning\n\n## Objective\n\n[REPLACE: Describe the sequence objective]\n\n## Tasks\n\n- [ ] [REPLACE: Task 1]\n- [ ] [REPLACE: Task 2]\n", opts.Name, seqID)
+	}
+
 	var markersFilled, markersTotal int
 	if content != "" {
 		if err := os.WriteFile(goalPath, []byte(content), 0644); err != nil {
@@ -279,13 +286,24 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 		remainingMarkers := markersTotal - markersFilled
 		warnings := []string{}
 		if remainingMarkers > 0 {
-			warnings = append(warnings, fmt.Sprintf("%d template markers need attention", remainingMarkers))
+			warnings = append(warnings,
+				fmt.Sprintf("CRITICAL: %d unfilled markers - sequence cannot be executed until resolved", remainingMarkers),
+				"Run 'fest wizard fill SEQUENCE_GOAL.md' to fill markers interactively",
+			)
 		}
 		warnings = append(warnings,
 			"Sequences need task files for AI execution. Goals define WHAT, tasks define HOW.",
 			"Create tasks with: fest create task --name \"...\"",
 			"Learn more: fest understand tasks",
 		)
+
+		// Add discovery commands for agents
+		suggestions := []string{
+			"fest status        - View festival progress",
+			"fest next          - Find what to work on next",
+			"fest show plan     - View the execution plan",
+			"fest validate      - Check completion status",
+		}
 
 		result := createSequenceResult{
 			OK:     true,
@@ -301,6 +319,7 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 			MarkersTotal:  markersTotal,
 			Validation:    validationResult,
 			Warnings:      warnings,
+			Suggestions:   suggestions,
 		}
 		return emitCreateSequenceJSON(opts, result)
 	}
@@ -309,7 +328,9 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 	remainingMarkers := markersTotal - markersFilled
 	if remainingMarkers > 0 {
 		fmt.Println()
-		display.Warning("⚠️  %d template markers need attention in SEQUENCE_GOAL.md", remainingMarkers)
+		display.Error("🚫 CRITICAL: %d unfilled markers - sequence cannot be executed until resolved", remainingMarkers)
+		display.Info("   Run 'fest wizard fill SEQUENCE_GOAL.md' to fill markers interactively")
+		display.Info("   Or edit SEQUENCE_GOAL.md directly to replace [REPLACE: ...] markers")
 		fmt.Println()
 	}
 
@@ -331,6 +352,11 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 		fmt.Println("   1. fest create task --name \"your_task_name\"")
 	}
 	fmt.Println("   💡 Run 'fest understand tasks' to learn more about task structure.")
+	fmt.Println()
+	fmt.Println("   Discover more commands:")
+	fmt.Println("   • fest status        View festival progress")
+	fmt.Println("   • fest next          Find what to work on next")
+	fmt.Println("   • fest show plan     View the execution plan")
 	fmt.Println()
 
 	// Blocking prompt (skip if --no-prompt or --json)

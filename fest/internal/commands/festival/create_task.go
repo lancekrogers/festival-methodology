@@ -43,6 +43,7 @@ type createTaskResult struct {
 	Validation    *ValidationSummary       `json:"validation,omitempty"`
 	Errors        []map[string]any         `json:"errors,omitempty"`
 	Warnings      []string                 `json:"warnings,omitempty"`
+	Suggestions   []string                 `json:"suggestions,omitempty"`
 }
 
 // NewCreateTaskCommand adds 'create task'
@@ -232,6 +233,11 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 			}
 		}
 
+		// If no template content was found, create a minimal placeholder
+		if content == "" {
+			content = fmt.Sprintf("# Task: %s\n\n> **Task Number**: %02d | **Status:** Pending\n\n## Objective\n\n[REPLACE: Describe the task objective]\n\n## Steps\n\n1. [REPLACE: Step 1]\n2. [REPLACE: Step 2]\n\n## Definition of Done\n\n- [ ] [REPLACE: Completion criterion]\n", name, newNumber)
+		}
+
 		// Write task file (the file was created by InsertTask, but we need to write content)
 		if content != "" {
 			if err := os.WriteFile(taskPath, []byte(content), 0644); err != nil {
@@ -304,9 +310,21 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 	if opts.JSONOutput {
 		warnings := []string{}
 		if remainingMarkers > 0 {
-			warnings = append(warnings, fmt.Sprintf("%d template markers need attention", remainingMarkers))
+			warnings = append(warnings,
+				fmt.Sprintf("CRITICAL: %d unfilled markers - task cannot be executed until resolved", remainingMarkers),
+				"Edit task file directly to replace [REPLACE: ...] markers",
+			)
 		}
 		warnings = append(warnings, "Edit task file to define implementation steps")
+
+		// Add discovery commands for agents
+		suggestions := []string{
+			"fest status        - View festival progress",
+			"fest next          - Find what to work on next",
+			"fest show plan     - View the execution plan",
+			"fest validate      - Check completion status",
+			"fest progress      - See detailed progress",
+		}
 
 		result := createTaskResult{
 			OK:            true,
@@ -317,6 +335,7 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 			MarkersTotal:  totalMarkersCount,
 			Validation:    validationResult,
 			Warnings:      warnings,
+			Suggestions:   suggestions,
 		}
 		// For single task, use Task field for backward compatibility
 		if len(createdTasks) == 1 {
@@ -328,7 +347,8 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 	// Show marker warning FIRST (before success message) for visibility
 	if remainingMarkers > 0 {
 		fmt.Println()
-		display.Warning("⚠️  %d template markers need attention in task file(s)", remainingMarkers)
+		display.Error("🚫 CRITICAL: %d unfilled markers - task cannot be executed until resolved", remainingMarkers)
+		display.Info("   Edit task file(s) directly to replace [REPLACE: ...] markers")
 		fmt.Println()
 	}
 
@@ -366,6 +386,11 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 	}
 	fmt.Println("   • Add quality gates: fest gates apply --approve")
 	fmt.Println("   • Validate progress: fest validate")
+	fmt.Println()
+	fmt.Println("   Discover more commands:")
+	fmt.Println("   • fest status        View festival progress")
+	fmt.Println("   • fest next          Find what to work on next")
+	fmt.Println("   • fest show plan     View the execution plan")
 	return nil
 }
 

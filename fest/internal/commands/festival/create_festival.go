@@ -583,9 +583,13 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 		remainingMarkers := totalMarkersCount - totalMarkersFilled
 		warnings := []string{}
 		if remainingMarkers > 0 {
-			warnings = append(warnings, fmt.Sprintf("%d template markers need attention", remainingMarkers))
+			warnings = append(warnings,
+				fmt.Sprintf("CRITICAL: %d unfilled markers - festival cannot be executed until resolved", remainingMarkers),
+				"Run 'fest validate' to see which files need editing",
+				"Run 'fest wizard fill FESTIVAL_GOAL.md' to fill markers interactively",
+			)
 		}
-		warnings = append(warnings, "Next: Create phases with 'fest create phase --name PHASE_NAME --after 0'")
+		warnings = append(warnings, "Next: Create phases with 'fest create phase --name PHASE_NAME'")
 
 		return emitCreateFestivalJSON(opts, createFestivalResult{
 			OK:     true,
@@ -610,8 +614,9 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 	remainingMarkers := totalMarkersCount - totalMarkersFilled
 	if remainingMarkers > 0 {
 		fmt.Println()
-		display.Warning("⚠️  %d template markers need attention", remainingMarkers)
+		display.Error("🚫 CRITICAL: %d unfilled markers - festival cannot be executed until resolved", remainingMarkers)
 		display.Info("   Run 'fest validate' to see which files need editing")
+		display.Info("   Run 'fest wizard fill FESTIVAL_GOAL.md' to fill markers interactively")
 		fmt.Println()
 	}
 

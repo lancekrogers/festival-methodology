@@ -22,6 +22,10 @@ func ValidateTemplateMarkers(festivalPath string) ([]Issue, error) {
 		if strings.HasPrefix(rel, ".") || strings.Contains(rel, "/.") {
 			return nil
 		}
+		// Skip gates/ directory - these are intentional template files
+		if strings.HasPrefix(rel, "gates/") || strings.HasPrefix(rel, "gates"+string(filepath.Separator)) {
+			return nil
+		}
 		content, err := os.ReadFile(path)
 		if err != nil {
 			return nil
@@ -55,6 +59,10 @@ func CheckTemplatesFilled(festivalPath string) bool {
 		}
 		rel, _ := filepath.Rel(festivalPath, path)
 		if strings.HasPrefix(rel, ".") || strings.Contains(rel, "/.") {
+			return nil
+		}
+		// Skip gates/ directory - these are intentional template files
+		if strings.HasPrefix(rel, "gates/") || strings.HasPrefix(rel, "gates"+string(filepath.Separator)) {
 			return nil
 		}
 		b, err := os.ReadFile(path)

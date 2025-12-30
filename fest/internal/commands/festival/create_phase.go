@@ -44,6 +44,7 @@ type createPhaseResult struct {
 	Validation    *ValidationSummary       `json:"validation,omitempty"`
 	Errors        []map[string]any         `json:"errors,omitempty"`
 	Warnings      []string                 `json:"warnings,omitempty"`
+	Suggestions   []string                 `json:"suggestions,omitempty"`
 }
 
 // NewCreatePhaseCommand adds 'create phase'
@@ -203,6 +204,12 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 		return emitCreatePhaseError(opts, errors.IO("creating phase dir", err).WithField("path", phaseDir))
 	}
 	goalPath := filepath.Join(phaseDir, "PHASE_GOAL.md")
+
+	// If no template content was found, create a minimal placeholder
+	if content == "" {
+		content = fmt.Sprintf("# Phase Goal: %s\n\n**Phase:** %03d | **Type:** %s | **Status:** Planning\n\n## Objective\n\n[REPLACE: Describe the phase objective]\n\n## Success Criteria\n\n- [ ] [REPLACE: Criterion 1]\n- [ ] [REPLACE: Criterion 2]\n", opts.Name, newNumber, opts.PhaseType)
+	}
+
 	var markersFilled, markersTotal int
 	if content != "" {
 		if err := os.WriteFile(goalPath, []byte(content), 0644); err != nil {
@@ -260,9 +267,20 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 		remainingMarkers := markersTotal - markersFilled
 		warnings := []string{}
 		if remainingMarkers > 0 {
-			warnings = append(warnings, fmt.Sprintf("%d template markers need attention", remainingMarkers))
+			warnings = append(warnings,
+				fmt.Sprintf("CRITICAL: %d unfilled markers - festival cannot be executed until resolved", remainingMarkers),
+				"Run 'fest wizard fill PHASE_GOAL.md' to fill markers interactively",
+			)
 		}
 		warnings = append(warnings, "Next: Create sequences with 'fest create sequence --name SEQUENCE_NAME'")
+
+		// Add discovery commands for agents
+		suggestions := []string{
+			"fest status        - View festival progress",
+			"fest next          - Find what to work on next",
+			"fest show plan     - View the execution plan",
+			"fest validate      - Check completion status",
+		}
 
 		return emitCreatePhaseJSON(opts, createPhaseResult{
 			OK:     true,
@@ -279,6 +297,7 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 			MarkersTotal:  markersTotal,
 			Validation:    validationResult,
 			Warnings:      warnings,
+			Suggestions:   suggestions,
 		})
 	}
 
@@ -286,7 +305,9 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 	remainingMarkers := markersTotal - markersFilled
 	if remainingMarkers > 0 {
 		fmt.Println()
-		display.Warning("⚠️  %d template markers need attention in PHASE_GOAL.md", remainingMarkers)
+		display.Error("🚫 CRITICAL: %d unfilled markers - festival cannot be executed until resolved", remainingMarkers)
+		display.Info("   Run 'fest wizard fill PHASE_GOAL.md' to fill markers interactively")
+		display.Info("   Or edit PHASE_GOAL.md directly to replace [REPLACE: ...] markers")
 		fmt.Println()
 	}
 
@@ -303,9 +324,14 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 		fmt.Println("   3. Create subdirectories for research topics")
 		fmt.Println("   4. fest research create --type investigation --title \"topic\"")
 	} else {
-		fmt.Println("   3. fest create sequence --name \"requirements\" --after 0")
+		fmt.Println("   3. fest create sequence --name \"requirements\"")
 		fmt.Println("   4. fest validate  (check completion status)")
 	}
+	fmt.Println()
+	fmt.Println("   Discover more commands:")
+	fmt.Println("   • fest status        View festival progress")
+	fmt.Println("   • fest next          Find what to work on next")
+	fmt.Println("   • fest show plan     View the execution plan")
 	return nil
 }
 

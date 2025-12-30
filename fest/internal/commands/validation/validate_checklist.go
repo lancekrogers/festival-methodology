@@ -98,6 +98,10 @@ func checkTemplatesFilled(festivalPath string) bool {
 		if strings.HasPrefix(relPath, ".") || strings.Contains(relPath, "/.") {
 			return nil
 		}
+		// Skip gates/ directory - these are intentional template files
+		if strings.HasPrefix(relPath, "gates/") || strings.HasPrefix(relPath, "gates"+string(filepath.Separator)) {
+			return nil
+		}
 
 		content, err := os.ReadFile(path)
 		if err != nil {
@@ -172,7 +176,7 @@ func printChecklistResult(display *ui.UI, checklist *Checklist) {
 	printCheckItem(display, 1, "Templates Filled",
 		"Did you fill out ALL templates?",
 		checklist.TemplatesFilled,
-		"Search for [FILL:] markers and replace with content")
+		"Search for [REPLACE:], [FILL:], or {{ }} markers and replace with actual content")
 
 	printCheckItem(display, 2, "Goals Achievable",
 		"Does this plan achieve project goals?",

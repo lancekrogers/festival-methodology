@@ -495,7 +495,7 @@ func buildFestBinaryShared() (string, error) {
 // This removes all test artifacts while keeping the container and binary intact.
 func (tc *TestContainer) Reset() error {
  exitCode, _, err := tc.container.Exec(tc.ctx, []string{
-  "sh", "-c", "rm -rf /test /output /festivals /workspace /tmp/* 2>/dev/null; mkdir -p /test",
+  "sh", "-c", "rm -rf /test /output /festivals /workspace /testproject /outer /tmp/* 2>/dev/null; mkdir -p /test /festivals",
  })
  if err != nil {
   return fmt.Errorf("failed to reset container: %w", err)

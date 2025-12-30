@@ -54,6 +54,6 @@ func AddSuggestions(result *Result) {
 	}
 	if hasUnfilledTemplates {
 		result.Suggestions = append(result.Suggestions,
-			"Edit files with [FILL:] markers and replace with actual content")
+			"Edit files with unfilled template markers ([REPLACE:], [FILL:], or {{ }}) and add actual content")
 	}
 }

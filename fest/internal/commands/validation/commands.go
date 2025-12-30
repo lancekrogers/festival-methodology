@@ -273,6 +273,10 @@ func validateTemplateMarkers(festivalPath string, result *ValidationResult) {
 		if strings.HasPrefix(relPath, ".") || strings.Contains(relPath, "/.") {
 			return nil
 		}
+		// Skip gates/ directory - these are intentional template files
+		if strings.HasPrefix(relPath, "gates/") || strings.HasPrefix(relPath, "gates"+string(filepath.Separator)) {
+			return nil
+		}
 
 		content, err := os.ReadFile(path)
 		if err != nil {
@@ -354,7 +358,7 @@ func addSuggestions(result *ValidationResult) {
 	}
 	if hasUnfilledTemplates {
 		result.Suggestions = append(result.Suggestions,
-			"Edit files with [FILL:] markers and replace with actual content")
+			"Edit files with unfilled template markers ([REPLACE:], [FILL:], or {{ }}) and add actual content")
 	}
 	if hasNumberingGaps {
 		result.Suggestions = append(result.Suggestions,
