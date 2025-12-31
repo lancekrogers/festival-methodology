@@ -287,7 +287,7 @@ func validateTemplateMarkers(festivalPath string, result *ValidationResult) {
 		for _, marker := range markers {
 			if strings.Contains(contentStr, marker) {
 				result.Issues = append(result.Issues, ValidationIssue{
-					Level:   LevelWarning,
+					Level:   LevelError,
 					Code:    CodeUnfilledTemplate,
 					Path:    relPath,
 					Message: fmt.Sprintf("File contains unfilled template marker: %s", marker),
@@ -407,7 +407,7 @@ func printValidationResult(display *ui.UI, festivalPath string, result *Validati
 	printValidationSection(display, "COMPLETENESS", completenessIssues)
 	printTaskValidationSection(display, taskIssues)
 	printValidationSection(display, "QUALITY GATES", gateIssues)
-	printValidationSection(display, "TEMPLATES", templateIssues)
+	printTemplateValidationSection(display, templateIssues)
 	printValidationSection(display, "ORDERING", orderingIssues)
 
 	// Score and summary
@@ -425,6 +425,9 @@ func printValidationResult(display *ui.UI, festivalPath string, result *Validati
 			fmt.Printf("  • %s\n", s)
 		}
 	}
+
+	// Agent self-check prompts
+	printAgentReflection(display, result)
 }
 
 func printValidationSection(display *ui.UI, title string, issues []ValidationIssue) {
@@ -450,6 +453,63 @@ func printValidationSection(display *ui.UI, title string, issues []ValidationIss
 		if issue.Fix != "" {
 			fmt.Printf("        FIX: %s\n", issue.Fix)
 		}
+	}
+}
+
+func printTemplateValidationSection(display *ui.UI, issues []ValidationIssue) {
+	fmt.Println("\nTEMPLATES (Required for Valid Festival)")
+
+	if len(issues) == 0 {
+		display.Success("[OK] All template markers have been filled")
+		return
+	}
+
+	display.Error("[ERROR] Files contain unfilled template markers")
+	fmt.Println()
+	fmt.Println("        Template markers are PLACEHOLDERS that MUST be replaced with actual content.")
+	fmt.Println("        A festival with unfilled markers is INCOMPLETE.")
+	fmt.Println()
+	fmt.Println("        Files needing attention:")
+
+	for _, issue := range issues {
+		fmt.Printf("        - %s\n", issue.Path)
+	}
+
+	fmt.Println()
+	fmt.Println("        For each file, edit and replace:")
+	fmt.Println("          [FILL: description]  → Write actual content")
+	fmt.Println("          [REPLACE: guidance]  → Replace with your content")
+	fmt.Println("          {{ placeholder }}    → Fill in the value")
+}
+
+func printAgentReflection(display *ui.UI, result *ValidationResult) {
+	fmt.Println()
+	fmt.Println(strings.Repeat("─", 50))
+	fmt.Println("AGENT SELF-CHECK")
+	fmt.Println(strings.Repeat("─", 50))
+	fmt.Println()
+
+	if !result.Valid || result.Score < 100 {
+		display.Warning("Before continuing, reflect on these questions:")
+		fmt.Println()
+		fmt.Println("  1. Did you follow the festival methodology exactly as written?")
+		fmt.Println()
+		fmt.Println("  2. Did you understand the PURPOSE of each level in the hierarchy?")
+		fmt.Println("     • Phases organize major milestones")
+		fmt.Println("     • Sequences group related work toward a goal")
+		fmt.Println("     • Tasks define specific executable work")
+		fmt.Println()
+		fmt.Println("  3. If someone follows this festival structure exactly,")
+		fmt.Println("     will the goals at each level be achieved?")
+		fmt.Println()
+		fmt.Println("  4. Are ALL placeholder markers filled with real content?")
+		fmt.Println("     Templates exist to guide you, not to remain as-is.")
+		fmt.Println()
+	} else {
+		display.Success("Festival structure passes all checks.")
+		fmt.Println()
+		fmt.Println("  Verify: If an agent executes each task in order,")
+		fmt.Println("  will the sequence goals, phase goals, and festival goal be achieved?")
 	}
 }
 

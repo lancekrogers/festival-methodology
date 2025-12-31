@@ -112,6 +112,26 @@ func printTemplates() {
 	fmt.Print(understanddocs.Load("templates.txt"))
 }
 
+func newUnderstandContextCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "context",
+		Short: "CONTEXT.md - session memory for AI agents (CREATE FIRST)",
+		Long: `Learn about CONTEXT.md - the "memory" document that preserves decisions,
+blockers, and handoff notes between AI sessions.
+
+CREATE CONTEXT.md FIRST when planning a new festival. It captures WHY
+the festival exists and prevents agents from losing focus on purpose.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			printContext()
+		},
+	}
+}
+
+func printContext() {
+	fmt.Print("\n")
+	fmt.Print(understanddocs.Load("context.txt"))
+}
+
 func printChecklist() {
 	fmt.Print(`
 Festival Validation Checklist
