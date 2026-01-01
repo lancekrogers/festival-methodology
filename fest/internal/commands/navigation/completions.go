@@ -2,10 +2,16 @@ package navigation
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/navigation"
 	"github.com/spf13/cobra"
 )
+
+// dateDirectoryPattern matches YYYY-MM format for date-based directory organization
+var dateDirectoryPattern = regexp.MustCompile(`^\d{4}-\d{2}$`)
 
 // NewGoCompletionsCommand creates the hidden completions subcommand for shell integration
 func NewGoCompletionsCommand() *cobra.Command {
@@ -64,4 +70,76 @@ func runGoCompletions() error {
 	}
 
 	return nil
+}
+
+// isDateDirectory checks if a directory name matches YYYY-MM pattern
+func isDateDirectory(name string) bool {
+	return dateDirectoryPattern.MatchString(name)
+}
+
+// findCompletedFestivals finds all completed festivals, including those in date subdirectories.
+// It supports both legacy flat structure and new date-based organization.
+func findCompletedFestivals(completedDir, prefix string) []string {
+	entries, err := os.ReadDir(completedDir)
+	if err != nil {
+		return nil
+	}
+
+	var festivals []string
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		name := entry.Name()
+
+		if isDateDirectory(name) {
+			// Search within date directory
+			datePath := filepath.Join(completedDir, name)
+			subEntries, err := os.ReadDir(datePath)
+			if err != nil {
+				continue
+			}
+
+			for _, subEntry := range subEntries {
+				if !subEntry.IsDir() {
+					continue
+				}
+				festName := subEntry.Name()
+				// Check if it's a valid festival
+				festPath := filepath.Join(datePath, festName)
+				if !isValidFestivalDir(festPath) {
+					continue
+				}
+				// Check prefix filter
+				if prefix == "" || len(festName) >= len(prefix) && festName[:len(prefix)] == prefix {
+					festivals = append(festivals, festName)
+				}
+			}
+		} else {
+			// Legacy flat structure
+			festPath := filepath.Join(completedDir, name)
+			if !isValidFestivalDir(festPath) {
+				continue
+			}
+			if prefix == "" || len(name) >= len(prefix) && name[:len(prefix)] == prefix {
+				festivals = append(festivals, name)
+			}
+		}
+	}
+
+	return festivals
+}
+
+// isValidFestivalDir checks if a directory contains festival markers
+func isValidFestivalDir(path string) bool {
+	// Check for FESTIVAL_OVERVIEW.md or FESTIVAL_GOAL.md
+	if _, err := os.Stat(filepath.Join(path, "FESTIVAL_OVERVIEW.md")); err == nil {
+		return true
+	}
+	if _, err := os.Stat(filepath.Join(path, "FESTIVAL_GOAL.md")); err == nil {
+		return true
+	}
+	return false
 }

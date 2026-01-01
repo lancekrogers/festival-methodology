@@ -13,12 +13,27 @@ func TestCalculateCompletionDateDir(t *testing.T) {
 		timestamp time.Time
 		want      string
 	}{
+		// Standard cases
 		{"january 2025", time.Date(2025, 1, 15, 0, 0, 0, 0, time.Local), "2025-01"},
 		{"december 2024", time.Date(2024, 12, 31, 23, 59, 59, 0, time.Local), "2024-12"},
+		{"mid month", time.Date(2025, 6, 15, 12, 0, 0, 0, time.Local), "2025-06"},
+
+		// Month boundaries
 		{"month boundary start", time.Date(2025, 2, 1, 0, 0, 0, 0, time.Local), "2025-02"},
 		{"month boundary end", time.Date(2025, 3, 31, 23, 59, 59, 0, time.Local), "2025-03"},
+		{"last of january", time.Date(2025, 1, 31, 23, 59, 59, 999999999, time.Local), "2025-01"},
+
+		// Year boundaries
+		{"new years eve", time.Date(2024, 12, 31, 23, 59, 59, 0, time.Local), "2024-12"},
+		{"new years day", time.Date(2025, 1, 1, 0, 0, 1, 0, time.Local), "2025-01"},
+		{"new year 2026", time.Date(2026, 1, 1, 0, 0, 0, 0, time.Local), "2026-01"},
+
+		// Leap year
 		{"leap year february", time.Date(2024, 2, 29, 12, 0, 0, 0, time.Local), "2024-02"},
-		{"new year", time.Date(2026, 1, 1, 0, 0, 0, 0, time.Local), "2026-01"},
+
+		// Single digit months (verify zero-padding)
+		{"single digit january", time.Date(2025, 1, 15, 0, 0, 0, 0, time.Local), "2025-01"},
+		{"single digit september", time.Date(2025, 9, 15, 0, 0, 0, 0, time.Local), "2025-09"},
 	}
 
 	for _, tc := range tests {
@@ -39,6 +54,28 @@ func TestCalculateCompletionDateDirNow(t *testing.T) {
 
 	if got != expected {
 		t.Errorf("CalculateCompletionDateDir(now) = %q, want %q", got, expected)
+	}
+}
+
+func TestCalculateCompletionDateDir_UsesLocalTime(t *testing.T) {
+	// Verify that the function uses the time as provided (local time)
+	// This ensures consistent behavior regardless of timezone
+	utcTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	localTime := utcTime.Local()
+
+	// Both should work correctly based on their respective times
+	utcResult := CalculateCompletionDateDir(utcTime)
+	localResult := CalculateCompletionDateDir(localTime)
+
+	// UTC Jan 1 00:00 should give 2025-01 in UTC
+	if utcResult != "2025-01" {
+		t.Errorf("UTC time: got %q, want %q", utcResult, "2025-01")
+	}
+
+	// Local result depends on timezone, but should match local time's month
+	expectedLocal := localTime.Format("2006-01")
+	if localResult != expectedLocal {
+		t.Errorf("Local time: got %q, want %q", localResult, expectedLocal)
 	}
 }
 
