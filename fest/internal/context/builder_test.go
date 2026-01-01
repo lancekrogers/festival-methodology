@@ -328,3 +328,191 @@ func TestExtractTaskNumber(t *testing.T) {
 		})
 	}
 }
+
+// setupTestFestivalWithMetadata creates a festival with metadata ID for testing.
+func setupTestFestivalWithMetadata(t *testing.T, festivalID string) string {
+	t.Helper()
+	festivalPath := setupTestFestival(t)
+
+	// Add fest.yaml with metadata
+	festConfig := `version: "1.0"
+metadata:
+  id: "` + festivalID + `"
+  name: "Test Festival"
+  created_at: 2025-01-01T00:00:00Z
+`
+	if err := os.WriteFile(filepath.Join(festivalPath, "fest.yaml"), []byte(festConfig), 0644); err != nil {
+		t.Fatalf("Failed to write fest.yaml: %v", err)
+	}
+
+	return festivalPath
+}
+
+func TestContextOutput_FestivalIDField(t *testing.T) {
+	festivalPath := setupTestFestivalWithMetadata(t, "TF0001")
+
+	origDir, _ := os.Getwd()
+	defer os.Chdir(origDir)
+	os.Chdir(festivalPath)
+
+	builder := NewBuilder(festivalPath, DepthStandard)
+	output, err := builder.Build()
+	if err != nil {
+		t.Fatalf("Build() error = %v", err)
+	}
+
+	// Verify FestivalID field is populated
+	if output.FestivalID == nil {
+		t.Error("FestivalID should not be nil for festival with metadata")
+	} else if *output.FestivalID != "TF0001" {
+		t.Errorf("FestivalID = %q, want %q", *output.FestivalID, "TF0001")
+	}
+}
+
+func TestContextOutput_CurrentRefField(t *testing.T) {
+	festivalPath := setupTestFestivalWithMetadata(t, "TF0001")
+	phasePath := filepath.Join(festivalPath, "001_Research")
+	seqPath := filepath.Join(phasePath, "01_analysis")
+
+	// Resolve symlinks for macOS /tmp -> /private/tmp
+	absFestival, _ := filepath.EvalSymlinks(festivalPath)
+	absSeq, _ := filepath.EvalSymlinks(seqPath)
+
+	origDir, _ := os.Getwd()
+	defer os.Chdir(origDir)
+	if err := os.Chdir(absSeq); err != nil {
+		t.Fatalf("Failed to chdir: %v", err)
+	}
+
+	builder := NewBuilder(absFestival, DepthStandard)
+	output, err := builder.Build()
+	if err != nil {
+		t.Fatalf("Build() error = %v", err)
+	}
+
+	// Verify CurrentRef field is populated with node reference format
+	if output.CurrentRef == nil {
+		t.Error("CurrentRef should not be nil for festival with metadata")
+	} else {
+		// Expected format: ID:P###.S##.T## (at sequence level, task is 00)
+		// Phase 001, Sequence 01 -> P001.S01.T00
+		expected := "TF0001:P001.S01.T00"
+		if *output.CurrentRef != expected {
+			t.Errorf("CurrentRef = %q, want %q", *output.CurrentRef, expected)
+		}
+	}
+}
+
+func TestContextOutput_NullFieldsWhenNoMetadata(t *testing.T) {
+	// Create a festival without metadata (legacy festival)
+	festivalPath := setupTestFestival(t)
+
+	origDir, _ := os.Getwd()
+	defer os.Chdir(origDir)
+	os.Chdir(festivalPath)
+
+	builder := NewBuilder(festivalPath, DepthStandard)
+	output, err := builder.Build()
+	if err != nil {
+		t.Fatalf("Build() error = %v", err)
+	}
+
+	// FestivalID and CurrentRef should be nil (JSON null) for legacy festivals
+	if output.FestivalID != nil {
+		t.Errorf("FestivalID should be nil for legacy festival, got %q", *output.FestivalID)
+	}
+	if output.CurrentRef != nil {
+		t.Errorf("CurrentRef should be nil for legacy festival, got %q", *output.CurrentRef)
+	}
+}
+
+func TestContextOutput_JSONSchemaStability(t *testing.T) {
+	tests := []struct {
+		name        string
+		festivalID  string
+		wantNullID  bool
+		wantNullRef bool
+	}{
+		{
+			name:        "festival with metadata has ID fields",
+			festivalID:  "GU0001",
+			wantNullID:  false,
+			wantNullRef: false,
+		},
+		{
+			name:        "legacy festival has null ID fields",
+			festivalID:  "",
+			wantNullID:  true,
+			wantNullRef: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var festivalPath string
+			if tc.festivalID != "" {
+				festivalPath = setupTestFestivalWithMetadata(t, tc.festivalID)
+			} else {
+				festivalPath = setupTestFestival(t)
+			}
+
+			origDir, _ := os.Getwd()
+			defer os.Chdir(origDir)
+			os.Chdir(festivalPath)
+
+			builder := NewBuilder(festivalPath, DepthStandard)
+			output, err := builder.Build()
+			if err != nil {
+				t.Fatalf("Build() error = %v", err)
+			}
+
+			// Check FestivalID null state
+			if tc.wantNullID && output.FestivalID != nil {
+				t.Errorf("FestivalID should be nil, got %q", *output.FestivalID)
+			}
+			if !tc.wantNullID && output.FestivalID == nil {
+				t.Error("FestivalID should not be nil")
+			}
+
+			// Check CurrentRef null state
+			if tc.wantNullRef && output.CurrentRef != nil {
+				t.Errorf("CurrentRef should be nil, got %q", *output.CurrentRef)
+			}
+			if !tc.wantNullRef && output.CurrentRef == nil {
+				t.Error("CurrentRef should not be nil")
+			}
+		})
+	}
+}
+
+func TestContextOutput_TaskLevelNodeReference(t *testing.T) {
+	festivalPath := setupTestFestivalWithMetadata(t, "TF0001")
+	seqPath := filepath.Join(festivalPath, "001_Research", "01_analysis")
+
+	// Resolve symlinks
+	absFestival, _ := filepath.EvalSymlinks(festivalPath)
+	absSeq, _ := filepath.EvalSymlinks(seqPath)
+
+	origDir, _ := os.Getwd()
+	defer os.Chdir(origDir)
+	os.Chdir(absSeq)
+
+	builder := NewBuilder(absFestival, DepthStandard)
+
+	// Build for specific task
+	output, err := builder.BuildForTask("01_analyze")
+	if err != nil {
+		t.Fatalf("BuildForTask() error = %v", err)
+	}
+
+	// Verify CurrentRef includes task number
+	if output.CurrentRef == nil {
+		t.Fatal("CurrentRef should not be nil")
+	}
+
+	// Expected format: TF0001:P001.S01.T01 (task 01)
+	expected := "TF0001:P001.S01.T01"
+	if *output.CurrentRef != expected {
+		t.Errorf("CurrentRef = %q, want %q", *output.CurrentRef, expected)
+	}
+}

@@ -1,11 +1,13 @@
 package context
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
@@ -13,6 +15,7 @@ import (
 type Builder struct {
 	festivalPath string
 	depth        Depth
+	metadata     *config.FestivalMetadata // Loaded from fest.yaml
 }
 
 // NewBuilder creates a new context builder
@@ -23,11 +26,23 @@ func NewBuilder(festivalPath string, depth Depth) *Builder {
 	}
 }
 
+// formatNodeReference creates a node reference string from festival ID and location.
+// Format: ID:P###.S##.T## (e.g., GU0001:P002.S01.T03)
+func formatNodeReference(festivalID string, phase, sequence, task int) string {
+	if festivalID == "" {
+		return ""
+	}
+	return fmt.Sprintf("%s:P%03d.S%02d.T%02d", festivalID, phase, sequence, task)
+}
+
 // Build constructs the complete context output for the current location
 func (b *Builder) Build() (*ContextOutput, error) {
 	output := &ContextOutput{
 		Depth: b.depth,
 	}
+
+	// Load festival metadata from fest.yaml (optional - legacy festivals may not have it)
+	b.loadMetadata()
 
 	// Determine location
 	location, err := b.determineLocation()
@@ -70,6 +85,9 @@ func (b *Builder) Build() (*ContextOutput, error) {
 		output.Task = taskCtx
 	}
 
+	// Populate FestivalID and CurrentRef fields
+	b.populateNodeReference(output, location)
+
 	// Load rules for standard and full depth
 	if b.depth == DepthStandard || b.depth == DepthFull {
 		rules, err := b.loadRules()
@@ -93,6 +111,54 @@ func (b *Builder) Build() (*ContextOutput, error) {
 	return output, nil
 }
 
+// loadMetadata loads festival metadata from fest.yaml
+func (b *Builder) loadMetadata() {
+	festConfig, err := config.LoadFestivalConfig(b.festivalPath)
+	if err != nil {
+		return // Metadata is optional
+	}
+	if festConfig.Metadata.ID != "" {
+		b.metadata = &festConfig.Metadata
+	}
+}
+
+// populateNodeReference sets FestivalID and CurrentRef on the output
+func (b *Builder) populateNodeReference(output *ContextOutput, location *Location) {
+	// If no metadata, leave fields as nil (JSON null)
+	if b.metadata == nil || b.metadata.ID == "" {
+		return
+	}
+
+	// Set FestivalID
+	id := b.metadata.ID
+	output.FestivalID = &id
+
+	// Extract phase, sequence, and task numbers from location
+	phaseNum := extractLocationNumber(location.PhaseName)
+	seqNum := extractLocationNumber(location.SequenceName)
+	taskNum := 0
+	if output.Task != nil {
+		taskNum = output.Task.TaskNumber
+	}
+
+	// Format and set CurrentRef
+	ref := formatNodeReference(id, phaseNum, seqNum, taskNum)
+	output.CurrentRef = &ref
+}
+
+// extractLocationNumber extracts the leading number from a location name (e.g., "001_Research" -> 1)
+func extractLocationNumber(name string) int {
+	num := 0
+	for _, c := range name {
+		if c >= '0' && c <= '9' {
+			num = num*10 + int(c-'0')
+		} else {
+			break
+		}
+	}
+	return num
+}
+
 // BuildForTask constructs context for a specific task
 func (b *Builder) BuildForTask(taskName string) (*ContextOutput, error) {
 	// Find the task file
@@ -101,10 +167,16 @@ func (b *Builder) BuildForTask(taskName string) (*ContextOutput, error) {
 		return nil, err
 	}
 
-	// Create a builder at the task location
+	// Create a builder at the task location (share metadata)
 	taskBuilder := &Builder{
 		festivalPath: b.festivalPath,
 		depth:        b.depth,
+		metadata:     b.metadata,
+	}
+
+	// Load metadata if not already loaded
+	if taskBuilder.metadata == nil {
+		taskBuilder.loadMetadata()
 	}
 
 	output, err := taskBuilder.Build()
@@ -121,6 +193,9 @@ func (b *Builder) BuildForTask(taskName string) (*ContextOutput, error) {
 	output.Location.TaskPath = taskPath
 	output.Location.TaskName = taskName
 	output.Location.Level = "task"
+
+	// Recalculate CurrentRef now that we have the task number
+	taskBuilder.populateNodeReference(output, output.Location)
 
 	return output, nil
 }
