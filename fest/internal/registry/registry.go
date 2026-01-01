@@ -11,6 +11,19 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
+// Registerer provides registry operations for festival ID management.
+// Implementations must be safe for concurrent use.
+type Registerer interface {
+	Add(ctx context.Context, entry RegistryEntry) error
+	Get(ctx context.Context, id string) (RegistryEntry, error)
+	Update(ctx context.Context, entry RegistryEntry) error
+	Delete(ctx context.Context, id string) error
+	Exists(ctx context.Context, id string) bool
+}
+
+// Ensure Registry implements Registerer
+var _ Registerer = (*Registry)(nil)
+
 // Registry holds the central index of all festival IDs and their metadata.
 // It provides thread-safe access for concurrent operations.
 type Registry struct {
@@ -34,7 +47,7 @@ type RegistryEntry struct {
 // New creates a new empty registry with the given file path.
 func New(path string) *Registry {
 	return &Registry{
-		Version: "1.0",
+		Version: CurrentVersion,
 		Entries: make(map[string]RegistryEntry),
 		path:    path,
 	}
@@ -147,7 +160,11 @@ func (r *Registry) Delete(ctx context.Context, id string) error {
 }
 
 // Exists checks if an ID exists in the registry.
-func (r *Registry) Exists(id string) bool {
+func (r *Registry) Exists(ctx context.Context, id string) bool {
+	if err := ctx.Err(); err != nil {
+		return false
+	}
+
 	if id == "" {
 		return false
 	}
@@ -160,31 +177,55 @@ func (r *Registry) Exists(id string) bool {
 }
 
 // List returns all entries in the registry.
+// Returns nil if context is cancelled.
 func (r *Registry) List(ctx context.Context) []RegistryEntry {
+	if err := ctx.Err(); err != nil {
+		return nil
+	}
+
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	entries := make([]RegistryEntry, 0, len(r.Entries))
 	for _, entry := range r.Entries {
+		if err := ctx.Err(); err != nil {
+			return nil
+		}
 		entries = append(entries, entry)
 	}
 	return entries
 }
 
 // Count returns the number of entries in the registry.
-func (r *Registry) Count() int {
+func (r *Registry) Count(ctx context.Context) int {
+	if err := ctx.Err(); err != nil {
+		return 0
+	}
+
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return len(r.Entries)
 }
 
 // ByStatus returns all entries with the given status.
+// Returns nil if context is cancelled or status is empty.
 func (r *Registry) ByStatus(ctx context.Context, status string) []RegistryEntry {
+	if err := ctx.Err(); err != nil {
+		return nil
+	}
+
+	if status == "" {
+		return nil
+	}
+
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	var entries []RegistryEntry
 	for _, entry := range r.Entries {
+		if err := ctx.Err(); err != nil {
+			return nil
+		}
 		if entry.Status == status {
 			entries = append(entries, entry)
 		}

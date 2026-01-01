@@ -48,7 +48,7 @@ func Load(ctx context.Context, path string) (*Registry, error) {
 		reg.Entries = make(map[string]RegistryEntry)
 	}
 	if reg.Version == "" {
-		reg.Version = "1.0"
+		reg.Version = CurrentVersion
 	}
 	reg.path = path
 
@@ -65,7 +65,7 @@ func (r *Registry) Save(ctx context.Context) error {
 
 	// Ensure the directory exists
 	dir := filepath.Dir(r.path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, DirPermissions); err != nil {
 		return errors.IO("creating registry directory", err).
 			WithField("path", dir)
 	}
@@ -80,7 +80,7 @@ func (r *Registry) Save(ctx context.Context) error {
 
 	// Write to temporary file
 	tmpPath := r.path + ".tmp"
-	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
+	if err := os.WriteFile(tmpPath, data, FilePermissions); err != nil {
 		return errors.IO("writing temporary registry file", err).
 			WithField("path", tmpPath)
 	}
@@ -98,19 +98,42 @@ func (r *Registry) Save(ctx context.Context) error {
 }
 
 // LoadOrCreate loads an existing registry or creates a new one if it doesn't exist.
-// The registry is saved after creation.
+// The registry is saved after creation to ensure the file exists on disk.
 func LoadOrCreate(ctx context.Context, path string) (*Registry, error) {
-	reg, err := Load(ctx, path)
-	if err != nil {
-		return nil, err
+	if err := ctx.Err(); err != nil {
+		return nil, errors.Wrap(err, "context cancelled")
 	}
 
-	// If we created a new registry, save it
-	if _, statErr := os.Stat(path); os.IsNotExist(statErr) {
-		if err := reg.Save(ctx); err != nil {
-			return nil, err
+	// Try to read existing file first
+	data, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		// File doesn't exist - create new registry and save it
+		reg := New(path)
+		if saveErr := reg.Save(ctx); saveErr != nil {
+			return nil, saveErr
 		}
+		return reg, nil
+	}
+	if err != nil {
+		return nil, errors.IO("reading registry file", err).
+			WithField("path", path)
 	}
 
-	return reg, nil
+	// Parse existing file
+	var reg Registry
+	if err := yaml.Unmarshal(data, &reg); err != nil {
+		return nil, errors.Parse("parsing registry YAML", err).
+			WithField("path", path)
+	}
+
+	// Initialize if nil
+	if reg.Entries == nil {
+		reg.Entries = make(map[string]RegistryEntry)
+	}
+	if reg.Version == "" {
+		reg.Version = CurrentVersion
+	}
+	reg.path = path
+
+	return &reg, nil
 }

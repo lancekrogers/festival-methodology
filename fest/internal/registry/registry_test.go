@@ -2,6 +2,7 @@ package registry
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,8 +12,8 @@ import (
 func TestNew(t *testing.T) {
 	reg := New("/path/to/registry.yaml")
 
-	if reg.Version != "1.0" {
-		t.Errorf("Version = %q, want %q", reg.Version, "1.0")
+	if reg.Version != CurrentVersion {
+		t.Errorf("Version = %q, want %q", reg.Version, CurrentVersion)
 	}
 	if reg.Entries == nil {
 		t.Error("Entries should be initialized, got nil")
@@ -40,7 +41,7 @@ func TestRegistry_Add(t *testing.T) {
 	}
 
 	// Verify entry was added
-	if !reg.Exists("GU0001") {
+	if !reg.Exists(ctx, "GU0001") {
 		t.Error("Entry should exist after Add")
 	}
 
@@ -140,7 +141,7 @@ func TestRegistry_Delete(t *testing.T) {
 	}
 
 	// Verify deletion
-	if reg.Exists("GU0001") {
+	if reg.Exists(ctx, "GU0001") {
 		t.Error("Entry should not exist after Delete")
 	}
 
@@ -168,7 +169,7 @@ func TestRegistry_Exists(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.id, func(t *testing.T) {
-			if got := reg.Exists(tt.id); got != tt.want {
+			if got := reg.Exists(ctx, tt.id); got != tt.want {
 				t.Errorf("Exists(%q) = %v, want %v", tt.id, got, tt.want)
 			}
 		})
@@ -221,6 +222,18 @@ func TestRegistry_ContextCancellation(t *testing.T) {
 	if err := reg.Delete(ctx, "GU0001"); err == nil {
 		t.Error("Delete() should return error with cancelled context")
 	}
+	if reg.Exists(ctx, "GU0001") {
+		t.Error("Exists() should return false with cancelled context")
+	}
+	if reg.Count(ctx) != 0 {
+		t.Error("Count() should return 0 with cancelled context")
+	}
+	if reg.List(ctx) != nil {
+		t.Error("List() should return nil with cancelled context")
+	}
+	if reg.ByStatus(ctx, "active") != nil {
+		t.Error("ByStatus() should return nil with cancelled context")
+	}
 }
 
 func TestLoad_NewRegistry(t *testing.T) {
@@ -236,8 +249,8 @@ func TestLoad_NewRegistry(t *testing.T) {
 	if reg == nil {
 		t.Fatal("Load() returned nil registry")
 	}
-	if reg.Version != "1.0" {
-		t.Errorf("Version = %q, want %q", reg.Version, "1.0")
+	if reg.Version != CurrentVersion {
+		t.Errorf("Version = %q, want %q", reg.Version, CurrentVersion)
 	}
 }
 
@@ -328,5 +341,84 @@ func TestLoad_ContextCancellation(t *testing.T) {
 	_, err := Load(ctx, "/any/path")
 	if err == nil {
 		t.Error("Load() should return error with cancelled context")
+	}
+}
+
+// Benchmarks for performance-critical operations
+
+// setupBenchmarkRegistry creates a registry with n entries for benchmarking
+func setupBenchmarkRegistry(n int) *Registry {
+	ctx := context.Background()
+	reg := New("/tmp/benchmark-registry.yaml")
+
+	for i := 0; i < n; i++ {
+		entry := RegistryEntry{
+			ID:     generateTestID(i),
+			Name:   "test-festival",
+			Status: StatusActive,
+			Path:   "/festivals/active/test",
+		}
+		_ = reg.Add(ctx, entry)
+	}
+
+	return reg
+}
+
+// generateTestID creates a test ID like TE0001, TE0002, etc.
+func generateTestID(n int) string {
+	return fmt.Sprintf("TE%04d", n+1)
+}
+
+func BenchmarkRegistry_Get(b *testing.B) {
+	reg := setupBenchmarkRegistry(1000)
+	ctx := context.Background()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = reg.Get(ctx, "TE0500")
+	}
+}
+
+func BenchmarkRegistry_Add(b *testing.B) {
+	ctx := context.Background()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		reg := New("/tmp/benchmark-registry.yaml")
+		_ = reg.Add(ctx, RegistryEntry{
+			ID:     generateTestID(i),
+			Name:   "test",
+			Status: StatusActive,
+		})
+	}
+}
+
+func BenchmarkRegistry_Exists(b *testing.B) {
+	reg := setupBenchmarkRegistry(1000)
+	ctx := context.Background()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = reg.Exists(ctx, "TE0500")
+	}
+}
+
+func BenchmarkRegistry_List(b *testing.B) {
+	reg := setupBenchmarkRegistry(100)
+	ctx := context.Background()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = reg.List(ctx)
+	}
+}
+
+func BenchmarkRegistry_ByStatus(b *testing.B) {
+	reg := setupBenchmarkRegistry(1000)
+	ctx := context.Background()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = reg.ByStatus(ctx, StatusActive)
 	}
 }

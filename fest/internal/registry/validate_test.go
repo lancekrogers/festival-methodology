@@ -86,18 +86,18 @@ func TestRebuild(t *testing.T) {
 		t.Fatalf("Rebuild() error = %v", err)
 	}
 
-	if reg.Count() != 3 {
-		t.Errorf("Rebuild() registry count = %d, want 3", reg.Count())
+	if reg.Count(ctx) != 3 {
+		t.Errorf("Rebuild() registry count = %d, want 3", reg.Count(ctx))
 	}
 
 	// Check specific entries
-	if !reg.Exists("GU0001") {
+	if !reg.Exists(ctx, "GU0001") {
 		t.Error("Rebuild() should include GU0001")
 	}
-	if !reg.Exists("FN0002") {
+	if !reg.Exists(ctx, "FN0002") {
 		t.Error("Rebuild() should include FN0002")
 	}
-	if !reg.Exists("DO0003") {
+	if !reg.Exists(ctx, "DO0003") {
 		t.Error("Rebuild() should include DO0003")
 	}
 }
@@ -114,8 +114,8 @@ func TestRebuild_NoFestivals(t *testing.T) {
 		t.Fatalf("Rebuild() error = %v", err)
 	}
 
-	if reg.Count() != 0 {
-		t.Errorf("Rebuild() registry count = %d, want 0 for empty festivals", reg.Count())
+	if reg.Count(ctx) != 0 {
+		t.Errorf("Rebuild() registry count = %d, want 0 for empty festivals", reg.Count(ctx))
 	}
 }
 
@@ -142,10 +142,10 @@ func TestRebuild_SkipsLegacyFestivals(t *testing.T) {
 		t.Fatalf("Rebuild() error = %v", err)
 	}
 
-	if reg.Count() != 1 {
-		t.Errorf("Rebuild() should only include 1 festival (with ID), got %d", reg.Count())
+	if reg.Count(ctx) != 1 {
+		t.Errorf("Rebuild() should only include 1 festival (with ID), got %d", reg.Count(ctx))
 	}
-	if !reg.Exists("MO0001") {
+	if !reg.Exists(ctx, "MO0001") {
 		t.Error("Rebuild() should include MO0001")
 	}
 }
@@ -180,10 +180,10 @@ func TestRegistry_Sync(t *testing.T) {
 		t.Fatalf("Sync() error = %v", err)
 	}
 
-	if reg.Exists("ST0001") {
+	if reg.Exists(ctx, "ST0001") {
 		t.Error("Sync() should remove stale entry ST0001")
 	}
-	if !reg.Exists("TE0001") {
+	if !reg.Exists(ctx, "TE0001") {
 		t.Error("Sync() should add missing entry TE0001")
 	}
 }
