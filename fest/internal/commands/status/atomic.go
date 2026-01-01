@@ -2,9 +2,13 @@
 package status
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/id"
+	"github.com/lancekrogers/festival-methodology/fest/internal/registry"
 )
 
 // AtomicStatusChange performs an atomic status change for a festival.
@@ -47,7 +51,44 @@ func AtomicStatusChange(festivalPath, fromStatus, toStatus string) (string, erro
 		}
 	}
 
+	// Update registry with new path/status
+	updateRegistry(festivalsRoot, festivalName, toStatus, newPath)
+
 	return newPath, nil
+}
+
+// updateRegistry updates the ID registry with the new festival status and path.
+// This is best-effort - registry updates are non-blocking.
+func updateRegistry(festivalsRoot, festivalName, newStatus, newPath string) {
+	ctx := context.Background()
+	regPath := registry.GetRegistryPath(festivalsRoot)
+	reg, err := registry.Load(ctx, regPath)
+	if err != nil {
+		return
+	}
+
+	// Try to extract ID from directory name
+	festivalID, err := id.ExtractIDFromDirName(festivalName)
+	if err != nil {
+		return
+	}
+
+	// Update existing entry or add new one
+	entry, err := reg.Get(ctx, festivalID)
+	if err != nil {
+		// Entry doesn't exist - this shouldn't happen for proper festivals
+		return
+	}
+
+	entry.Status = newStatus
+	entry.Path = newPath
+	entry.UpdatedAt = time.Now()
+
+	if err := reg.Update(ctx, entry); err != nil {
+		return
+	}
+
+	_ = reg.Save(ctx)
 }
 
 // CopyDeleteMove performs a copy+delete operation for cross-filesystem moves.

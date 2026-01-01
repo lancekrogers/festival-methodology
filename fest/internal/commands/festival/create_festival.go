@@ -15,6 +15,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/id"
+	"github.com/lancekrogers/festival-methodology/fest/internal/registry"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
@@ -552,6 +553,23 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 		return emitCreateFestivalError(opts, errors.Wrap(err, "writing fest.yaml").WithField("path", festConfigPath))
 	}
 	created = append(created, festConfigPath)
+
+	// Update ID registry
+	regPath := registry.GetRegistryPath(festivalsRoot)
+	reg, regErr := registry.Load(ctx, regPath)
+	if regErr == nil {
+		regEntry := registry.RegistryEntry{
+			ID:        festivalID,
+			Name:      opts.Name,
+			Status:    destCategory,
+			Path:      destDir,
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
+		if addErr := reg.Add(ctx, regEntry); addErr == nil {
+			_ = reg.Save(ctx) // Non-blocking - registry is optional
+		}
+	}
 
 	// Process REPLACE markers in all created files
 	var totalMarkersFilled, totalMarkersCount int
