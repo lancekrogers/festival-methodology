@@ -8,10 +8,13 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	"github.com/lancekrogers/festival-methodology/fest/internal/id"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
@@ -425,7 +428,16 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 	if destCategory != "planned" && destCategory != "active" {
 		destCategory = "active"
 	}
-	destDir := filepath.Join(festivalsRoot, destCategory, slug)
+
+	// Generate unique festival ID
+	festivalID, err := id.GenerateID(opts.Name, festivalsRoot)
+	if err != nil {
+		return emitCreateFestivalError(opts, errors.Wrap(err, "generating festival ID").WithField("name", opts.Name))
+	}
+
+	// Create directory with ID suffix: {slug}_{ID}
+	dirName := fmt.Sprintf("%s_%s", slug, festivalID)
+	destDir := filepath.Join(festivalsRoot, destCategory, dirName)
 	if err := os.MkdirAll(destDir, 0755); err != nil {
 		return emitCreateFestivalError(opts, errors.IO("creating festival directory", err).WithField("path", destDir))
 	}
@@ -515,8 +527,26 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 		}
 	}
 
-	// Generate fest.yaml with default gates configuration
+	// Generate fest.yaml with default gates configuration and metadata
 	festConfig := defaultFestivalGatesConfig()
+
+	// Populate metadata section
+	now := time.Now().UTC()
+	festConfig.Metadata = config.FestivalMetadata{
+		ID:        festivalID,
+		UUID:      uuid.New().String(),
+		Name:      opts.Name,
+		CreatedAt: now,
+		StatusHistory: []config.StatusChange{
+			{
+				Status:    destCategory,
+				Timestamp: now,
+				Path:      destDir,
+				Notes:     "Festival created",
+			},
+		},
+	}
+
 	festConfigPath := filepath.Join(destDir, config.FestivalConfigFileName)
 	if err := config.SaveFestivalConfig(destDir, festConfig); err != nil {
 		return emitCreateFestivalError(opts, errors.Wrap(err, "writing fest.yaml").WithField("path", festConfigPath))
@@ -595,9 +625,11 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 			OK:     true,
 			Action: "create_festival",
 			Festival: map[string]string{
-				"name": opts.Name,
-				"slug": slug,
-				"dest": destCategory,
+				"name":      opts.Name,
+				"slug":      slug,
+				"dest":      destCategory,
+				"id":        festivalID,
+				"directory": dirName,
 			},
 			Created:        created,
 			GatesDirectory: gatesDir,
@@ -620,7 +652,8 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 		fmt.Println()
 	}
 
-	display.Success("Created festival: %s (%s)", slug, destCategory)
+	display.Success("Created festival: %s (%s)", dirName, destCategory)
+	display.Info("  ID: %s", festivalID)
 	for _, p := range created {
 		display.Info("  • %s", p)
 	}

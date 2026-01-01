@@ -346,8 +346,13 @@ func TestCreateFestival_GatesDirectory(t *testing.T) {
 		t.Fatalf("RunCreateFestival failed: %v", err)
 	}
 
-	// Verify gates directory was created
-	festivalDir := filepath.Join(festivalsDir, "active", "test-festival")
+	// Find the created festival directory (now includes ID suffix)
+	activeDir := filepath.Join(festivalsDir, "active")
+	entries, err := os.ReadDir(activeDir)
+	if err != nil || len(entries) != 1 {
+		t.Fatalf("expected 1 entry in active/: %v", err)
+	}
+	festivalDir := filepath.Join(activeDir, entries[0].Name())
 	gatesDir := filepath.Join(festivalDir, "gates")
 
 	info, err := os.Stat(gatesDir)
@@ -411,8 +416,13 @@ func TestCreateFestival_FestYAMLGenerated(t *testing.T) {
 		t.Fatalf("RunCreateFestival failed: %v", err)
 	}
 
-	// Verify fest.yaml was created
-	festivalDir := filepath.Join(festivalsDir, "active", "gates-test")
+	// Find the created festival directory (now includes ID suffix)
+	activeDir := filepath.Join(festivalsDir, "active")
+	entries, err := os.ReadDir(activeDir)
+	if err != nil || len(entries) != 1 {
+		t.Fatalf("expected 1 entry in active/: %v", err)
+	}
+	festivalDir := filepath.Join(activeDir, entries[0].Name())
 	festYAMLPath := filepath.Join(festivalDir, "fest.yaml")
 
 	if _, err := os.Stat(festYAMLPath); err != nil {
