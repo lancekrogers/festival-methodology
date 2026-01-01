@@ -132,6 +132,26 @@ func printContext() {
 	fmt.Print(understanddocs.Load("context.txt"))
 }
 
+func newUnderstandNodeIDsCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "nodeids",
+		Short: "Node reference system for code traceability",
+		Long: `Learn about the node reference system for tracing code changes back to
+specific festival tasks.
+
+Node references like GU0001:P002.S01.T03 create a clear audit trail
+connecting code comments to planning documents.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			printNodeIDs()
+		},
+	}
+}
+
+func printNodeIDs() {
+	fmt.Print("\n")
+	fmt.Print(understanddocs.Load("nodeids.txt"))
+}
+
 func printChecklist() {
 	fmt.Print(`
 Festival Validation Checklist

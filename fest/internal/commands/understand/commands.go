@@ -45,7 +45,8 @@ ensuring you see the current methodology design and any customizations.`,
 
 	// Learning commands
 	cmd.AddCommand(newUnderstandMethodologyCmd())
-	cmd.AddCommand(newUnderstandContextCmd()) // Session memory - CREATE FIRST
+	cmd.AddCommand(newUnderstandContextCmd())  // Session memory - CREATE FIRST
+	cmd.AddCommand(newUnderstandNodeIDsCmd())  // Node reference system for traceability
 	cmd.AddCommand(newUnderstandWorkflowCmd())
 	cmd.AddCommand(newUnderstandTemplatesCmd())
 	cmd.AddCommand(newUnderstandResourcesCmd())
