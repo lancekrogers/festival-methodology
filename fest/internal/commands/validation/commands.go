@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -391,7 +392,91 @@ func emitValidateError(opts *validateOptions, err error) error {
 	return err
 }
 
+// formatNodeReference creates a node reference string from festival ID and location.
+// Format: ID:P###.S##.T## (e.g., GU0001:P002.S01.T03)
+func formatNodeReference(festivalID string, phase, sequence, task int) string {
+	if festivalID == "" {
+		return ""
+	}
+	return fmt.Sprintf("%s:P%03d.S%02d.T%02d", festivalID, phase, sequence, task)
+}
+
+// getCurrentLocationNumbers determines phase, sequence, and task numbers from cwd relative to festival
+func getCurrentLocationNumbers(festivalPath string) (phase, sequence, task int) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return 0, 0, 0
+	}
+
+	rel, err := filepath.Rel(festivalPath, cwd)
+	if err != nil || strings.HasPrefix(rel, "..") {
+		return 0, 0, 0
+	}
+
+	parts := strings.Split(rel, string(filepath.Separator))
+	if len(parts) == 0 || parts[0] == "." {
+		return 0, 0, 0
+	}
+
+	// Extract phase number from first part (e.g., "001_Research" -> 1)
+	if len(parts) >= 1 {
+		phase = extractLeadingNumber(parts[0])
+	}
+
+	// Extract sequence number from second part
+	if len(parts) >= 2 {
+		sequence = extractLeadingNumber(parts[1])
+	}
+
+	// Task number would be from third part or task file - for now just location
+	return phase, sequence, task
+}
+
+// extractLeadingNumber extracts the leading number from a string (e.g., "001_Name" -> 1)
+func extractLeadingNumber(s string) int {
+	num := 0
+	for _, c := range s {
+		if c >= '0' && c <= '9' {
+			num = num*10 + int(c-'0')
+		} else {
+			break
+		}
+	}
+	return num
+}
+
+// printContextHeader prints the current context header with node reference
+func printContextHeader(festivalPath string) {
+	fmt.Println()
+	fmt.Println(strings.Repeat("=", 80))
+
+	// Load festival metadata
+	festConfig, err := config.LoadFestivalConfig(festivalPath)
+	if err != nil || festConfig.Metadata.ID == "" {
+		fmt.Println("Current Context: (no ID - legacy festival)")
+		fmt.Println(strings.Repeat("=", 80))
+		return
+	}
+
+	// Get current location numbers
+	phase, seq, task := getCurrentLocationNumbers(festivalPath)
+
+	// Format and print node reference
+	nodeRef := formatNodeReference(festConfig.Metadata.ID, phase, seq, task)
+	fmt.Printf("Current Context: %s\n", nodeRef)
+	fmt.Println(strings.Repeat("=", 80))
+
+	// Print agent guidance with TODO example
+	fmt.Println()
+	fmt.Println("Self-Check Guidance:")
+	fmt.Println("  Use this reference in code comments for traceability:")
+	fmt.Printf("  // TODO(%s): Description of work needed\n", nodeRef)
+}
+
 func printValidationResult(display *ui.UI, festivalPath string, result *ValidationResult) {
+	// Print context header with node reference
+	printContextHeader(festivalPath)
+
 	fmt.Printf("\nFestival Validation: %s\n", result.Festival)
 	fmt.Println(strings.Repeat("=", 50))
 
