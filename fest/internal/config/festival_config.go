@@ -16,6 +16,7 @@ const (
 // FestivalConfig represents per-festival configuration
 type FestivalConfig struct {
 	Version          string             `yaml:"version"`
+	Metadata         FestivalMetadata   `yaml:"metadata,omitempty"`
 	QualityGates     QualityGatesConfig `yaml:"quality_gates"`
 	ExcludedPatterns []string           `yaml:"excluded_patterns"`
 	Templates        TemplatePrefs      `yaml:"templates"`
