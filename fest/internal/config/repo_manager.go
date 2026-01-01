@@ -42,7 +42,7 @@ func (rm *RepoManager) Add(ctx context.Context, name, source string) (*ConfigRep
 
 	// Ensure config-repos directory exists
 	reposDir := ConfigReposPath()
-	if err := os.MkdirAll(reposDir, 0755); err != nil {
+	if err := os.MkdirAll(reposDir, dirPermissions); err != nil {
 		return nil, errors.IO("creating config-repos directory", err).WithField("path", reposDir)
 	}
 

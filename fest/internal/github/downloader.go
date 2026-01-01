@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	"github.com/lancekrogers/festival-methodology/fest/internal/registry"
 )
 
 // ProgressFunc is called during download to report progress
@@ -83,7 +84,7 @@ func (d *Downloader) Download(targetDir string, progress ProgressFunc) error {
 	baseURL := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s", owner, repo, d.branch)
 
 	// Create target directory
-	if err := os.MkdirAll(targetDir, 0755); err != nil {
+	if err := os.MkdirAll(targetDir, registry.DirPermissions); err != nil {
 		return errors.IO("creating target directory", err).WithField("path", targetDir)
 	}
 
@@ -134,7 +135,7 @@ func (d *Downloader) Download(targetDir string, progress ProgressFunc) error {
 func (d *Downloader) downloadFile(url, targetPath string) error {
 	// Create directory if needed
 	targetDir := filepath.Dir(targetPath)
-	if err := os.MkdirAll(targetDir, 0755); err != nil {
+	if err := os.MkdirAll(targetDir, registry.DirPermissions); err != nil {
 		return errors.IO("creating directory", err).WithField("path", targetDir)
 	}
 

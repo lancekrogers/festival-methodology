@@ -2,8 +2,8 @@ package frontmatter
 
 import (
 	"bytes"
-	"fmt"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"gopkg.in/yaml.v3"
 )
 
@@ -30,7 +30,7 @@ func Parse(content []byte) (*Frontmatter, []byte, error) {
 	// Find the closing delimiter
 	endIdx := bytes.Index(rest, []byte("\n"+delimiter))
 	if endIdx == -1 {
-		return nil, content, fmt.Errorf("frontmatter missing closing delimiter")
+		return nil, content, errors.Parse("frontmatter missing closing delimiter", nil)
 	}
 
 	fmContent := rest[:endIdx]
@@ -40,7 +40,7 @@ func Parse(content []byte) (*Frontmatter, []byte, error) {
 	// Parse the YAML
 	var fm Frontmatter
 	if err := yaml.Unmarshal(fmContent, &fm); err != nil {
-		return nil, content, fmt.Errorf("failed to parse frontmatter: %w", err)
+		return nil, content, errors.Parse("parsing frontmatter YAML", err)
 	}
 
 	return &fm, remaining, nil
@@ -68,7 +68,7 @@ func Extract(content []byte) ([]byte, []byte, error) {
 
 	endIdx := bytes.Index(rest, []byte("\n"+delimiter))
 	if endIdx == -1 {
-		return nil, content, fmt.Errorf("frontmatter missing closing delimiter")
+		return nil, content, errors.Parse("frontmatter missing closing delimiter", nil)
 	}
 
 	fmContent := rest[:endIdx]

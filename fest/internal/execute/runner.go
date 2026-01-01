@@ -1,9 +1,12 @@
 package execute
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // Runner orchestrates festival execution
@@ -30,17 +33,17 @@ func NewRunner(festivalPath string, config *ExecutionConfig) *Runner {
 }
 
 // Initialize loads or creates execution state and builds plan
-func (r *Runner) Initialize() error {
+func (r *Runner) Initialize(ctx context.Context) error {
 	// Load or create state
-	_, err := r.stateManager.Load()
+	_, err := r.stateManager.Load(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to load state: %w", err)
+		return errors.Wrap(err, "failed to load state")
 	}
 
 	// Build execution plan
 	plan, err := r.planBuilder.BuildPlan()
 	if err != nil {
-		return fmt.Errorf("failed to build plan: %w", err)
+		return errors.Wrap(err, "failed to build plan")
 	}
 	r.plan = plan
 
@@ -102,32 +105,32 @@ func (r *Runner) GetNextStep() (*StepGroup, *SequenceExecution, *PhaseExecution,
 }
 
 // MarkTaskComplete marks a task as completed
-func (r *Runner) MarkTaskComplete(taskID string) error {
+func (r *Runner) MarkTaskComplete(ctx context.Context, taskID string) error {
 	r.stateManager.SetTaskStatus(taskID, StatusCompleted)
-	return r.stateManager.Save()
+	return r.stateManager.Save(ctx)
 }
 
 // MarkTaskSkipped marks a task as skipped
-func (r *Runner) MarkTaskSkipped(taskID string) error {
+func (r *Runner) MarkTaskSkipped(ctx context.Context, taskID string) error {
 	r.stateManager.SetTaskStatus(taskID, StatusSkipped)
-	return r.stateManager.Save()
+	return r.stateManager.Save(ctx)
 }
 
 // MarkTaskFailed marks a task as failed
-func (r *Runner) MarkTaskFailed(taskID string) error {
+func (r *Runner) MarkTaskFailed(ctx context.Context, taskID string) error {
 	r.stateManager.SetTaskStatus(taskID, StatusFailed)
-	return r.stateManager.Save()
+	return r.stateManager.Save(ctx)
 }
 
 // AdvancePosition moves to the next position
-func (r *Runner) AdvancePosition(phase, seq, step int) error {
+func (r *Runner) AdvancePosition(ctx context.Context, phase, seq, step int) error {
 	r.stateManager.SetCurrentPosition(phase, seq, step)
-	return r.stateManager.Save()
+	return r.stateManager.Save(ctx)
 }
 
 // Reset clears execution state
-func (r *Runner) Reset() error {
-	return r.stateManager.Clear()
+func (r *Runner) Reset(ctx context.Context) error {
+	return r.stateManager.Clear(ctx)
 }
 
 // FormatDryRun generates a dry-run output showing the execution plan

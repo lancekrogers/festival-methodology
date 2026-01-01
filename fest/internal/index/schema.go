@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	"github.com/lancekrogers/festival-methodology/fest/internal/registry"
 )
 
 const (
@@ -81,7 +82,7 @@ func (idx *FestivalIndex) Save(path string) error {
 		return errors.Wrap(err, "marshaling index")
 	}
 
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	if err := os.WriteFile(path, data, registry.FilePermissions); err != nil {
 		return errors.IO("writing index", err).WithField("path", path)
 	}
 

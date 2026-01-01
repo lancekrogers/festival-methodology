@@ -455,7 +455,7 @@ func TestCreateFestival_FestYAMLGenerated(t *testing.T) {
 
 // TestCreateFestival_GatesConfigHasCorrectStructure verifies the generated config
 func TestCreateFestival_GatesConfigHasCorrectStructure(t *testing.T) {
-	cfg := defaultFestivalGatesConfig()
+	cfg := DefaultFestivalGatesConfig()
 
 	// Verify quality gates are enabled
 	if !cfg.QualityGates.Enabled {

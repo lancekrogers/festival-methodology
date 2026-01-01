@@ -6,6 +6,7 @@ import (
 	"os"
 
 	ctx "github.com/lancekrogers/festival-methodology/fest/internal/context"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
 )
@@ -56,12 +57,12 @@ func runContext(cmd *cobra.Command, args []string) error {
 	// Find festival root
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to get current directory: %w", err)
+		return errors.IO("getting current directory", err)
 	}
 
 	festivalPath, err := tpl.FindFestivalRoot(cwd)
 	if err != nil {
-		return fmt.Errorf("not inside a festival: %w", err)
+		return errors.Wrap(err, "not inside a festival")
 	}
 
 	// Validate depth
@@ -70,7 +71,9 @@ func runContext(cmd *cobra.Command, args []string) error {
 	case ctx.DepthMinimal, ctx.DepthStandard, ctx.DepthFull:
 		// Valid
 	default:
-		return fmt.Errorf("invalid depth %q; must be minimal, standard, or full", depth)
+		return errors.Validation("invalid depth").
+			WithField("depth", depth).
+			WithField("valid", "minimal, standard, full")
 	}
 
 	// Build context
@@ -84,7 +87,7 @@ func runContext(cmd *cobra.Command, args []string) error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("failed to build context: %w", err)
+		return errors.Wrap(err, "building context")
 	}
 
 	// Format and output
@@ -93,7 +96,7 @@ func runContext(cmd *cobra.Command, args []string) error {
 	if jsonOutput {
 		jsonStr, err := formatter.FormatJSON(output)
 		if err != nil {
-			return fmt.Errorf("failed to format JSON: %w", err)
+			return errors.Parse("formatting JSON", err)
 		}
 		fmt.Println(jsonStr)
 	} else if verbose {

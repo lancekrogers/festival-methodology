@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/next"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
@@ -56,12 +57,12 @@ Examples:
 func runNext(cmd *cobra.Command, args []string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to get current directory: %w", err)
+		return errors.IO("getting current directory", err)
 	}
 
 	festivalPath, err := tpl.FindFestivalRoot(cwd)
 	if err != nil {
-		return fmt.Errorf("not inside a festival: %w", err)
+		return errors.Wrap(err, "not inside a festival")
 	}
 
 	selector := next.NewSelector(festivalPath)
@@ -70,7 +71,7 @@ func runNext(cmd *cobra.Command, args []string) error {
 	if sequenceOnly {
 		seqPath := findSequencePath(cwd, festivalPath)
 		if seqPath == "" {
-			return fmt.Errorf("not inside a sequence directory")
+			return errors.NotFound("not inside a sequence directory")
 		}
 		result, err = selector.FindNextInSequence(seqPath)
 	} else {
@@ -78,14 +79,14 @@ func runNext(cmd *cobra.Command, args []string) error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("failed to find next task: %w", err)
+		return errors.Wrap(err, "finding next task")
 	}
 
 	// Output formatting
 	if cdOutput {
 		output := next.FormatCD(result)
 		if output == "" {
-			return fmt.Errorf("no task available to navigate to")
+			return errors.NotFound("no task available to navigate to")
 		}
 		fmt.Println(output)
 		return nil
@@ -99,7 +100,7 @@ func runNext(cmd *cobra.Command, args []string) error {
 	if jsonOutput {
 		output, err := next.FormatJSON(result)
 		if err != nil {
-			return fmt.Errorf("failed to format JSON: %w", err)
+			return errors.Parse("formatting JSON", err)
 		}
 		fmt.Println(output)
 		return nil

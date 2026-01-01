@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // Common words to skip when extracting initials
@@ -103,22 +105,27 @@ func FormatID(prefix string, counter int) string {
 // Returns an error if the ID format is invalid.
 func ParseID(id string) (prefix string, counter int, err error) {
 	if len(id) < 6 {
-		return "", 0, fmt.Errorf("invalid ID format: too short")
+		return "", 0, errors.Validation("invalid ID format: too short").
+			WithField("id", id).
+			WithField("minLength", 6)
 	}
 
 	prefix = id[:2]
 	if !isValidPrefix(prefix) {
-		return "", 0, fmt.Errorf("invalid ID format: prefix must be two uppercase letters")
+		return "", 0, errors.Validation("invalid ID format: prefix must be two uppercase letters").
+			WithField("prefix", prefix)
 	}
 
 	counterStr := id[2:]
 	if len(counterStr) < 4 {
-		return "", 0, fmt.Errorf("invalid ID format: counter too short")
+		return "", 0, errors.Validation("invalid ID format: counter too short").
+			WithField("counter", counterStr)
 	}
 
 	counter, err = strconv.Atoi(counterStr)
 	if err != nil {
-		return "", 0, fmt.Errorf("invalid ID format: counter must be numeric")
+		return "", 0, errors.Validation("invalid ID format: counter must be numeric").
+			WithField("counter", counterStr)
 	}
 
 	return prefix, counter, nil
@@ -141,12 +148,13 @@ func isValidPrefix(prefix string) bool {
 // Directory names follow the pattern: name_XX0001
 func ExtractIDFromDirName(dirName string) (string, error) {
 	if dirName == "" {
-		return "", fmt.Errorf("empty directory name")
+		return "", errors.Validation("empty directory name")
 	}
 
 	matches := idPattern.FindStringSubmatch(dirName)
 	if matches == nil {
-		return "", fmt.Errorf("no valid ID found in directory name: %s", dirName)
+		return "", errors.NotFound("no valid ID found in directory name").
+			WithField("dirName", dirName)
 	}
 
 	// matches[0] is full match, matches[1] is prefix, matches[2] is counter
@@ -214,7 +222,8 @@ func GenerateID(name string, festivalsRoot string) (string, error) {
 
 	counter, err := FindNextCounter(festivalsRoot, initials)
 	if err != nil {
-		return "", fmt.Errorf("failed to find next counter: %w", err)
+		return "", errors.Wrap(err, "finding next counter").
+			WithField("initials", initials)
 	}
 
 	return FormatID(initials, counter), nil

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/deps"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
 )
@@ -48,12 +49,12 @@ Examples:
 func runDeps(cmd *cobra.Command, args []string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to get current directory: %w", err)
+		return errors.IO("getting current directory", err)
 	}
 
 	festivalPath, err := tpl.FindFestivalRoot(cwd)
 	if err != nil {
-		return fmt.Errorf("not inside a festival: %w", err)
+		return errors.Wrap(err, "not inside a festival")
 	}
 
 	resolver := deps.NewResolver(festivalPath)
@@ -72,7 +73,7 @@ func runDeps(cmd *cobra.Command, args []string) error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("failed to resolve dependencies: %w", err)
+		return errors.Wrap(err, "resolving dependencies")
 	}
 
 	// If a specific task was requested
@@ -150,7 +151,8 @@ func showTaskDeps(graph *deps.Graph, taskName string) error {
 	}
 
 	if task == nil {
-		return fmt.Errorf("task %q not found", taskName)
+		return errors.NotFound("task not found").
+			WithField("task", taskName)
 	}
 
 	if jsonOutput {

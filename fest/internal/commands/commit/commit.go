@@ -151,7 +151,7 @@ func executeGitCommit(message string) (string, error) {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("git commit failed: %w", err)
+		return "", errors.Wrap(err, "git commit failed")
 	}
 
 	// Get the commit hash
@@ -159,7 +159,7 @@ func executeGitCommit(message string) (string, error) {
 	var out bytes.Buffer
 	hashCmd.Stdout = &out
 	if err := hashCmd.Run(); err != nil {
-		return "", fmt.Errorf("failed to get commit hash: %w", err)
+		return "", errors.Wrap(err, "failed to get commit hash")
 	}
 
 	return strings.TrimSpace(out.String()), nil

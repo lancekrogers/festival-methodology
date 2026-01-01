@@ -86,7 +86,7 @@ func SaveRepoManifest(ctx context.Context, manifest *ConfigRepoManifest) error {
 	}
 
 	configDir := ConfigDir()
-	if err := os.MkdirAll(configDir, 0755); err != nil {
+	if err := os.MkdirAll(configDir, dirPermissions); err != nil {
 		return errors.IO("creating config directory", err).WithField("path", configDir)
 	}
 
@@ -96,7 +96,7 @@ func SaveRepoManifest(ctx context.Context, manifest *ConfigRepoManifest) error {
 	}
 
 	manifestPath := RepoManifestPath()
-	if err := os.WriteFile(manifestPath, data, 0644); err != nil {
+	if err := os.WriteFile(manifestPath, data, filePermissions); err != nil {
 		return errors.IO("writing repo manifest", err).WithField("path", manifestPath)
 	}
 

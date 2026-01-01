@@ -91,7 +91,7 @@ func SaveFestivalConfig(festivalPath string, cfg *FestivalConfig) error {
 	}
 
 	// Write file
-	if err := os.WriteFile(configPath, data, 0644); err != nil {
+	if err := os.WriteFile(configPath, data, filePermissions); err != nil {
 		return errors.IO("writing festival config", err).WithField("path", configPath)
 	}
 

@@ -1,11 +1,13 @@
 package execute
 
 import (
-	"fmt"
+	"context"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	"github.com/lancekrogers/festival-methodology/fest/internal/registry"
 	"gopkg.in/yaml.v3"
 )
 
@@ -51,7 +53,11 @@ func NewStateManager(festivalPath string) *StateManager {
 }
 
 // Load loads the execution state from disk
-func (m *StateManager) Load() (*ExecutionState, error) {
+func (m *StateManager) Load(ctx context.Context) (*ExecutionState, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, errors.Wrap(err, "context cancelled")
+	}
+
 	data, err := os.ReadFile(m.statePath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -64,12 +70,13 @@ func (m *StateManager) Load() (*ExecutionState, error) {
 			}
 			return m.state, nil
 		}
-		return nil, fmt.Errorf("failed to read state: %w", err)
+		return nil, errors.IO("reading execution state", err).
+			WithField("path", m.statePath)
 	}
 
 	var state ExecutionState
 	if err := yaml.Unmarshal(data, &state); err != nil {
-		return nil, fmt.Errorf("failed to parse state: %w", err)
+		return nil, errors.Parse("parsing execution state YAML", err)
 	}
 
 	if state.TaskStatuses == nil {
@@ -81,26 +88,32 @@ func (m *StateManager) Load() (*ExecutionState, error) {
 }
 
 // Save persists the execution state to disk
-func (m *StateManager) Save() error {
+func (m *StateManager) Save(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled")
+	}
+
 	if m.state == nil {
-		return fmt.Errorf("no state to save")
+		return errors.Validation("no state to save")
 	}
 
 	m.state.LastUpdated = time.Now()
 
 	// Ensure .fest directory exists
 	festDir := filepath.Dir(m.statePath)
-	if err := os.MkdirAll(festDir, 0o755); err != nil {
-		return fmt.Errorf("failed to create .fest directory: %w", err)
+	if err := os.MkdirAll(festDir, registry.DirPermissions); err != nil {
+		return errors.IO("creating .fest directory", err).
+			WithField("path", festDir)
 	}
 
 	data, err := yaml.Marshal(m.state)
 	if err != nil {
-		return fmt.Errorf("failed to marshal state: %w", err)
+		return errors.Parse("marshaling execution state", err)
 	}
 
-	if err := os.WriteFile(m.statePath, data, 0o644); err != nil {
-		return fmt.Errorf("failed to write state: %w", err)
+	if err := os.WriteFile(m.statePath, data, registry.FilePermissions); err != nil {
+		return errors.IO("writing execution state", err).
+			WithField("path", m.statePath)
 	}
 
 	return nil
@@ -163,9 +176,14 @@ func (m *StateManager) SetMode(mode ExecutionMode) {
 }
 
 // Clear removes the execution state file
-func (m *StateManager) Clear() error {
+func (m *StateManager) Clear(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled")
+	}
+
 	if err := os.Remove(m.statePath); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("failed to remove state file: %w", err)
+		return errors.IO("removing state file", err).
+			WithField("path", m.statePath)
 	}
 	m.state = nil
 	return nil

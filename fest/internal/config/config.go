@@ -9,6 +9,12 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
+// File permission constants (kept local to avoid import cycles with registry)
+const (
+	dirPermissions  os.FileMode = 0755
+	filePermissions os.FileMode = 0644
+)
+
 const (
 	// DefaultRepositoryURL is the default festival methodology repository
 	DefaultRepositoryURL = "https://github.com/lancekrogers/festival-methodology"
@@ -118,7 +124,7 @@ func Save(ctx context.Context, cfg *Config) error {
 	configPath := filepath.Join(configDir, ConfigFileName)
 
 	// Create directory if it doesn't exist
-	if err := os.MkdirAll(configDir, 0755); err != nil {
+	if err := os.MkdirAll(configDir, dirPermissions); err != nil {
 		return errors.IO("creating config directory", err).WithField("path", configDir)
 	}
 
@@ -129,7 +135,7 @@ func Save(ctx context.Context, cfg *Config) error {
 	}
 
 	// Write file
-	if err := os.WriteFile(configPath, data, 0644); err != nil {
+	if err := os.WriteFile(configPath, data, filePermissions); err != nil {
 		return errors.IO("writing config", err).WithField("path", configPath)
 	}
 
