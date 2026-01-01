@@ -11,8 +11,8 @@ import (
 
 // FestivalInfo holds information about a festival.
 type FestivalInfo struct {
-	ID         string         `json:"id"`                     // Directory-based ID (e.g., "my-project_GU0001")
-	MetadataID string         `json:"metadata_id,omitempty"`  // ID from fest.yaml metadata (e.g., "GU0001")
+	ID         string         `json:"id"`                    // Directory-based ID (e.g., "my-project_GU0001")
+	MetadataID string         `json:"metadata_id,omitempty"` // ID from fest.yaml metadata (e.g., "GU0001")
 	Name       string         `json:"name"`
 	Status     string         `json:"status"`
 	Priority   string         `json:"priority,omitempty"`

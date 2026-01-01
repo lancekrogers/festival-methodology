@@ -275,18 +275,18 @@ func TestFormatID(t *testing.T) {
 
 func TestParseID(t *testing.T) {
 	tests := []struct {
-		id             string
-		expectPrefix   string
-		expectCounter  int
-		expectErr      bool
+		id            string
+		expectPrefix  string
+		expectCounter int
+		expectErr     bool
 	}{
 		{"GU0001", "GU", 1, false},
 		{"FN0042", "FN", 42, false},
 		{"AB9999", "AB", 9999, false},
 		{"invalid", "", 0, true},
-		{"G0001", "", 0, true},   // prefix too short
-		{"GU001", "", 0, true},   // counter too short
-		{"GU000a", "", 0, true},  // non-numeric counter
+		{"G0001", "", 0, true},  // prefix too short
+		{"GU001", "", 0, true},  // counter too short
+		{"GU000a", "", 0, true}, // non-numeric counter
 		{"", "", 0, true},
 	}
 
