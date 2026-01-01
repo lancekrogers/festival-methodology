@@ -31,12 +31,20 @@ ALWAYS Do This
 Execution Pattern
 -----------------
 
+PLANNING a new festival:
+0. Create CONTEXT.md FIRST - capture why this festival exists
+   This prevents losing focus on the festival's purpose.
+   See: fest understand context
+
+EXECUTING an existing festival:
 1. Read FESTIVAL_GOAL.md to understand the objective
-2. Check TODO.md for current status
-3. Navigate to the current phase/sequence
-4. Read ONLY the current task file
-5. Execute the task
-6. Mark complete and move to next
+2. Read CONTEXT.md for decisions and current state
+3. Check TODO.md for current status
+4. Navigate to the current phase/sequence
+5. Read ONLY the current task file
+6. Execute the task
+7. Update CONTEXT.md with decisions/blockers
+8. Mark complete and move to next
 
 Using fest CLI Efficiently
 --------------------------

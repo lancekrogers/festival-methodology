@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	"github.com/lancekrogers/festival-methodology/fest/internal/registry"
 )
 
 // Copier handles file copying operations
@@ -95,7 +96,7 @@ func (c *Copier) CopyDirectory(ctx context.Context, src, dst string) error {
 
 // CopyFile copies a single file
 func CopyFile(ctx context.Context, src, dst string) error {
-	return NewCopier().copyFile(ctx, src, dst, 0644)
+	return NewCopier().copyFile(ctx, src, dst, registry.FilePermissions)
 }
 
 // copyFile copies a single file with permissions
@@ -114,7 +115,7 @@ func (c *Copier) copyFile(ctx context.Context, src, dst string, mode os.FileMode
 
 	// Create destination directory if needed
 	dstDir := filepath.Dir(dst)
-	if err := os.MkdirAll(dstDir, 0755); err != nil {
+	if err := os.MkdirAll(dstDir, registry.DirPermissions); err != nil {
 		return errors.IO("creating destination directory", err).WithField("path", dstDir)
 	}
 
@@ -165,7 +166,7 @@ func CreateBackup(ctx context.Context, src, backupDir string) error {
 	}
 
 	// Create backup directory
-	if err := os.MkdirAll(backupDir, 0755); err != nil {
+	if err := os.MkdirAll(backupDir, registry.DirPermissions); err != nil {
 		return errors.IO("creating backup directory", err).WithField("path", backupDir)
 	}
 
@@ -183,7 +184,7 @@ func CreateBackup(ctx context.Context, src, backupDir string) error {
   "reason": "manual backup"
 }`, timeNow(), src)
 
-	if err := os.WriteFile(manifest, []byte(manifestData), 0644); err != nil {
+	if err := os.WriteFile(manifest, []byte(manifestData), registry.FilePermissions); err != nil {
 		// Non-fatal error
 		fmt.Fprintf(os.Stderr, "Warning: failed to create backup manifest: %v\n", err)
 	}

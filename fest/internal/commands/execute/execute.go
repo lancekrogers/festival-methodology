@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/execute"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
@@ -57,21 +58,23 @@ Examples:
 }
 
 func runExecute(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
+
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to get current directory: %w", err)
+		return errors.IO("getting current directory", err)
 	}
 
 	festivalPath, err := tpl.FindFestivalRoot(cwd)
 	if err != nil {
-		return fmt.Errorf("not inside a festival: %w", err)
+		return errors.Wrap(err, "not inside a festival")
 	}
 
 	// Handle reset
 	if reset {
 		stateManager := execute.NewStateManager(festivalPath)
-		if err := stateManager.Clear(); err != nil {
-			return fmt.Errorf("failed to clear state: %w", err)
+		if err := stateManager.Clear(ctx); err != nil {
+			return errors.IO("clearing execution state", err)
 		}
 		fmt.Println("Execution state cleared.")
 		return nil
@@ -85,8 +88,8 @@ func runExecute(cmd *cobra.Command, args []string) error {
 	runner := execute.NewRunner(festivalPath, config)
 
 	// Initialize
-	if err := runner.Initialize(); err != nil {
-		return fmt.Errorf("failed to initialize: %w", err)
+	if err := runner.Initialize(ctx); err != nil {
+		return errors.Wrap(err, "initializing execution runner")
 	}
 
 	// Handle different output modes
@@ -101,7 +104,7 @@ func runExecute(cmd *cobra.Command, args []string) error {
 	if agentMode {
 		instructions, err := runner.FormatAgentInstructions()
 		if err != nil {
-			return fmt.Errorf("failed to format instructions: %w", err)
+			return errors.Wrap(err, "formatting agent instructions")
 		}
 		fmt.Print(instructions)
 		return nil
@@ -118,7 +121,7 @@ func runExecute(cmd *cobra.Command, args []string) error {
 func outputJSON(data interface{}) error {
 	output, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
-		return fmt.Errorf("failed to format JSON: %w", err)
+		return errors.Parse("formatting JSON", err)
 	}
 	fmt.Println(string(output))
 	return nil

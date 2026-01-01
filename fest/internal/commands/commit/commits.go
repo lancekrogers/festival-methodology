@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/id"
 	"github.com/spf13/cobra"
 )
@@ -74,7 +75,8 @@ func runCommits(cmd *cobra.Command, args []string) error {
 	switch {
 	case queryTask != "":
 		if !id.Validate(queryTask) {
-			return fmt.Errorf("invalid task reference format: %s", queryTask)
+			return errors.Validation("invalid task reference format").
+				WithField("task", queryTask)
 		}
 		grepPattern = fmt.Sprintf("\\[%s\\]", queryTask)
 		queryDesc = fmt.Sprintf("task:%s", queryTask)
@@ -132,7 +134,8 @@ func queryCommits(grepPattern string, limit int) ([]Commit, error) {
 	if err := cmd.Run(); err != nil {
 		// Check if just no matches
 		if strings.Contains(stderr.String(), "fatal") {
-			return nil, fmt.Errorf("git log failed: %s", stderr.String())
+			return nil, errors.Wrap(err, "git log failed").
+				WithField("stderr", stderr.String())
 		}
 		// No matches is fine
 		return []Commit{}, nil

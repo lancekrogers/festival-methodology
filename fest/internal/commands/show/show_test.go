@@ -357,3 +357,147 @@ func TestFormatFestivalListEmpty(t *testing.T) {
 func contains(s, substr string) bool {
 	return len(s) > 0 && len(substr) > 0 && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || contains(s[1:], substr)))
 }
+
+// TestFormatFestivalDetails_DisplaysMetadataID tests that festival ID from metadata is displayed
+func TestFormatFestivalDetails_DisplaysMetadataID(t *testing.T) {
+	tests := []struct {
+		name           string
+		festival       *FestivalInfo
+		expectedOutput []string
+		notExpected    []string
+	}{
+		{
+			name: "displays festival ID prominently",
+			festival: &FestivalInfo{
+				ID:         "my-project_GU0001",
+				MetadataID: "GU0001",
+				Name:       "my-project",
+				Status:     "active",
+				Path:       "/path/to/my-project_GU0001",
+			},
+			expectedOutput: []string{"ID: GU0001"},
+		},
+		{
+			name: "handles legacy festival without metadata ID",
+			festival: &FestivalInfo{
+				ID:         "old-festival",
+				MetadataID: "", // No metadata ID
+				Name:       "old-festival",
+				Status:     "active",
+				Path:       "/path/to/old-festival",
+			},
+			expectedOutput: []string{"No ID"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			output := FormatFestivalDetails(tt.festival, false)
+
+			for _, expected := range tt.expectedOutput {
+				if !contains(output, expected) {
+					t.Errorf("Output should contain %q, got:\n%s", expected, output)
+				}
+			}
+
+			for _, notExpected := range tt.notExpected {
+				if contains(output, notExpected) {
+					t.Errorf("Output should NOT contain %q, got:\n%s", notExpected, output)
+				}
+			}
+		})
+	}
+}
+
+// TestFormatNodeReference tests the node reference format
+func TestFormatNodeReference(t *testing.T) {
+	tests := []struct {
+		festivalID string
+		phase      int
+		sequence   int
+		task       int
+		expected   string
+	}{
+		{"GU0001", 1, 1, 1, "GU0001:P001.S01.T01"},
+		{"GU0001", 12, 5, 99, "GU0001:P012.S05.T99"},
+		{"FN0042", 2, 3, 4, "FN0042:P002.S03.T04"},
+		{"", 1, 1, 1, ""}, // No ID, no reference
+	}
+
+	for _, tt := range tests {
+		result := FormatNodeReference(tt.festivalID, tt.phase, tt.sequence, tt.task)
+		if result != tt.expected {
+			t.Errorf("FormatNodeReference(%q, %d, %d, %d) = %q, want %q",
+				tt.festivalID, tt.phase, tt.sequence, tt.task, result, tt.expected)
+		}
+	}
+}
+
+// TestParseFestivalInfo_ReadsMetadataID tests that parseFestivalInfo reads metadata from fest.yaml
+func TestParseFestivalInfo_ReadsMetadataID(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create festival with fest.yaml containing metadata
+	festivalDir := filepath.Join(tmpDir, "my-project_GU0001")
+	if err := os.MkdirAll(festivalDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create fest.yaml with metadata
+	festYAML := `version: "1.0"
+metadata:
+  id: GU0001
+  uuid: 550e8400-e29b-41d4-a716-446655440000
+  name: my-project
+  created_at: 2025-12-31T12:00:00Z
+quality_gates:
+  enabled: true
+`
+	if err := os.WriteFile(filepath.Join(festivalDir, "fest.yaml"), []byte(festYAML), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(festivalDir, FestivalGoalFile), []byte("# Test"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	info, err := parseFestivalInfo(festivalDir)
+	if err != nil {
+		t.Fatalf("parseFestivalInfo() error = %v", err)
+	}
+
+	if info.MetadataID != "GU0001" {
+		t.Errorf("MetadataID = %q, want %q", info.MetadataID, "GU0001")
+	}
+}
+
+// TestParseFestivalInfo_LegacyFestivalNoMetadata tests legacy festivals without metadata
+func TestParseFestivalInfo_LegacyFestivalNoMetadata(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create festival without metadata in fest.yaml
+	festivalDir := filepath.Join(tmpDir, "old-festival")
+	if err := os.MkdirAll(festivalDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create fest.yaml without metadata section
+	festYAML := `version: "1.0"
+quality_gates:
+  enabled: true
+`
+	if err := os.WriteFile(filepath.Join(festivalDir, "fest.yaml"), []byte(festYAML), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(festivalDir, FestivalGoalFile), []byte("# Test"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	info, err := parseFestivalInfo(festivalDir)
+	if err != nil {
+		t.Fatalf("parseFestivalInfo() error = %v", err)
+	}
+
+	if info.MetadataID != "" {
+		t.Errorf("MetadataID = %q, want empty string for legacy festival", info.MetadataID)
+	}
+}

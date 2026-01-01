@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
@@ -133,11 +132,8 @@ func toOptions(values []string) []huh.Option[string] {
 
 // theme returns the custom theme for TUI forms
 func theme() *huh.Theme {
-	th := huh.ThemeBase()
-	th.Focused.Title = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
-	th.Focused.Description = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
-	th.Blurred.Title = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
-	return th
+	// Use ThemeCharm for better visual appeal
+	return huh.ThemeCharm()
 }
 
 // fallbackDot returns "." if string is empty, otherwise returns the string

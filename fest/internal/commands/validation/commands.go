@@ -1,7 +1,6 @@
 package validation
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -287,7 +286,7 @@ func validateTemplateMarkers(festivalPath string, result *ValidationResult) {
 		for _, marker := range markers {
 			if strings.Contains(contentStr, marker) {
 				result.Issues = append(result.Issues, ValidationIssue{
-					Level:   LevelWarning,
+					Level:   LevelError,
 					Code:    CodeUnfilledTemplate,
 					Path:    relPath,
 					Message: fmt.Sprintf("File contains unfilled template marker: %s", marker),
@@ -391,101 +390,3 @@ func emitValidateError(opts *validateOptions, err error) error {
 	return err
 }
 
-func printValidationResult(display *ui.UI, festivalPath string, result *ValidationResult) {
-	fmt.Printf("\nFestival Validation: %s\n", result.Festival)
-	fmt.Println(strings.Repeat("=", 50))
-
-	// Group issues by category
-	structureIssues := filterIssuesByCode(result.Issues, CodeNamingConvention)
-	completenessIssues := filterIssuesByCode(result.Issues, CodeMissingFile, CodeMissingGoal)
-	taskIssues := filterIssuesByCode(result.Issues, CodeMissingTaskFiles)
-	gateIssues := filterIssuesByCode(result.Issues, CodeMissingQualityGate)
-	templateIssues := filterIssuesByCode(result.Issues, CodeUnfilledTemplate)
-	orderingIssues := filterIssuesByCode(result.Issues, CodeNumberingGap)
-
-	printValidationSection(display, "STRUCTURE", structureIssues)
-	printValidationSection(display, "COMPLETENESS", completenessIssues)
-	printTaskValidationSection(display, taskIssues)
-	printValidationSection(display, "QUALITY GATES", gateIssues)
-	printValidationSection(display, "TEMPLATES", templateIssues)
-	printValidationSection(display, "ORDERING", orderingIssues)
-
-	// Score and summary
-	fmt.Printf("\nScore: %d/100", result.Score)
-	if result.Valid {
-		fmt.Println(" - Festival structure is valid")
-	} else {
-		fmt.Println(" - Festival structure needs attention")
-	}
-
-	// Suggestions
-	if len(result.Suggestions) > 0 {
-		fmt.Println("\nSuggestions:")
-		for _, s := range result.Suggestions {
-			fmt.Printf("  • %s\n", s)
-		}
-	}
-}
-
-func printValidationSection(display *ui.UI, title string, issues []ValidationIssue) {
-	fmt.Printf("\n%s\n", title)
-
-	if len(issues) == 0 {
-		display.Success("[OK] All checks passed")
-		return
-	}
-
-	for _, issue := range issues {
-		switch issue.Level {
-		case LevelError:
-			display.Error("[ERROR] %s", issue.Message)
-		case LevelWarning:
-			display.Warning("[WARN] %s", issue.Message)
-		case LevelInfo:
-			display.Info("[INFO] %s", issue.Message)
-		}
-		if issue.Path != "" {
-			fmt.Printf("        Path: %s\n", issue.Path)
-		}
-		if issue.Fix != "" {
-			fmt.Printf("        FIX: %s\n", issue.Fix)
-		}
-	}
-}
-
-func filterIssuesByCode(issues []ValidationIssue, codes ...string) []ValidationIssue {
-	codeSet := make(map[string]bool)
-	for _, c := range codes {
-		codeSet[c] = true
-	}
-
-	var filtered []ValidationIssue
-	for _, issue := range issues {
-		if codeSet[issue.Code] {
-			filtered = append(filtered, issue)
-		}
-	}
-	return filtered
-}
-
-// countFileMarkers counts unfilled template markers in a file
-func countFileMarkers(path string) int {
-	markers := []string{"[FILL:", "[GUIDANCE:", "{{ "}
-	count := 0
-
-	file, err := os.Open(path)
-	if err != nil {
-		return 0
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		for _, marker := range markers {
-			count += strings.Count(line, marker)
-		}
-	}
-
-	return count
-}

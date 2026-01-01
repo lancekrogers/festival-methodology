@@ -66,7 +66,7 @@ func SaveWorkspaceConfig(festivalsRoot string, cfg *WorkspaceConfig) error {
 	dotFestivalPath := filepath.Join(festivalsRoot, DotFestivalDir)
 
 	// Ensure .festival directory exists
-	if err := os.MkdirAll(dotFestivalPath, 0755); err != nil {
+	if err := os.MkdirAll(dotFestivalPath, dirPermissions); err != nil {
 		return errors.IO("creating .festival directory", err).WithField("path", dotFestivalPath)
 	}
 
@@ -79,7 +79,7 @@ func SaveWorkspaceConfig(festivalsRoot string, cfg *WorkspaceConfig) error {
 	}
 
 	// Write file
-	if err := os.WriteFile(configPath, data, 0644); err != nil {
+	if err := os.WriteFile(configPath, data, filePermissions); err != nil {
 		return errors.IO("writing workspace config", err).WithField("path", configPath)
 	}
 

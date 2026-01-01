@@ -14,14 +14,18 @@ func NewMigrateCommand() *cobra.Command {
 
 Available migrations:
   frontmatter   Add YAML frontmatter to existing documents
+  metadata      Add ID and metadata to existing festivals
 
 Examples:
   fest migrate frontmatter              # Add frontmatter to all docs
   fest migrate frontmatter --dry-run    # Preview changes
-  fest migrate frontmatter --fix        # Auto-fix existing frontmatter`,
+  fest migrate frontmatter --fix        # Auto-fix existing frontmatter
+  fest migrate metadata                 # Add IDs to all festivals
+  fest migrate metadata --dry-run       # Preview ID migrations`,
 	}
 
 	cmd.AddCommand(NewFrontmatterCommand())
+	cmd.AddCommand(NewMetadataCommand())
 
 	return cmd
 }

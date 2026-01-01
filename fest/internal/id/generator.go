@@ -1,132 +1,249 @@
-// Package id provides unique identifier generation for festival elements.
+// Package id provides festival ID generation and parsing utilities.
+// Festival IDs follow the format XX0001 where XX is a 2-letter prefix
+// derived from the festival name and 0001 is a 4-digit counter.
 package id
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
-	"sync"
-	"time"
+	"unicode"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
-const (
-	// IDPrefix is the prefix for all festival IDs
-	IDPrefix = "FEST"
-	// IDLength is the length of the hash portion
-	IDLength = 6
-)
-
-var (
-	// IDPattern matches a valid festival ID
-	IDPattern = regexp.MustCompile(`^FEST-[a-z0-9]{6}$`)
-)
-
-// Generator creates unique festival IDs
-type Generator struct {
-	mu   sync.RWMutex
-	seen map[string]bool
+// Common words to skip when extracting initials
+var commonWords = map[string]bool{
+	"the": true, "a": true, "an": true,
+	"of": true, "for": true, "and": true,
+	"to": true, "in": true, "on": true,
 }
 
-// NewGenerator creates a new ID generator
-func NewGenerator() *Generator {
-	return &Generator{
-		seen: make(map[string]bool),
+// idPattern matches festival IDs in directory names (e.g., _GU0001)
+var idPattern = regexp.MustCompile(`_([A-Z]{2})(\d{4,})$`)
+
+// StatusDirectories are the directories that contain festivals
+var StatusDirectories = []string{"planned", "active", "completed", "dungeon"}
+
+// ExtractInitials extracts a 2-letter uppercase prefix from a festival name.
+// For multi-word names: first letter of first two significant words.
+// For single-word names: first two letters.
+// If extraction fails, returns "XX" as a fallback.
+func ExtractInitials(name string) string {
+	// Normalize: replace hyphens with spaces, lowercase
+	normalized := strings.ToLower(strings.ReplaceAll(name, "-", " "))
+
+	// Split into words
+	words := strings.Fields(normalized)
+
+	// Filter out common words and non-alphabetic entries
+	var significant []string
+	for _, word := range words {
+		// Skip common words
+		if commonWords[word] {
+			continue
+		}
+		// Keep only if starts with a letter
+		if len(word) > 0 && unicode.IsLetter(rune(word[0])) {
+			significant = append(significant, word)
+		}
 	}
+
+	// Build initials
+	var initials strings.Builder
+
+	switch len(significant) {
+	case 0:
+		// No significant words found
+		return "XX"
+	case 1:
+		// Single word: take first two letters
+		word := significant[0]
+		for _, r := range word {
+			if unicode.IsLetter(r) {
+				initials.WriteRune(unicode.ToUpper(r))
+				if initials.Len() >= 2 {
+					break
+				}
+			}
+		}
+	default:
+		// Multiple words: first letter of first two
+		for i := 0; i < 2 && i < len(significant); i++ {
+			for _, r := range significant[i] {
+				if unicode.IsLetter(r) {
+					initials.WriteRune(unicode.ToUpper(r))
+					break
+				}
+			}
+		}
+	}
+
+	// Pad if needed
+	result := initials.String()
+	if len(result) < 2 {
+		result = result + strings.Repeat("X", 2-len(result))
+	}
+
+	return result[:2]
 }
 
-// Generate creates a unique ID from a path and timestamp
-func (g *Generator) Generate(path string) string {
-	g.mu.Lock()
-	defer g.mu.Unlock()
+// FormatID creates a festival ID string from prefix and counter.
+// Format: XX0001 (2 letters + 4 digits, zero-padded)
+func FormatID(prefix string, counter int) string {
+	if counter > 9999 {
+		// Overflow: don't zero-pad beyond 4 digits
+		return fmt.Sprintf("%s%d", prefix, counter)
+	}
+	return fmt.Sprintf("%s%04d", prefix, counter)
+}
 
-	// Hash input: relative path + creation timestamp
-	timestamp := time.Now().UnixNano()
-	input := fmt.Sprintf("%s:%d", path, timestamp)
+// ParseID extracts the prefix and counter from a festival ID.
+// Returns an error if the ID format is invalid.
+func ParseID(id string) (prefix string, counter int, err error) {
+	if len(id) < 6 {
+		return "", 0, errors.Validation("invalid ID format: too short").
+			WithField("id", id).
+			WithField("minLength", 6)
+	}
 
-	for attempt := 0; attempt < 100; attempt++ {
-		hash := sha256.Sum256([]byte(input))
-		hexStr := hex.EncodeToString(hash[:])
+	prefix = id[:2]
+	if !isValidPrefix(prefix) {
+		return "", 0, errors.Validation("invalid ID format: prefix must be two uppercase letters").
+			WithField("prefix", prefix)
+	}
 
-		// Take first IDLength chars, lowercase
-		id := fmt.Sprintf("%s-%s", IDPrefix, strings.ToLower(hexStr[:IDLength]))
+	counterStr := id[2:]
+	if len(counterStr) < 4 {
+		return "", 0, errors.Validation("invalid ID format: counter too short").
+			WithField("counter", counterStr)
+	}
 
-		// Check for collision
-		if !g.seen[id] {
-			g.seen[id] = true
-			return id
+	counter, err = strconv.Atoi(counterStr)
+	if err != nil {
+		return "", 0, errors.Validation("invalid ID format: counter must be numeric").
+			WithField("counter", counterStr)
+	}
+
+	return prefix, counter, nil
+}
+
+// isValidPrefix checks if a prefix is two uppercase letters
+func isValidPrefix(prefix string) bool {
+	if len(prefix) != 2 {
+		return false
+	}
+	for _, r := range prefix {
+		if r < 'A' || r > 'Z' {
+			return false
+		}
+	}
+	return true
+}
+
+// ExtractIDFromDirName extracts the festival ID from a directory name.
+// Directory names follow the pattern: name_XX0001
+func ExtractIDFromDirName(dirName string) (string, error) {
+	if dirName == "" {
+		return "", errors.Validation("empty directory name")
+	}
+
+	matches := idPattern.FindStringSubmatch(dirName)
+	if matches == nil {
+		return "", errors.NotFound("no valid ID found in directory name").
+			WithField("dirName", dirName)
+	}
+
+	// matches[0] is full match, matches[1] is prefix, matches[2] is counter
+	return matches[1] + matches[2], nil
+}
+
+// FindNextCounter scans all festival directories to find the next available
+// counter for the given prefix. Returns the next counter value (max + 1).
+func FindNextCounter(festivalsRoot string, prefix string) (int, error) {
+	maxCounter := 0
+
+	// Scan each status directory
+	for _, status := range StatusDirectories {
+		statusPath := filepath.Join(festivalsRoot, status)
+
+		// Skip if directory doesn't exist
+		if _, err := os.Stat(statusPath); os.IsNotExist(err) {
+			continue
 		}
 
-		// Add attempt counter for next iteration
-		input = fmt.Sprintf("%s:%d:%d", path, timestamp, attempt+1)
+		// Walk the directory tree to find all festivals
+		err := filepath.WalkDir(statusPath, func(path string, d os.DirEntry, err error) error {
+			if err != nil {
+				return nil // Skip directories we can't read
+			}
+
+			if !d.IsDir() {
+				return nil
+			}
+
+			// Try to extract ID from directory name
+			id, err := ExtractIDFromDirName(d.Name())
+			if err != nil {
+				return nil // Not a festival directory with ID
+			}
+
+			// Parse the ID
+			idPrefix, counter, err := ParseID(id)
+			if err != nil {
+				return nil
+			}
+
+			// Only count matching prefixes
+			if idPrefix == prefix && counter > maxCounter {
+				maxCounter = counter
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			// Continue scanning other directories even if one fails
+			continue
+		}
 	}
 
-	// Fallback with more entropy
-	hash := sha256.Sum256([]byte(fmt.Sprintf("%s:%d:%d", path, time.Now().UnixNano(), time.Now().Nanosecond())))
-	return fmt.Sprintf("%s-%s", IDPrefix, strings.ToLower(hex.EncodeToString(hash[:])[:IDLength]))
+	return maxCounter + 1, nil
 }
 
-// GenerateFromContent creates an ID based on content hash (deterministic)
-func (g *Generator) GenerateFromContent(content string) string {
-	hash := sha256.Sum256([]byte(content))
-	hexStr := hex.EncodeToString(hash[:])
-	return fmt.Sprintf("%s-%s", IDPrefix, strings.ToLower(hexStr[:IDLength]))
-}
+// GenerateID creates a unique festival ID for the given name.
+// It extracts initials from the name and finds the next available counter
+// by scanning all festival directories.
+func GenerateID(name string, festivalsRoot string) (string, error) {
+	initials := ExtractInitials(name)
 
-// Register marks an ID as already used
-func (g *Generator) Register(id string) {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	g.seen[id] = true
-}
-
-// IsRegistered checks if an ID is already used
-func (g *Generator) IsRegistered(id string) bool {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
-	return g.seen[id]
-}
-
-// Validate checks if a string is a valid festival ID
-func Validate(id string) bool {
-	return IDPattern.MatchString(id)
-}
-
-// Parse extracts the hash portion from a festival ID
-func Parse(id string) (string, error) {
-	if !Validate(id) {
-		return "", fmt.Errorf("invalid festival ID format: %s", id)
+	counter, err := FindNextCounter(festivalsRoot, initials)
+	if err != nil {
+		return "", errors.Wrap(err, "finding next counter").
+			WithField("initials", initials)
 	}
-	return strings.TrimPrefix(id, IDPrefix+"-"), nil
+
+	return FormatID(initials, counter), nil
 }
 
-// Format creates a properly formatted ID from a hash
-func Format(hash string) string {
-	// Ensure lowercase and correct length
-	h := strings.ToLower(hash)
-	if len(h) > IDLength {
-		h = h[:IDLength]
-	}
-	return fmt.Sprintf("%s-%s", IDPrefix, h)
+// taskRefPattern matches task references like FEST-123456 or [FEST-123456]
+var taskRefPattern = regexp.MustCompile(`FEST-(\d{6})`)
+
+// Validate checks if a string is a valid task reference format.
+// Valid format: FEST-xxxxxx where x is a digit
+func Validate(ref string) bool {
+	return taskRefPattern.MatchString(ref)
 }
 
-// ExtractFromMessage extracts festival IDs from a commit message
+// ExtractFromMessage extracts all task references from a commit message.
+// Looks for patterns like FEST-123456 or [FEST-123456]
 func ExtractFromMessage(message string) []string {
-	pattern := regexp.MustCompile(`\[FEST-[a-z0-9]{6}\]`)
-	matches := pattern.FindAllString(message, -1)
-
-	var ids []string
-	for _, match := range matches {
-		// Remove brackets
-		id := strings.TrimPrefix(match, "[")
-		id = strings.TrimSuffix(id, "]")
-		ids = append(ids, id)
+	matches := taskRefPattern.FindAllString(message, -1)
+	if matches == nil {
+		return []string{}
 	}
-	return ids
-}
-
-// FormatForCommit formats an ID for inclusion in a commit message
-func FormatForCommit(id string) string {
-	return fmt.Sprintf("[%s]", id)
+	return matches
 }

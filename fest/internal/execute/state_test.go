@@ -1,6 +1,7 @@
 package execute
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -19,10 +20,11 @@ func TestNewStateManager(t *testing.T) {
 }
 
 func TestStateManager_LoadNew(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 	sm := NewStateManager(tmpDir)
 
-	state, err := sm.Load()
+	state, err := sm.Load(ctx)
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
@@ -41,11 +43,12 @@ func TestStateManager_LoadNew(t *testing.T) {
 }
 
 func TestStateManager_SaveAndLoad(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 	sm := NewStateManager(tmpDir)
 
 	// Load to initialize
-	_, err := sm.Load()
+	_, err := sm.Load(ctx)
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
@@ -56,7 +59,7 @@ func TestStateManager_SaveAndLoad(t *testing.T) {
 	sm.SetMode(ModeSemiAutonomous)
 
 	// Save
-	if err := sm.Save(); err != nil {
+	if err := sm.Save(ctx); err != nil {
 		t.Fatalf("Save() error = %v", err)
 	}
 
@@ -68,7 +71,7 @@ func TestStateManager_SaveAndLoad(t *testing.T) {
 
 	// Load again with a new manager
 	sm2 := NewStateManager(tmpDir)
-	state, err := sm2.Load()
+	state, err := sm2.Load(ctx)
 	if err != nil {
 		t.Fatalf("Load() error on reload = %v", err)
 	}
@@ -88,9 +91,10 @@ func TestStateManager_SaveAndLoad(t *testing.T) {
 }
 
 func TestStateManager_GetTaskStatus_Default(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 	sm := NewStateManager(tmpDir)
-	sm.Load()
+	sm.Load(ctx)
 
 	status := sm.GetTaskStatus("nonexistent")
 	if status != StatusPending {
@@ -99,17 +103,18 @@ func TestStateManager_GetTaskStatus_Default(t *testing.T) {
 }
 
 func TestStateManager_Clear(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 	sm := NewStateManager(tmpDir)
-	sm.Load()
+	sm.Load(ctx)
 	sm.SetTaskStatus("task-1", StatusCompleted)
-	sm.Save()
+	sm.Save(ctx)
 
 	if !sm.Exists() {
 		t.Error("Expected state to exist after save")
 	}
 
-	if err := sm.Clear(); err != nil {
+	if err := sm.Clear(ctx); err != nil {
 		t.Fatalf("Clear() error = %v", err)
 	}
 

@@ -3,6 +3,8 @@ package deps
 import (
 	"fmt"
 	"os"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // ValidationResult holds the results of dependency validation
@@ -18,7 +20,7 @@ func Validate(festivalPath string) (*ValidationResult, error) {
 	resolver := NewResolver(festivalPath)
 	graph, err := resolver.ResolveFestival()
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve dependencies: %w", err)
+		return nil, errors.Wrap(err, "failed to resolve dependencies")
 	}
 
 	result := &ValidationResult{
@@ -80,7 +82,7 @@ func ValidateSequence(seqPath string) (*ValidationResult, error) {
 	resolver := NewResolver(festivalPath)
 	graph, err := resolver.ResolveSequence(seqPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve sequence dependencies: %w", err)
+		return nil, errors.Wrap(err, "failed to resolve sequence dependencies")
 	}
 
 	result := &ValidationResult{

@@ -54,30 +54,80 @@ go build -tags charm -o fest cmd/fest/main.go
 
 ### Navigation
 
-Navigate to your festivals directory from anywhere:
+Navigate to your festivals directory from anywhere using `fgo`.
+
+**One-time setup** - add to your shell config:
 
 ```bash
-# One-time setup - add to ~/.zshrc or ~/.bashrc:
+# Zsh (~/.zshrc) or Bash (~/.bashrc):
 eval "$(fest shell-init zsh)"
+
+# Fish (~/.config/fish/config.fish):
+fest shell-init fish | source
 ```
 
-Then use `fgo` to navigate:
+**Basic navigation:**
 
 ```bash
-fgo              # Go to festivals root
+fgo              # Go to festivals root (or smart navigate between linked project ↔ festival)
 fgo 2            # Go to phase 002
 fgo 2/1          # Go to phase 2, sequence 1
-fgo active       # Go to active directory
+fgo active       # Go to active/ directory
+fgo planned      # Go to planned/ directory
+fgo my-festival  # Go to festival by name
 ```
 
-Without shell integration, use command substitution:
+**Shortcuts** - create named bookmarks for quick jumps:
+
+```bash
+fest go map n              # Create shortcut 'n' to current directory
+fest go map api /path/api  # Create shortcut 'api' to specific path
+fgo -n                     # Jump to shortcut 'n'
+fgo -api                   # Jump to shortcut 'api'
+fest go unmap n            # Remove shortcut
+```
+
+**Project links** - bidirectional navigation between festivals and project code:
+
+```bash
+# From inside a festival:
+fest link /path/to/project   # Link festival to project directory
+fest link .                  # Link to current directory
+
+# From inside a linked project:
+fest link                    # Shows picker to select festival to link
+
+# Navigate between linked locations:
+fgo project                  # From festival → go to linked project
+fgo fest                     # From project → go to linked festival
+fgo                          # Smart: auto-navigate to the other side
+
+fest unlink                  # Remove link (works from either location)
+fest links                   # List all festival-project links
+```
+
+**Interactive navigation:**
+
+```bash
+fgo list                     # Interactive picker to select destination
+fest go list                 # List all shortcuts and links
+```
+
+**Tab completion** - `fgo` supports tab completion for all targets:
+
+```bash
+fgo <tab>                    # Shows: active, planned, list, -shortcut, etc.
+fgo -<tab>                   # Shows only your shortcuts
+```
+
+**Without shell integration**, use command substitution:
 
 ```bash
 cd $(fest go)
 cd $(fest go 2)
 ```
 
-Register a workspace for cross-project navigation:
+**Register a workspace** for cross-project navigation:
 
 ```bash
 fest init --register /path/to/project/festivals

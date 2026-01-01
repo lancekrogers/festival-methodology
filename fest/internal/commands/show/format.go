@@ -5,12 +5,30 @@ import (
 	"strings"
 )
 
+// FormatNodeReference creates a node reference string from festival ID and location.
+// Format: ID:P###.S##.T## (e.g., GU0001:P002.S01.T03)
+// Returns empty string if festivalID is empty.
+func FormatNodeReference(festivalID string, phase, sequence, task int) string {
+	if festivalID == "" {
+		return ""
+	}
+	return fmt.Sprintf("%s:P%03d.S%02d.T%02d", festivalID, phase, sequence, task)
+}
+
 // FormatFestivalDetails formats a single festival with full details.
 func FormatFestivalDetails(festival *FestivalInfo, verbose bool) string {
 	var sb strings.Builder
 
 	// Header
 	sb.WriteString(fmt.Sprintf("Festival: %s\n", festival.Name))
+
+	// Display festival ID prominently
+	if festival.MetadataID != "" {
+		sb.WriteString(fmt.Sprintf("  ID: %s\n", festival.MetadataID))
+	} else {
+		sb.WriteString("  ID: No ID (run fest migrate to add)\n")
+	}
+
 	sb.WriteString(fmt.Sprintf("  Status: %s\n", festival.Status))
 	sb.WriteString(fmt.Sprintf("  Path:   %s\n", festival.Path))
 

@@ -100,6 +100,8 @@ type DepOutput struct {
 // ContextOutput is the complete context response
 type ContextOutput struct {
 	Location          *Location        `json:"location"`
+	FestivalID        *string          `json:"festival_id"` // Unique festival ID from metadata (null if legacy)
+	CurrentRef        *string          `json:"current_ref"` // Full node reference (e.g., GU0001:P002.S01.T03)
 	Festival          *FestivalContext `json:"festival,omitempty"`
 	Phase             *PhaseContext    `json:"phase,omitempty"`
 	Sequence          *SequenceContext `json:"sequence,omitempty"`

@@ -8,6 +8,7 @@ import (
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	"github.com/lancekrogers/festival-methodology/fest/internal/gates"
+	"github.com/lancekrogers/festival-methodology/fest/internal/registry"
 )
 
 // IndexWriter generates festival indices from filesystem structure
@@ -193,7 +194,7 @@ func (w *IndexWriter) WriteIndex() error {
 
 	// Determine output path
 	dotFestival := filepath.Join(w.festivalRoot, ".festival")
-	if err := os.MkdirAll(dotFestival, 0755); err != nil {
+	if err := os.MkdirAll(dotFestival, registry.DirPermissions); err != nil {
 		return err
 	}
 

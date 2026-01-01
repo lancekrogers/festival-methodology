@@ -2,8 +2,9 @@ package execute
 
 import (
 	"context"
-	"fmt"
 	"sync"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // ParallelExecutor handles parallel task execution
@@ -203,8 +204,9 @@ func ValidateParallelSafety(tasks []*PlanTask) error {
 	for _, task := range tasks {
 		for _, dep := range task.Dependencies {
 			if taskIDs[dep] {
-				return fmt.Errorf("task %q depends on task %q which is in the same parallel group",
-					task.Name, dep)
+				return errors.Validation("parallel group contains circular dependency").
+					WithField("task", task.Name).
+					WithField("depends_on", dep)
 			}
 		}
 	}

@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/registry"
 )
 
 // TreeIndex represents the complete workspace tree for Guild v3
@@ -184,11 +186,11 @@ func (t *TreeIndex) Save(path string) error {
 
 	// Ensure directory exists
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, registry.DirPermissions); err != nil {
 		return err
 	}
 
-	return os.WriteFile(path, data, 0644)
+	return os.WriteFile(path, data, registry.FilePermissions)
 }
 
 // LoadTreeIndex loads a tree index from a file

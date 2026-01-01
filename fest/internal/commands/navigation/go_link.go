@@ -1,17 +1,26 @@
 package navigation
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/huh"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
-	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	festErrors "github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/navigation"
 	"github.com/lancekrogers/festival-methodology/fest/internal/workspace"
 	"github.com/spf13/cobra"
+)
+
+// Styles for festival status in TUI
+var (
+	activeStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true) // Green
+	plannedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Bold(true) // Blue
+	pathStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))           // Gray
 )
 
 // NewGoLinkCommand creates the context-aware link subcommand for fest go
@@ -56,7 +65,7 @@ Examples:
 func runGoLink(targetPath string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return errors.IO("getting current directory", err)
+		return festErrors.IO("getting current directory", err)
 	}
 
 	// Detect context: are we inside a festival?
@@ -106,7 +115,7 @@ func linkFestivalToProject(cwd, targetPath string) error {
 	// Detect current festival
 	loc, err := show.DetectCurrentLocation(cwd)
 	if err != nil || loc == nil || loc.Festival == nil || loc.Festival.Name == "" {
-		return errors.Validation("not inside a recognized festival")
+		return festErrors.Validation("not inside a recognized festival")
 	}
 	festivalName := loc.Festival.Name
 
@@ -116,16 +125,16 @@ func linkFestivalToProject(cwd, targetPath string) error {
 		// Use provided path
 		absPath, err := filepath.Abs(targetPath)
 		if err != nil {
-			return errors.Wrap(err, "resolving path").WithField("path", targetPath)
+			return festErrors.Wrap(err, "resolving path").WithField("path", targetPath)
 		}
 
 		// Validate path exists and is a directory
 		info, err := os.Stat(absPath)
 		if err != nil {
-			return errors.NotFound("directory").WithField("path", absPath)
+			return festErrors.NotFound("directory").WithField("path", absPath)
 		}
 		if !info.IsDir() {
-			return errors.Validation("path is not a directory").WithField("path", absPath)
+			return festErrors.Validation("path is not a directory").WithField("path", absPath)
 		}
 
 		projectPath = absPath
@@ -141,29 +150,33 @@ func linkFestivalToProject(cwd, targetPath string) error {
 					Value(&inputPath).
 					Validate(func(s string) error {
 						if strings.TrimSpace(s) == "" {
-							return errors.Validation("path is required")
+							return festErrors.Validation("path is required")
 						}
 						return nil
 					}),
 			),
-		).WithTheme(huh.ThemeBase())
+		).WithTheme(huh.ThemeCharm())
 
 		if err := form.Run(); err != nil {
+			// Silent exit on user cancel (Ctrl-C or Esc)
+			if errors.Is(err, huh.ErrUserAborted) {
+				return nil
+			}
 			return err
 		}
 
 		absPath, err := filepath.Abs(inputPath)
 		if err != nil {
-			return errors.Wrap(err, "resolving path").WithField("path", inputPath)
+			return festErrors.Wrap(err, "resolving path").WithField("path", inputPath)
 		}
 
 		// Validate
 		info, err := os.Stat(absPath)
 		if err != nil {
-			return errors.NotFound("directory").WithField("path", absPath)
+			return festErrors.NotFound("directory").WithField("path", absPath)
 		}
 		if !info.IsDir() {
-			return errors.Validation("path is not a directory").WithField("path", absPath)
+			return festErrors.Validation("path is not a directory").WithField("path", absPath)
 		}
 
 		projectPath = absPath
@@ -172,7 +185,7 @@ func linkFestivalToProject(cwd, targetPath string) error {
 	// Load navigation state
 	nav, err := navigation.LoadNavigation()
 	if err != nil {
-		return errors.Wrap(err, "loading navigation state")
+		return festErrors.Wrap(err, "loading navigation state")
 	}
 
 	// Set the bidirectional link
@@ -180,7 +193,7 @@ func linkFestivalToProject(cwd, targetPath string) error {
 
 	// Save
 	if err := nav.Save(); err != nil {
-		return errors.Wrap(err, "saving navigation state")
+		return festErrors.Wrap(err, "saving navigation state")
 	}
 
 	fmt.Printf("Linked: %s ↔ %s\n", festivalName, projectPath)
@@ -193,42 +206,37 @@ func linkFestivalToProject(cwd, targetPath string) error {
 func linkProjectToFestival(cwd string) error {
 	absPath, err := filepath.Abs(cwd)
 	if err != nil {
-		return errors.Wrap(err, "resolving current directory")
+		return festErrors.Wrap(err, "resolving current directory")
 	}
 
 	// Find festivals directory
 	festivalsDir, err := workspace.FindFestivals(cwd)
 	if err != nil || festivalsDir == "" {
-		return errors.NotFound("festivals directory").WithField("hint", "run 'fest init' first")
+		return festErrors.NotFound("festivals directory").WithField("hint", "run 'fest init' first")
 	}
 
 	// Collect all festivals from active/ and planned/
 	festivals, err := collectFestivals(festivalsDir)
 	if err != nil {
-		return errors.Wrap(err, "collecting festivals")
+		return festErrors.Wrap(err, "collecting festivals")
 	}
 
 	if len(festivals) == 0 {
-		return errors.NotFound("festivals").WithField("hint", "create a festival with 'fest create festival'")
+		return festErrors.NotFound("festivals").WithField("hint", "create a festival with 'fest create festival'")
 	}
 
-	// Build options for picker
-	options := make([]huh.Option[string], 0, len(festivals)+1)
+	// Build options for picker with color-coded status
+	options := make([]huh.Option[string], 0, len(festivals))
 
-	// Group by status
-	var activeOpts, plannedOpts []huh.Option[string]
 	for _, f := range festivals {
-		opt := huh.NewOption(f.displayName, f.name)
+		var label string
 		if f.status == "active" {
-			activeOpts = append(activeOpts, opt)
+			label = activeStyle.Render("● "+f.name) + " " + pathStyle.Render("(active)")
 		} else {
-			plannedOpts = append(plannedOpts, opt)
+			label = plannedStyle.Render("○ "+f.name) + " " + pathStyle.Render("(planned)")
 		}
+		options = append(options, huh.NewOption(label, f.name))
 	}
-
-	// Add active festivals first (without section headers - picker validates selection)
-	options = append(options, activeOpts...)
-	options = append(options, plannedOpts...)
 
 	// Show picker
 	var selectedFestival string
@@ -236,30 +244,29 @@ func linkProjectToFestival(cwd string) error {
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Select a festival to link to this project").
-				Description(absPath).
+				Description(pathStyle.Render(absPath)).
 				Options(options...).
-				Value(&selectedFestival).
-				Validate(func(s string) error {
-					if s == "" {
-						return errors.Validation("please select a festival")
-					}
-					return nil
-				}),
+				Value(&selectedFestival),
 		),
-	).WithTheme(huh.ThemeBase())
+	).WithTheme(huh.ThemeCharm())
 
 	if err := form.Run(); err != nil {
+		// Silent exit on user cancel (Ctrl-C or Esc)
+		if errors.Is(err, huh.ErrUserAborted) {
+			return nil
+		}
 		return err
 	}
 
 	if selectedFestival == "" {
-		return errors.Validation("no festival selected")
+		// User cancelled without selecting
+		return nil
 	}
 
 	// Load navigation state
 	nav, err := navigation.LoadNavigation()
 	if err != nil {
-		return errors.Wrap(err, "loading navigation state")
+		return festErrors.Wrap(err, "loading navigation state")
 	}
 
 	// Set the bidirectional link
@@ -267,7 +274,7 @@ func linkProjectToFestival(cwd string) error {
 
 	// Save
 	if err := nav.Save(); err != nil {
-		return errors.Wrap(err, "saving navigation state")
+		return festErrors.Wrap(err, "saving navigation state")
 	}
 
 	fmt.Printf("Linked: %s ↔ %s\n", selectedFestival, absPath)
