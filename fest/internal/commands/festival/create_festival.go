@@ -147,8 +147,8 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 		return emitCreateFestivalError(opts, errors.Wrap(err, "generating festival ID").WithField("name", opts.Name))
 	}
 
-	// Create directory with ID suffix: {slug}_{ID}
-	dirName := fmt.Sprintf("%s_%s", slug, festivalID)
+	// Create directory with ID suffix: {slug}-{ID}
+	dirName := fmt.Sprintf("%s-%s", slug, festivalID)
 	destDir := filepath.Join(festivalsRoot, destCategory, dirName)
 	if err := os.MkdirAll(destDir, 0755); err != nil {
 		return emitCreateFestivalError(opts, errors.IO("creating festival directory", err).WithField("path", destDir))

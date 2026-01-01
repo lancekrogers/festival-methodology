@@ -22,8 +22,8 @@ var commonWords = map[string]bool{
 	"to": true, "in": true, "on": true,
 }
 
-// idPattern matches festival IDs in directory names (e.g., _GU0001)
-var idPattern = regexp.MustCompile(`_([A-Z]{2})(\d{4,})$`)
+// idPattern matches festival IDs in directory names (e.g., -GC0001)
+var idPattern = regexp.MustCompile(`-([A-Z]{2})(\d{4,})$`)
 
 // StatusDirectories are the directories that contain festivals
 var StatusDirectories = []string{"planned", "active", "completed", "dungeon"}
@@ -145,7 +145,7 @@ func isValidPrefix(prefix string) bool {
 }
 
 // ExtractIDFromDirName extracts the festival ID from a directory name.
-// Directory names follow the pattern: name_XX0001
+// Directory names follow the pattern: name-XX0001
 func ExtractIDFromDirName(dirName string) (string, error) {
 	if dirName == "" {
 		return "", errors.Validation("empty directory name")

@@ -389,4 +389,3 @@ func emitValidateError(opts *validateOptions, err error) error {
 	}
 	return err
 }
-

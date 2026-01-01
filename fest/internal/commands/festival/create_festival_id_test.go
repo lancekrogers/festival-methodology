@@ -11,7 +11,7 @@ import (
 )
 
 // TestCreateFestival_DirectoryNaming verifies that festival directories
-// are created with the format {slug}_{ID} where ID is XX0001 format.
+// are created with the format {slug}-{ID} where ID is XX0001 format.
 func TestCreateFestival_DirectoryNaming(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -97,17 +97,24 @@ func TestCreateFestival_DirectoryNaming(t *testing.T) {
 				t.Errorf("Directory %q should start with slug %q", dirName, slug)
 			}
 
-			// Directory should have underscore separator and ID suffix
-			if !strings.Contains(dirName, "_") {
-				t.Errorf("Directory %q should contain underscore separator", dirName)
+			// Directory should have hyphen separator before ID suffix
+			// Note: slug may contain hyphens, so we look for the ID pattern at the end
+			if !strings.Contains(dirName, "-") {
+				t.Errorf("Directory %q should contain hyphen separator", dirName)
 			}
 
-			// Extract the ID suffix (after last underscore)
-			parts := strings.Split(dirName, "_")
-			if len(parts) < 2 {
-				t.Fatalf("Directory %q should have format {slug}_{id}", dirName)
+			// Extract the ID suffix (last 6 chars after final hyphen with uppercase letters)
+			// Format: slug-XX0001, where XX are uppercase letters
+			lastHyphen := strings.LastIndex(dirName, "-")
+			if lastHyphen == -1 || lastHyphen == len(dirName)-1 {
+				t.Fatalf("Directory %q should have format {slug}-{id}", dirName)
 			}
-			idPart := parts[len(parts)-1]
+			idPart := dirName[lastHyphen+1:]
+
+			// Verify it looks like an ID (starts with 2 uppercase letters)
+			if len(idPart) < 2 || idPart[0] < 'A' || idPart[0] > 'Z' {
+				t.Fatalf("Directory %q should end with ID in XX0001 format", dirName)
+			}
 
 			// ID should be 6 characters: 2 letters + 4 digits
 			if len(idPart) != 6 {
@@ -291,19 +298,27 @@ func TestCreateFestival_UniqueIDs(t *testing.T) {
 		t.Errorf("Expected 1 entry in planned/, got %d", len(plannedEntries))
 	}
 
-	// Collect all IDs
+	// Collect all IDs (extract from end of directory name after last hyphen)
 	ids := make(map[string]bool)
 	for _, e := range activeEntries {
-		parts := strings.Split(e.Name(), "_")
-		id := parts[len(parts)-1]
+		name := e.Name()
+		lastHyphen := strings.LastIndex(name, "-")
+		if lastHyphen == -1 {
+			continue
+		}
+		id := name[lastHyphen+1:]
 		if ids[id] {
 			t.Errorf("Duplicate ID found: %s", id)
 		}
 		ids[id] = true
 	}
 	for _, e := range plannedEntries {
-		parts := strings.Split(e.Name(), "_")
-		id := parts[len(parts)-1]
+		name := e.Name()
+		lastHyphen := strings.LastIndex(name, "-")
+		if lastHyphen == -1 {
+			continue
+		}
+		id := name[lastHyphen+1:]
 		if ids[id] {
 			t.Errorf("Duplicate ID found: %s", id)
 		}

@@ -109,7 +109,7 @@ func TestFindNextCounter(t *testing.T) {
 			name:   "one existing",
 			prefix: "GU",
 			existingDirs: map[string][]string{
-				"active": {"guild-usable_GU0001"},
+				"active": {"guild-usable-GU0001"},
 			},
 			expectedCount: 2,
 		},
@@ -117,8 +117,8 @@ func TestFindNextCounter(t *testing.T) {
 			name:   "multiple existing same prefix",
 			prefix: "GU",
 			existingDirs: map[string][]string{
-				"active":  {"guild-usable_GU0001", "guild-ui_GU0002"},
-				"planned": {"guild-v2_GU0003"},
+				"active":  {"guild-usable-GU0001", "guild-ui-GU0002"},
+				"planned": {"guild-v2-GU0003"},
 			},
 			expectedCount: 4,
 		},
@@ -126,7 +126,7 @@ func TestFindNextCounter(t *testing.T) {
 			name:   "different prefixes",
 			prefix: "FN",
 			existingDirs: map[string][]string{
-				"active": {"guild-usable_GU0001", "fest-node_FN0001"},
+				"active": {"guild-usable-GU0001", "fest-node-FN0001"},
 			},
 			expectedCount: 2,
 		},
@@ -134,7 +134,7 @@ func TestFindNextCounter(t *testing.T) {
 			name:   "gap in counter",
 			prefix: "GU",
 			existingDirs: map[string][]string{
-				"active": {"guild-usable_GU0001", "guild-v3_GU0005"},
+				"active": {"guild-usable-GU0001", "guild-v3-GU0005"},
 			},
 			expectedCount: 6, // Next after highest
 		},
@@ -142,7 +142,7 @@ func TestFindNextCounter(t *testing.T) {
 			name:   "in completed subdirectory",
 			prefix: "GU",
 			existingDirs: map[string][]string{
-				"completed/2025-01": {"guild-old_GU0010"},
+				"completed/2025-01": {"guild-old-GU0010"},
 			},
 			expectedCount: 11,
 		},
@@ -205,7 +205,7 @@ func TestGenerateID(t *testing.T) {
 			name:         "second with same prefix",
 			festivalName: "guild-ui",
 			existingDirs: map[string][]string{
-				"active": {"guild-usable_GU0001"},
+				"active": {"guild-usable-GU0001"},
 			},
 			expectedID: "GU0002",
 		},
@@ -213,7 +213,7 @@ func TestGenerateID(t *testing.T) {
 			name:         "different prefix",
 			festivalName: "fest-node-ids",
 			existingDirs: map[string][]string{
-				"active": {"guild-usable_GU0001"},
+				"active": {"guild-usable-GU0001"},
 			},
 			expectedID: "FN0001",
 		},
@@ -315,11 +315,11 @@ func TestExtractIDFromDirName(t *testing.T) {
 		expectedID string
 		expectErr  bool
 	}{
-		{"guild-usable_GU0001", "GU0001", false},
-		{"fest-node-ids_FN0042", "FN0042", false},
-		{"my-project_AB9999", "AB9999", false},
+		{"guild-usable-GU0001", "GU0001", false},
+		{"fest-node-ids-FN0042", "FN0042", false},
+		{"my-project-AB9999", "AB9999", false},
 		{"no-id-here", "", true},
-		{"invalid_XX", "", true},
+		{"invalid-XX", "", true},
 		{"", "", true},
 	}
 
