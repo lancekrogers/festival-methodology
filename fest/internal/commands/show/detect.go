@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
@@ -155,6 +156,19 @@ func parseFestivalInfo(festivalDir string) (*FestivalInfo, error) {
 		info.Status = parentName
 	default:
 		info.Status = "unknown"
+	}
+
+	// Try to load fest.yaml to get metadata ID
+	festConfig, err := config.LoadFestivalConfig(festivalDir)
+	if err == nil && festConfig != nil {
+		// Extract metadata ID if present
+		if festConfig.Metadata.ID != "" {
+			info.MetadataID = festConfig.Metadata.ID
+		}
+		// Use name from metadata if available, otherwise use directory name
+		if festConfig.Metadata.Name != "" {
+			info.Name = festConfig.Metadata.Name
+		}
 	}
 
 	// Calculate statistics
