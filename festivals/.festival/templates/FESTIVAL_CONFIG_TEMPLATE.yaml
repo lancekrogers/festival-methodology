@@ -46,6 +46,12 @@ quality_gates:
       name: "Review Results and Iterate"
       enabled: true
 
+    # Commit changes task
+    - id: commit
+      template: QUALITY_GATE_COMMIT
+      name: "Commit Changes"
+      enabled: true
+
 # Sequences matching these patterns won't get quality gates
 # (planning/research sequences typically don't need them)
 excluded_patterns:

@@ -53,8 +53,8 @@ func TestPolicyRegistry_GetPolicy(t *testing.T) {
 	if policy.Name != "default" {
 		t.Errorf("Policy name = %q, want %q", policy.Name, "default")
 	}
-	if len(policy.Append) != 3 {
-		t.Errorf("Default policy has %d gates, want 3", len(policy.Append))
+	if len(policy.Append) != 4 {
+		t.Errorf("Default policy has %d gates, want 4", len(policy.Append))
 	}
 
 	// Test strict policy
@@ -62,8 +62,8 @@ func TestPolicyRegistry_GetPolicy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetPolicy(strict) error: %v", err)
 	}
-	if len(policy.Append) != 5 {
-		t.Errorf("Strict policy has %d gates, want 5", len(policy.Append))
+	if len(policy.Append) != 6 {
+		t.Errorf("Strict policy has %d gates, want 6", len(policy.Append))
 	}
 
 	// Test lightweight policy
@@ -214,8 +214,8 @@ func TestStrictPolicy(t *testing.T) {
 	if policy.Name != "strict" {
 		t.Errorf("Name = %q, want %q", policy.Name, "strict")
 	}
-	if len(policy.Append) != 5 {
-		t.Errorf("Strict policy has %d gates, want 5", len(policy.Append))
+	if len(policy.Append) != 6 {
+		t.Errorf("Strict policy has %d gates, want 6", len(policy.Append))
 	}
 
 	// Check gate IDs
@@ -225,6 +225,7 @@ func TestStrictPolicy(t *testing.T) {
 		"security_audit",
 		"performance_check",
 		"review_results_iterate",
+		"commit",
 	}
 	for i, expected := range expectedIDs {
 		if policy.Append[i].ID != expected {

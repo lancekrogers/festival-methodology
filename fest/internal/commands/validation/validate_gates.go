@@ -24,6 +24,7 @@ Quality gates are required for implementation sequences:
   • XX_testing_and_verify.md
   • XX_code_review.md
   • XX_review_results_iterate.md
+  • XX_commit.md
 
 Use --fix to automatically add missing quality gates.
 Planning sequences (*_planning, *_research, etc.) are excluded.`,

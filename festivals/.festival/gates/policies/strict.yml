@@ -23,3 +23,7 @@ append:
     template: QUALITY_GATE_ITERATE
     name: Review Results and Iterate
     enabled: true
+  - id: commit
+    template: QUALITY_GATE_COMMIT
+    name: Commit Changes
+    enabled: true

@@ -128,7 +128,7 @@ func DefaultPolicy() *GatePolicy {
 	return &GatePolicy{
 		Version:     1,
 		Name:        DefaultPolicyName,
-		Description: "Default quality gates: testing, code review, and iteration",
+		Description: "Default quality gates: testing, code review, iteration, and commit",
 		Append: []GateTask{
 			{
 				ID:       "testing_and_verify",
@@ -146,6 +146,12 @@ func DefaultPolicy() *GatePolicy {
 				ID:       "review_results_iterate",
 				Template: "QUALITY_GATE_ITERATE",
 				Name:     "Review Results and Iterate",
+				Enabled:  true,
+			},
+			{
+				ID:       "commit",
+				Template: "QUALITY_GATE_COMMIT",
+				Name:     "Commit Changes",
 				Enabled:  true,
 			},
 		},

@@ -137,6 +137,11 @@ quality_gates:
       name: Review Results and Iterate
       enabled: true
 
+    - id: commit
+      template: QUALITY_GATE_COMMIT
+      name: Commit Changes
+      enabled: true
+
 excluded_patterns:
   - "*_planning"
   - "*_research"

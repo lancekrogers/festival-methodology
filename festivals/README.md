@@ -219,6 +219,9 @@ quality_gates:
     - id: review_results_iterate
       template: QUALITY_GATE_ITERATE
       enabled: true
+    - id: commit
+      template: QUALITY_GATE_COMMIT
+      enabled: true
 ```
 
 For full CLI documentation, see `.festival/CLI_REFERENCE.md`.

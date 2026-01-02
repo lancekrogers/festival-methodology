@@ -17,12 +17,12 @@ func TestDefaultFestivalConfig(t *testing.T) {
 		t.Error("expected quality gates to be enabled by default")
 	}
 
-	if len(cfg.QualityGates.Tasks) != 3 {
-		t.Errorf("expected 3 default quality gate tasks, got %d", len(cfg.QualityGates.Tasks))
+	if len(cfg.QualityGates.Tasks) != 4 {
+		t.Errorf("expected 4 default quality gate tasks, got %d", len(cfg.QualityGates.Tasks))
 	}
 
 	// Check task IDs
-	expectedIDs := []string{"testing_and_verify", "code_review", "review_results_iterate"}
+	expectedIDs := []string{"testing_and_verify", "code_review", "review_results_iterate", "commit"}
 	for i, task := range cfg.QualityGates.Tasks {
 		if task.ID != expectedIDs[i] {
 			t.Errorf("expected task ID %s, got %s", expectedIDs[i], task.ID)

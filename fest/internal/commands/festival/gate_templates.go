@@ -352,6 +352,12 @@ func DefaultFestivalGatesConfig() *config.FestivalConfig {
 					Name:     "Review Results and Iterate",
 					Enabled:  true,
 				},
+				{
+					ID:       "commit",
+					Template: "gates/QUALITY_GATE_COMMIT",
+					Name:     "Commit Changes",
+					Enabled:  true,
+				},
 			},
 		},
 		ExcludedPatterns: []string{

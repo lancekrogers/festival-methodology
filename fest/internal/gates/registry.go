@@ -48,7 +48,7 @@ func NewPolicyRegistry(festivalsRoot, configRoot string) (*PolicyRegistry, error
 func (r *PolicyRegistry) registerBuiltin() {
 	r.policies["default"] = &PolicyInfo{
 		Name:        "default",
-		Description: "Standard quality gates: testing, code review, iteration",
+		Description: "Standard quality gates: testing, code review, iteration, commit",
 		Source:      "built-in",
 	}
 	r.policies["strict"] = &PolicyInfo{
@@ -75,6 +75,7 @@ func StrictPolicy() *GatePolicy {
 			{ID: "security_audit", Template: "SECURITY_AUDIT", Name: "Security Audit", Enabled: true},
 			{ID: "performance_check", Template: "PERFORMANCE_CHECK", Name: "Performance Check", Enabled: true},
 			{ID: "review_results_iterate", Template: "QUALITY_GATE_ITERATE", Name: "Review Results and Iterate", Enabled: true},
+			{ID: "commit", Template: "QUALITY_GATE_COMMIT", Name: "Commit Changes", Enabled: true},
 		},
 	}
 }

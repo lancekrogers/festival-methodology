@@ -239,5 +239,6 @@ func isGateFile(name string) bool {
 		strings.Contains(lower, "_testing") ||
 		strings.Contains(lower, "_review") ||
 		strings.Contains(lower, "_verify") ||
-		strings.Contains(lower, "_iterate")
+		strings.Contains(lower, "_iterate") ||
+		strings.Contains(lower, "_commit")
 }

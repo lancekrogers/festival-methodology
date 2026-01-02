@@ -133,8 +133,8 @@ func TestHierarchicalLoader_LoadForFestival(t *testing.T) {
 	}
 
 	// Should have default gates
-	if len(effective.Gates) != 3 {
-		t.Errorf("Expected 3 default gates, got %d", len(effective.Gates))
+	if len(effective.Gates) != 4 {
+		t.Errorf("Expected 4 default gates, got %d", len(effective.Gates))
 	}
 	if effective.Level != PolicyLevelBuiltin {
 		t.Errorf("Expected level %q, got %q", PolicyLevelBuiltin, effective.Level)
