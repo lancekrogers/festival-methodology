@@ -76,11 +76,16 @@ Commit messages are for describing code changes, not for marketing or self-promo
 
 2. **Write commit message** following the format above
 
-3. **Create commit**
+3. **Create commit with fest (adds task reference ID)**
 
    ```bash
-   git commit
+   fest commit -m "<type>: <summary>"
+   # If you need to attach a specific task reference:
+   fest commit --task FEST-XXXX -m "<type>: <summary>"
    ```
+
+   Use `fest commit` so task references are preserved. Avoid raw `git commit`
+   unless you intentionally omit tags (`fest commit --no-tag`).
 
 4. **Verify commit**
 

@@ -309,7 +309,12 @@ Commit all changes from this sequence with proper documentation.
 
 ## Commit
 
-[REPLACE: Your git commit command or process]
+Use fest commit so task references are preserved:
+
+```
+fest commit -m "<type>: <summary>"
+# Optional: fest commit --task FEST-XXXX -m "<type>: <summary>"
+```
 
 ## Post-Commit
 
