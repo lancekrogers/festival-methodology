@@ -266,9 +266,25 @@ func FormatNumber(number int, elemType ElementType) string {
 }
 
 // BuildElementName constructs the full name with number prefix
+// Normalizes name case based on element type: UPPERCASE for phases, lowercase for sequences/tasks
 func BuildElementName(number int, name string, elemType ElementType) string {
 	numStr := FormatNumber(number, elemType)
-	return fmt.Sprintf("%s_%s", numStr, name)
+
+	// Normalize name based on element type
+	var normalized string
+	switch elemType {
+	case PhaseType:
+		// Phases are UPPERCASE
+		normalized = strings.ToUpper(strings.ReplaceAll(name, " ", "_"))
+	case SequenceType, TaskType:
+		// Sequences and tasks are lowercase
+		normalized = strings.ToLower(strings.ReplaceAll(name, " ", "_"))
+	default:
+		// Unknown type: just replace spaces
+		normalized = strings.ReplaceAll(name, " ", "_")
+	}
+
+	return fmt.Sprintf("%s_%s", numStr, normalized)
 }
 
 // ParseElementName extracts number and name from a numbered element

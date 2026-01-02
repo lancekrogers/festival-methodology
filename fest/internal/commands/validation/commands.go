@@ -59,6 +59,13 @@ type FixApplied struct {
 	Action string `json:"action"`
 }
 
+// MarkerInfo tracks template marker details
+type MarkerInfo struct {
+	TotalFiles  int      `json:"total_files"`
+	TotalCount  int      `json:"total_count"`
+	FilesWithMarkers []string `json:"files,omitempty"`
+}
+
 // ValidationResult represents the complete validation result
 type ValidationResult struct {
 	OK           bool              `json:"ok"`
@@ -71,6 +78,7 @@ type ValidationResult struct {
 	Checklist    *Checklist        `json:"checklist,omitempty"`
 	FixesApplied []FixApplied      `json:"fixes_applied,omitempty"`
 	Suggestions  []string          `json:"suggestions,omitempty"`
+	MarkerInfo   *MarkerInfo       `json:"marker_info,omitempty"`
 }
 
 type validateOptions struct {
@@ -257,7 +265,11 @@ func runValidateAll(opts *validateOptions) error {
 
 func validateTemplateMarkers(festivalPath string, result *ValidationResult) {
 	// Scan for unfilled template markers
-	markers := []string{"[FILL:", "[GUIDANCE:", "{{ "}
+	markers := []string{"[FILL:", "[REPLACE:", "[GUIDANCE:", "{{ "}
+
+	markerInfo := &MarkerInfo{
+		FilesWithMarkers: []string{},
+	}
 
 	filepath.Walk(festivalPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
@@ -283,21 +295,45 @@ func validateTemplateMarkers(festivalPath string, result *ValidationResult) {
 		}
 
 		contentStr := string(content)
+		fileMarkerCount := 0
+		foundMarkers := make(map[string]bool)
+
+		// Count all markers in this file
 		for _, marker := range markers {
-			if strings.Contains(contentStr, marker) {
-				result.Issues = append(result.Issues, ValidationIssue{
-					Level:   LevelError,
-					Code:    CodeUnfilledTemplate,
-					Path:    relPath,
-					Message: fmt.Sprintf("File contains unfilled template marker: %s", marker),
-					Fix:     "Edit file and replace template markers with actual content",
-				})
-				break
+			count := strings.Count(contentStr, marker)
+			if count > 0 {
+				fileMarkerCount += count
+				foundMarkers[marker] = true
 			}
+		}
+
+		if fileMarkerCount > 0 {
+			markerInfo.TotalCount += fileMarkerCount
+			markerInfo.TotalFiles++
+			markerInfo.FilesWithMarkers = append(markerInfo.FilesWithMarkers, relPath)
+
+			// Create a single issue per file listing all marker types found
+			markerTypes := []string{}
+			for marker := range foundMarkers {
+				markerTypes = append(markerTypes, marker)
+			}
+
+			result.Issues = append(result.Issues, ValidationIssue{
+				Level:   LevelError,
+				Code:    CodeUnfilledTemplate,
+				Path:    relPath,
+				Message: fmt.Sprintf("File contains %d unfilled template markers (%s)", fileMarkerCount, strings.Join(markerTypes, ", ")),
+				Fix:     "Edit file and replace template markers with actual content",
+			})
 		}
 
 		return nil
 	})
+
+	// Only set MarkerInfo if markers were found
+	if markerInfo.TotalCount > 0 {
+		result.MarkerInfo = markerInfo
+	}
 }
 
 // Score calculation
@@ -357,7 +393,8 @@ func addSuggestions(result *ValidationResult) {
 	}
 	if hasUnfilledTemplates {
 		result.Suggestions = append(result.Suggestions,
-			"Edit files with unfilled template markers ([REPLACE:], [FILL:], or {{ }}) and add actual content")
+			"Run 'fest markers list' to see all unfilled template markers",
+			"Use 'fest markers fill' or edit files manually to replace markers with actual content")
 	}
 	if hasNumberingGaps {
 		result.Suggestions = append(result.Suggestions,

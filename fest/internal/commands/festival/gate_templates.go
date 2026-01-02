@@ -311,10 +311,8 @@ Commit all changes from this sequence with proper documentation.
 
 Use fest commit so task references are preserved:
 
-```
-fest commit -m "<type>: <summary>"
-# Optional: fest commit --task FEST-XXXX -m "<type>: <summary>"
-```
+    fest commit -m "<type>: <summary>"
+    # Optional: fest commit --task FEST-XXXX -m "<type>: <summary>"
 
 ## Post-Commit
 

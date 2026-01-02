@@ -92,10 +92,11 @@ func validateStructureChecks(festivalPath string, result *ValidationResult) {
 	for _, phase := range phases {
 		if !phaseUpperPattern.MatchString(phase.FullName) {
 			result.Issues = append(result.Issues, ValidationIssue{
-				Level:   LevelWarning,
+				Level:   LevelError,
 				Code:    CodeNamingConvention,
 				Path:    phase.Path,
 				Message: fmt.Sprintf("Phase name should be UPPERCASE: %s", phase.FullName),
+				Fix:     "Rename phase directory to use UPPERCASE (e.g., 001_PHASE_NAME)",
 			})
 		}
 
@@ -105,10 +106,11 @@ func validateStructureChecks(festivalPath string, result *ValidationResult) {
 		for _, seq := range sequences {
 			if !seqLowerPattern.MatchString(seq.FullName) {
 				result.Issues = append(result.Issues, ValidationIssue{
-					Level:   LevelWarning,
+					Level:   LevelError,
 					Code:    CodeNamingConvention,
 					Path:    seq.Path,
 					Message: fmt.Sprintf("Sequence name should be lowercase: %s", seq.FullName),
+					Fix:     "Rename sequence directory to use lowercase (e.g., 01_sequence_name)",
 				})
 			}
 
@@ -118,10 +120,11 @@ func validateStructureChecks(festivalPath string, result *ValidationResult) {
 			for _, task := range tasks {
 				if !taskLowerPattern.MatchString(task.FullName) {
 					result.Issues = append(result.Issues, ValidationIssue{
-						Level:   LevelWarning,
+						Level:   LevelError,
 						Code:    CodeNamingConvention,
 						Path:    task.Path,
 						Message: fmt.Sprintf("Task name should be lowercase: %s", task.FullName),
+						Fix:     "Rename task file to use lowercase (e.g., 01_task_name.md)",
 					})
 				}
 			}
