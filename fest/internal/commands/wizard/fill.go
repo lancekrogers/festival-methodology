@@ -123,10 +123,10 @@ func RunFill(ctx context.Context, opts *FillOptions) error {
 			if walkErr != nil {
 				return walkErr
 			}
-			// Skip hidden directories and .festival directory
+			// Skip hidden directories, .festival directory, and gates/ (template files)
 			if d.IsDir() {
 				name := d.Name()
-				if strings.HasPrefix(name, ".") || name == ".festival" {
+				if strings.HasPrefix(name, ".") || name == ".festival" || name == "gates" {
 					return filepath.SkipDir
 				}
 				return nil
