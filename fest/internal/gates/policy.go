@@ -132,25 +132,25 @@ func DefaultPolicy() *GatePolicy {
 		Append: []GateTask{
 			{
 				ID:       "testing_and_verify",
-				Template: "QUALITY_GATE_TESTING",
+				Template: "gates/QUALITY_GATE_TESTING",
 				Name:     "Testing and Verification",
 				Enabled:  true,
 			},
 			{
 				ID:       "code_review",
-				Template: "QUALITY_GATE_REVIEW",
+				Template: "gates/QUALITY_GATE_REVIEW",
 				Name:     "Code Review",
 				Enabled:  true,
 			},
 			{
 				ID:       "review_results_iterate",
-				Template: "QUALITY_GATE_ITERATE",
+				Template: "gates/QUALITY_GATE_ITERATE",
 				Name:     "Review Results and Iterate",
 				Enabled:  true,
 			},
 			{
 				ID:       "commit",
-				Template: "QUALITY_GATE_COMMIT",
+				Template: "gates/QUALITY_GATE_COMMIT",
 				Name:     "Commit Changes",
 				Enabled:  true,
 			},

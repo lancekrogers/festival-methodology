@@ -123,22 +123,22 @@ quality_gates:
   auto_append: true
   tasks:
     - id: testing_and_verify
-      template: QUALITY_GATE_TESTING
+      template: gates/QUALITY_GATE_TESTING
       name: Testing and Verification
       enabled: true
 
     - id: code_review
-      template: QUALITY_GATE_REVIEW
+      template: gates/QUALITY_GATE_REVIEW
       name: Code Review
       enabled: true
 
     - id: review_results_iterate
-      template: QUALITY_GATE_ITERATE
+      template: gates/QUALITY_GATE_ITERATE
       name: Review Results and Iterate
       enabled: true
 
     - id: commit
-      template: QUALITY_GATE_COMMIT
+      template: gates/QUALITY_GATE_COMMIT
       name: Commit Changes
       enabled: true
 

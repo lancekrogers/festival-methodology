@@ -213,7 +213,6 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 	for _, gt := range gateTemplates {
 		srcPaths := []string{
 			filepath.Join(tmplRoot, "gates", gt),
-			filepath.Join(tmplRoot, gt),
 		}
 		var content []byte
 		found := false

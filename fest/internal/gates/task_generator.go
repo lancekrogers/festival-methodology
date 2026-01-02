@@ -216,7 +216,7 @@ func (g *TaskGenerator) renderGateContent(ctx context.Context, gate GateTask, ta
 		if strings.HasPrefix(templateName, "gates/") {
 			templateName = strings.TrimPrefix(templateName, "gates/")
 		}
-		tpath := filepath.Join(g.templateRoot, templateName+".md")
+		tpath := filepath.Join(g.templateRoot, "gates", templateName+".md")
 		if _, err := os.Stat(tpath); err == nil {
 			loader := tpl.NewLoader()
 			t, err := loader.Load(ctx, tpath)
