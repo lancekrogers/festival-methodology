@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/huh"
+	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/markers"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -145,12 +147,93 @@ func RunFill(ctx context.Context, opts *FillOptions) error {
 		files = []string{absPath}
 	}
 
-	// Process each file
+	// Route based on TTY mode
+	if opts.Interactive {
+		return runVimFill(ctx, opts, files, absPath)
+	}
+
+	// Non-TTY mode: sequential prompts for agents
+	return runAgentFill(ctx, opts, display, files, absPath)
+}
+
+// runVimFill opens the configured editor with all files containing markers.
+func runVimFill(ctx context.Context, opts *FillOptions, files []string, rootPath string) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled").WithOp("runVimFill")
+	}
+
+	// Filter to only files with markers
+	filesWithMarkers := []string{}
+	for _, f := range files {
+		ms, err := markers.ParseFile(ctx, f)
+		if err != nil {
+			continue
+		}
+		if len(ms) > 0 {
+			filesWithMarkers = append(filesWithMarkers, f)
+		}
+	}
+
+	if len(filesWithMarkers) == 0 {
+		display := ui.New(false, false)
+		display.Info("No REPLACE markers found")
+		return nil
+	}
+
+	// Show summary before opening
+	display := ui.New(false, false)
+	display.Info("Found %d files with REPLACE markers:", len(filesWithMarkers))
+	for _, f := range filesWithMarkers {
+		relPath, _ := filepath.Rel(rootPath, f)
+		if relPath == "" {
+			relPath = filepath.Base(f)
+		}
+		fmt.Printf("  • %s\n", relPath)
+	}
+	fmt.Println()
+	display.Info("Opening in editor... Use :wqa to save all and quit")
+	fmt.Println()
+
+	// Get editor: config > $EDITOR > "vim"
+	editor := getEditor(ctx)
+
+	// Open editor with all files as buffers
+	cmd := exec.CommandContext(ctx, editor, filesWithMarkers...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return errors.Wrap(err, "editor exited with error").WithField("editor", editor)
+	}
+
+	return nil
+}
+
+// getEditor returns the configured editor from config, $EDITOR, or "vim" as fallback.
+func getEditor(ctx context.Context) string {
+	// Try config first
+	cfg, err := config.Load(ctx, "")
+	if err == nil && cfg.Behavior.Editor != "" {
+		return cfg.Behavior.Editor
+	}
+
+	// Fall back to $EDITOR
+	if editor := os.Getenv("EDITOR"); editor != "" {
+		return editor
+	}
+
+	// Default to vim
+	return "vim"
+}
+
+// runAgentFill handles sequential prompt-based filling for non-TTY (agent) mode.
+func runAgentFill(ctx context.Context, opts *FillOptions, display *ui.UI, files []string, rootPath string) error {
 	totalFilled := 0
 	totalMarkers := 0
 
 	for _, filePath := range files {
-		filled, total, err := processFile(ctx, opts, display, absPath, filePath)
+		filled, total, err := processFile(ctx, opts, display, rootPath, filePath)
 		if err != nil {
 			return err
 		}
