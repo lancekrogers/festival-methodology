@@ -1,6 +1,7 @@
 package progress
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -37,6 +38,7 @@ func TestNormalizeTaskID(t *testing.T) {
 }
 
 func TestResolveTaskStatus_UsesProgressStore(t *testing.T) {
+	ctx := context.Background()
 	festivalDir := t.TempDir()
 	seqDir := filepath.Join(festivalDir, "001_PHASE", "01_seq")
 	if err := os.MkdirAll(seqDir, 0755); err != nil {
@@ -48,13 +50,13 @@ func TestResolveTaskStatus_UsesProgressStore(t *testing.T) {
 		t.Fatalf("WriteFile error = %v", err)
 	}
 
-	mgr, err := NewManager(festivalDir)
+	mgr, err := NewManager(ctx, festivalDir)
 	if err != nil {
 		t.Fatalf("NewManager error = %v", err)
 	}
 
 	relKey := filepath.ToSlash(filepath.Join("001_PHASE", "01_seq", "01_task.md"))
-	if err := mgr.MarkComplete(relKey); err != nil {
+	if err := mgr.MarkComplete(ctx, relKey); err != nil {
 		t.Fatalf("MarkComplete error = %v", err)
 	}
 
@@ -65,6 +67,7 @@ func TestResolveTaskStatus_UsesProgressStore(t *testing.T) {
 }
 
 func TestResolveTaskStatus_FallsBackToLegacyKey(t *testing.T) {
+	ctx := context.Background()
 	festivalDir := t.TempDir()
 	seqDir := filepath.Join(festivalDir, "001_PHASE", "01_seq")
 	if err := os.MkdirAll(seqDir, 0755); err != nil {
@@ -76,12 +79,12 @@ func TestResolveTaskStatus_FallsBackToLegacyKey(t *testing.T) {
 		t.Fatalf("WriteFile error = %v", err)
 	}
 
-	mgr, err := NewManager(festivalDir)
+	mgr, err := NewManager(ctx, festivalDir)
 	if err != nil {
 		t.Fatalf("NewManager error = %v", err)
 	}
 
-	if err := mgr.MarkComplete("01_task.md"); err != nil {
+	if err := mgr.MarkComplete(ctx, "01_task.md"); err != nil {
 		t.Fatalf("MarkComplete legacy error = %v", err)
 	}
 

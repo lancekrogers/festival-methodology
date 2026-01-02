@@ -1,19 +1,21 @@
 package progress
 
 import (
+	"context"
 	"testing"
 )
 
 func TestManager_UpdateProgress(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 
-	mgr, err := NewManager(tmpDir)
+	mgr, err := NewManager(ctx, tmpDir)
 	if err != nil {
 		t.Fatalf("NewManager() error = %v", err)
 	}
 
 	// Test initial progress update
-	err = mgr.UpdateProgress("01_test.md", 25)
+	err = mgr.UpdateProgress(ctx, "01_test.md", 25)
 	if err != nil {
 		t.Fatalf("UpdateProgress() error = %v", err)
 	}
@@ -37,15 +39,16 @@ func TestManager_UpdateProgress(t *testing.T) {
 }
 
 func TestManager_UpdateProgress_Complete(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 
-	mgr, err := NewManager(tmpDir)
+	mgr, err := NewManager(ctx, tmpDir)
 	if err != nil {
 		t.Fatalf("NewManager() error = %v", err)
 	}
 
 	// Update to 100%
-	err = mgr.UpdateProgress("01_test.md", 100)
+	err = mgr.UpdateProgress(ctx, "01_test.md", 100)
 	if err != nil {
 		t.Fatalf("UpdateProgress() error = %v", err)
 	}
@@ -62,34 +65,36 @@ func TestManager_UpdateProgress_Complete(t *testing.T) {
 }
 
 func TestManager_UpdateProgress_Invalid(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 
-	mgr, err := NewManager(tmpDir)
+	mgr, err := NewManager(ctx, tmpDir)
 	if err != nil {
 		t.Fatalf("NewManager() error = %v", err)
 	}
 
 	// Test invalid progress values
-	err = mgr.UpdateProgress("01_test.md", -1)
+	err = mgr.UpdateProgress(ctx, "01_test.md", -1)
 	if err == nil {
 		t.Error("UpdateProgress() should error for negative value")
 	}
 
-	err = mgr.UpdateProgress("01_test.md", 101)
+	err = mgr.UpdateProgress(ctx, "01_test.md", 101)
 	if err == nil {
 		t.Error("UpdateProgress() should error for value > 100")
 	}
 }
 
 func TestManager_MarkComplete(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 
-	mgr, err := NewManager(tmpDir)
+	mgr, err := NewManager(ctx, tmpDir)
 	if err != nil {
 		t.Fatalf("NewManager() error = %v", err)
 	}
 
-	err = mgr.MarkComplete("01_test.md")
+	err = mgr.MarkComplete(ctx, "01_test.md")
 	if err != nil {
 		t.Fatalf("MarkComplete() error = %v", err)
 	}
@@ -110,14 +115,15 @@ func TestManager_MarkComplete(t *testing.T) {
 }
 
 func TestManager_ReportBlocker(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 
-	mgr, err := NewManager(tmpDir)
+	mgr, err := NewManager(ctx, tmpDir)
 	if err != nil {
 		t.Fatalf("NewManager() error = %v", err)
 	}
 
-	err = mgr.ReportBlocker("01_test.md", "Waiting on API spec")
+	err = mgr.ReportBlocker(ctx, "01_test.md", "Waiting on API spec")
 	if err != nil {
 		t.Fatalf("ReportBlocker() error = %v", err)
 	}
@@ -138,32 +144,34 @@ func TestManager_ReportBlocker(t *testing.T) {
 }
 
 func TestManager_ReportBlocker_EmptyMessage(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 
-	mgr, err := NewManager(tmpDir)
+	mgr, err := NewManager(ctx, tmpDir)
 	if err != nil {
 		t.Fatalf("NewManager() error = %v", err)
 	}
 
-	err = mgr.ReportBlocker("01_test.md", "")
+	err = mgr.ReportBlocker(ctx, "01_test.md", "")
 	if err == nil {
 		t.Error("ReportBlocker() should error for empty message")
 	}
 }
 
 func TestManager_ClearBlocker(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 
-	mgr, err := NewManager(tmpDir)
+	mgr, err := NewManager(ctx, tmpDir)
 	if err != nil {
 		t.Fatalf("NewManager() error = %v", err)
 	}
 
 	// Report blocker
-	mgr.ReportBlocker("01_test.md", "Blocker")
+	mgr.ReportBlocker(ctx, "01_test.md", "Blocker")
 
 	// Clear it
-	err = mgr.ClearBlocker("01_test.md")
+	err = mgr.ClearBlocker(ctx, "01_test.md")
 	if err != nil {
 		t.Fatalf("ClearBlocker() error = %v", err)
 	}
@@ -180,14 +188,15 @@ func TestManager_ClearBlocker(t *testing.T) {
 }
 
 func TestManager_MarkInProgress(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 
-	mgr, err := NewManager(tmpDir)
+	mgr, err := NewManager(ctx, tmpDir)
 	if err != nil {
 		t.Fatalf("NewManager() error = %v", err)
 	}
 
-	err = mgr.MarkInProgress("01_test.md")
+	err = mgr.MarkInProgress(ctx, "01_test.md")
 	if err != nil {
 		t.Fatalf("MarkInProgress() error = %v", err)
 	}

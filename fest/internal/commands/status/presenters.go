@@ -1,6 +1,7 @@
 package status
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -107,14 +108,16 @@ func emitFestivalProgress(loc *show.LocationInfo) error {
 }
 
 func emitPhaseProgress(loc *show.LocationInfo) error {
-	mgr, err := progress.NewManager(loc.Festival.Path)
+	ctx := context.Background()
+
+	mgr, err := progress.NewManager(ctx, loc.Festival.Path)
 	if err != nil {
 		// Fall back to festival stats if progress manager fails
 		return emitFestivalProgress(loc)
 	}
 
 	phasePath := filepath.Join(loc.Festival.Path, loc.Phase)
-	phaseProgress, err := mgr.GetPhaseProgress(phasePath)
+	phaseProgress, err := mgr.GetPhaseProgress(ctx, phasePath)
 	if err != nil {
 		// Fall back to festival stats if phase progress fails
 		return emitFestivalProgress(loc)
@@ -140,14 +143,16 @@ func emitPhaseProgress(loc *show.LocationInfo) error {
 }
 
 func emitSequenceProgress(loc *show.LocationInfo) error {
-	mgr, err := progress.NewManager(loc.Festival.Path)
+	ctx := context.Background()
+
+	mgr, err := progress.NewManager(ctx, loc.Festival.Path)
 	if err != nil {
 		// Fall back to festival stats if progress manager fails
 		return emitFestivalProgress(loc)
 	}
 
 	seqPath := filepath.Join(loc.Festival.Path, loc.Phase, loc.Sequence)
-	seqProgress, err := mgr.GetSequenceProgress(seqPath)
+	seqProgress, err := mgr.GetSequenceProgress(ctx, seqPath)
 	if err != nil {
 		// Fall back to festival stats if sequence progress fails
 		return emitFestivalProgress(loc)

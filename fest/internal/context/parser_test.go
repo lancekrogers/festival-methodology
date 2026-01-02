@@ -71,7 +71,7 @@ func TestParseRulesFile(t *testing.T) {
 
 ### Always Wrap Errors
 
-Use gerror.Wrap() for all error handling.
+Use errors.Wrap() for all error handling.
 
 ### Include Context
 

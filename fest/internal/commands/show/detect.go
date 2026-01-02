@@ -1,6 +1,7 @@
 package show
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -172,7 +173,8 @@ func parseFestivalInfo(festivalDir string) (*FestivalInfo, error) {
 	}
 
 	// Calculate statistics
-	stats, err := CalculateFestivalStats(festivalDir)
+	ctx := context.Background()
+	stats, err := CalculateFestivalStats(ctx, festivalDir)
 	if err == nil {
 		info.Stats = stats
 	}

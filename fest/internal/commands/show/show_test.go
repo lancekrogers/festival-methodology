@@ -1,6 +1,7 @@
 package show
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -230,7 +231,8 @@ func TestCalculateFestivalStats(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stats, err := CalculateFestivalStats(festivalDir)
+	ctx := context.Background()
+	stats, err := CalculateFestivalStats(ctx, festivalDir)
 	if err != nil {
 		t.Fatalf("CalculateFestivalStats() unexpected error: %v", err)
 	}

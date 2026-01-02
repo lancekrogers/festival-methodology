@@ -2,6 +2,7 @@
 package progress
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -16,6 +17,11 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
 	"github.com/spf13/cobra"
+)
+
+const (
+	// ProgressBarWidth defines the number of characters in the progress bar
+	ProgressBarWidth = 20
 )
 
 type progressOptions struct {
@@ -90,6 +96,8 @@ Use --festival to run outside a festival directory.`,
 }
 
 func runProgress(opts *progressOptions) error {
+	ctx := context.Background()
+
 	cwd, err := os.Getwd()
 	if err != nil {
 		return errors.IO("getting current directory", err)
@@ -130,21 +138,21 @@ func runProgress(opts *progressOptions) error {
 	}
 
 	// Create progress manager
-	mgr, err := progress.NewManager(loc.Festival.Path)
+	mgr, err := progress.NewManager(ctx, loc.Festival.Path)
 	if err != nil {
 		return errors.Wrap(err, "initializing progress manager")
 	}
 
 	// Handle task updates
 	if opts.taskID != "" || opts.taskPath != "" {
-		return handleTaskUpdate(mgr, loc.Festival.Path, opts)
+		return handleTaskUpdate(ctx, mgr, loc.Festival.Path, opts)
 	}
 
 	// Show progress overview
-	return showProgressOverview(mgr, loc, opts)
+	return showProgressOverview(ctx, mgr, loc, opts)
 }
 
-func handleTaskUpdate(mgr *progress.Manager, festivalPath string, opts *progressOptions) error {
+func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath string, opts *progressOptions) error {
 	taskID, err := resolveTaskID(festivalPath, opts)
 	if err != nil {
 		return err
@@ -152,7 +160,7 @@ func handleTaskUpdate(mgr *progress.Manager, festivalPath string, opts *progress
 
 	// Handle blocker report
 	if opts.blocker != "" {
-		if err := mgr.ReportBlocker(taskID, opts.blocker); err != nil {
+		if err := mgr.ReportBlocker(ctx, taskID, opts.blocker); err != nil {
 			return err
 		}
 		if opts.json {
@@ -172,7 +180,7 @@ func handleTaskUpdate(mgr *progress.Manager, festivalPath string, opts *progress
 
 	// Handle clear blocker
 	if opts.clear {
-		if err := mgr.ClearBlocker(taskID); err != nil {
+		if err := mgr.ClearBlocker(ctx, taskID); err != nil {
 			return err
 		}
 		if opts.json {
@@ -191,7 +199,7 @@ func handleTaskUpdate(mgr *progress.Manager, festivalPath string, opts *progress
 
 	// Handle complete
 	if opts.complete {
-		if err := mgr.MarkComplete(taskID); err != nil {
+		if err := mgr.MarkComplete(ctx, taskID); err != nil {
 			return err
 		}
 		if opts.json {
@@ -213,7 +221,7 @@ func handleTaskUpdate(mgr *progress.Manager, festivalPath string, opts *progress
 
 	// Handle in-progress
 	if opts.inProgress {
-		if err := mgr.MarkInProgress(taskID); err != nil {
+		if err := mgr.MarkInProgress(ctx, taskID); err != nil {
 			return err
 		}
 		if opts.json {
@@ -236,7 +244,7 @@ func handleTaskUpdate(mgr *progress.Manager, festivalPath string, opts *progress
 		if err != nil {
 			return err
 		}
-		if err := mgr.UpdateProgress(taskID, pct); err != nil {
+		if err := mgr.UpdateProgress(ctx, taskID, pct); err != nil {
 			return err
 		}
 		if opts.json {
@@ -290,22 +298,22 @@ func handleTaskUpdate(mgr *progress.Manager, festivalPath string, opts *progress
 	return nil
 }
 
-func showProgressOverview(mgr *progress.Manager, loc *show.LocationInfo, opts *progressOptions) error {
+func showProgressOverview(ctx context.Context, mgr *progress.Manager, loc *show.LocationInfo, opts *progressOptions) error {
 	// Determine scope based on location
 	switch loc.Type {
 	case "sequence":
-		return showSequenceProgress(mgr, loc, opts)
+		return showSequenceProgress(ctx, mgr, loc, opts)
 	case "phase":
-		return showPhaseProgress(mgr, loc, opts)
+		return showPhaseProgress(ctx, mgr, loc, opts)
 	case "festival", "task":
-		return showFestivalProgress(mgr, loc, opts)
+		return showFestivalProgress(ctx, mgr, loc, opts)
 	default:
-		return showFestivalProgress(mgr, loc, opts)
+		return showFestivalProgress(ctx, mgr, loc, opts)
 	}
 }
 
-func showFestivalProgress(mgr *progress.Manager, loc *show.LocationInfo, opts *progressOptions) error {
-	festProgress, err := mgr.GetFestivalProgress(loc.Festival.Path)
+func showFestivalProgress(ctx context.Context, mgr *progress.Manager, loc *show.LocationInfo, opts *progressOptions) error {
+	festProgress, err := mgr.GetFestivalProgress(ctx, loc.Festival.Path)
 	if err != nil {
 		return errors.Wrap(err, "calculating progress")
 	}
@@ -368,9 +376,9 @@ func showFestivalProgress(mgr *progress.Manager, loc *show.LocationInfo, opts *p
 	return nil
 }
 
-func showPhaseProgress(mgr *progress.Manager, loc *show.LocationInfo, opts *progressOptions) error {
+func showPhaseProgress(ctx context.Context, mgr *progress.Manager, loc *show.LocationInfo, opts *progressOptions) error {
 	phasePath := filepath.Join(loc.Festival.Path, loc.Phase)
-	phaseProgress, err := mgr.GetPhaseProgress(phasePath)
+	phaseProgress, err := mgr.GetPhaseProgress(ctx, phasePath)
 	if err != nil {
 		return errors.Wrap(err, "calculating phase progress")
 	}
@@ -418,9 +426,9 @@ func showPhaseProgress(mgr *progress.Manager, loc *show.LocationInfo, opts *prog
 	return nil
 }
 
-func showSequenceProgress(mgr *progress.Manager, loc *show.LocationInfo, opts *progressOptions) error {
+func showSequenceProgress(ctx context.Context, mgr *progress.Manager, loc *show.LocationInfo, opts *progressOptions) error {
 	seqPath := filepath.Join(loc.Festival.Path, loc.Phase, loc.Sequence)
-	seqProgress, err := mgr.GetSequenceProgress(seqPath)
+	seqProgress, err := mgr.GetSequenceProgress(ctx, seqPath)
 	if err != nil {
 		return errors.Wrap(err, "calculating sequence progress")
 	}
@@ -474,8 +482,8 @@ func showSequenceProgress(mgr *progress.Manager, loc *show.LocationInfo, opts *p
 }
 
 func progressBar(percentage int) string {
-	filled := percentage / 5 // 20 char bar
-	empty := 20 - filled
+	filled := (percentage * ProgressBarWidth) / 100
+	empty := ProgressBarWidth - filled
 	return "[" + strings.Repeat("█", filled) + strings.Repeat("░", empty) + "]"
 }
 

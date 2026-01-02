@@ -316,7 +316,7 @@ func runSequenceListing(ctx context.Context, loc *show.LocationInfo, filterStatu
 
 // collectSequencesForListing collects sequences based on the current location context.
 func collectSequencesForListing(ctx context.Context, loc *show.LocationInfo) ([]*SequenceInfo, error) {
-	store := progressStoreForFestival(loc.Festival.Path)
+	store := progressStoreForFestival(ctx, loc.Festival.Path)
 	switch loc.Type {
 	case "festival":
 		// List all sequences in festival
@@ -382,7 +382,7 @@ func runTaskListing(ctx context.Context, loc *show.LocationInfo, filterStatus st
 
 // collectTasksForListing collects tasks based on the current location context.
 func collectTasksForListing(ctx context.Context, loc *show.LocationInfo) ([]*TaskInfo, error) {
-	store := progressStoreForFestival(loc.Festival.Path)
+	store := progressStoreForFestival(ctx, loc.Festival.Path)
 	switch loc.Type {
 	case "festival":
 		// List all tasks in festival

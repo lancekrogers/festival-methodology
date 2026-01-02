@@ -57,7 +57,7 @@ func collectPhaseInfo(ctx context.Context, phasePath, phaseName string) (*PhaseI
 	}
 
 	// Calculate phase stats using show package
-	festStats, err := show.CalculateFestivalStats(phasePath)
+	festStats, err := show.CalculateFestivalStats(ctx, phasePath)
 	var taskStats StatusCounts
 	if err == nil && festStats != nil {
 		taskStats = StatusCounts{
@@ -93,7 +93,7 @@ func collectSequencesFromFestival(ctx context.Context, festivalPath string) ([]*
 		return nil, errors.Wrap(err, "context cancelled")
 	}
 
-	store := progressStoreForFestival(festivalPath)
+	store := progressStoreForFestival(ctx, festivalPath)
 
 	entries, err := os.ReadDir(festivalPath)
 	if err != nil {
@@ -237,7 +237,7 @@ func collectTasksFromFestival(ctx context.Context, festivalPath string) ([]*Task
 		return nil, errors.Wrap(err, "context cancelled")
 	}
 
-	store := progressStoreForFestival(festivalPath)
+	store := progressStoreForFestival(ctx, festivalPath)
 
 	phases, err := os.ReadDir(festivalPath)
 	if err != nil {
@@ -339,8 +339,8 @@ func collectTasks(ctx context.Context, seqPath, phaseName, seqName string, store
 	return tasks, nil
 }
 
-func progressStoreForFestival(festivalPath string) *progress.Store {
-	mgr, err := progress.NewManager(festivalPath)
+func progressStoreForFestival(ctx context.Context, festivalPath string) *progress.Store {
+	mgr, err := progress.NewManager(ctx, festivalPath)
 	if err != nil {
 		return nil
 	}
