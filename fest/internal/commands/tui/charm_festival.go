@@ -12,6 +12,7 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+	uitheme "github.com/lancekrogers/festival-methodology/fest/internal/ui/theme"
 )
 
 func charmCreateFestival(ctx context.Context) error {
@@ -39,6 +40,9 @@ func charmCreateFestival(ctx context.Context) error {
 		),
 	).WithTheme(theme())
 	if err := form.Run(); err != nil {
+		if uitheme.IsCancelled(err) {
+			return nil
+		}
 		return err
 	}
 
@@ -55,6 +59,9 @@ func charmCreateFestival(ctx context.Context) error {
 		}
 		var v string
 		if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title(k).Value(&v))).WithTheme(theme()).Run(); err != nil {
+			if uitheme.IsCancelled(err) {
+				return nil
+			}
 			return err
 		}
 		if strings.TrimSpace(v) != "" {
@@ -99,6 +106,9 @@ func charmPlanFestivalWizard(ctx context.Context) error {
 		),
 	).WithTheme(theme())
 	if err := base.Run(); err != nil {
+		if uitheme.IsCancelled(err) {
+			return nil
+		}
 		return err
 	}
 
@@ -113,6 +123,9 @@ func charmPlanFestivalWizard(ctx context.Context) error {
 		}
 		var v string
 		if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title(k).Value(&v))).WithTheme(theme()).Run(); err != nil {
+			if uitheme.IsCancelled(err) {
+				return nil
+			}
 			return err
 		}
 		if strings.TrimSpace(v) != "" {
@@ -140,6 +153,9 @@ func charmPlanFestivalWizard(ctx context.Context) error {
 		),
 	).WithTheme(theme())
 	if err := phasesForm.Run(); err != nil {
+		if uitheme.IsCancelled(err) {
+			return nil
+		}
 		return err
 	}
 	count := atoiDefault(countStr, 0)
@@ -158,6 +174,9 @@ func charmPlanFestivalWizard(ctx context.Context) error {
 				),
 			).WithTheme(theme())
 			if err := pf.Run(); err != nil {
+				if uitheme.IsCancelled(err) {
+					return nil
+				}
 				return err
 			}
 			if err := shared.RunCreatePhase(ctx, &shared.CreatePhaseOpts{After: after, Name: pname, PhaseType: ptype, Path: festivalDir}); err != nil {
@@ -183,6 +202,9 @@ func charmGenerateFestivalGoal(ctx context.Context) error {
 		),
 	).WithTheme(theme())
 	if err := form.Run(); err != nil {
+		if uitheme.IsCancelled(err) {
+			return nil
+		}
 		return err
 	}
 	vars := map[string]interface{}{}

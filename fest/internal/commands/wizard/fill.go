@@ -12,6 +12,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/markers"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui/theme"
 	"github.com/spf13/cobra"
 )
 
@@ -277,10 +278,10 @@ func promptSelect(m markers.Marker) (string, bool, error) {
 				Options(toOptions(options)...).
 				Value(&selected),
 		),
-	)
+	).WithTheme(theme.FestTheme())
 
 	if err := form.Run(); err != nil {
-		if err == huh.ErrUserAborted {
+		if theme.IsCancelled(err) {
 			return "", true, nil
 		}
 		return "", false, errors.Wrap(err, "form error")
@@ -303,10 +304,10 @@ func promptInput(m markers.Marker) (string, bool, error) {
 				Placeholder("(press Enter to skip)").
 				Value(&value),
 		),
-	)
+	).WithTheme(theme.FestTheme())
 
 	if err := form.Run(); err != nil {
-		if err == huh.ErrUserAborted {
+		if theme.IsCancelled(err) {
 			return "", true, nil
 		}
 		return "", false, errors.Wrap(err, "form error")

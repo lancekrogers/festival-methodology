@@ -12,6 +12,7 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+	uitheme "github.com/lancekrogers/festival-methodology/fest/internal/ui/theme"
 )
 
 func charmCreateTask(ctx context.Context) error {
@@ -32,6 +33,9 @@ func charmCreateTask(ctx context.Context) error {
 		if err := huh.NewForm(huh.NewGroup(
 			huh.NewInput().Title("Task name").Placeholder("user_research").Value(&name).Validate(notEmpty),
 		)).WithTheme(theme()).Run(); err != nil {
+			if uitheme.IsCancelled(err) {
+				return nil
+			}
 			return err
 		}
 		// Position select with default append
@@ -43,11 +47,17 @@ func charmCreateTask(ctx context.Context) error {
 				huh.NewOption("Insert after number", "insert"),
 			).Value(&pos),
 		)).WithTheme(theme()).Run(); err != nil {
+			if uitheme.IsCancelled(err) {
+				return nil
+			}
 			return err
 		}
 		if pos == "insert" {
 			afterStr = fmt.Sprintf("%d", defAfter)
 			if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr))).WithTheme(theme()).Run(); err != nil {
+				if uitheme.IsCancelled(err) {
+					return nil
+				}
 				return err
 			}
 		} else {
@@ -72,10 +82,16 @@ func charmCreateTask(ctx context.Context) error {
 					huh.NewSelect[string]().Title("Select phase").Options(pOpts...).Value(&pSel),
 				)).WithTheme(theme())
 				if err := pf.Run(); err != nil {
+					if uitheme.IsCancelled(err) {
+						return nil
+					}
 					return err
 				}
 				if pSel == "__other__" {
 					if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Phase (dir or number)").Value(&path))).WithTheme(theme()).Run(); err != nil {
+						if uitheme.IsCancelled(err) {
+							return nil
+						}
 						return err
 					}
 					rp, rerr := resolvePhaseDirInput(path, cwd)
@@ -88,6 +104,9 @@ func charmCreateTask(ctx context.Context) error {
 				}
 			} else {
 				if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Phase (dir or number)").Value(&path))).WithTheme(theme()).Run(); err != nil {
+					if uitheme.IsCancelled(err) {
+						return nil
+					}
 					return err
 				}
 				rp, rerr := resolvePhaseDirInput(path, cwd)
@@ -114,10 +133,16 @@ func charmCreateTask(ctx context.Context) error {
 				),
 			).WithTheme(theme())
 			if err := form.Run(); err != nil {
+				if uitheme.IsCancelled(err) {
+					return nil
+				}
 				return err
 			}
 			if sSel == "__other__" {
 				if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Sequence (dir or number)").Value(&path))).WithTheme(theme()).Run(); err != nil {
+					if uitheme.IsCancelled(err) {
+						return nil
+					}
 					return err
 				}
 			} else {
@@ -131,6 +156,9 @@ func charmCreateTask(ctx context.Context) error {
 				),
 			).WithTheme(theme())
 			if err := form.Run(); err != nil {
+				if uitheme.IsCancelled(err) {
+					return nil
+				}
 				return err
 			}
 		}
@@ -147,11 +175,17 @@ func charmCreateTask(ctx context.Context) error {
 				huh.NewOption("Insert after number", "insert"),
 			).Value(&pos),
 		)).WithTheme(theme()).Run(); err != nil {
+			if uitheme.IsCancelled(err) {
+				return nil
+			}
 			return err
 		}
 		if pos == "insert" {
 			afterStr = fmt.Sprintf("%d", defAfter)
 			if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr))).WithTheme(theme()).Run(); err != nil {
+				if uitheme.IsCancelled(err) {
+					return nil
+				}
 				return err
 			}
 		} else {
@@ -168,6 +202,9 @@ func charmCreateTask(ctx context.Context) error {
 		}
 		var v string
 		if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title(k).Value(&v))).WithTheme(theme()).Run(); err != nil {
+			if uitheme.IsCancelled(err) {
+				return nil
+			}
 			return err
 		}
 		if strings.TrimSpace(v) != "" {

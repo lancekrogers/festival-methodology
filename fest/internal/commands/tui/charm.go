@@ -11,6 +11,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+	uitheme "github.com/lancekrogers/festival-methodology/fest/internal/ui/theme"
 	"github.com/spf13/cobra"
 )
 
@@ -47,6 +48,9 @@ func runCharmTUI(ctx context.Context) error {
 			),
 		).WithTheme(theme())
 		if err := form.Run(); err != nil {
+			if uitheme.IsCancelled(err) {
+				return nil // Clean exit on Ctrl-C
+			}
 			return err
 		}
 		if initNow {
@@ -76,9 +80,12 @@ func runCharmTUI(ctx context.Context) error {
 					).
 					Value(&action),
 			),
-		).WithTheme(huh.ThemeBase())
+		).WithTheme(theme())
 
 		if err := menu.Run(); err != nil {
+			if uitheme.IsCancelled(err) {
+				return nil // Clean exit on Ctrl-C
+			}
 			return err
 		}
 
@@ -130,10 +137,10 @@ func toOptions(values []string) []huh.Option[string] {
 	return opts
 }
 
-// theme returns the custom theme for TUI forms
+// theme returns the custom theme for TUI forms.
+// Uses the high-contrast FestTheme that works on any terminal background.
 func theme() *huh.Theme {
-	// Use ThemeCharm for better visual appeal
-	return huh.ThemeCharm()
+	return uitheme.FestTheme()
 }
 
 // fallbackDot returns "." if string is empty, otherwise returns the string
@@ -168,6 +175,9 @@ func StartCreateTUI(ctx context.Context) error {
 			),
 		).WithTheme(theme())
 		if err := menu.Run(); err != nil {
+			if uitheme.IsCancelled(err) {
+				return nil // Clean exit on Ctrl-C
+			}
 			return err
 		}
 		switch action {
