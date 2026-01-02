@@ -92,15 +92,18 @@ func runProgress(opts *progressOptions) error {
 
 	// Handle task updates
 	if opts.taskID != "" {
-		return handleTaskUpdate(mgr, opts)
+		return handleTaskUpdate(mgr, loc.Festival.Path, opts)
 	}
 
 	// Show progress overview
 	return showProgressOverview(mgr, loc, opts)
 }
 
-func handleTaskUpdate(mgr *progress.Manager, opts *progressOptions) error {
-	taskID := opts.taskID
+func handleTaskUpdate(mgr *progress.Manager, festivalPath string, opts *progressOptions) error {
+	taskID, err := progress.NormalizeTaskID(festivalPath, opts.taskID)
+	if err != nil {
+		return err
+	}
 
 	// Handle blocker report
 	if opts.blocker != "" {

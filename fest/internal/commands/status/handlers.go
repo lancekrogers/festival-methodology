@@ -316,6 +316,7 @@ func runSequenceListing(ctx context.Context, loc *show.LocationInfo, filterStatu
 
 // collectSequencesForListing collects sequences based on the current location context.
 func collectSequencesForListing(ctx context.Context, loc *show.LocationInfo) ([]*SequenceInfo, error) {
+	store := progressStoreForFestival(loc.Festival.Path)
 	switch loc.Type {
 	case "festival":
 		// List all sequences in festival
@@ -323,12 +324,12 @@ func collectSequencesForListing(ctx context.Context, loc *show.LocationInfo) ([]
 	case "phase":
 		// List sequences in current phase
 		phasePath := filepath.Join(loc.Festival.Path, loc.Phase)
-		return collectSequences(ctx, phasePath, loc.Phase)
+		return collectSequences(ctx, phasePath, loc.Phase, store, loc.Festival.Path)
 	default:
 		// In sequence or task - list current sequence
 		phasePath := filepath.Join(loc.Festival.Path, loc.Phase)
 		seqPath := filepath.Join(phasePath, loc.Sequence)
-		seq, err := collectSequenceInfo(ctx, seqPath, loc.Phase, loc.Sequence)
+		seq, err := collectSequenceInfo(ctx, seqPath, loc.Phase, loc.Sequence, store, loc.Festival.Path)
 		if err != nil {
 			return nil, err
 		}
@@ -381,6 +382,7 @@ func runTaskListing(ctx context.Context, loc *show.LocationInfo, filterStatus st
 
 // collectTasksForListing collects tasks based on the current location context.
 func collectTasksForListing(ctx context.Context, loc *show.LocationInfo) ([]*TaskInfo, error) {
+	store := progressStoreForFestival(loc.Festival.Path)
 	switch loc.Type {
 	case "festival":
 		// List all tasks in festival
@@ -388,12 +390,12 @@ func collectTasksForListing(ctx context.Context, loc *show.LocationInfo) ([]*Tas
 	case "phase":
 		// List tasks in current phase
 		phasePath := filepath.Join(loc.Festival.Path, loc.Phase)
-		return collectTasksFromPhase(ctx, phasePath, loc.Phase)
+		return collectTasksFromPhase(ctx, phasePath, loc.Phase, store, loc.Festival.Path)
 	default:
 		// In sequence or task - list tasks in current sequence
 		phasePath := filepath.Join(loc.Festival.Path, loc.Phase)
 		seqPath := filepath.Join(phasePath, loc.Sequence)
-		return collectTasks(ctx, seqPath, loc.Phase, loc.Sequence)
+		return collectTasks(ctx, seqPath, loc.Phase, loc.Sequence, store, loc.Festival.Path)
 	}
 }
 

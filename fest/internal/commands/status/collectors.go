@@ -93,6 +93,8 @@ func collectSequencesFromFestival(ctx context.Context, festivalPath string) ([]*
 		return nil, errors.Wrap(err, "context cancelled")
 	}
 
+	store := progressStoreForFestival(festivalPath)
+
 	entries, err := os.ReadDir(festivalPath)
 	if err != nil {
 		return nil, errors.IO("reading festival directory", err).WithField("path", festivalPath)
@@ -109,7 +111,7 @@ func collectSequencesFromFestival(ctx context.Context, festivalPath string) ([]*
 		}
 
 		phaseDir := filepath.Join(festivalPath, entry.Name())
-		sequences, err := collectSequences(ctx, phaseDir, entry.Name())
+		sequences, err := collectSequences(ctx, phaseDir, entry.Name(), store, festivalPath)
 		if err != nil {
 			// Log warning but continue - partial results are acceptable
 			continue
@@ -122,7 +124,7 @@ func collectSequencesFromFestival(ctx context.Context, festivalPath string) ([]*
 }
 
 // collectSequences collects all sequences from a phase directory.
-func collectSequences(ctx context.Context, phasePath, phaseName string) ([]*SequenceInfo, error) {
+func collectSequences(ctx context.Context, phasePath, phaseName string, store *progress.Store, festivalRoot string) ([]*SequenceInfo, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, errors.Wrap(err, "context cancelled")
 	}
@@ -143,7 +145,7 @@ func collectSequences(ctx context.Context, phasePath, phaseName string) ([]*Sequ
 		}
 
 		seqDir := filepath.Join(phasePath, entry.Name())
-		seq, err := collectSequenceInfo(ctx, seqDir, phaseName, entry.Name())
+		seq, err := collectSequenceInfo(ctx, seqDir, phaseName, entry.Name(), store, festivalRoot)
 		if err != nil {
 			// Log warning but continue - partial results are acceptable
 			continue
@@ -156,13 +158,13 @@ func collectSequences(ctx context.Context, phasePath, phaseName string) ([]*Sequ
 }
 
 // collectSequenceInfo collects information about a single sequence.
-func collectSequenceInfo(ctx context.Context, seqPath, phaseName, seqName string) (*SequenceInfo, error) {
+func collectSequenceInfo(ctx context.Context, seqPath, phaseName, seqName string, store *progress.Store, festivalRoot string) (*SequenceInfo, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, errors.Wrap(err, "context cancelled")
 	}
 
 	// Count tasks in sequence
-	taskStats, err := countSequenceTasks(ctx, seqPath)
+	taskStats, err := countSequenceTasks(ctx, seqPath, store, festivalRoot)
 	if err != nil {
 		taskStats = StatusCounts{}
 	}
@@ -187,7 +189,7 @@ func collectSequenceInfo(ctx context.Context, seqPath, phaseName, seqName string
 }
 
 // countSequenceTasks counts tasks in a sequence directory.
-func countSequenceTasks(ctx context.Context, seqDir string) (StatusCounts, error) {
+func countSequenceTasks(ctx context.Context, seqDir string, store *progress.Store, festivalRoot string) (StatusCounts, error) {
 	counts := StatusCounts{}
 
 	if err := ctx.Err(); err != nil {
@@ -212,7 +214,7 @@ func countSequenceTasks(ctx context.Context, seqDir string) (StatusCounts, error
 
 		counts.Total++
 		taskPath := filepath.Join(seqDir, name)
-		status := progress.ParseTaskStatus(taskPath)
+		status := progress.ResolveTaskStatus(store, festivalRoot, taskPath)
 
 		switch status {
 		case "completed":
@@ -235,6 +237,8 @@ func collectTasksFromFestival(ctx context.Context, festivalPath string) ([]*Task
 		return nil, errors.Wrap(err, "context cancelled")
 	}
 
+	store := progressStoreForFestival(festivalPath)
+
 	phases, err := os.ReadDir(festivalPath)
 	if err != nil {
 		return nil, errors.IO("reading festival directory", err).WithField("path", festivalPath)
@@ -251,7 +255,7 @@ func collectTasksFromFestival(ctx context.Context, festivalPath string) ([]*Task
 		}
 
 		phaseDir := filepath.Join(festivalPath, phaseEntry.Name())
-		tasks, err := collectTasksFromPhase(ctx, phaseDir, phaseEntry.Name())
+		tasks, err := collectTasksFromPhase(ctx, phaseDir, phaseEntry.Name(), store, festivalPath)
 		if err != nil {
 			// Log warning but continue - partial results are acceptable
 			continue
@@ -264,7 +268,7 @@ func collectTasksFromFestival(ctx context.Context, festivalPath string) ([]*Task
 }
 
 // collectTasksFromPhase collects all tasks from all sequences in a phase.
-func collectTasksFromPhase(ctx context.Context, phasePath, phaseName string) ([]*TaskInfo, error) {
+func collectTasksFromPhase(ctx context.Context, phasePath, phaseName string, store *progress.Store, festivalRoot string) ([]*TaskInfo, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, errors.Wrap(err, "context cancelled")
 	}
@@ -285,7 +289,7 @@ func collectTasksFromPhase(ctx context.Context, phasePath, phaseName string) ([]
 		}
 
 		seqDir := filepath.Join(phasePath, seqEntry.Name())
-		tasks, err := collectTasks(ctx, seqDir, phaseName, seqEntry.Name())
+		tasks, err := collectTasks(ctx, seqDir, phaseName, seqEntry.Name(), store, festivalRoot)
 		if err != nil {
 			// Log warning but continue - partial results are acceptable
 			continue
@@ -298,7 +302,7 @@ func collectTasksFromPhase(ctx context.Context, phasePath, phaseName string) ([]
 }
 
 // collectTasks collects all tasks from a sequence directory.
-func collectTasks(ctx context.Context, seqPath, phaseName, seqName string) ([]*TaskInfo, error) {
+func collectTasks(ctx context.Context, seqPath, phaseName, seqName string, store *progress.Store, festivalRoot string) ([]*TaskInfo, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, errors.Wrap(err, "context cancelled")
 	}
@@ -321,7 +325,7 @@ func collectTasks(ctx context.Context, seqPath, phaseName, seqName string) ([]*T
 		}
 
 		taskPath := filepath.Join(seqPath, name)
-		status := progress.ParseTaskStatus(taskPath)
+		status := progress.ResolveTaskStatus(store, festivalRoot, taskPath)
 
 		tasks = append(tasks, &TaskInfo{
 			Name:         strings.TrimSuffix(name, ".md"),
@@ -333,6 +337,14 @@ func collectTasks(ctx context.Context, seqPath, phaseName, seqName string) ([]*T
 	}
 
 	return tasks, nil
+}
+
+func progressStoreForFestival(festivalPath string) *progress.Store {
+	mgr, err := progress.NewManager(festivalPath)
+	if err != nil {
+		return nil
+	}
+	return mgr.Store()
 }
 
 // isGoalOrGateFile checks if a filename is a goal or gate file that should be skipped.

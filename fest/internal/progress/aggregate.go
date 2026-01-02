@@ -173,14 +173,13 @@ func (m *Manager) GetSequenceProgress(seqPath string) (*SequenceProgress, error)
 			continue
 		}
 
-		taskID := entry.Name()
 		aggregate.Total++
+		taskPath := filepath.Join(seqPath, entry.Name())
 
-		// Check if we have progress data for this task
-		task, exists := m.store.GetTask(taskID)
+		// Check if we have progress data for this task (prefer relative path keys)
+		task, exists := ResolveTaskProgress(m.store, m.store.festivalPath, taskPath)
 		if !exists {
 			// No YAML data - parse markdown file for checkbox status
-			taskPath := filepath.Join(seqPath, entry.Name())
 			status := ParseTaskStatus(taskPath)
 			switch status {
 			case StatusCompleted:
