@@ -3,10 +3,12 @@ package status
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
 )
 
 // emitErrorJSON outputs an error message in JSON format.
@@ -75,6 +77,20 @@ func emitLocationText(loc *show.LocationInfo) error {
 		fmt.Printf("Task:     %s\n", loc.Task)
 	}
 
+	// Display context-appropriate progress
+	switch loc.Type {
+	case "sequence":
+		return emitSequenceProgress(loc)
+	case "phase":
+		return emitPhaseProgress(loc)
+	case "festival", "task":
+		return emitFestivalProgress(loc)
+	default:
+		return emitFestivalProgress(loc)
+	}
+}
+
+func emitFestivalProgress(loc *show.LocationInfo) error {
 	if loc.Festival.Stats != nil {
 		fmt.Printf("\nProgress: %.1f%%\n", loc.Festival.Stats.Progress)
 		fmt.Printf("  Phases:    %d/%d completed\n",
@@ -86,6 +102,71 @@ func emitLocationText(loc *show.LocationInfo) error {
 		fmt.Printf("  Tasks:     %d/%d completed\n",
 			loc.Festival.Stats.Tasks.Completed,
 			loc.Festival.Stats.Tasks.Total)
+	}
+	return nil
+}
+
+func emitPhaseProgress(loc *show.LocationInfo) error {
+	mgr, err := progress.NewManager(loc.Festival.Path)
+	if err != nil {
+		// Fall back to festival stats if progress manager fails
+		return emitFestivalProgress(loc)
+	}
+
+	phasePath := filepath.Join(loc.Festival.Path, loc.Phase)
+	phaseProgress, err := mgr.GetPhaseProgress(phasePath)
+	if err != nil {
+		// Fall back to festival stats if phase progress fails
+		return emitFestivalProgress(loc)
+	}
+
+	prog := phaseProgress.Progress
+	fmt.Printf("\nPhase Progress: %d%% (%d/%d tasks)\n",
+		prog.Percentage,
+		prog.Completed,
+		prog.Total)
+
+	if prog.InProgress > 0 {
+		fmt.Printf("  In Progress: %d\n", prog.InProgress)
+	}
+	if prog.Pending > 0 {
+		fmt.Printf("  Pending:     %d\n", prog.Pending)
+	}
+	if prog.Blocked > 0 {
+		fmt.Printf("  Blocked:     %d\n", prog.Blocked)
+	}
+
+	return nil
+}
+
+func emitSequenceProgress(loc *show.LocationInfo) error {
+	mgr, err := progress.NewManager(loc.Festival.Path)
+	if err != nil {
+		// Fall back to festival stats if progress manager fails
+		return emitFestivalProgress(loc)
+	}
+
+	seqPath := filepath.Join(loc.Festival.Path, loc.Phase, loc.Sequence)
+	seqProgress, err := mgr.GetSequenceProgress(seqPath)
+	if err != nil {
+		// Fall back to festival stats if sequence progress fails
+		return emitFestivalProgress(loc)
+	}
+
+	prog := seqProgress.Progress
+	fmt.Printf("\nSequence Progress: %d%% (%d/%d tasks)\n",
+		prog.Percentage,
+		prog.Completed,
+		prog.Total)
+
+	if prog.InProgress > 0 {
+		fmt.Printf("  In Progress: %d\n", prog.InProgress)
+	}
+	if prog.Pending > 0 {
+		fmt.Printf("  Pending:     %d\n", prog.Pending)
+	}
+	if prog.Blocked > 0 {
+		fmt.Printf("  Blocked:     %d\n", prog.Blocked)
 	}
 
 	return nil

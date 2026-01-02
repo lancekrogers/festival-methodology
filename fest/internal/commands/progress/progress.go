@@ -291,6 +291,20 @@ func handleTaskUpdate(mgr *progress.Manager, festivalPath string, opts *progress
 }
 
 func showProgressOverview(mgr *progress.Manager, loc *show.LocationInfo, opts *progressOptions) error {
+	// Determine scope based on location
+	switch loc.Type {
+	case "sequence":
+		return showSequenceProgress(mgr, loc, opts)
+	case "phase":
+		return showPhaseProgress(mgr, loc, opts)
+	case "festival", "task":
+		return showFestivalProgress(mgr, loc, opts)
+	default:
+		return showFestivalProgress(mgr, loc, opts)
+	}
+}
+
+func showFestivalProgress(mgr *progress.Manager, loc *show.LocationInfo, opts *progressOptions) error {
 	festProgress, err := mgr.GetFestivalProgress(loc.Festival.Path)
 	if err != nil {
 		return errors.Wrap(err, "calculating progress")
@@ -347,6 +361,111 @@ func showProgressOverview(mgr *progress.Manager, loc *show.LocationInfo, opts *p
 		fmt.Println("\nBLOCKERS")
 		fmt.Println(strings.Repeat("-", 60))
 		for _, blocker := range overall.Blockers {
+			fmt.Printf("🚫 %s: %s\n", blocker.TaskID, blocker.BlockerMessage)
+		}
+	}
+
+	return nil
+}
+
+func showPhaseProgress(mgr *progress.Manager, loc *show.LocationInfo, opts *progressOptions) error {
+	phasePath := filepath.Join(loc.Festival.Path, loc.Phase)
+	phaseProgress, err := mgr.GetPhaseProgress(phasePath)
+	if err != nil {
+		return errors.Wrap(err, "calculating phase progress")
+	}
+
+	if opts.json {
+		data, _ := json.MarshalIndent(phaseProgress, "", "  ")
+		fmt.Println(string(data))
+		return nil
+	}
+
+	// Human-readable output
+	fmt.Printf("PHASE PROGRESS: %s\n", phaseProgress.PhaseName)
+	fmt.Printf("Festival: %s\n", loc.Festival.Name)
+	fmt.Println(strings.Repeat("=", 60))
+
+	// Phase progress bar
+	prog := phaseProgress.Progress
+	fmt.Printf("\nPhase: %s %d%% (%d/%d tasks)\n",
+		progressBar(prog.Percentage),
+		prog.Percentage,
+		prog.Completed,
+		prog.Total)
+
+	if prog.InProgress > 0 {
+		fmt.Printf("  In Progress: %d\n", prog.InProgress)
+	}
+
+	if prog.Blocked > 0 {
+		fmt.Printf("⚠️  Blocked: %d task(s)\n", prog.Blocked)
+	}
+
+	if prog.TimeSpentMin > 0 {
+		fmt.Printf("⏱️  Time spent: %d min\n", prog.TimeSpentMin)
+	}
+
+	// Show blockers if any
+	if len(prog.Blockers) > 0 {
+		fmt.Println("\nBLOCKERS")
+		fmt.Println(strings.Repeat("-", 60))
+		for _, blocker := range prog.Blockers {
+			fmt.Printf("🚫 %s: %s\n", blocker.TaskID, blocker.BlockerMessage)
+		}
+	}
+
+	return nil
+}
+
+func showSequenceProgress(mgr *progress.Manager, loc *show.LocationInfo, opts *progressOptions) error {
+	seqPath := filepath.Join(loc.Festival.Path, loc.Phase, loc.Sequence)
+	seqProgress, err := mgr.GetSequenceProgress(seqPath)
+	if err != nil {
+		return errors.Wrap(err, "calculating sequence progress")
+	}
+
+	if opts.json {
+		data, _ := json.MarshalIndent(seqProgress, "", "  ")
+		fmt.Println(string(data))
+		return nil
+	}
+
+	// Human-readable output
+	fmt.Printf("SEQUENCE PROGRESS: %s\n", seqProgress.SequenceName)
+	fmt.Printf("Phase: %s\n", loc.Phase)
+	fmt.Printf("Festival: %s\n", loc.Festival.Name)
+	fmt.Println(strings.Repeat("=", 60))
+
+	// Sequence progress bar
+	prog := seqProgress.Progress
+	fmt.Printf("\nSequence: %s %d%% (%d/%d tasks)\n",
+		progressBar(prog.Percentage),
+		prog.Percentage,
+		prog.Completed,
+		prog.Total)
+
+	if prog.InProgress > 0 {
+		fmt.Printf("  In Progress: %d\n", prog.InProgress)
+	}
+
+	if prog.Pending > 0 {
+		fmt.Printf("  Pending: %d\n", prog.Pending)
+	}
+
+	if prog.Blocked > 0 {
+		fmt.Printf("⚠️  Blocked: %d task(s)\n", prog.Blocked)
+	}
+
+	if prog.TimeSpentMin > 0 {
+		fmt.Printf("⏱️  Time spent: %d min\n", prog.TimeSpentMin)
+	}
+
+	// Show blockers if any
+	if len(prog.Blockers) > 0 {
+		fmt.Println("\nBLOCKERS")
+		fmt.Println(strings.Repeat("-", 60))
+		for _, blocker := range prog.Blockers {
 			fmt.Printf("🚫 %s: %s\n", blocker.TaskID, blocker.BlockerMessage)
 		}
 	}

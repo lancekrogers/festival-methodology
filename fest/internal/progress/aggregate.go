@@ -1,10 +1,13 @@
 package progress
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
 // AggregateProgress holds aggregated progress stats
