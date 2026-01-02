@@ -10,6 +10,7 @@ import (
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
 	"github.com/spf13/cobra"
 )
 
@@ -402,6 +403,685 @@ func isValidStatus(entityType EntityType, status string) bool {
 	return false
 }
 
+// PhaseInfo holds information about a phase.
+type PhaseInfo struct {
+	Name      string       `json:"name"`
+	Path      string       `json:"path"`
+	Status    string       `json:"status"`
+	TaskStats StatusCounts `json:"task_stats,omitempty"`
+}
+
+// SequenceInfo holds information about a sequence.
+type SequenceInfo struct {
+	Name      string       `json:"name"`
+	Path      string       `json:"path"`
+	PhaseName string       `json:"phase_name"`
+	Status    string       `json:"status"`
+	TaskStats StatusCounts `json:"task_stats,omitempty"`
+}
+
+// TaskInfo holds information about a task.
+type TaskInfo struct {
+	Name         string `json:"name"`
+	Path         string `json:"path"`
+	PhaseName    string `json:"phase_name"`
+	SequenceName string `json:"sequence_name"`
+	Status       string `json:"status"`
+}
+
+// StatusCounts tracks entity completion.
+type StatusCounts struct {
+	Total      int `json:"total"`
+	Completed  int `json:"completed"`
+	InProgress int `json:"in_progress"`
+	Pending    int `json:"pending"`
+	Blocked    int `json:"blocked,omitempty"`
+}
+
+// collectPhases collects all phases from a festival directory.
+func collectPhases(festivalPath string) ([]*PhaseInfo, error) {
+	var phases []*PhaseInfo
+
+	entries, err := os.ReadDir(festivalPath)
+	if err != nil {
+		return nil, errors.IO("reading festival directory", err).WithField("path", festivalPath)
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		phaseDir := filepath.Join(festivalPath, entry.Name())
+
+		// Check if it's a phase directory (numeric prefix)
+		if !hasNumericPrefix(entry.Name()) {
+			continue
+		}
+
+		phase, err := collectPhaseInfo(phaseDir, entry.Name())
+		if err != nil {
+			// Skip phases that can't be parsed
+			continue
+		}
+
+		phases = append(phases, phase)
+	}
+
+	return phases, nil
+}
+
+// collectPhaseInfo collects information about a single phase.
+func collectPhaseInfo(phasePath, phaseName string) (*PhaseInfo, error) {
+	// Calculate phase stats using show package
+	festStats, err := show.CalculateFestivalStats(phasePath)
+	var taskStats StatusCounts
+	if err == nil && festStats != nil {
+		taskStats = StatusCounts{
+			Total:      festStats.Tasks.Total,
+			Completed:  festStats.Tasks.Completed,
+			InProgress: festStats.Tasks.InProgress,
+			Pending:    festStats.Tasks.Pending,
+			Blocked:    festStats.Tasks.Blocked,
+		}
+	}
+
+	// Determine phase status
+	status := "pending"
+	if taskStats.Total > 0 {
+		if taskStats.Completed == taskStats.Total {
+			status = "completed"
+		} else if taskStats.InProgress > 0 || taskStats.Completed > 0 {
+			status = "in_progress"
+		}
+	}
+
+	return &PhaseInfo{
+		Name:      phaseName,
+		Path:      phasePath,
+		Status:    status,
+		TaskStats: taskStats,
+	}, nil
+}
+
+// collectSequencesFromFestival collects all sequences across all phases in a festival.
+func collectSequencesFromFestival(festivalPath string) ([]*SequenceInfo, error) {
+	var allSequences []*SequenceInfo
+
+	entries, err := os.ReadDir(festivalPath)
+	if err != nil {
+		return nil, errors.IO("reading festival directory", err).WithField("path", festivalPath)
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() || !hasNumericPrefix(entry.Name()) {
+			continue
+		}
+
+		phaseDir := filepath.Join(festivalPath, entry.Name())
+		sequences, err := collectSequences(phaseDir, entry.Name())
+		if err != nil {
+			continue
+		}
+
+		allSequences = append(allSequences, sequences...)
+	}
+
+	return allSequences, nil
+}
+
+// collectSequences collects all sequences from a phase directory.
+func collectSequences(phasePath, phaseName string) ([]*SequenceInfo, error) {
+	var sequences []*SequenceInfo
+
+	entries, err := os.ReadDir(phasePath)
+	if err != nil {
+		return nil, errors.IO("reading phase directory", err).WithField("path", phasePath)
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() || !hasNumericPrefix(entry.Name()) {
+			continue
+		}
+
+		seqDir := filepath.Join(phasePath, entry.Name())
+		seq, err := collectSequenceInfo(seqDir, phaseName, entry.Name())
+		if err != nil {
+			continue
+		}
+
+		sequences = append(sequences, seq)
+	}
+
+	return sequences, nil
+}
+
+// collectSequenceInfo collects information about a single sequence.
+func collectSequenceInfo(seqPath, phaseName, seqName string) (*SequenceInfo, error) {
+	// Count tasks in sequence
+	taskStats, err := countSequenceTasks(seqPath)
+	if err != nil {
+		taskStats = StatusCounts{}
+	}
+
+	// Determine sequence status
+	status := "pending"
+	if taskStats.Total > 0 {
+		if taskStats.Completed == taskStats.Total {
+			status = "completed"
+		} else if taskStats.InProgress > 0 || taskStats.Completed > 0 {
+			status = "in_progress"
+		}
+	}
+
+	return &SequenceInfo{
+		Name:      seqName,
+		Path:      seqPath,
+		PhaseName: phaseName,
+		Status:    status,
+		TaskStats: taskStats,
+	}, nil
+}
+
+// countSequenceTasks counts tasks in a sequence directory.
+func countSequenceTasks(seqDir string) (StatusCounts, error) {
+	counts := StatusCounts{}
+
+	entries, err := os.ReadDir(seqDir)
+	if err != nil {
+		return counts, err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+
+		name := entry.Name()
+		// Skip goal files and gate files
+		if name == "SEQUENCE_GOAL.md" || name == "PHASE_GOAL.md" ||
+		   name == "FESTIVAL_GOAL.md" || name == "FESTIVAL_OVERVIEW.md" ||
+		   strings.Contains(strings.ToLower(name), "gate") {
+			continue
+		}
+
+		counts.Total++
+		taskPath := filepath.Join(seqDir, name)
+		status := progress.ParseTaskStatus(taskPath)
+
+		switch status {
+		case "completed":
+			counts.Completed++
+		case "in_progress":
+			counts.InProgress++
+		case "blocked":
+			counts.Blocked++
+		default:
+			counts.Pending++
+		}
+	}
+
+	return counts, nil
+}
+
+// collectTasksFromFestival collects all tasks across all sequences in a festival.
+func collectTasksFromFestival(festivalPath string) ([]*TaskInfo, error) {
+	var allTasks []*TaskInfo
+
+	phases, err := os.ReadDir(festivalPath)
+	if err != nil {
+		return nil, errors.IO("reading festival directory", err).WithField("path", festivalPath)
+	}
+
+	for _, phaseEntry := range phases {
+		if !phaseEntry.IsDir() || !hasNumericPrefix(phaseEntry.Name()) {
+			continue
+		}
+
+		phaseDir := filepath.Join(festivalPath, phaseEntry.Name())
+		tasks, err := collectTasksFromPhase(phaseDir, phaseEntry.Name())
+		if err != nil {
+			continue
+		}
+
+		allTasks = append(allTasks, tasks...)
+	}
+
+	return allTasks, nil
+}
+
+// collectTasksFromPhase collects all tasks from all sequences in a phase.
+func collectTasksFromPhase(phasePath, phaseName string) ([]*TaskInfo, error) {
+	var allTasks []*TaskInfo
+
+	sequences, err := os.ReadDir(phasePath)
+	if err != nil {
+		return nil, errors.IO("reading phase directory", err).WithField("path", phasePath)
+	}
+
+	for _, seqEntry := range sequences {
+		if !seqEntry.IsDir() || !hasNumericPrefix(seqEntry.Name()) {
+			continue
+		}
+
+		seqDir := filepath.Join(phasePath, seqEntry.Name())
+		tasks, err := collectTasks(seqDir, phaseName, seqEntry.Name())
+		if err != nil {
+			continue
+		}
+
+		allTasks = append(allTasks, tasks...)
+	}
+
+	return allTasks, nil
+}
+
+// collectTasks collects all tasks from a sequence directory.
+func collectTasks(seqPath, phaseName, seqName string) ([]*TaskInfo, error) {
+	var tasks []*TaskInfo
+
+	entries, err := os.ReadDir(seqPath)
+	if err != nil {
+		return nil, errors.IO("reading sequence directory", err).WithField("path", seqPath)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+
+		name := entry.Name()
+		// Skip goal files and gate files
+		if name == "SEQUENCE_GOAL.md" || name == "PHASE_GOAL.md" ||
+		   name == "FESTIVAL_GOAL.md" || name == "FESTIVAL_OVERVIEW.md" ||
+		   strings.Contains(strings.ToLower(name), "gate") {
+			continue
+		}
+
+		taskPath := filepath.Join(seqPath, name)
+		status := progress.ParseTaskStatus(taskPath)
+
+		tasks = append(tasks, &TaskInfo{
+			Name:         strings.TrimSuffix(name, ".md"),
+			Path:         taskPath,
+			PhaseName:    phaseName,
+			SequenceName: seqName,
+			Status:       status,
+		})
+	}
+
+	return tasks, nil
+}
+
+// hasNumericPrefix checks if a directory name starts with digits.
+func hasNumericPrefix(name string) bool {
+	if len(name) == 0 {
+		return false
+	}
+	return name[0] >= '0' && name[0] <= '9'
+}
+
+// Filter functions
+
+func filterPhasesByStatus(phases []*PhaseInfo, status string) []*PhaseInfo {
+	if status == "" {
+		return phases
+	}
+
+	var filtered []*PhaseInfo
+	for _, phase := range phases {
+		if phase.Status == status {
+			filtered = append(filtered, phase)
+		}
+	}
+	return filtered
+}
+
+func filterSequencesByStatus(sequences []*SequenceInfo, status string) []*SequenceInfo {
+	if status == "" {
+		return sequences
+	}
+
+	var filtered []*SequenceInfo
+	for _, seq := range sequences {
+		if seq.Status == status {
+			filtered = append(filtered, seq)
+		}
+	}
+	return filtered
+}
+
+func filterTasksByStatus(tasks []*TaskInfo, status string) []*TaskInfo {
+	if status == "" {
+		return tasks
+	}
+
+	var filtered []*TaskInfo
+	for _, task := range tasks {
+		if task.Status == status {
+			filtered = append(filtered, task)
+		}
+	}
+	return filtered
+}
+
+// Presentation functions
+
+func emitPhasesJSON(phases []*PhaseInfo, filterStatus string) error {
+	result := map[string]interface{}{
+		"type":  "phase",
+		"count": len(phases),
+		"phases": phases,
+	}
+	if filterStatus != "" {
+		result["status"] = filterStatus
+	}
+
+	data, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		return errors.Wrap(err, "marshaling phases to JSON")
+	}
+	fmt.Println(string(data))
+	return nil
+}
+
+func emitPhasesText(phases []*PhaseInfo, filterStatus string) error {
+	if filterStatus != "" {
+		fmt.Printf("Phases with status '%s' (%d)\n", filterStatus, len(phases))
+	} else {
+		fmt.Printf("Phases (%d)\n", len(phases))
+	}
+	fmt.Println(strings.Repeat("─", 60))
+
+	for _, phase := range phases {
+		fmt.Printf("  %s [%s]", phase.Name, phase.Status)
+		if phase.TaskStats.Total > 0 {
+			fmt.Printf(" (%d/%d tasks)", phase.TaskStats.Completed, phase.TaskStats.Total)
+		}
+		fmt.Println()
+	}
+
+	return nil
+}
+
+func emitSequencesJSON(sequences []*SequenceInfo, filterStatus string) error {
+	result := map[string]interface{}{
+		"type":      "sequence",
+		"count":     len(sequences),
+		"sequences": sequences,
+	}
+	if filterStatus != "" {
+		result["status"] = filterStatus
+	}
+
+	data, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		return errors.Wrap(err, "marshaling sequences to JSON")
+	}
+	fmt.Println(string(data))
+	return nil
+}
+
+func emitSequencesText(sequences []*SequenceInfo, filterStatus string) error {
+	if filterStatus != "" {
+		fmt.Printf("Sequences with status '%s' (%d)\n", filterStatus, len(sequences))
+	} else {
+		fmt.Printf("Sequences (%d)\n", len(sequences))
+	}
+	fmt.Println(strings.Repeat("─", 60))
+
+	for _, seq := range sequences {
+		fmt.Printf("  %s/%s [%s]", seq.PhaseName, seq.Name, seq.Status)
+		if seq.TaskStats.Total > 0 {
+			fmt.Printf(" (%d/%d tasks)", seq.TaskStats.Completed, seq.TaskStats.Total)
+		}
+		fmt.Println()
+	}
+
+	return nil
+}
+
+func emitTasksJSON(tasks []*TaskInfo, filterStatus string) error {
+	result := map[string]interface{}{
+		"type":  "task",
+		"count": len(tasks),
+		"tasks": tasks,
+	}
+	if filterStatus != "" {
+		result["status"] = filterStatus
+	}
+
+	data, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		return errors.Wrap(err, "marshaling tasks to JSON")
+	}
+	fmt.Println(string(data))
+	return nil
+}
+
+func emitTasksText(tasks []*TaskInfo, filterStatus string) error {
+	if filterStatus != "" {
+		fmt.Printf("Tasks with status '%s' (%d)\n", filterStatus, len(tasks))
+	} else {
+		fmt.Printf("Tasks (%d)\n", len(tasks))
+	}
+	fmt.Println(strings.Repeat("─", 60))
+
+	for _, task := range tasks {
+		fmt.Printf("  %s/%s/%s [%s]\n",
+			task.PhaseName,
+			task.SequenceName,
+			task.Name,
+			task.Status)
+	}
+
+	return nil
+}
+
+func emitEmptyJSON(entityType, filterStatus string) error {
+	result := map[string]interface{}{
+		"type":  entityType,
+		"count": 0,
+	}
+	if filterStatus != "" {
+		result["status"] = filterStatus
+		result["message"] = fmt.Sprintf("no %ss found with status '%s'", entityType, filterStatus)
+	} else {
+		result["message"] = fmt.Sprintf("no %ss found", entityType)
+	}
+
+	data, _ := json.MarshalIndent(result, "", "  ")
+	fmt.Println(string(data))
+	return nil
+}
+
+// Routing functions
+
+func runFestivalListing(festivalsRoot, filterStatus string, opts *statusOptions) error {
+	if filterStatus != "" {
+		festivals, err := show.ListFestivalsByStatus(festivalsRoot, filterStatus)
+		if err != nil {
+			return err
+		}
+
+		if opts.json {
+			result := map[string]interface{}{
+				"status":    filterStatus,
+				"count":     len(festivals),
+				"festivals": festivals,
+			}
+			data, _ := json.MarshalIndent(result, "", "  ")
+			fmt.Println(string(data))
+		} else {
+			fmt.Println(show.FormatFestivalList(filterStatus, festivals))
+		}
+	} else {
+		fmt.Println("Use 'fest show all' to see all festivals grouped by status")
+	}
+
+	return nil
+}
+
+func runPhaseListing(loc *show.LocationInfo, filterStatus string, opts *statusOptions) error {
+	if loc.Festival == nil {
+		return errors.NotFound("festival")
+	}
+
+	var phases []*PhaseInfo
+	var err error
+
+	// Collect phases based on current location
+	if loc.Type == "festival" {
+		// List all phases in festival
+		phases, err = collectPhases(loc.Festival.Path)
+	} else {
+		// In phase/sequence/task - list just current phase
+		phasePath := filepath.Join(loc.Festival.Path, loc.Phase)
+		phase, err := collectPhaseInfo(phasePath, loc.Phase)
+		if err != nil {
+			return err
+		}
+		phases = []*PhaseInfo{phase}
+	}
+
+	if err != nil {
+		return err
+	}
+
+	// Filter by status
+	phases = filterPhasesByStatus(phases, filterStatus)
+
+	// Handle empty results
+	if len(phases) == 0 {
+		if opts.json {
+			return emitEmptyJSON("phase", filterStatus)
+		}
+		fmt.Printf("No phases found")
+		if filterStatus != "" {
+			fmt.Printf(" with status '%s'", filterStatus)
+		}
+		fmt.Println()
+		return nil
+	}
+
+	// Emit output
+	if opts.json {
+		return emitPhasesJSON(phases, filterStatus)
+	}
+	return emitPhasesText(phases, filterStatus)
+}
+
+func runSequenceListing(loc *show.LocationInfo, filterStatus string, opts *statusOptions) error {
+	if loc.Festival == nil {
+		return errors.NotFound("festival")
+	}
+
+	var sequences []*SequenceInfo
+	var err error
+
+	// Collect sequences based on current location
+	switch loc.Type {
+	case "festival":
+		// List all sequences in festival
+		sequences, err = collectSequencesFromFestival(loc.Festival.Path)
+	case "phase":
+		// List sequences in current phase
+		phasePath := filepath.Join(loc.Festival.Path, loc.Phase)
+		sequences, err = collectSequences(phasePath, loc.Phase)
+	default:
+		// In sequence or task - list current sequence
+		phasePath := filepath.Join(loc.Festival.Path, loc.Phase)
+		seqPath := filepath.Join(phasePath, loc.Sequence)
+		seq, err := collectSequenceInfo(seqPath, loc.Phase, loc.Sequence)
+		if err != nil {
+			return err
+		}
+		sequences = []*SequenceInfo{seq}
+	}
+
+	if err != nil {
+		return err
+	}
+
+	// Filter by status
+	sequences = filterSequencesByStatus(sequences, filterStatus)
+
+	// Handle empty results
+	if len(sequences) == 0 {
+		if opts.json {
+			return emitEmptyJSON("sequence", filterStatus)
+		}
+		fmt.Printf("No sequences found")
+		if filterStatus != "" {
+			fmt.Printf(" with status '%s'", filterStatus)
+		}
+		fmt.Println()
+		return nil
+	}
+
+	// Emit output
+	if opts.json {
+		return emitSequencesJSON(sequences, filterStatus)
+	}
+	return emitSequencesText(sequences, filterStatus)
+}
+
+func runTaskListing(loc *show.LocationInfo, filterStatus string, opts *statusOptions) error {
+	if loc.Festival == nil {
+		return errors.NotFound("festival")
+	}
+
+	var tasks []*TaskInfo
+	var err error
+
+	// Collect tasks based on current location
+	switch loc.Type {
+	case "festival":
+		// List all tasks in festival
+		tasks, err = collectTasksFromFestival(loc.Festival.Path)
+	case "phase":
+		// List tasks in current phase
+		phasePath := filepath.Join(loc.Festival.Path, loc.Phase)
+		tasks, err = collectTasksFromPhase(phasePath, loc.Phase)
+	case "sequence":
+		// List tasks in current sequence
+		phasePath := filepath.Join(loc.Festival.Path, loc.Phase)
+		seqPath := filepath.Join(phasePath, loc.Sequence)
+		tasks, err = collectTasks(seqPath, loc.Phase, loc.Sequence)
+	default:
+		// In task - could list siblings or just the current task
+		phasePath := filepath.Join(loc.Festival.Path, loc.Phase)
+		seqPath := filepath.Join(phasePath, loc.Sequence)
+		tasks, err = collectTasks(seqPath, loc.Phase, loc.Sequence)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	// Filter by status
+	tasks = filterTasksByStatus(tasks, filterStatus)
+
+	// Handle empty results
+	if len(tasks) == 0 {
+		if opts.json {
+			return emitEmptyJSON("task", filterStatus)
+		}
+		fmt.Printf("No tasks found")
+		if filterStatus != "" {
+			fmt.Printf(" with status '%s'", filterStatus)
+		}
+		fmt.Println()
+		return nil
+	}
+
+	// Emit output
+	if opts.json {
+		return emitTasksJSON(tasks, filterStatus)
+	}
+	return emitTasksText(tasks, filterStatus)
+}
+
 func newStatusListCommand(opts *statusOptions) *cobra.Command {
 	var filterStatus string
 
@@ -432,45 +1112,52 @@ func runStatusList(cmd *cobra.Command, filterStatus string, opts *statusOptions)
 		return errors.IO("getting current directory", err)
 	}
 
-	// Use the show package's listing functionality
-	if opts.entityType == "festival" || opts.entityType == "" {
-		// Reuse show command's festival listing
-		if filterStatus != "" {
-			// List festivals with specific status
-			festivals, err := show.ListFestivalsByStatus(filepath.Dir(cwd), filterStatus)
-			if err != nil {
-				// Try finding festivals root
-				loc, err := show.DetectCurrentLocation(cwd)
-				if err != nil {
-					return err
-				}
-				if loc.Festival != nil {
-					festivalsRoot := filepath.Dir(filepath.Dir(loc.Festival.Path))
-					festivals, err = show.ListFestivalsByStatus(festivalsRoot, filterStatus)
-					if err != nil {
-						return err
-					}
-				}
-			}
-
-			if opts.json {
-				result := map[string]interface{}{
-					"status":    filterStatus,
-					"count":     len(festivals),
-					"festivals": festivals,
-				}
-				data, _ := json.MarshalIndent(result, "", "  ")
-				fmt.Println(string(data))
-			} else {
-				fmt.Println(show.FormatFestivalList(filterStatus, festivals))
-			}
-		} else {
-			// List all festivals
-			fmt.Println("Use 'fest show all' to see all festivals grouped by status")
+	// Detect current location
+	loc, err := show.DetectCurrentLocation(cwd)
+	if err != nil {
+		// Not in a festival - handle festival listing or error
+		festivalsDir := findFestivalsRoot(cwd)
+		if festivalsDir == "" {
+			return errors.NotFound("festival or festivals directory").
+				WithField("hint", "navigate to a festival directory to list phases/sequences/tasks")
 		}
+		if opts.entityType == "festival" || opts.entityType == "" {
+			return runFestivalListing(festivalsDir, filterStatus, opts)
+		}
+		return errors.NotFound("festival").
+			WithField("hint", "navigate to a festival directory to list phases/sequences/tasks")
 	}
 
-	return nil
+	// Validate entity type and status
+	entityType := EntityType(opts.entityType)
+	if filterStatus != "" && !isValidStatus(entityType, filterStatus) {
+		validOptions := ValidStatuses[entityType]
+		return errors.Validation("invalid status for entity type").
+			WithField("status", filterStatus).
+			WithField("type", opts.entityType).
+			WithField("valid_options", strings.Join(validOptions, ", "))
+	}
+
+	// Route based on entity type
+	switch opts.entityType {
+	case "festival", "":
+		festivalsRoot := filepath.Dir(filepath.Dir(loc.Festival.Path))
+		return runFestivalListing(festivalsRoot, filterStatus, opts)
+
+	case "phase":
+		return runPhaseListing(loc, filterStatus, opts)
+
+	case "sequence":
+		return runSequenceListing(loc, filterStatus, opts)
+
+	case "task":
+		return runTaskListing(loc, filterStatus, opts)
+
+	default:
+		return errors.Validation("invalid entity type").
+			WithField("type", opts.entityType).
+			WithField("valid_types", "festival, phase, sequence, task")
+	}
 }
 
 func newStatusHistoryCommand(opts *statusOptions) *cobra.Command {
