@@ -4,7 +4,10 @@ package progress
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
+	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -21,6 +24,10 @@ type progressOptions struct {
 	blocker    string
 	clear      bool
 	taskID     string
+	taskPath   string
+	phase      string
+	sequence   string
+	festival   string
 	inProgress bool
 }
 
@@ -42,13 +49,15 @@ PROGRESS OVERVIEW:
 
 TASK UPDATES:
   fest progress --task <id> --update 50%     Update task progress
-  fest progress --task <id> --complete       Mark task as complete
-  fest progress --task <id> --in-progress    Mark task as in progress
-  fest progress --task <id> --blocker "msg"  Report a blocker
-  fest progress --task <id> --clear          Clear blocker`,
+  fest progress --path <task_path> --complete    Mark task as complete
+  fest progress --phase <phase> --sequence <seq> --task <id> --complete
+
+Task IDs can be festival-relative paths (e.g. 002_FOUNDATION/01_project_scaffold/01_design.md)
+or absolute paths. Use --path for explicit task paths.`,
 		Example: `  fest progress                          # Show overall progress
   fest progress --task 01_setup.md --update 75%
-  fest progress --task 01_setup.md --complete
+  fest progress --path 002_FOUNDATION/01_project_scaffold/01_design.md --complete
+  fest progress --phase 002_FOUNDATION --sequence 01_project_scaffold --task 01_design.md --complete
   fest progress --task 02_impl.md --blocker "Waiting on API spec"
   fest progress --task 02_impl.md --clear`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -62,6 +71,10 @@ TASK UPDATES:
 	cmd.Flags().StringVar(&opts.blocker, "blocker", "", "report a blocker with message")
 	cmd.Flags().BoolVar(&opts.clear, "clear", false, "clear blocker for task")
 	cmd.Flags().StringVar(&opts.taskID, "task", "", "task ID to update")
+	cmd.Flags().StringVar(&opts.taskPath, "path", "", "task path (festival-relative or absolute)")
+	cmd.Flags().StringVar(&opts.phase, "phase", "", "phase directory name for task path")
+	cmd.Flags().StringVar(&opts.sequence, "sequence", "", "sequence directory name for task path")
+	cmd.Flags().StringVar(&opts.festival, "festival", "", "festival root path (directory containing fest.yaml)")
 	cmd.Flags().BoolVar(&opts.inProgress, "in-progress", false, "mark task as in progress")
 
 	return cmd
@@ -73,8 +86,31 @@ func runProgress(opts *progressOptions) error {
 		return errors.IO("getting current directory", err)
 	}
 
+	if err := validateTaskOptions(opts); err != nil {
+		return err
+	}
+
+	festivalPath := opts.festival
+	if festivalPath != "" {
+		if !filepath.IsAbs(festivalPath) {
+			festivalPath = filepath.Join(cwd, festivalPath)
+		}
+	}
+
+	targetPath := cwd
+	if opts.taskPath != "" {
+		resolvedTaskPath, err := resolveTaskPath(opts.taskPath, festivalPath, cwd)
+		if err != nil {
+			return err
+		}
+		opts.taskPath = resolvedTaskPath
+		targetPath = resolvedTaskPath
+	} else if festivalPath != "" {
+		targetPath = festivalPath
+	}
+
 	// Detect current location
-	loc, err := show.DetectCurrentLocation(cwd)
+	loc, err := show.DetectCurrentLocation(targetPath)
 	if err != nil {
 		return errors.Wrap(err, "detecting festival location")
 	}
@@ -91,7 +127,7 @@ func runProgress(opts *progressOptions) error {
 	}
 
 	// Handle task updates
-	if opts.taskID != "" {
+	if opts.taskID != "" || opts.taskPath != "" {
 		return handleTaskUpdate(mgr, loc.Festival.Path, opts)
 	}
 
@@ -100,7 +136,7 @@ func runProgress(opts *progressOptions) error {
 }
 
 func handleTaskUpdate(mgr *progress.Manager, festivalPath string, opts *progressOptions) error {
-	taskID, err := progress.NormalizeTaskID(festivalPath, opts.taskID)
+	taskID, err := resolveTaskID(festivalPath, opts)
 	if err != nil {
 		return err
 	}
@@ -325,4 +361,161 @@ func parsePercentage(s string) (int, error) {
 		return 0, errors.Validation("percentage must be 0-100").WithField("value", pct)
 	}
 	return pct, nil
+}
+
+func validateTaskOptions(opts *progressOptions) error {
+	if opts.taskPath != "" && (opts.taskID != "" || opts.phase != "" || opts.sequence != "") {
+		return errors.Validation("use --path or --task/--phase/--sequence, not both")
+	}
+
+	if (opts.phase != "" || opts.sequence != "") && opts.taskID == "" {
+		return errors.Validation("--phase/--sequence require --task")
+	}
+
+	if (opts.phase == "") != (opts.sequence == "") {
+		return errors.Validation("both --phase and --sequence must be provided together")
+	}
+
+	return nil
+}
+
+func resolveTaskPath(pathArg, festivalPath, cwd string) (string, error) {
+	if pathArg == "" {
+		return "", errors.Validation("task path required")
+	}
+
+	if filepath.IsAbs(pathArg) {
+		return filepath.Clean(pathArg), nil
+	}
+
+	if festivalPath != "" {
+		return filepath.Clean(filepath.Join(festivalPath, pathArg)), nil
+	}
+
+	return filepath.Clean(filepath.Join(cwd, pathArg)), nil
+}
+
+func resolveTaskID(festivalPath string, opts *progressOptions) (string, error) {
+	if opts.taskPath != "" {
+		return progress.NormalizeTaskID(festivalPath, opts.taskPath)
+	}
+
+	taskID := strings.TrimSpace(opts.taskID)
+	if taskID == "" {
+		return "", errors.Validation("task ID required")
+	}
+
+	if opts.phase != "" && opts.sequence != "" {
+		taskID = ensureMarkdownFilename(taskID)
+		taskPath := filepath.Join(opts.phase, opts.sequence, taskID)
+		return progress.NormalizeTaskID(festivalPath, taskPath)
+	}
+
+	normalized, err := progress.NormalizeTaskID(festivalPath, taskID)
+	if err != nil {
+		return "", err
+	}
+
+	if !strings.Contains(taskID, "/") && !strings.Contains(taskID, "\\") && !filepath.IsAbs(taskID) {
+		matches, err := findTaskMatches(festivalPath, taskID)
+		if err != nil {
+			return "", err
+		}
+
+		if len(matches) > 1 {
+			return "", errors.Validation("task ID is ambiguous; provide a full task path or use --phase/--sequence").
+				WithField("task", taskID).
+				WithField("matches", strings.Join(matches, ", "))
+		}
+		if len(matches) == 1 {
+			return matches[0], nil
+		}
+	}
+
+	return normalized, nil
+}
+
+func ensureMarkdownFilename(name string) string {
+	if strings.HasSuffix(name, ".md") {
+		return name
+	}
+	return name + ".md"
+}
+
+func findTaskMatches(festivalPath, taskID string) ([]string, error) {
+	if festivalPath == "" {
+		return nil, errors.Validation("festival path required")
+	}
+
+	exact := taskID
+	withExt := taskID
+	if !strings.HasSuffix(taskID, ".md") {
+		withExt = taskID + ".md"
+	}
+
+	var matches []string
+	err := filepath.WalkDir(festivalPath, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.IsDir() {
+			if entry.Name() == ".fest" || entry.Name() == "results" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		name := entry.Name()
+		if !isTaskFile(name) {
+			return nil
+		}
+
+		if name != exact && name != withExt {
+			return nil
+		}
+
+		rel, err := filepath.Rel(festivalPath, path)
+		if err != nil {
+			return err
+		}
+
+		parts := strings.Split(rel, string(filepath.Separator))
+		if len(parts) < 3 {
+			return nil
+		}
+
+		matches = append(matches, filepath.ToSlash(rel))
+		return nil
+	})
+	if err != nil {
+		return nil, errors.IO("walking festival", err).WithField("path", festivalPath)
+	}
+
+	sort.Strings(matches)
+	return matches, nil
+}
+
+func isTaskFile(name string) bool {
+	if !strings.HasSuffix(name, ".md") {
+		return false
+	}
+
+	lower := strings.ToLower(name)
+	if lower == strings.ToLower(show.FestivalGoalFile) ||
+		lower == strings.ToLower(show.FestivalOverviewFile) ||
+		lower == strings.ToLower(show.PhaseGoalFile) ||
+		lower == strings.ToLower(show.SequenceGoalFile) {
+		return false
+	}
+
+	if strings.Contains(lower, "_gate") ||
+		strings.Contains(lower, "_testing") ||
+		strings.Contains(lower, "_review") ||
+		strings.Contains(lower, "_verify") ||
+		strings.Contains(lower, "_iterate") ||
+		strings.Contains(lower, "_commit") {
+		return false
+	}
+
+	return true
 }
