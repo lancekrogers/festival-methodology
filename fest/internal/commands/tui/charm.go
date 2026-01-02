@@ -46,8 +46,8 @@ func runCharmTUI(ctx context.Context) error {
 			huh.NewGroup(
 				huh.NewConfirm().Title("No festivals/ directory detected. Initialize here?").Value(&initNow),
 			),
-		).WithTheme(theme())
-		if err := form.Run(); err != nil {
+		)
+		if err := uitheme.RunForm(ctx, form); err != nil {
 			if uitheme.IsCancelled(err) {
 				return nil // Clean exit on Ctrl-C
 			}
@@ -69,6 +69,7 @@ func runCharmTUI(ctx context.Context) error {
 			huh.NewGroup(
 				huh.NewSelect[string]().
 					Title("What would you like to do?").
+					Description("↑/↓ navigate • enter select • esc/ctrl-c quit").
 					Options(
 						huh.NewOption("Plan a New Festival (wizard)", "plan_festival"),
 						huh.NewOption("Create a Festival (quick)", "create_festival"),
@@ -80,9 +81,9 @@ func runCharmTUI(ctx context.Context) error {
 					).
 					Value(&action),
 			),
-		).WithTheme(theme())
+		)
 
-		if err := menu.Run(); err != nil {
+		if err := uitheme.RunForm(ctx, menu); err != nil {
 			if uitheme.IsCancelled(err) {
 				return nil // Clean exit on Ctrl-C
 			}
@@ -164,6 +165,7 @@ func StartCreateTUI(ctx context.Context) error {
 			huh.NewGroup(
 				huh.NewSelect[string]().
 					Title("Create what?").
+					Description("↑/↓ navigate • enter select • esc/ctrl-c quit").
 					Options(
 						huh.NewOption("Festival", "festival"),
 						huh.NewOption("Phase", "phase"),
@@ -173,8 +175,8 @@ func StartCreateTUI(ctx context.Context) error {
 					).
 					Value(&action),
 			),
-		).WithTheme(theme())
-		if err := menu.Run(); err != nil {
+		)
+		if err := uitheme.RunForm(ctx, menu); err != nil {
 			if uitheme.IsCancelled(err) {
 				return nil // Clean exit on Ctrl-C
 			}

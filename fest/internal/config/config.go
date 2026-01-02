@@ -162,7 +162,7 @@ func DefaultConfig() *Config {
 			Interactive: true,
 			UseColor:    true,
 			Verbose:     false,
-			Editor:      "vim",
+			Editor:      "", // Empty default - falls back to $EDITOR then "vim"
 		},
 		Network: Network{
 			Timeout:    30,
@@ -216,7 +216,6 @@ func applyDefaults(cfg *Config) {
 		cfg.Network.RetryDelay = defaults.Network.RetryDelay
 	}
 
-	if cfg.Behavior.Editor == "" {
-		cfg.Behavior.Editor = defaults.Behavior.Editor
-	}
+	// Note: Behavior.Editor intentionally not defaulted here
+	// Empty means: use $EDITOR env var, then fall back to "vim"
 }

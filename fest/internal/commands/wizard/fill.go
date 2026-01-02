@@ -162,11 +162,15 @@ func runVimFill(ctx context.Context, opts *FillOptions, files []string, rootPath
 		return errors.Wrap(err, "context cancelled").WithOp("runVimFill")
 	}
 
+	display := ui.New(false, false)
+
 	// Filter to only files with markers
-	filesWithMarkers := []string{}
+	filesWithMarkers := make([]string, 0, len(files))
 	for _, f := range files {
 		ms, err := markers.ParseFile(ctx, f)
 		if err != nil {
+			// Log parse errors but continue - file may still be editable
+			display.Warning("Could not parse %s: %v", filepath.Base(f), err)
 			continue
 		}
 		if len(ms) > 0 {
@@ -175,17 +179,15 @@ func runVimFill(ctx context.Context, opts *FillOptions, files []string, rootPath
 	}
 
 	if len(filesWithMarkers) == 0 {
-		display := ui.New(false, false)
 		display.Info("No REPLACE markers found")
 		return nil
 	}
 
 	// Show summary before opening
-	display := ui.New(false, false)
 	display.Info("Found %d files with REPLACE markers:", len(filesWithMarkers))
 	for _, f := range filesWithMarkers {
-		relPath, _ := filepath.Rel(rootPath, f)
-		if relPath == "" {
+		relPath, err := filepath.Rel(rootPath, f)
+		if err != nil || relPath == "" {
 			relPath = filepath.Base(f)
 		}
 		fmt.Printf("  • %s\n", relPath)
@@ -203,9 +205,9 @@ func runVimFill(ctx context.Context, opts *FillOptions, files []string, rootPath
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	if err := cmd.Run(); err != nil {
-		return errors.Wrap(err, "editor exited with error").WithField("editor", editor)
-	}
+	// Run editor - don't treat exit codes as errors since editors like vim
+	// return non-zero for normal operations like :q without saving
+	_ = cmd.Run()
 
 	return nil
 }

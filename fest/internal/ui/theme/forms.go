@@ -18,12 +18,16 @@ var ErrUserCancelled = festErrors.New("operation cancelled by user").WithCode(Er
 
 // RunForm executes a form with the fest theme, context propagation, and proper error handling.
 // Context cancellation will interrupt the form. Returns ErrUserCancelled if the user aborts.
+// Keyboard interrupt (Ctrl-C) and Escape are enabled for clean exits.
 func RunForm(ctx context.Context, form *huh.Form) error {
 	if err := ctx.Err(); err != nil {
 		return festErrors.Wrap(err, "context cancelled").WithOp("RunForm")
 	}
 
-	form = form.WithTheme(FestTheme())
+	form = form.
+		WithTheme(FestTheme()).
+		WithKeyMap(huh.NewDefaultKeyMap()).
+		WithShowHelp(true)
 
 	if err := form.RunWithContext(ctx); err != nil {
 		if errors.Is(err, huh.ErrUserAborted) {
@@ -137,4 +141,66 @@ func ToOptions(values []string) []huh.Option[string] {
 		opts = append(opts, huh.NewOption(v, v))
 	}
 	return opts
+}
+
+// QuickInput runs a simple text input form with proper keyboard handling.
+// Returns the value, whether cancelled, and any error.
+func QuickInput(ctx context.Context, title, placeholder string, value *string) (bool, error) {
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title(title).
+				Placeholder(placeholder).
+				Value(value),
+		),
+	)
+	if err := RunForm(ctx, form); err != nil {
+		if IsCancelled(err) {
+			return true, nil
+		}
+		return false, err
+	}
+	return false, nil
+}
+
+// QuickInputValidate runs a simple text input form with validation.
+// Returns whether cancelled, and any error.
+func QuickInputValidate(ctx context.Context, title, placeholder string, value *string, validate func(string) error) (bool, error) {
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title(title).
+				Placeholder(placeholder).
+				Value(value).
+				Validate(validate),
+		),
+	)
+	if err := RunForm(ctx, form); err != nil {
+		if IsCancelled(err) {
+			return true, nil
+		}
+		return false, err
+	}
+	return false, nil
+}
+
+// QuickSelect runs a simple select form with proper keyboard handling.
+// Returns whether cancelled, and any error.
+func QuickSelect[T comparable](ctx context.Context, title string, options []huh.Option[T], value *T) (bool, error) {
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[T]().
+				Title(title).
+				Description("↑/↓ navigate • enter select • esc quit").
+				Options(options...).
+				Value(value),
+		),
+	)
+	if err := RunForm(ctx, form); err != nil {
+		if IsCancelled(err) {
+			return true, nil
+		}
+		return false, err
+	}
+	return false, nil
 }

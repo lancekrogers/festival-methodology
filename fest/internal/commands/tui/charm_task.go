@@ -30,35 +30,34 @@ func charmCreateTask(ctx context.Context) error {
 
 	if inSequence {
 		// Name first
-		if err := huh.NewForm(huh.NewGroup(
-			huh.NewInput().Title("Task name").Placeholder("user_research").Value(&name).Validate(notEmpty),
-		)).WithTheme(theme()).Run(); err != nil {
-			if uitheme.IsCancelled(err) {
-				return nil
-			}
+		cancelled, err := uitheme.QuickInputValidate(ctx, "Task name", "user_research", &name, notEmpty)
+		if err != nil {
 			return err
+		}
+		if cancelled {
+			return nil
 		}
 		// Position select with default append
 		defAfter := nextTaskAfter(ctx, cwd)
 		var pos string
-		if err := huh.NewForm(huh.NewGroup(
-			huh.NewSelect[string]().Title("Position").Options(
-				huh.NewOption("Append at end", "append"),
-				huh.NewOption("Insert after number", "insert"),
-			).Value(&pos),
-		)).WithTheme(theme()).Run(); err != nil {
-			if uitheme.IsCancelled(err) {
-				return nil
-			}
+		cancelled, err = uitheme.QuickSelect(ctx, "Position", []huh.Option[string]{
+			huh.NewOption("Append at end", "append"),
+			huh.NewOption("Insert after number", "insert"),
+		}, &pos)
+		if err != nil {
 			return err
+		}
+		if cancelled {
+			return nil
 		}
 		if pos == "insert" {
 			afterStr = fmt.Sprintf("%d", defAfter)
-			if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr))).WithTheme(theme()).Run(); err != nil {
-				if uitheme.IsCancelled(err) {
-					return nil
-				}
+			cancelled, err = uitheme.QuickInput(ctx, "Insert after number (0 to insert at beginning)", "", &afterStr)
+			if err != nil {
 				return err
+			}
+			if cancelled {
+				return nil
 			}
 		} else {
 			afterStr = fmt.Sprintf("%d", defAfter)
