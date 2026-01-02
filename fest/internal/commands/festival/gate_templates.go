@@ -309,7 +309,10 @@ Commit all changes from this sequence with proper documentation.
 
 ## Commit
 
-[REPLACE: Your git commit command or process]
+Use fest commit so task references are preserved:
+
+    fest commit -m "<type>: <summary>"
+    # Optional: fest commit --task FEST-XXXX -m "<type>: <summary>"
 
 ## Post-Commit
 
@@ -350,6 +353,12 @@ func DefaultFestivalGatesConfig() *config.FestivalConfig {
 					ID:       "review_results_iterate",
 					Template: "gates/QUALITY_GATE_ITERATE",
 					Name:     "Review Results and Iterate",
+					Enabled:  true,
+				},
+				{
+					ID:       "commit",
+					Template: "gates/QUALITY_GATE_COMMIT",
+					Name:     "Commit Changes",
 					Enabled:  true,
 				},
 			},

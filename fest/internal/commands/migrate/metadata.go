@@ -161,8 +161,8 @@ func checkExistingMigration(festivalPath, festivalsRoot string) (*migrationConte
 			WithField("name", festivalName)
 	}
 
-	// Calculate new path
-	newDirName := fmt.Sprintf("%s_%s", dirName, newID)
+	// Calculate new path with hyphen separator (format: {slug}-{ID})
+	newDirName := fmt.Sprintf("%s-%s", dirName, newID)
 	newPath := filepath.Join(filepath.Dir(festivalPath), newDirName)
 
 	return &migrationContext{

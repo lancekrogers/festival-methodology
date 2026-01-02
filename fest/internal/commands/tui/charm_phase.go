@@ -12,6 +12,7 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+	uitheme "github.com/lancekrogers/festival-methodology/fest/internal/ui/theme"
 )
 
 func charmCreatePhase(ctx context.Context) error {
@@ -39,6 +40,9 @@ func charmCreatePhase(ctx context.Context) error {
 		),
 	).WithTheme(theme())
 	if err := form.Run(); err != nil {
+		if uitheme.IsCancelled(err) {
+			return nil
+		}
 		return err
 	}
 	basePath := path
@@ -54,11 +58,17 @@ func charmCreatePhase(ctx context.Context) error {
 			huh.NewOption("Insert after number", "insert"),
 		).Value(&posPhase),
 	)).WithTheme(theme()).Run(); err != nil {
+		if uitheme.IsCancelled(err) {
+			return nil
+		}
 		return err
 	}
 	if posPhase == "insert" {
 		afterStr = fmt.Sprintf("%d", defAfter)
 		if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr))).WithTheme(theme()).Run(); err != nil {
+			if uitheme.IsCancelled(err) {
+				return nil
+			}
 			return err
 		}
 	} else {
@@ -74,6 +84,9 @@ func charmCreatePhase(ctx context.Context) error {
 		}
 		var v string
 		if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title(k).Value(&v))).WithTheme(theme()).Run(); err != nil {
+			if uitheme.IsCancelled(err) {
+				return nil
+			}
 			return err
 		}
 		if strings.TrimSpace(v) != "" {

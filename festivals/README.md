@@ -211,13 +211,16 @@ quality_gates:
   enabled: true
   tasks:
     - id: testing_and_verify
-      template: QUALITY_GATE_TESTING
+      template: gates/QUALITY_GATE_TESTING
       enabled: true
     - id: code_review
-      template: QUALITY_GATE_REVIEW
+      template: gates/QUALITY_GATE_REVIEW
       enabled: true
     - id: review_results_iterate
-      template: QUALITY_GATE_ITERATE
+      template: gates/QUALITY_GATE_ITERATE
+      enabled: true
+    - id: commit
+      template: gates/QUALITY_GATE_COMMIT
       enabled: true
 ```
 

@@ -147,8 +147,8 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 		return emitCreateFestivalError(opts, errors.Wrap(err, "generating festival ID").WithField("name", opts.Name))
 	}
 
-	// Create directory with ID suffix: {slug}_{ID}
-	dirName := fmt.Sprintf("%s_%s", slug, festivalID)
+	// Create directory with ID suffix: {slug}-{ID}
+	dirName := fmt.Sprintf("%s-%s", slug, festivalID)
 	destDir := filepath.Join(festivalsRoot, destCategory, dirName)
 	if err := os.MkdirAll(destDir, 0755); err != nil {
 		return emitCreateFestivalError(opts, errors.IO("creating festival directory", err).WithField("path", destDir))
@@ -206,18 +206,37 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 		"QUALITY_GATE_TESTING.md",
 		"QUALITY_GATE_REVIEW.md",
 		"QUALITY_GATE_ITERATE.md",
+		"QUALITY_GATE_COMMIT.md",
 	}
 
 	copiedGates := []string{}
 	for _, gt := range gateTemplates {
-		srcPath := filepath.Join(tmplRoot, gt)
-		if _, err := os.Stat(srcPath); err != nil {
-			// Skip if template doesn't exist - will try fallback below
-			continue
+		srcPaths := []string{
+			filepath.Join(tmplRoot, "gates", gt),
 		}
-		content, err := os.ReadFile(srcPath)
-		if err != nil {
-			return emitCreateFestivalError(opts, errors.IO("reading gate template", err).WithField("path", srcPath))
+		var content []byte
+		found := false
+		for _, srcPath := range srcPaths {
+			if _, err := os.Stat(srcPath); err != nil {
+				continue
+			}
+			fileContent, err := os.ReadFile(srcPath)
+			if err != nil {
+				return emitCreateFestivalError(opts, errors.IO("reading gate template", err).WithField("path", srcPath))
+			}
+			content = fileContent
+			found = true
+			break
+		}
+		if !found {
+			if embedded, ok := DefaultGateTemplates[gt]; ok {
+				content = []byte(embedded)
+				found = true
+			}
+		}
+		if !found {
+			// Skip if template doesn't exist - fallback to embedded failed
+			continue
 		}
 		outPath := filepath.Join(gatesDir, gt)
 		if err := os.WriteFile(outPath, content, 0644); err != nil {
@@ -225,18 +244,6 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 		}
 		copiedGates = append(copiedGates, outPath)
 		created = append(created, outPath)
-	}
-
-	// Fallback: Use embedded templates if no templates were copied from file system
-	if len(copiedGates) == 0 {
-		for filename, content := range DefaultGateTemplates {
-			outPath := filepath.Join(gatesDir, filename)
-			if err := os.WriteFile(outPath, []byte(content), 0644); err != nil {
-				return emitCreateFestivalError(opts, errors.IO("writing embedded gate template", err).WithField("path", outPath))
-			}
-			copiedGates = append(copiedGates, outPath)
-			created = append(created, outPath)
-		}
 	}
 
 	// Generate fest.yaml with default gates configuration and metadata

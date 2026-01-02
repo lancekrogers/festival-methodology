@@ -406,7 +406,16 @@ func extractName(name string) string {
 
 func isGateFile(name string) bool {
 	lower := strings.ToLower(name)
-	indicators := []string{"quality_gate", "gate_", "_gate", "testing_and_verify", "review_gate"}
+	indicators := []string{
+		"quality_gate",
+		"gate_",
+		"_gate",
+		"testing_and_verify",
+		"code_review",
+		"review_results_iterate",
+		"review_gate",
+		"commit",
+	}
 	for _, ind := range indicators {
 		if strings.Contains(lower, ind) {
 			return true

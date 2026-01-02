@@ -81,7 +81,7 @@ func TestTemplateResolver_Cache(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	// Create template
-	templateDir := filepath.Join(tmpDir, ".festival", "templates")
+	templateDir := filepath.Join(tmpDir, ".festival", "templates", "gates")
 	os.MkdirAll(templateDir, 0755)
 	os.WriteFile(filepath.Join(templateDir, "CACHED.md"), []byte("# Cached"), 0644)
 
@@ -114,13 +114,13 @@ func TestTemplateResolver_HierarchyPrecedence(t *testing.T) {
 	sequencePath := filepath.Join(phasePath, "sequence")
 
 	// Create templates at multiple levels
-	// Built-in
-	builtinDir := filepath.Join(tmpDir, ".festival", "templates")
-	os.MkdirAll(builtinDir, 0755)
-	os.WriteFile(filepath.Join(builtinDir, "TEST.md"), []byte("builtin"), 0644)
+	// Global
+	globalDir := filepath.Join(tmpDir, ".festival", "templates", "gates")
+	os.MkdirAll(globalDir, 0755)
+	os.WriteFile(filepath.Join(globalDir, "TEST.md"), []byte("builtin"), 0644)
 
 	// Festival
-	festivalTemplateDir := filepath.Join(festivalPath, ".festival", "templates")
+	festivalTemplateDir := filepath.Join(festivalPath, ".festival", "templates", "gates")
 	os.MkdirAll(festivalTemplateDir, 0755)
 	os.WriteFile(filepath.Join(festivalTemplateDir, "TEST.md"), []byte("festival"), 0644)
 
@@ -201,7 +201,7 @@ func TestTemplateResolver_GatesPrefixResolution(t *testing.T) {
 	os.WriteFile(gatesTemplatePath, []byte("# Testing Gate"), 0644)
 
 	// Also create fallback in global templates
-	globalTemplateDir := filepath.Join(tmpDir, ".festival", "templates")
+	globalTemplateDir := filepath.Join(tmpDir, ".festival", "templates", "gates")
 	os.MkdirAll(globalTemplateDir, 0755)
 	globalTemplatePath := filepath.Join(globalTemplateDir, "QUALITY_GATE_TESTING.md")
 	os.WriteFile(globalTemplatePath, []byte("# Global Testing Gate"), 0644)

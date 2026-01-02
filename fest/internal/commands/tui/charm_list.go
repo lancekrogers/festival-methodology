@@ -4,7 +4,6 @@ package tui
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sort"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	festErrors "github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/navigation"
+	uitheme "github.com/lancekrogers/festival-methodology/fest/internal/ui/theme"
 )
 
 // Styles for list items
@@ -86,11 +86,11 @@ func StartGoListTUI(ctx context.Context) (string, error) {
 				Options(opts...).
 				Value(&selected),
 		),
-	).WithTheme(huh.ThemeCharm())
+	).WithTheme(uitheme.FestTheme())
 
 	if err := form.Run(); err != nil {
 		// Silent exit on user cancel (Ctrl-C or Esc)
-		if errors.Is(err, huh.ErrUserAborted) {
+		if uitheme.IsCancelled(err) {
 			return "", nil
 		}
 		return "", err

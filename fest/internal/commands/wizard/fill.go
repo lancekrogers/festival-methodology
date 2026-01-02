@@ -1,25 +1,32 @@
 package wizard
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/huh"
+	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/markers"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui/theme"
+	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 )
 
 // FillOptions holds options for the fill command.
 type FillOptions struct {
-	Path       string
-	DryRun     bool
-	JSONOutput bool
+	Path        string
+	DryRun      bool
+	JSONOutput  bool
+	Interactive bool // true = TUI mode, false = text prompts (for agents)
 }
 
 type fillResult struct {
@@ -76,6 +83,8 @@ ensuring all template markers are properly completed.`,
 			if len(args) > 0 {
 				opts.Path = args[0]
 			}
+			// Detect TTY for interactive mode (TUI for humans, text for agents)
+			opts.Interactive = isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
 			return RunFill(cmd.Context(), opts)
 		},
 	}
@@ -109,15 +118,27 @@ func RunFill(ctx context.Context, opts *FillOptions) error {
 
 	var files []string
 	if info.IsDir() {
-		// Find all markdown files in the directory
-		entries, err := os.ReadDir(absPath)
-		if err != nil {
-			return emitFillError(opts, errors.Wrap(err, "reading directory").WithField("path", absPath))
-		}
-		for _, entry := range entries {
-			if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".md") {
-				files = append(files, filepath.Join(absPath, entry.Name()))
+		// Recursively find all markdown files in the directory tree
+		err := filepath.WalkDir(absPath, func(path string, d fs.DirEntry, walkErr error) error {
+			if walkErr != nil {
+				return walkErr
 			}
+			// Skip hidden directories and .festival directory
+			if d.IsDir() {
+				name := d.Name()
+				if strings.HasPrefix(name, ".") || name == ".festival" {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+			// Collect markdown files
+			if strings.HasSuffix(d.Name(), ".md") {
+				files = append(files, path)
+			}
+			return nil
+		})
+		if err != nil {
+			return emitFillError(opts, errors.Wrap(err, "walking directory").WithField("path", absPath))
 		}
 		if len(files) == 0 {
 			return emitFillError(opts, errors.NotFound("no markdown files in directory"))
@@ -126,12 +147,95 @@ func RunFill(ctx context.Context, opts *FillOptions) error {
 		files = []string{absPath}
 	}
 
-	// Process each file
+	// Route based on TTY mode
+	if opts.Interactive {
+		return runVimFill(ctx, opts, files, absPath)
+	}
+
+	// Non-TTY mode: sequential prompts for agents
+	return runAgentFill(ctx, opts, display, files, absPath)
+}
+
+// runVimFill opens the configured editor with all files containing markers.
+func runVimFill(ctx context.Context, opts *FillOptions, files []string, rootPath string) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled").WithOp("runVimFill")
+	}
+
+	display := ui.New(false, false)
+
+	// Filter to only files with markers
+	filesWithMarkers := make([]string, 0, len(files))
+	for _, f := range files {
+		ms, err := markers.ParseFile(ctx, f)
+		if err != nil {
+			// Log parse errors but continue - file may still be editable
+			display.Warning("Could not parse %s: %v", filepath.Base(f), err)
+			continue
+		}
+		if len(ms) > 0 {
+			filesWithMarkers = append(filesWithMarkers, f)
+		}
+	}
+
+	if len(filesWithMarkers) == 0 {
+		display.Info("No REPLACE markers found")
+		return nil
+	}
+
+	// Show summary before opening
+	display.Info("Found %d files with REPLACE markers:", len(filesWithMarkers))
+	for _, f := range filesWithMarkers {
+		relPath, err := filepath.Rel(rootPath, f)
+		if err != nil || relPath == "" {
+			relPath = filepath.Base(f)
+		}
+		fmt.Printf("  • %s\n", relPath)
+	}
+	fmt.Println()
+	display.Info("Opening in editor... Use :wqa to save all and quit")
+	fmt.Println()
+
+	// Get editor: config > $EDITOR > "vim"
+	editor := getEditor(ctx)
+
+	// Open editor with all files as buffers
+	cmd := exec.CommandContext(ctx, editor, filesWithMarkers...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// Run editor - don't treat exit codes as errors since editors like vim
+	// return non-zero for normal operations like :q without saving
+	_ = cmd.Run()
+
+	return nil
+}
+
+// getEditor returns the configured editor from config, $EDITOR, or "vim" as fallback.
+func getEditor(ctx context.Context) string {
+	// Try config first
+	cfg, err := config.Load(ctx, "")
+	if err == nil && cfg.Behavior.Editor != "" {
+		return cfg.Behavior.Editor
+	}
+
+	// Fall back to $EDITOR
+	if editor := os.Getenv("EDITOR"); editor != "" {
+		return editor
+	}
+
+	// Default to vim
+	return "vim"
+}
+
+// runAgentFill handles sequential prompt-based filling for non-TTY (agent) mode.
+func runAgentFill(ctx context.Context, opts *FillOptions, display *ui.UI, files []string, rootPath string) error {
 	totalFilled := 0
 	totalMarkers := 0
 
 	for _, filePath := range files {
-		filled, total, err := processFile(ctx, opts, display, filePath)
+		filled, total, err := processFile(ctx, opts, display, rootPath, filePath)
 		if err != nil {
 			return err
 		}
@@ -149,9 +253,17 @@ func RunFill(ctx context.Context, opts *FillOptions) error {
 }
 
 // processFile handles marker filling for a single file.
-func processFile(ctx context.Context, opts *FillOptions, display *ui.UI, filePath string) (int, int, error) {
+func processFile(ctx context.Context, opts *FillOptions, display *ui.UI, rootPath, filePath string) (int, int, error) {
 	if err := ctx.Err(); err != nil {
 		return 0, 0, errors.Wrap(err, "context cancelled").WithOp("processFile")
+	}
+
+	// Calculate display name (relative path from root, or base name if same)
+	displayName := filepath.Base(filePath)
+	if rootPath != filePath {
+		if rel, err := filepath.Rel(rootPath, filePath); err == nil {
+			displayName = rel
+		}
 	}
 
 	// Parse markers from file
@@ -162,14 +274,14 @@ func processFile(ctx context.Context, opts *FillOptions, display *ui.UI, filePat
 
 	if len(fileMarkers) == 0 {
 		if !opts.JSONOutput {
-			display.Info("No REPLACE markers found in %s", filepath.Base(filePath))
+			display.Info("No REPLACE markers found in %s", displayName)
 		}
 		return 0, 0, nil
 	}
 
 	if !opts.JSONOutput {
 		fmt.Println()
-		display.Info("Found %d markers in %s", len(fileMarkers), filepath.Base(filePath))
+		display.Info("Found %d markers in %s", len(fileMarkers), displayName)
 		fmt.Println()
 	}
 
@@ -236,7 +348,7 @@ func processFile(ctx context.Context, opts *FillOptions, display *ui.UI, filePat
 			}
 		}
 	} else if filled > 0 {
-		display.Success("Filled %d/%d markers in %s", filled, total, filepath.Base(filePath))
+		display.Success("Filled %d/%d markers in %s", filled, total, displayName)
 	} else {
 		display.Info("No markers filled (all skipped or empty)")
 	}
@@ -252,20 +364,56 @@ func promptForMarker(ctx context.Context, opts *FillOptions, m markers.Marker) (
 
 	// Check if hint contains pipe-separated options
 	if strings.Contains(m.Hint, "|") {
-		return promptSelect(m)
+		return promptSelect(ctx, opts, m)
 	}
 
-	return promptInput(m)
+	return promptInput(ctx, opts, m)
 }
 
 // promptSelect creates a select form for pipe-separated options.
-func promptSelect(m markers.Marker) (string, bool, error) {
+func promptSelect(ctx context.Context, opts *FillOptions, m markers.Marker) (string, bool, error) {
 	options := strings.Split(m.Hint, "|")
 	for i, opt := range options {
 		options[i] = strings.TrimSpace(opt)
 	}
 
-	// Add skip option
+	// Non-interactive mode: text-based prompt for agents
+	if !opts.Interactive {
+		fmt.Printf("Line %d - Select from options:\n", m.LineNumber)
+		for i, opt := range options {
+			fmt.Printf("  [%d] %s\n", i+1, opt)
+		}
+		fmt.Printf("  [0] (skip)\n")
+		fmt.Print("Enter number: ")
+
+		reader := bufio.NewReader(os.Stdin)
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			return "", false, errors.Wrap(err, "reading input")
+		}
+
+		input = strings.TrimSpace(input)
+		if input == "" || input == "0" {
+			return "", true, nil
+		}
+
+		// Parse numeric selection
+		var idx int
+		if _, err := fmt.Sscanf(input, "%d", &idx); err == nil && idx >= 1 && idx <= len(options) {
+			return options[idx-1], false, nil
+		}
+
+		// Try direct match
+		for _, opt := range options {
+			if strings.EqualFold(input, opt) {
+				return opt, false, nil
+			}
+		}
+
+		return "", true, nil // Skip if invalid input
+	}
+
+	// Interactive mode: TUI
 	options = append(options, "(skip)")
 
 	var selected string
@@ -277,10 +425,10 @@ func promptSelect(m markers.Marker) (string, bool, error) {
 				Options(toOptions(options)...).
 				Value(&selected),
 		),
-	)
+	).WithTheme(theme.FestTheme())
 
-	if err := form.Run(); err != nil {
-		if err == huh.ErrUserAborted {
+	if err := theme.RunForm(ctx, form); err != nil {
+		if theme.IsCancelled(err) {
 			return "", true, nil
 		}
 		return "", false, errors.Wrap(err, "form error")
@@ -294,7 +442,27 @@ func promptSelect(m markers.Marker) (string, bool, error) {
 }
 
 // promptInput creates a text input form for regular hints.
-func promptInput(m markers.Marker) (string, bool, error) {
+func promptInput(ctx context.Context, opts *FillOptions, m markers.Marker) (string, bool, error) {
+	// Non-interactive mode: text-based prompt for agents
+	if !opts.Interactive {
+		fmt.Printf("Line %d: %s\n", m.LineNumber, m.Hint)
+		fmt.Print("Enter value (or press Enter to skip): ")
+
+		reader := bufio.NewReader(os.Stdin)
+		value, err := reader.ReadString('\n')
+		if err != nil {
+			return "", false, errors.Wrap(err, "reading input")
+		}
+
+		value = strings.TrimSpace(value)
+		if value == "" {
+			return "", true, nil
+		}
+
+		return value, false, nil
+	}
+
+	// Interactive mode: TUI
 	var value string
 	form := huh.NewForm(
 		huh.NewGroup(
@@ -303,10 +471,10 @@ func promptInput(m markers.Marker) (string, bool, error) {
 				Placeholder("(press Enter to skip)").
 				Value(&value),
 		),
-	)
+	).WithTheme(theme.FestTheme())
 
-	if err := form.Run(); err != nil {
-		if err == huh.ErrUserAborted {
+	if err := theme.RunForm(ctx, form); err != nil {
+		if theme.IsCancelled(err) {
 			return "", true, nil
 		}
 		return "", false, errors.Wrap(err, "form error")

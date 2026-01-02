@@ -147,10 +147,10 @@ func TestIsDateDirectory(t *testing.T) {
 		{"2024-12", true},
 		{"2020-06", true},
 		{"my-festival", false},
-		{"2025-1", false},  // Not zero-padded
-		{"25-01", false},   // Short year
-		{"202501", false},  // No dash
-		{"2025-13", true},  // Month validation not enforced by pattern
+		{"2025-1", false}, // Not zero-padded
+		{"25-01", false},  // Short year
+		{"202501", false}, // No dash
+		{"2025-13", true}, // Month validation not enforced by pattern
 		{"", false},
 	}
 

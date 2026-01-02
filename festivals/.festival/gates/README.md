@@ -5,9 +5,11 @@ This directory contains custom quality gate configurations for the Festival Meth
 ## Structure
 
 ```
-gates/
-├── policies/    # Named policy YAML files (e.g., strict.yml, lightweight.yml)
-└── templates/   # Custom gate template files (e.g., SECURITY_AUDIT.md)
+.festival/
+├── gates/
+│   └── policies/   # Named policy YAML files (e.g., strict.yml, lightweight.yml)
+└── templates/
+    └── gates/      # Global gate templates (e.g., QUALITY_GATE_TESTING.md)
 ```
 
 ## Policies
@@ -34,9 +36,10 @@ Template files are Markdown files that define the content of each gate task. The
 
 1. Sequence level: `<sequence>/.fest.templates/`
 2. Phase level: `<phase>/.fest.templates/`
-3. Festival level: `<festival>/.festival/templates/`
-4. Global gates: `festivals/.festival/gates/templates/`
-5. Built-in: `festivals/.festival/templates/`
+3. Festival level: `<festival>/.festival/templates/gates/`
+4. Global gates: `festivals/.festival/templates/gates/`
+
+If a template ID starts with `gates/`, fest checks `<festival>/gates/` first.
 
 ## Usage
 

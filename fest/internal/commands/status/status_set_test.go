@@ -9,11 +9,11 @@ import (
 
 func TestAtomicStatusChange(t *testing.T) {
 	tests := []struct {
-		name        string
-		setupFn     func(baseDir string) (festivalPath string)
-		fromStatus  string
-		toStatus    string
-		wantError   bool
+		name          string
+		setupFn       func(baseDir string) (festivalPath string)
+		fromStatus    string
+		toStatus      string
+		wantError     bool
 		checkRollback bool
 	}{
 		{

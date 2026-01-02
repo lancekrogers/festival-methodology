@@ -52,10 +52,11 @@ type Local struct {
 
 // Behavior contains behavior configuration
 type Behavior struct {
-	AutoBackup  bool `json:"auto_backup"`
-	Interactive bool `json:"interactive"`
-	UseColor    bool `json:"use_color"`
-	Verbose     bool `json:"verbose"`
+	AutoBackup  bool   `json:"auto_backup"`
+	Interactive bool   `json:"interactive"`
+	UseColor    bool   `json:"use_color"`
+	Verbose     bool   `json:"verbose"`
+	Editor      string `json:"editor"` // Preferred editor for wizard fill (default: vim)
 }
 
 // Network contains network configuration
@@ -161,6 +162,7 @@ func DefaultConfig() *Config {
 			Interactive: true,
 			UseColor:    true,
 			Verbose:     false,
+			Editor:      "", // Empty default - falls back to $EDITOR then "vim"
 		},
 		Network: Network{
 			Timeout:    30,
@@ -213,4 +215,7 @@ func applyDefaults(cfg *Config) {
 	if cfg.Network.RetryDelay == 0 {
 		cfg.Network.RetryDelay = defaults.Network.RetryDelay
 	}
+
+	// Note: Behavior.Editor intentionally not defaulted here
+	// Empty means: use $EDITOR env var, then fall back to "vim"
 }

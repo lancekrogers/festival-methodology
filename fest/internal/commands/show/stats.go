@@ -11,13 +11,14 @@ import (
 
 // FestivalInfo holds information about a festival.
 type FestivalInfo struct {
-	ID         string         `json:"id"`                    // Directory-based ID (e.g., "my-project_GU0001")
-	MetadataID string         `json:"metadata_id,omitempty"` // ID from fest.yaml metadata (e.g., "GU0001")
-	Name       string         `json:"name"`
-	Status     string         `json:"status"`
-	Priority   string         `json:"priority,omitempty"`
-	Path       string         `json:"path"`
-	Stats      *FestivalStats `json:"stats,omitempty"`
+	ID           string         `json:"id"`                      // Directory-based ID (e.g., "my-project_GU0001")
+	MetadataID   string         `json:"metadata_id,omitempty"`   // ID from fest.yaml metadata (e.g., "GU0001")
+	Name         string         `json:"name"`                    // Directory name (used for linking)
+	MetadataName string         `json:"metadata_name,omitempty"` // Name from fest.yaml metadata (clean name without ID)
+	Status       string         `json:"status"`
+	Priority     string         `json:"priority,omitempty"`
+	Path         string         `json:"path"`
+	Stats        *FestivalStats `json:"stats,omitempty"`
 }
 
 // FestivalStats holds statistical information about a festival's progress.
@@ -48,6 +49,11 @@ type GateCounts struct {
 // CalculateFestivalStats calculates statistics for a festival.
 func CalculateFestivalStats(festivalDir string) (*FestivalStats, error) {
 	stats := &FestivalStats{}
+	festivalRoot := resolveFestivalRoot(festivalDir)
+	var store *progress.Store
+	if mgr, err := progress.NewManager(festivalRoot); err == nil {
+		store = mgr.Store()
+	}
 
 	// Find and count phases
 	entries, err := os.ReadDir(festivalDir)
@@ -69,7 +75,7 @@ func CalculateFestivalStats(festivalDir string) (*FestivalStats, error) {
 		stats.Phases.Total++
 
 		// Count sequences within the phase
-		phaseStats, err := calculatePhaseStats(phaseDir)
+		phaseStats, err := calculatePhaseStats(phaseDir, store, festivalRoot)
 		if err != nil {
 			continue
 		}
@@ -109,7 +115,7 @@ func CalculateFestivalStats(festivalDir string) (*FestivalStats, error) {
 	return stats, nil
 }
 
-func calculatePhaseStats(phaseDir string) (*FestivalStats, error) {
+func calculatePhaseStats(phaseDir string, store *progress.Store, festivalRoot string) (*FestivalStats, error) {
 	stats := &FestivalStats{}
 
 	entries, err := os.ReadDir(phaseDir)
@@ -131,7 +137,7 @@ func calculatePhaseStats(phaseDir string) (*FestivalStats, error) {
 		stats.Sequences.Total++
 
 		// Count tasks within the sequence
-		seqStats, err := calculateSequenceStats(seqDir)
+		seqStats, err := calculateSequenceStats(seqDir, store, festivalRoot)
 		if err != nil {
 			continue
 		}
@@ -161,7 +167,7 @@ func calculatePhaseStats(phaseDir string) (*FestivalStats, error) {
 	return stats, nil
 }
 
-func calculateSequenceStats(seqDir string) (*FestivalStats, error) {
+func calculateSequenceStats(seqDir string, store *progress.Store, festivalRoot string) (*FestivalStats, error) {
 	stats := &FestivalStats{}
 
 	entries, err := os.ReadDir(seqDir)
@@ -194,9 +200,8 @@ func calculateSequenceStats(seqDir string) (*FestivalStats, error) {
 			// TODO: Parse file to determine actual status
 		} else {
 			stats.Tasks.Total++
-			// Parse markdown file for checkbox status
 			taskPath := filepath.Join(seqDir, entry.Name())
-			status := progress.ParseTaskStatus(taskPath)
+			status := progress.ResolveTaskStatus(store, festivalRoot, taskPath)
 			switch status {
 			case progress.StatusCompleted:
 				stats.Tasks.Completed++
@@ -211,6 +216,28 @@ func calculateSequenceStats(seqDir string) (*FestivalStats, error) {
 	}
 
 	return stats, nil
+}
+
+func resolveFestivalRoot(startDir string) string {
+	absStart, err := filepath.Abs(startDir)
+	if err != nil {
+		return startDir
+	}
+
+	dir := absStart
+	for {
+		if isValidFestival(dir) {
+			return dir
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+
+	return startDir
 }
 
 func hasNumericPrefix(name string) bool {
@@ -239,5 +266,6 @@ func isGateFile(name string) bool {
 		strings.Contains(lower, "_testing") ||
 		strings.Contains(lower, "_review") ||
 		strings.Contains(lower, "_verify") ||
-		strings.Contains(lower, "_iterate")
+		strings.Contains(lower, "_iterate") ||
+		strings.Contains(lower, "_commit")
 }

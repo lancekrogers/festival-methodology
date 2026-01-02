@@ -182,6 +182,7 @@ Before executing a festival, verify:
     □ XX_testing_and_verify.md
     □ XX_code_review.md
     □ XX_review_results_iterate.md
+    □ XX_commit.md
 
   ✓ Templates
     □ No [FILL:] markers remaining

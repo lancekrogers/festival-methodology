@@ -72,7 +72,7 @@ func parseGatesPrefix(templateID, festivalPath string) gatesPrefixInfo {
 }
 
 // Resolve finds a template by ID, searching the hierarchy from most to least specific.
-// Search order: sequence → phase → festival → global gates → built-in
+// Search order: sequence → phase → festival → global gates
 // If templateID starts with "gates/", it first looks in the festival's gates/ directory.
 func (r *TemplateResolver) Resolve(
 	templateID string,
@@ -139,9 +139,8 @@ func (r *TemplateResolver) buildSearchPaths(
 	paths = append(paths,
 		searchPath{PolicyLevelSequence, filepath.Join(sequencePath, ".fest.templates", gatesInfo.resolvedID+".md")},
 		searchPath{PolicyLevelPhase, filepath.Join(phasePath, ".fest.templates", gatesInfo.resolvedID+".md")},
-		searchPath{PolicyLevelFestival, filepath.Join(festivalPath, ".festival", "templates", gatesInfo.resolvedID+".md")},
-		searchPath{PolicyLevelGlobal, filepath.Join(r.festivalsRoot, ".festival", "gates", "templates", gatesInfo.resolvedID+".md")},
-		searchPath{PolicyLevelBuiltin, filepath.Join(r.festivalsRoot, ".festival", "templates", gatesInfo.resolvedID+".md")},
+		searchPath{PolicyLevelFestival, filepath.Join(festivalPath, ".festival", "templates", "gates", gatesInfo.resolvedID+".md")},
+		searchPath{PolicyLevelGlobal, filepath.Join(r.festivalsRoot, ".festival", "templates", "gates", gatesInfo.resolvedID+".md")},
 	)
 
 	return paths
@@ -168,9 +167,8 @@ func (r *TemplateResolver) ResolveForPhase(
 	}
 	paths = append(paths,
 		searchPath{PolicyLevelPhase, filepath.Join(phasePath, ".fest.templates", gatesInfo.resolvedID+".md")},
-		searchPath{PolicyLevelFestival, filepath.Join(festivalPath, ".festival", "templates", gatesInfo.resolvedID+".md")},
-		searchPath{PolicyLevelGlobal, filepath.Join(r.festivalsRoot, ".festival", "gates", "templates", gatesInfo.resolvedID+".md")},
-		searchPath{PolicyLevelBuiltin, filepath.Join(r.festivalsRoot, ".festival", "templates", gatesInfo.resolvedID+".md")},
+		searchPath{PolicyLevelFestival, filepath.Join(festivalPath, ".festival", "templates", "gates", gatesInfo.resolvedID+".md")},
+		searchPath{PolicyLevelGlobal, filepath.Join(r.festivalsRoot, ".festival", "templates", "gates", gatesInfo.resolvedID+".md")},
 	)
 
 	var searched []string
@@ -216,9 +214,8 @@ func (r *TemplateResolver) ResolveForFestival(
 		paths = append(paths, searchPath{PolicyLevelFestival, gatesInfo.gatesPath})
 	}
 	paths = append(paths,
-		searchPath{PolicyLevelFestival, filepath.Join(festivalPath, ".festival", "templates", gatesInfo.resolvedID+".md")},
-		searchPath{PolicyLevelGlobal, filepath.Join(r.festivalsRoot, ".festival", "gates", "templates", gatesInfo.resolvedID+".md")},
-		searchPath{PolicyLevelBuiltin, filepath.Join(r.festivalsRoot, ".festival", "templates", gatesInfo.resolvedID+".md")},
+		searchPath{PolicyLevelFestival, filepath.Join(festivalPath, ".festival", "templates", "gates", gatesInfo.resolvedID+".md")},
+		searchPath{PolicyLevelGlobal, filepath.Join(r.festivalsRoot, ".festival", "templates", "gates", gatesInfo.resolvedID+".md")},
 	)
 
 	var searched []string

@@ -175,6 +175,9 @@ func TestIsGateFile(t *testing.T) {
 		{"gate_testing.md", true},
 		{"review_gate.md", true},
 		{"testing_and_verify.md", true},
+		{"code_review.md", true},
+		{"review_results_iterate.md", true},
+		{"commit.md", true},
 		{"regular_task.md", false},
 		{"01_implementation.md", false},
 	}

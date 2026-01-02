@@ -111,7 +111,7 @@ func printValidationResult(display *ui.UI, festivalPath string, result *Validati
 	printValidationSection(display, "COMPLETENESS", completenessIssues)
 	printTaskValidationSection(display, taskIssues)
 	printValidationSection(display, "QUALITY GATES", gateIssues)
-	printTemplateValidationSection(display, templateIssues)
+	printMarkerValidationSection(display, templateIssues, result.MarkerInfo)
 	printValidationSection(display, "ORDERING", orderingIssues)
 
 	// Score and summary
@@ -160,30 +160,42 @@ func printValidationSection(display *ui.UI, title string, issues []ValidationIss
 	}
 }
 
-func printTemplateValidationSection(display *ui.UI, issues []ValidationIssue) {
-	fmt.Println("\nTEMPLATES (Required for Valid Festival)")
+func printMarkerValidationSection(display *ui.UI, issues []ValidationIssue, markerInfo *MarkerInfo) {
+	fmt.Println("\nMARKERS (Template Completion Status)")
 
 	if len(issues) == 0 {
-		display.Success("[OK] All template markers have been filled")
+		display.Success("[OK] All template markers have been filled (0 markers found)")
 		return
 	}
 
-	display.Error("[ERROR] Files contain unfilled template markers")
+	// Show error with count
+	if markerInfo != nil {
+		display.Error("[ERROR] Found %d unfilled markers in %d files", markerInfo.TotalCount, markerInfo.TotalFiles)
+	} else {
+		display.Error("[ERROR] Files contain unfilled template markers")
+	}
+
 	fmt.Println()
 	fmt.Println("        Template markers are PLACEHOLDERS that MUST be replaced with actual content.")
 	fmt.Println("        A festival with unfilled markers is INCOMPLETE.")
 	fmt.Println()
-	fmt.Println("        Files needing attention:")
 
-	for _, issue := range issues {
-		fmt.Printf("        - %s\n", issue.Path)
+	if len(issues) > 0 {
+		fmt.Println("        Files needing attention:")
+		for _, issue := range issues {
+			fmt.Printf("          • %s\n", issue.Path)
+			fmt.Printf("            %s\n", issue.Message)
+		}
 	}
 
 	fmt.Println()
-	fmt.Println("        For each file, edit and replace:")
-	fmt.Println("          [FILL: description]  → Write actual content")
-	fmt.Println("          [REPLACE: guidance]  → Replace with your content")
-	fmt.Println("          {{ placeholder }}    → Fill in the value")
+	fmt.Println("        Common marker types to replace:")
+	fmt.Println("          [FILL: description]    → Write actual content")
+	fmt.Println("          [REPLACE: guidance]    → Replace with your content")
+	fmt.Println("          [GUIDANCE: hint]       → Remove and write real content")
+	fmt.Println("          {{ placeholder }}      → Fill in the value")
+	fmt.Println()
+	fmt.Println("        Run 'fest markers list' to see all unfilled markers")
 }
 
 func printAgentReflection(display *ui.UI, result *ValidationResult) {

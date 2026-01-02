@@ -127,7 +127,10 @@ func isGateFile(filename string) bool {
 		"gate_",
 		"_gate",
 		"testing_and_verify",
+		"code_review",
+		"review_results_iterate",
 		"review_gate",
+		"commit",
 	}
 
 	for _, indicator := range gateIndicators {

@@ -165,9 +165,9 @@ func parseFestivalInfo(festivalDir string) (*FestivalInfo, error) {
 		if festConfig.Metadata.ID != "" {
 			info.MetadataID = festConfig.Metadata.ID
 		}
-		// Use name from metadata if available, otherwise use directory name
+		// Keep metadata name separate from directory name (used for linking)
 		if festConfig.Metadata.Name != "" {
-			info.Name = festConfig.Metadata.Name
+			info.MetadataName = festConfig.Metadata.Name
 		}
 	}
 

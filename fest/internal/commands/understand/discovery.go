@@ -21,7 +21,7 @@ func newUnderstandGatesCmd() *cobra.Command {
 		Long: `Show the quality gate policy that will be applied to sequences.
 
 Quality gates are tasks automatically appended to implementation sequences.
-The default gates are: testing_and_verify, code_review, review_results_iterate.
+The default gates are: testing_and_verify, code_review, review_results_iterate, commit.
 
 Gates can be customized at multiple levels:
   1. Built-in defaults (always available)

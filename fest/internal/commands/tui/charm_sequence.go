@@ -12,6 +12,7 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+	uitheme "github.com/lancekrogers/festival-methodology/fest/internal/ui/theme"
 )
 
 func charmCreateSequence(ctx context.Context) error {
@@ -32,6 +33,9 @@ func charmCreateSequence(ctx context.Context) error {
 		if err := huh.NewForm(huh.NewGroup(
 			huh.NewInput().Title("Sequence name").Placeholder("requirements").Value(&name).Validate(notEmpty),
 		)).WithTheme(theme()).Run(); err != nil {
+			if uitheme.IsCancelled(err) {
+				return nil
+			}
 			return err
 		}
 		// Position selection with default append
@@ -43,11 +47,17 @@ func charmCreateSequence(ctx context.Context) error {
 				huh.NewOption("Insert after number", "insert"),
 			).Value(&pos),
 		)).WithTheme(theme()).Run(); err != nil {
+			if uitheme.IsCancelled(err) {
+				return nil
+			}
 			return err
 		}
 		if pos == "insert" {
 			afterStr = fmt.Sprintf("%d", defAfter)
 			if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr))).WithTheme(theme()).Run(); err != nil {
+				if uitheme.IsCancelled(err) {
+					return nil
+				}
 				return err
 			}
 		} else {
@@ -71,11 +81,17 @@ func charmCreateSequence(ctx context.Context) error {
 				),
 			).WithTheme(theme())
 			if err := form.Run(); err != nil {
+				if uitheme.IsCancelled(err) {
+					return nil
+				}
 				return err
 			}
 			if selected == "__other__" {
 				// Ask for manual path/number
 				if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Phase (dir or number)").Value(&path))).WithTheme(theme()).Run(); err != nil {
+					if uitheme.IsCancelled(err) {
+						return nil
+					}
 					return err
 				}
 			} else {
@@ -89,6 +105,9 @@ func charmCreateSequence(ctx context.Context) error {
 				),
 			).WithTheme(theme())
 			if err := form.Run(); err != nil {
+				if uitheme.IsCancelled(err) {
+					return nil
+				}
 				return err
 			}
 		}
@@ -105,11 +124,17 @@ func charmCreateSequence(ctx context.Context) error {
 				huh.NewOption("Insert after number", "insert"),
 			).Value(&pos),
 		)).WithTheme(theme()).Run(); err != nil {
+			if uitheme.IsCancelled(err) {
+				return nil
+			}
 			return err
 		}
 		if pos == "insert" {
 			afterStr = fmt.Sprintf("%d", defAfter)
 			if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title("Insert after number (0 to insert at beginning)").Value(&afterStr))).WithTheme(theme()).Run(); err != nil {
+				if uitheme.IsCancelled(err) {
+					return nil
+				}
 				return err
 			}
 		} else {
@@ -134,6 +159,9 @@ func charmCreateSequence(ctx context.Context) error {
 		}
 		var v string
 		if err := huh.NewForm(huh.NewGroup(huh.NewInput().Title(k).Value(&v))).WithTheme(theme()).Run(); err != nil {
+			if uitheme.IsCancelled(err) {
+				return nil
+			}
 			return err
 		}
 		if strings.TrimSpace(v) != "" {

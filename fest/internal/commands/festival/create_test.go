@@ -299,7 +299,8 @@ func TestCreateFestival_GatesDirectory(t *testing.T) {
 	festivalsDir := filepath.Join(tmpDir, "festivals")
 	festivalMetaDir := filepath.Join(festivalsDir, ".festival")
 	templatesDir := filepath.Join(festivalMetaDir, "templates")
-	if err := os.MkdirAll(templatesDir, 0755); err != nil {
+	gatesTemplatesDir := filepath.Join(templatesDir, "gates")
+	if err := os.MkdirAll(gatesTemplatesDir, 0755); err != nil {
 		t.Fatalf("failed to create template dir: %v", err)
 	}
 
@@ -308,10 +309,11 @@ func TestCreateFestival_GatesDirectory(t *testing.T) {
 		"QUALITY_GATE_TESTING.md",
 		"QUALITY_GATE_REVIEW.md",
 		"QUALITY_GATE_ITERATE.md",
+		"QUALITY_GATE_COMMIT.md",
 	}
 	for _, tmpl := range gateTemplates {
 		content := "# " + tmpl + "\n\nGate template content."
-		if err := os.WriteFile(filepath.Join(templatesDir, tmpl), []byte(content), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(gatesTemplatesDir, tmpl), []byte(content), 0644); err != nil {
 			t.Fatalf("failed to create template %s: %v", tmpl, err)
 		}
 	}
@@ -380,13 +382,14 @@ func TestCreateFestival_FestYAMLGenerated(t *testing.T) {
 	festivalsDir := filepath.Join(tmpDir, "festivals")
 	festivalMetaDir := filepath.Join(festivalsDir, ".festival")
 	templatesDir := filepath.Join(festivalMetaDir, "templates")
-	if err := os.MkdirAll(templatesDir, 0755); err != nil {
+	gatesTemplatesDir := filepath.Join(templatesDir, "gates")
+	if err := os.MkdirAll(gatesTemplatesDir, 0755); err != nil {
 		t.Fatalf("failed to create template dir: %v", err)
 	}
 
 	// Create minimal gate templates
-	for _, tmpl := range []string{"QUALITY_GATE_TESTING.md", "QUALITY_GATE_REVIEW.md", "QUALITY_GATE_ITERATE.md"} {
-		if err := os.WriteFile(filepath.Join(templatesDir, tmpl), []byte("# Gate"), 0644); err != nil {
+	for _, tmpl := range []string{"QUALITY_GATE_TESTING.md", "QUALITY_GATE_REVIEW.md", "QUALITY_GATE_ITERATE.md", "QUALITY_GATE_COMMIT.md"} {
+		if err := os.WriteFile(filepath.Join(gatesTemplatesDir, tmpl), []byte("# Gate"), 0644); err != nil {
 			t.Fatalf("failed to create template: %v", err)
 		}
 	}
@@ -446,6 +449,9 @@ func TestCreateFestival_FestYAMLGenerated(t *testing.T) {
 	if !contains(contentStr, "gates/QUALITY_GATE_ITERATE") {
 		t.Error("fest.yaml should contain gates/QUALITY_GATE_ITERATE")
 	}
+	if !contains(contentStr, "gates/QUALITY_GATE_COMMIT") {
+		t.Error("fest.yaml should contain gates/QUALITY_GATE_COMMIT")
+	}
 
 	// Verify quality_gates.enabled is true
 	if !contains(contentStr, "enabled: true") {
@@ -462,9 +468,9 @@ func TestCreateFestival_GatesConfigHasCorrectStructure(t *testing.T) {
 		t.Error("quality gates should be enabled by default")
 	}
 
-	// Verify we have 3 default gates
-	if len(cfg.QualityGates.Tasks) != 3 {
-		t.Errorf("expected 3 quality gate tasks, got %d", len(cfg.QualityGates.Tasks))
+	// Verify we have 4 default gates
+	if len(cfg.QualityGates.Tasks) != 4 {
+		t.Errorf("expected 4 quality gate tasks, got %d", len(cfg.QualityGates.Tasks))
 	}
 
 	// Verify all gates use gates/ prefix
@@ -472,6 +478,7 @@ func TestCreateFestival_GatesConfigHasCorrectStructure(t *testing.T) {
 		"gates/QUALITY_GATE_TESTING": false,
 		"gates/QUALITY_GATE_REVIEW":  false,
 		"gates/QUALITY_GATE_ITERATE": false,
+		"gates/QUALITY_GATE_COMMIT":  false,
 	}
 
 	for _, task := range cfg.QualityGates.Tasks {

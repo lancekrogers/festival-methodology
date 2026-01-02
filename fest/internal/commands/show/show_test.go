@@ -39,6 +39,7 @@ func TestIsGateFile(t *testing.T) {
 		{"01_code_review.md", true},
 		{"01_verify_build.md", true},
 		{"01_iterate_feedback.md", true},
+		{"01_commit.md", true},
 		{"01_implementation.md", false},
 		{"01_task.md", false},
 		{"SEQUENCE_GOAL.md", false},

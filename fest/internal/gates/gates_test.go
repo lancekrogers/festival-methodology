@@ -15,12 +15,12 @@ func TestDefaultPolicy(t *testing.T) {
 	if policy.Name != DefaultPolicyName {
 		t.Errorf("DefaultPolicy name = %q, want %q", policy.Name, DefaultPolicyName)
 	}
-	if len(policy.Append) != 3 {
-		t.Errorf("DefaultPolicy has %d tasks, want 3", len(policy.Append))
+	if len(policy.Append) != 4 {
+		t.Errorf("DefaultPolicy has %d tasks, want 4", len(policy.Append))
 	}
 
 	// Check default task IDs
-	expectedIDs := []string{"testing_and_verify", "code_review", "review_results_iterate"}
+	expectedIDs := []string{"testing_and_verify", "code_review", "review_results_iterate", "commit"}
 	for i, expected := range expectedIDs {
 		if policy.Append[i].ID != expected {
 			t.Errorf("DefaultPolicy task %d ID = %q, want %q", i, policy.Append[i].ID, expected)

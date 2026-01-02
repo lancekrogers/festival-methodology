@@ -71,9 +71,9 @@ func TestRebuild(t *testing.T) {
 	os.MkdirAll(completedPath, 0755)
 
 	// Create festivals with IDs
-	festival1 := filepath.Join(activePath, "first_GU0001")
-	festival2 := filepath.Join(activePath, "second_FN0002")
-	festival3 := filepath.Join(completedPath, "done_DO0003")
+	festival1 := filepath.Join(activePath, "first-GU0001")
+	festival2 := filepath.Join(activePath, "second-FN0002")
+	festival3 := filepath.Join(completedPath, "done-DO0003")
 	os.MkdirAll(festival1, 0755)
 	os.MkdirAll(festival2, 0755)
 	os.MkdirAll(festival3, 0755)
@@ -132,7 +132,7 @@ func TestRebuild_SkipsLegacyFestivals(t *testing.T) {
 	os.MkdirAll(legacy, 0755)
 
 	// Create festival with ID
-	withID := filepath.Join(activePath, "modern_MO0001")
+	withID := filepath.Join(activePath, "modern-MO0001")
 	os.MkdirAll(withID, 0755)
 
 	regPath := filepath.Join(festivalsRoot, ".festival", "id_registry.yaml")
@@ -159,7 +159,7 @@ func TestRegistry_Sync(t *testing.T) {
 	os.MkdirAll(activePath, 0755)
 
 	// Create festival on filesystem
-	festival := filepath.Join(activePath, "test_TE0001")
+	festival := filepath.Join(activePath, "test-TE0001")
 	os.MkdirAll(festival, 0755)
 
 	regPath := filepath.Join(festivalsRoot, ".festival", "id_registry.yaml")
@@ -172,7 +172,7 @@ func TestRegistry_Sync(t *testing.T) {
 		ID:     "ST0001",
 		Name:   "stale",
 		Status: "active",
-		Path:   filepath.Join(activePath, "stale_ST0001"),
+		Path:   filepath.Join(activePath, "stale-ST0001"),
 	})
 
 	// Sync should add TE0001 and remove ST0001
@@ -211,8 +211,8 @@ func TestRebuild_ContextCancellation(t *testing.T) {
 
 func TestDetectStatus(t *testing.T) {
 	tests := []struct {
-		path   string
-		want   string
+		path string
+		want string
 	}{
 		{"/festivals/active/test_TE0001", "active"},
 		{"/festivals/planned/test_TE0001", "planned"},

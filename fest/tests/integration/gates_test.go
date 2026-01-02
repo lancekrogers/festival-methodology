@@ -239,11 +239,11 @@ name: custom
 inherit: true
 append:
   - id: testing_and_verify
-    template: QUALITY_GATE_TESTING
+    template: gates/QUALITY_GATE_TESTING
     name: Testing and Verification
     enabled: true
   - id: code_review
-    template: QUALITY_GATE_REVIEW
+    template: gates/QUALITY_GATE_REVIEW
     name: Code Review
     enabled: true
 `
@@ -273,8 +273,8 @@ func setupGatesTestFestival(tc *TestContainer) error {
 	// Create base structure
 	dirs := []string{
 		"/festivals/.festival/gates/policies",
-		"/festivals/.festival/gates/templates",
 		"/festivals/.festival/templates",
+		"/festivals/.festival/templates/gates",
 		"/festivals/test-gates-festival/001_DESIGN/01_planning",
 		"/festivals/test-gates-festival/002_IMPLEMENT/01_core",
 		"/festivals/test-gates-festival/002_IMPLEMENT/02_features",
