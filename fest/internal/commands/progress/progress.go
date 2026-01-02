@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -31,6 +32,8 @@ type progressOptions struct {
 	inProgress bool
 }
 
+var taskFilenamePattern = regexp.MustCompile(`^\d{2}[\._].*\.md$`)
+
 // NewProgressCommand creates the progress command
 func NewProgressCommand() *cobra.Command {
 	opts := &progressOptions{}
@@ -49,15 +52,21 @@ PROGRESS OVERVIEW:
 
 TASK UPDATES:
   fest progress --task <id> --update 50%     Update task progress
-  fest progress --path <task_path> --complete    Mark task as complete
+  fest progress --task <id> --complete       Mark task as complete
+  fest progress --task <id> --in-progress    Mark task as in progress
+  fest progress --task <id> --blocker "msg"  Report a blocker
+  fest progress --task <id> --clear          Clear blocker
+  fest progress --path <task_path> --complete
   fest progress --phase <phase> --sequence <seq> --task <id> --complete
 
 Task IDs can be festival-relative paths (e.g. 002_FOUNDATION/01_project_scaffold/01_design.md)
-or absolute paths. Use --path for explicit task paths.`,
+or absolute paths. Use --path or --phase/--sequence to disambiguate duplicates.
+Use --festival to run outside a festival directory.`,
 		Example: `  fest progress                          # Show overall progress
   fest progress --task 01_setup.md --update 75%
   fest progress --path 002_FOUNDATION/01_project_scaffold/01_design.md --complete
   fest progress --phase 002_FOUNDATION --sequence 01_project_scaffold --task 01_design.md --complete
+  fest progress --festival festivals/active/guild-chat-GC0001 --task 01_setup.md --update 75%
   fest progress --task 02_impl.md --blocker "Waiting on API spec"
   fest progress --task 02_impl.md --clear`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -496,26 +505,5 @@ func findTaskMatches(festivalPath, taskID string) ([]string, error) {
 }
 
 func isTaskFile(name string) bool {
-	if !strings.HasSuffix(name, ".md") {
-		return false
-	}
-
-	lower := strings.ToLower(name)
-	if lower == strings.ToLower(show.FestivalGoalFile) ||
-		lower == strings.ToLower(show.FestivalOverviewFile) ||
-		lower == strings.ToLower(show.PhaseGoalFile) ||
-		lower == strings.ToLower(show.SequenceGoalFile) {
-		return false
-	}
-
-	if strings.Contains(lower, "_gate") ||
-		strings.Contains(lower, "_testing") ||
-		strings.Contains(lower, "_review") ||
-		strings.Contains(lower, "_verify") ||
-		strings.Contains(lower, "_iterate") ||
-		strings.Contains(lower, "_commit") {
-		return false
-	}
-
-	return true
+	return taskFilenamePattern.MatchString(name)
 }
