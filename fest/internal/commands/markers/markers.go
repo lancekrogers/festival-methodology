@@ -144,10 +144,6 @@ func scanMarkers(festivalPath string) (*MarkerSummary, error) {
 		if strings.HasPrefix(relPath, ".") || strings.Contains(relPath, "/.") {
 			return nil
 		}
-		// Skip gates/ directory - these are intentional template files
-		if strings.HasPrefix(relPath, "gates/") || strings.HasPrefix(relPath, "gates"+string(filepath.Separator)) {
-			return nil
-		}
 
 		// Read file and scan for markers
 		file, err := os.Open(path)

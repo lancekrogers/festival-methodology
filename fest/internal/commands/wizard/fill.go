@@ -199,8 +199,9 @@ func runVimFill(ctx context.Context, opts *FillOptions, files []string, rootPath
 	// Get editor: config > $EDITOR > "vim"
 	editor := getEditor(ctx)
 
-	// Open editor with all files as buffers
-	cmd := exec.CommandContext(ctx, editor, filesWithMarkers...)
+	// Open editor with all files as vertical splits (-O flag)
+	args := append([]string{"-O"}, filesWithMarkers...)
+	cmd := exec.CommandContext(ctx, editor, args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
