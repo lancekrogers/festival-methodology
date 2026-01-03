@@ -1,0 +1,27 @@
+version: "1.0"
+metadata:
+  id: TODO0001
+  uuid: test-uuid-todo-app-festival
+  name: todo-app-festival
+  created_at: 2026-01-02T10:00:00Z
+  status_history:
+    - status: active
+      timestamp: 2026-01-02T10:00:00Z
+      path: /festivals/todo-app-festival
+      notes: Festival created for progress tracking integration test
+
+quality_gates:
+  enabled: false  # Disabled for test simplicity
+  auto_append: false
+
+excluded_patterns:
+  - '*_planning'
+  - '*_research'
+
+templates:
+  task_default: TASK_TEMPLATE_SIMPLE
+  prefer_simple: true
+
+tracking:
+  enabled: true
+  checksum_file: .festival-checksums.json
