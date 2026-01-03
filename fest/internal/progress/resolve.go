@@ -43,26 +43,17 @@ func ResolveTaskProgress(store *Store, festivalPath, taskPath string) (*TaskProg
 	return store.GetTask(filepath.Base(taskPath))
 }
 
-// ResolveTaskStatus returns the status for a task path, with markdown checkboxes
-// as the primary source of truth. YAML store data is only used for additional
-// metadata (time tracking, blockers) but not for overriding completion state.
+// ResolveTaskStatus returns the status for a task path, with YAML progress store
+// as the primary source of truth. Markdown checkboxes are only used as a fallback
+// when no YAML record exists.
 func ResolveTaskStatus(store *Store, festivalPath, taskPath string) string {
-	// Always check markdown first - this is the source of truth
-	markdownStatus := ParseTaskStatus(taskPath)
-
-	// If markdown status is definitive (completed, blocked, or in_progress), trust it
-	if markdownStatus != StatusPending {
-		return markdownStatus
-	}
-
-	// For pending tasks, check YAML for additional state (e.g., if marked blocked manually)
+	// Check YAML first - this is the source of truth
 	if task, ok := ResolveTaskProgress(store, festivalPath, taskPath); ok {
-		if task.Status == StatusBlocked {
-			return StatusBlocked
-		}
+		return task.Status
 	}
 
-	return StatusPending
+	// Fall back to markdown if no YAML record exists
+	return ParseTaskStatus(taskPath)
 }
 
 func taskKeyFromPath(festivalPath, taskPath string) (string, error) {

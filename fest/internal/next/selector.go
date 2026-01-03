@@ -2,12 +2,14 @@
 package next
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/deps"
+	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
 )
 
 // NextTaskResult represents the result of finding the next task
@@ -84,6 +86,11 @@ func (s *Selector) FindNext(currentPath string) (*NextTaskResult, error) {
 		return nil, err
 	}
 
+	// Update task statuses from progress system (YAML source of truth)
+	if err := s.updateTaskStatusesFromProgress(graph); err != nil {
+		return nil, err
+	}
+
 	// Determine current location
 	location := s.determineLocation(currentPath)
 
@@ -140,6 +147,11 @@ func (s *Selector) FindNext(currentPath string) (*NextTaskResult, error) {
 func (s *Selector) FindNextInSequence(seqPath string) (*NextTaskResult, error) {
 	graph, err := s.resolver.ResolveSequence(seqPath)
 	if err != nil {
+		return nil, err
+	}
+
+	// Update task statuses from progress system (YAML source of truth)
+	if err := s.updateTaskStatusesFromProgress(graph); err != nil {
 		return nil, err
 	}
 
@@ -395,6 +407,36 @@ func (s *Selector) GetProgress() (*ProgressStats, error) {
 	}
 
 	return stats, nil
+}
+
+// updateTaskStatusesFromProgress updates all task statuses in the graph
+// by querying the progress tracking system (YAML source of truth)
+func (s *Selector) updateTaskStatusesFromProgress(graph *deps.Graph) error {
+	// Create progress manager
+	mgr, err := progress.NewManager(context.Background(), s.festivalPath)
+	if err != nil {
+		return err
+	}
+
+	// Update each task's status from YAML (or markdown fallback)
+	for _, task := range graph.Tasks {
+		// ResolveTaskStatus checks YAML first, falls back to markdown
+		status := progress.ResolveTaskStatus(mgr.Store(), s.festivalPath, task.Path)
+
+		// Map progress status to deps status
+		switch status {
+		case progress.StatusCompleted:
+			task.Status = "complete" // GetReadyTasks() will skip this
+		case progress.StatusInProgress:
+			task.Status = "in_progress"
+		case progress.StatusBlocked:
+			task.Status = "blocked"
+		default:
+			task.Status = "pending"
+		}
+	}
+
+	return nil
 }
 
 // isNumberedDir checks if directory name starts with a number

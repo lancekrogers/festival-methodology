@@ -197,37 +197,28 @@ func (m *Manager) GetSequenceProgress(ctx context.Context, seqPath string) (*Seq
 		aggregate.Total++
 		taskPath := filepath.Join(seqPath, entry.Name())
 
-		// Check if we have progress data for this task (prefer relative path keys)
-		task, exists := ResolveTaskProgress(m.store, m.store.festivalPath, taskPath)
-		if !exists {
-			// No YAML data - parse markdown file for checkbox status
-			status := ParseTaskStatus(taskPath)
-			switch status {
-			case StatusCompleted:
-				aggregate.Completed++
-			case StatusInProgress:
-				aggregate.InProgress++
-			case StatusBlocked:
-				aggregate.Blocked++
-			default:
-				aggregate.Pending++
-			}
-			continue
-		}
+		// Use ResolveTaskStatus which prioritizes markdown checkboxes as source of truth
+		status := ResolveTaskStatus(m.store, m.store.festivalPath, taskPath)
 
-		switch task.Status {
+		switch status {
 		case StatusCompleted:
 			aggregate.Completed++
 		case StatusInProgress:
 			aggregate.InProgress++
 		case StatusBlocked:
 			aggregate.Blocked++
-			aggregate.Blockers = append(aggregate.Blockers, task)
+			// Get task from YAML for blocker details if available
+			if task, exists := ResolveTaskProgress(m.store, m.store.festivalPath, taskPath); exists && task.Status == StatusBlocked {
+				aggregate.Blockers = append(aggregate.Blockers, task)
+			}
 		default:
 			aggregate.Pending++
 		}
 
-		aggregate.TimeSpentMin += task.TimeSpentMinutes
+		// Get time tracking from YAML if available (markdown doesn't track time)
+		if task, exists := ResolveTaskProgress(m.store, m.store.festivalPath, taskPath); exists {
+			aggregate.TimeSpentMin += task.TimeSpentMinutes
+		}
 	}
 
 	// Calculate percentage

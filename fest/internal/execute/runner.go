@@ -40,12 +40,27 @@ func (r *Runner) Initialize(ctx context.Context) error {
 		return errors.Wrap(err, "failed to load state")
 	}
 
-	// Build execution plan
+	// Build execution plan (includes syncing from progress system)
 	plan, err := r.planBuilder.BuildPlan()
 	if err != nil {
 		return errors.Wrap(err, "failed to build plan")
 	}
 	r.plan = plan
+
+	// Sync execution state from plan's task statuses
+	// (Plan task statuses come from progress system YAML)
+	for _, phase := range plan.Phases {
+		for _, seq := range phase.Sequences {
+			for _, step := range seq.Steps {
+				for _, task := range step.Tasks {
+					// Only update if task has a non-pending status in the plan
+					if task.Status != "" && task.Status != StatusPending {
+						r.stateManager.SetTaskStatus(task.ID, task.Status)
+					}
+				}
+			}
+		}
+	}
 
 	// Update state with total tasks
 	r.stateManager.State().TotalTasks = plan.Summary.TotalTasks

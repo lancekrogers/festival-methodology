@@ -61,8 +61,8 @@ type FixApplied struct {
 
 // MarkerInfo tracks template marker details
 type MarkerInfo struct {
-	TotalFiles  int      `json:"total_files"`
-	TotalCount  int      `json:"total_count"`
+	TotalFiles       int      `json:"total_files"`
+	TotalCount       int      `json:"total_count"`
 	FilesWithMarkers []string `json:"files,omitempty"`
 }
 

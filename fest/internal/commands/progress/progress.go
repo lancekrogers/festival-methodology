@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
@@ -107,23 +108,26 @@ func runProgress(opts *progressOptions) error {
 		return err
 	}
 
+	// Resolve festival path from --festival flag, navigation links, or current directory
 	festivalPath := opts.festival
-	if festivalPath != "" {
-		if !filepath.IsAbs(festivalPath) {
-			festivalPath = filepath.Join(cwd, festivalPath)
-		}
+	if festivalPath != "" && !filepath.IsAbs(festivalPath) {
+		festivalPath = filepath.Join(cwd, festivalPath)
 	}
 
-	targetPath := cwd
+	// Use shared helper to resolve festival path (supports linked festivals)
+	resolvedFestivalPath, err := shared.ResolveFestivalPath(cwd, festivalPath)
+	if err != nil {
+		return errors.Wrap(err, "detecting festival location")
+	}
+
+	targetPath := resolvedFestivalPath
 	if opts.taskPath != "" {
-		resolvedTaskPath, err := resolveTaskPath(opts.taskPath, festivalPath, cwd)
+		resolvedTaskPath, err := resolveTaskPath(opts.taskPath, resolvedFestivalPath, cwd)
 		if err != nil {
 			return err
 		}
 		opts.taskPath = resolvedTaskPath
 		targetPath = resolvedTaskPath
-	} else if festivalPath != "" {
-		targetPath = festivalPath
 	}
 
 	// Detect current location
