@@ -9,6 +9,7 @@ import (
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/lancekrogers/festival-methodology/fest/internal/workspace"
 	"github.com/spf13/cobra"
 )
@@ -110,7 +111,9 @@ func listByStatus(festivalsDir, status string, opts *listOptions) error {
 		return nil
 	}
 
-	fmt.Printf("%s (%d)\n", strings.ToUpper(status), len(festivals))
+	// Color the status header
+	header := fmt.Sprintf("%s (%d)", strings.ToUpper(status), len(festivals))
+	fmt.Println(ui.GetStatusStyle(status).Render(header))
 	fmt.Println(strings.Repeat("─", 50))
 	for _, f := range festivals {
 		printFestival(f)
@@ -151,7 +154,9 @@ func listAll(festivalsDir string, opts *listOptions) error {
 			continue
 		}
 
-		fmt.Printf("\n%s (%d)\n", strings.ToUpper(status), len(festivals))
+		// Color the status header
+		header := fmt.Sprintf("%s (%d)", strings.ToUpper(status), len(festivals))
+		fmt.Printf("\n%s\n", ui.GetStatusStyle(status).Render(header))
 		fmt.Println(strings.Repeat("─", 50))
 
 		if len(festivals) == 0 {

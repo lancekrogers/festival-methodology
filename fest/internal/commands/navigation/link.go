@@ -8,9 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/navigation"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
+	"github.com/lancekrogers/festival-methodology/fest/internal/workspace"
 	"github.com/spf13/cobra"
 )
 
@@ -376,13 +379,41 @@ func runLinks(jsonOutput bool) error {
 			return nil
 		}
 
-		fmt.Println("Festival-Project Links:")
+		headerStyle := lipgloss.NewStyle().Bold(true)
+		fmt.Println(headerStyle.Render("Festival-Project Links:"))
 		fmt.Println(strings.Repeat("-", 60))
+
+		// Try to find festivals directory to look up statuses
+		cwd, _ := os.Getwd()
+		festivalsDir, _ := workspace.FindFestivals(cwd)
+
 		for name, link := range links {
-			fmt.Printf("%-20s → %s\n", name, link.Path)
+			// Try to get festival status for coloring
+			styledName := name
+			if festivalsDir != "" {
+				status := findFestivalStatus(festivalsDir, name)
+				if status != "" {
+					styledName = ui.GetStatusStyle(status).Render(name)
+				}
+			}
+			fmt.Printf("%-20s → %s\n", styledName, link.Path)
 			fmt.Printf("%-20s   (linked %s)\n", "", link.LinkedAt.Format("2006-01-02"))
 		}
 	}
 
 	return nil
+}
+
+// findFestivalStatus looks up a festival's status by searching status directories.
+// Returns empty string if festival not found.
+func findFestivalStatus(festivalsDir, festivalName string) string {
+	statuses := []string{"active", "planned", "completed", "dungeon"}
+	for _, status := range statuses {
+		statusDir := filepath.Join(festivalsDir, status)
+		festivalPath := filepath.Join(statusDir, festivalName)
+		if info, err := os.Stat(festivalPath); err == nil && info.IsDir() {
+			return status
+		}
+	}
+	return ""
 }
