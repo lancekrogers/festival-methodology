@@ -4,6 +4,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -312,4 +313,123 @@ func H3(text string) string {
 	opts := DefaultHeaderOptions()
 	opts.Level = HeaderH3
 	return Header(text, opts)
+}
+
+// ProgressBarOptions configures how a progress bar is rendered.
+type ProgressBarOptions struct {
+	// Current value (0-100 for percentage mode, or absolute value).
+	Current int
+	// Total value (100 for percentage, or custom total).
+	Total int
+	// Width of the progress bar in characters.
+	Width int
+	// FilledChar is the character used for filled portions.
+	FilledChar string
+	// EmptyChar is the character used for empty portions.
+	EmptyChar string
+	// FilledColor sets the filled portion color.
+	FilledColor lipgloss.Color
+	// EmptyColor sets the empty portion color.
+	EmptyColor lipgloss.Color
+	// ShowPercentage displays the percentage on the right side.
+	ShowPercentage bool
+	// ShowFraction displays current/total on the right side.
+	ShowFraction bool
+}
+
+// DefaultProgressBarOptions returns sensible defaults for progress bar rendering.
+func DefaultProgressBarOptions() ProgressBarOptions {
+	return ProgressBarOptions{
+		Current:        0,
+		Total:          100,
+		Width:          40,
+		FilledChar:     "█",
+		EmptyChar:      "░",
+		FilledColor:    SuccessColor,
+		EmptyColor:     lipgloss.Color("240"),
+		ShowPercentage: true,
+		ShowFraction:   false,
+	}
+}
+
+// RenderProgressBar creates a visual progress indicator.
+//
+// Usage:
+//   // Simple percentage bar
+//   opts := DefaultProgressBarOptions()
+//   opts.Current = 75
+//   output := RenderProgressBar(opts)  // Shows 75% filled
+//
+//   // Custom total with fraction display
+//   opts := DefaultProgressBarOptions()
+//   opts.Current = 42
+//   opts.Total = 100
+//   opts.ShowPercentage = false
+//   opts.ShowFraction = true
+//   output := RenderProgressBar(opts)  // Shows "42/100"
+func RenderProgressBar(opts ProgressBarOptions) string {
+	// Calculate fill percentage
+	percentage := 0
+	if opts.Total > 0 {
+		percentage = (opts.Current * 100) / opts.Total
+		if percentage > 100 {
+			percentage = 100
+		}
+	}
+
+	// Calculate filled width
+	filledWidth := (opts.Width * percentage) / 100
+	emptyWidth := opts.Width - filledWidth
+
+	// Build the bar
+	filledStyle := lipgloss.NewStyle().Foreground(opts.FilledColor)
+	emptyStyle := lipgloss.NewStyle().Foreground(opts.EmptyColor)
+
+	filled := strings.Repeat(opts.FilledChar, filledWidth)
+	empty := strings.Repeat(opts.EmptyChar, emptyWidth)
+
+	bar := filledStyle.Render(filled) + emptyStyle.Render(empty)
+
+	// Add percentage or fraction if requested
+	if opts.ShowPercentage {
+		percentStyle := lipgloss.NewStyle().
+			Foreground(ValueColor).
+			Bold(true)
+		percentText := percentStyle.Render(fmt.Sprintf(" %d%%", percentage))
+		bar = bar + percentText
+	} else if opts.ShowFraction {
+		fractionStyle := lipgloss.NewStyle().
+			Foreground(MetadataColor)
+		fractionText := fractionStyle.Render(fmt.Sprintf(" %d/%d", opts.Current, opts.Total))
+		bar = bar + fractionText
+	}
+
+	return bar
+}
+
+// SimpleProgressBar creates a basic progress bar showing percentage.
+func SimpleProgressBar(current, total int) string {
+	opts := DefaultProgressBarOptions()
+	opts.Current = current
+	opts.Total = total
+	return RenderProgressBar(opts)
+}
+
+// Spinner characters for animated progress indicators.
+var SpinnerFrames = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+
+// Spinner creates an animated spinner frame.
+// frame should be incremented each render to show animation.
+//
+// Usage:
+//   for i := 0; i < 10; i++ {
+//       fmt.Print("\r" + Spinner(i) + " Loading...")
+//       time.Sleep(100 * time.Millisecond)
+//   }
+func Spinner(frame int) string {
+	idx := frame % len(SpinnerFrames)
+	return lipgloss.NewStyle().
+		Foreground(InProgressColor).
+		Bold(true).
+		Render(SpinnerFrames[idx])
 }

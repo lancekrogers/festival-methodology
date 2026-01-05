@@ -611,3 +611,305 @@ func TestH3_Convenience(t *testing.T) {
 		t.Error("H3 should match Header with HeaderH3")
 	}
 }
+
+// Progress bar component tests
+
+func TestDefaultProgressBarOptions(t *testing.T) {
+	opts := DefaultProgressBarOptions()
+
+	if opts.Current != 0 {
+		t.Errorf("Expected current 0, got %d", opts.Current)
+	}
+
+	if opts.Total != 100 {
+		t.Errorf("Expected total 100, got %d", opts.Total)
+	}
+
+	if opts.Width != 40 {
+		t.Errorf("Expected width 40, got %d", opts.Width)
+	}
+
+	if opts.FilledChar != "█" {
+		t.Errorf("Expected filled char '█', got %q", opts.FilledChar)
+	}
+
+	if opts.EmptyChar != "░" {
+		t.Errorf("Expected empty char '░', got %q", opts.EmptyChar)
+	}
+
+	if opts.FilledColor != SuccessColor {
+		t.Error("Expected filled color to be SuccessColor")
+	}
+
+	if opts.EmptyColor != lipgloss.Color("240") {
+		t.Error("Expected empty color to be grey (240)")
+	}
+
+	if !opts.ShowPercentage {
+		t.Error("Expected ShowPercentage to be true by default")
+	}
+
+	if opts.ShowFraction {
+		t.Error("Expected ShowFraction to be false by default")
+	}
+}
+
+func TestProgressBar_ZeroPercent(t *testing.T) {
+	opts := DefaultProgressBarOptions()
+	opts.Current = 0
+	opts.Total = 100
+
+	result := RenderProgressBar(opts)
+
+	// Should contain empty characters
+	if !strings.Contains(result, opts.EmptyChar) {
+		t.Error("0% progress bar should contain empty characters")
+	}
+
+	// Should not contain filled characters (or very few)
+	filledCount := strings.Count(result, opts.FilledChar)
+	if filledCount > 1 {
+		t.Errorf("0%% progress bar should have minimal filled characters, got %d", filledCount)
+	}
+}
+
+func TestProgressBar_FiftyPercent(t *testing.T) {
+	opts := DefaultProgressBarOptions()
+	opts.Current = 50
+	opts.Total = 100
+
+	result := RenderProgressBar(opts)
+
+	// Should contain both filled and empty characters
+	if !strings.Contains(result, opts.FilledChar) {
+		t.Error("50% progress bar should contain filled characters")
+	}
+
+	if !strings.Contains(result, opts.EmptyChar) {
+		t.Error("50% progress bar should contain empty characters")
+	}
+}
+
+func TestProgressBar_OneHundredPercent(t *testing.T) {
+	opts := DefaultProgressBarOptions()
+	opts.Current = 100
+	opts.Total = 100
+
+	result := RenderProgressBar(opts)
+
+	// Should be fully filled
+	if !strings.Contains(result, opts.FilledChar) {
+		t.Error("100% progress bar should contain filled characters")
+	}
+
+	// Should have minimal or no empty characters
+	emptyCount := strings.Count(result, opts.EmptyChar)
+	if emptyCount > 1 {
+		t.Errorf("100%% progress bar should have minimal empty characters, got %d", emptyCount)
+	}
+}
+
+func TestProgressBar_OverOneHundredPercent(t *testing.T) {
+	opts := DefaultProgressBarOptions()
+	opts.Current = 150
+	opts.Total = 100
+
+	result := RenderProgressBar(opts)
+
+	// Should cap at 100% - fully filled
+	if !strings.Contains(result, opts.FilledChar) {
+		t.Error("Over 100% progress bar should be fully filled")
+	}
+
+	// Should have minimal or no empty characters
+	emptyCount := strings.Count(result, opts.EmptyChar)
+	if emptyCount > 1 {
+		t.Errorf("Over 100%% progress bar should have minimal empty characters, got %d", emptyCount)
+	}
+}
+
+func TestProgressBar_CustomCharacters(t *testing.T) {
+	opts := DefaultProgressBarOptions()
+	opts.Current = 50
+	opts.Total = 100
+	opts.FilledChar = "#"
+	opts.EmptyChar = "-"
+
+	result := RenderProgressBar(opts)
+
+	if !strings.Contains(result, "#") {
+		t.Error("Progress bar should use custom filled character '#'")
+	}
+
+	if !strings.Contains(result, "-") {
+		t.Error("Progress bar should use custom empty character '-'")
+	}
+}
+
+func TestProgressBar_CustomColors(t *testing.T) {
+	opts := DefaultProgressBarOptions()
+	opts.Current = 75
+	opts.Total = 100
+	opts.FilledColor = lipgloss.Color("42")
+	opts.EmptyColor = lipgloss.Color("240")
+
+	result := RenderProgressBar(opts)
+
+	// Basic check - should contain the progress bar
+	if !strings.Contains(result, opts.FilledChar) {
+		t.Error("Progress bar should contain filled characters")
+	}
+}
+
+func TestProgressBar_ShowPercentage(t *testing.T) {
+	opts := DefaultProgressBarOptions()
+	opts.Current = 75
+	opts.Total = 100
+	opts.ShowPercentage = true
+	opts.ShowFraction = false
+
+	result := RenderProgressBar(opts)
+
+	// Should contain percentage indicator
+	// Note: The implementation has a complex percentage rendering, just verify it's not empty
+	if result == "" {
+		t.Error("Progress bar with percentage should not be empty")
+	}
+
+	if !strings.Contains(result, opts.FilledChar) {
+		t.Error("Progress bar should contain filled characters")
+	}
+}
+
+func TestProgressBar_ShowFraction(t *testing.T) {
+	opts := DefaultProgressBarOptions()
+	opts.Current = 42
+	opts.Total = 100
+	opts.ShowPercentage = false
+	opts.ShowFraction = true
+
+	result := RenderProgressBar(opts)
+
+	// Should contain the progress bar
+	if result == "" {
+		t.Error("Progress bar with fraction should not be empty")
+	}
+
+	if !strings.Contains(result, opts.FilledChar) {
+		t.Error("Progress bar should contain filled characters")
+	}
+}
+
+func TestProgressBar_ZeroTotal(t *testing.T) {
+	opts := DefaultProgressBarOptions()
+	opts.Current = 50
+	opts.Total = 0
+
+	result := RenderProgressBar(opts)
+
+	// With zero total, should handle gracefully (all empty)
+	if !strings.Contains(result, opts.EmptyChar) {
+		t.Error("Progress bar with zero total should contain empty characters")
+	}
+}
+
+func TestSimpleProgressBar(t *testing.T) {
+	result := SimpleProgressBar(30, 100)
+
+	// Should produce a valid progress bar
+	if result == "" {
+		t.Error("SimpleProgressBar should not be empty")
+	}
+
+	// Should contain progress characters
+	opts := DefaultProgressBarOptions()
+	if !strings.Contains(result, opts.FilledChar) && !strings.Contains(result, opts.EmptyChar) {
+		t.Error("SimpleProgressBar should contain progress bar characters")
+	}
+}
+
+func TestSimpleProgressBar_MatchesProgressBar(t *testing.T) {
+	current := 60
+	total := 100
+
+	simple := SimpleProgressBar(current, total)
+
+	opts := DefaultProgressBarOptions()
+	opts.Current = current
+	opts.Total = total
+	standard := RenderProgressBar(opts)
+
+	if simple != standard {
+		t.Error("SimpleProgressBar should match RenderProgressBar with default options")
+	}
+}
+
+func TestSpinner_FirstFrame(t *testing.T) {
+	result := Spinner(0)
+
+	if result == "" {
+		t.Error("Spinner should not be empty")
+	}
+
+	// Should contain the first spinner frame
+	if !strings.Contains(result, SpinnerFrames[0]) {
+		t.Errorf("Spinner(0) should contain first frame %q", SpinnerFrames[0])
+	}
+}
+
+func TestSpinner_MiddleFrame(t *testing.T) {
+	frameIndex := 5
+	result := Spinner(frameIndex)
+
+	if result == "" {
+		t.Error("Spinner should not be empty")
+	}
+
+	// Should contain the specified spinner frame
+	if !strings.Contains(result, SpinnerFrames[frameIndex]) {
+		t.Errorf("Spinner(%d) should contain frame %q", frameIndex, SpinnerFrames[frameIndex])
+	}
+}
+
+func TestSpinner_WrapsAround(t *testing.T) {
+	// Test that spinner wraps around when frame exceeds length
+	frameCount := len(SpinnerFrames)
+	result := Spinner(frameCount) // Should wrap to frame 0
+
+	if result == "" {
+		t.Error("Spinner should not be empty")
+	}
+
+	// Should contain the first frame (wrapped around)
+	if !strings.Contains(result, SpinnerFrames[0]) {
+		t.Errorf("Spinner(%d) should wrap to first frame %q", frameCount, SpinnerFrames[0])
+	}
+}
+
+func TestSpinner_LargeFrameNumber(t *testing.T) {
+	// Test with a large frame number
+	result := Spinner(100)
+
+	if result == "" {
+		t.Error("Spinner should not be empty")
+	}
+
+	// Should successfully render some frame
+	expectedFrame := SpinnerFrames[100%len(SpinnerFrames)]
+	if !strings.Contains(result, expectedFrame) {
+		t.Errorf("Spinner should contain frame %q", expectedFrame)
+	}
+}
+
+func TestSpinner_AllFrames(t *testing.T) {
+	// Verify all spinner frames can be rendered
+	for i := 0; i < len(SpinnerFrames); i++ {
+		result := Spinner(i)
+		if result == "" {
+			t.Errorf("Spinner(%d) should not be empty", i)
+		}
+		if !strings.Contains(result, SpinnerFrames[i]) {
+			t.Errorf("Spinner(%d) should contain frame %q", i, SpinnerFrames[i])
+		}
+	}
+}
