@@ -85,9 +85,9 @@ func TestGetEditorArgs_ContextCancellation(t *testing.T) {
 	opts := &FillOptions{EditorMode: "tab"}
 	files := []string{"file1.md"}
 
-	// Should still work with cancelled context (falls back to default)
+	// With cancelled context, should fail fast and return default buffer mode
 	got := getEditorArgs(ctx, files, opts)
-	want := []string{"-p", "file1.md"}
+	want := []string{"file1.md"} // Buffer mode (no flags) when context cancelled
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("getEditorArgs() with cancelled context = %v, want %v", got, want)

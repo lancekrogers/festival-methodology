@@ -277,6 +277,11 @@ func getEditor(ctx context.Context) string {
 // getEditorArgs returns editor arguments based on config and flags.
 // Priority: CLI flags > config > default "buffer" mode
 func getEditorArgs(ctx context.Context, files []string, opts *FillOptions) []string {
+	// Check context early - fail fast if cancelled
+	if ctx.Err() != nil {
+		return files // Return default buffer mode if context cancelled
+	}
+
 	// 1. Check for explicit command-line flags first (highest priority)
 	if len(opts.EditorFlags) > 0 {
 		return append(opts.EditorFlags, files...)
@@ -286,7 +291,7 @@ func getEditorArgs(ctx context.Context, files []string, opts *FillOptions) []str
 	mode := opts.EditorMode
 	if mode == "" {
 		cfg, err := config.Load(ctx, "")
-		if err == nil {
+		if err == nil && cfg != nil {
 			mode = cfg.Behavior.EditorMode
 			// Check for custom flags in config
 			if len(cfg.Behavior.EditorFlags) > 0 {
