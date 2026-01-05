@@ -441,6 +441,26 @@ fmt.Println(ui.RoundedBorder("Important message"))
 - **Grey (240/245):** Borders, metadata, pending, dimmed text
 - **White (255):** Important values, highlighted text
 
+## Visual Examples
+
+This section will be populated with before/after screenshots as commands are styled.
+
+### Command Output Improvements
+
+Visual examples will demonstrate the impact of consistent styling:
+
+- **Before:** Plain text output without colors or structure
+- **After:** Styled output with semantic colors and visual hierarchy
+
+Screenshots will be added for:
+- `fest status` - Festival status with progress bars and entity colors
+- `fest progress` - Progress tracking with state colors
+- `fest list` - Festival listing with color-coded states
+- `fest validation` - Validation results with error/warning panels
+- `fest next` - Task recommendation with highlighted information
+
+*Note: Visual examples will be added as commands are styled in phases 002-005.*
+
 ---
 
 *For implementation details, see:*
