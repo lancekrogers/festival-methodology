@@ -140,6 +140,10 @@ fgo() {
             # Context-aware linking (no cd needed, shows TUI if needed)
             command fest go "$@"
             ;;
+        unlink)
+            # Remove festival-project link (no cd needed)
+            command fest unlink
+            ;;
         map|unmap)
             # Pass through to fest go subcommands (no cd needed)
             command fest go "$@"
@@ -252,6 +256,9 @@ function fgo
         case link
             # Context-aware linking (no cd needed, shows TUI if needed)
             command fest go $argv
+        case unlink
+            # Remove festival-project link (no cd needed)
+            command fest unlink
         case map unmap
             # Pass through to fest go subcommands (no cd needed)
             command fest go $argv
