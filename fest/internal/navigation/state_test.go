@@ -300,3 +300,164 @@ func TestNavigation_SetLinkUpdatesReverse(t *testing.T) {
 		t.Error("New reverse link not set correctly")
 	}
 }
+
+// TestNavigation_RelinkProjectToDifferentFestival tests the specific bug scenario:
+// 1. Link Project P to Festival A
+// 2. Re-link Project P to Festival B (from Festival B)
+// 3. Verify `fgo project` works from Festival B
+func TestNavigation_RelinkProjectToDifferentFestival(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("FEST_CONFIG_DIR", tmpDir)
+
+	nav, err := LoadNavigation()
+	if err != nil {
+		t.Fatalf("LoadNavigation() error = %v", err)
+	}
+
+	projectPath := "/path/to/shared-project"
+
+	// Step 1: Link project to Festival A
+	nav.SetLink("festival-a", projectPath)
+
+	// Verify initial state
+	if nav.GetLinkedProject("festival-a") != projectPath {
+		t.Error("Step 1: Forward link festival-a -> project not set")
+	}
+	if nav.GetLinkedFestival(projectPath) != "festival-a" {
+		t.Error("Step 1: Reverse link project -> festival-a not set")
+	}
+
+	// Step 2: Re-link same project to Festival B (simulating user in Festival B)
+	nav.SetLink("festival-b", projectPath)
+
+	// Step 3: Verify the bug - can we navigate from Festival B to project?
+	linkedProject := nav.GetLinkedProject("festival-b")
+	if linkedProject != projectPath {
+		t.Errorf("Bug: GetLinkedProject('festival-b') = %q, want %q", linkedProject, projectPath)
+	}
+
+	// Verify Festival A's link was properly removed
+	if nav.GetLinkedProject("festival-a") != "" {
+		t.Error("Festival A's forward link should be removed when project relinked")
+	}
+
+	// Verify reverse lookup returns Festival B
+	linkedFestival := nav.GetLinkedFestival(projectPath)
+	if linkedFestival != "festival-b" {
+		t.Errorf("GetLinkedFestival(project) = %q, want 'festival-b'", linkedFestival)
+	}
+
+	// Verify only one entry in Links map
+	if len(nav.Links) != 1 {
+		t.Errorf("Expected 1 link, got %d", len(nav.Links))
+	}
+
+	// Verify only one entry in ProjectLinks map
+	if len(nav.ProjectLinks) != 1 {
+		t.Errorf("Expected 1 project link, got %d", len(nav.ProjectLinks))
+	}
+}
+
+// TestNavigation_SetLinkWithPath tests that festival path is stored correctly
+func TestNavigation_SetLinkWithPath(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("FEST_CONFIG_DIR", tmpDir)
+
+	nav, err := LoadNavigation()
+	if err != nil {
+		t.Fatalf("LoadNavigation() error = %v", err)
+	}
+
+	projectPath := "/path/to/project"
+	festivalPath := "/path/to/festivals/active/my-festival"
+
+	// Set link with festival path
+	nav.SetLinkWithPath("my-festival", projectPath, festivalPath)
+
+	// Verify forward link has festival path
+	link, found := nav.GetLink("my-festival")
+	if !found {
+		t.Fatal("Link should exist")
+	}
+	if link.Path != projectPath {
+		t.Errorf("Link.Path = %q, want %q", link.Path, projectPath)
+	}
+	if link.FestivalPath != festivalPath {
+		t.Errorf("Link.FestivalPath = %q, want %q", link.FestivalPath, festivalPath)
+	}
+
+	// Save and reload
+	if err := nav.Save(); err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+
+	nav2, err := LoadNavigation()
+	if err != nil {
+		t.Fatalf("LoadNavigation() error = %v", err)
+	}
+
+	link2, found := nav2.GetLink("my-festival")
+	if !found {
+		t.Fatal("Link should exist after reload")
+	}
+	if link2.FestivalPath != festivalPath {
+		t.Errorf("After reload, Link.FestivalPath = %q, want %q", link2.FestivalPath, festivalPath)
+	}
+}
+
+// TestNavigation_RelinkWithSaveLoadCycle tests the relinking scenario with persistence
+func TestNavigation_RelinkWithSaveLoadCycle(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("FEST_CONFIG_DIR", tmpDir)
+
+	projectPath := "/path/to/shared-project"
+
+	// Step 1: Link project to Festival A and save
+	nav1, err := LoadNavigation()
+	if err != nil {
+		t.Fatalf("LoadNavigation() error = %v", err)
+	}
+	nav1.SetLink("festival-a", projectPath)
+	if err := nav1.Save(); err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+
+	// Step 2: Load fresh, re-link project to Festival B, and save
+	nav2, err := LoadNavigation()
+	if err != nil {
+		t.Fatalf("LoadNavigation() error = %v", err)
+	}
+	nav2.SetLink("festival-b", projectPath)
+	if err := nav2.Save(); err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+
+	// Step 3: Load fresh and verify state
+	nav3, err := LoadNavigation()
+	if err != nil {
+		t.Fatalf("LoadNavigation() error = %v", err)
+	}
+
+	// Forward link from Festival B should work
+	if nav3.GetLinkedProject("festival-b") != projectPath {
+		t.Error("Forward link festival-b -> project not persisted")
+	}
+
+	// Forward link from Festival A should be gone
+	if nav3.GetLinkedProject("festival-a") != "" {
+		t.Error("Festival A's forward link should have been removed")
+	}
+
+	// Reverse lookup should return Festival B
+	if nav3.GetLinkedFestival(projectPath) != "festival-b" {
+		t.Error("Reverse link project -> festival-b not persisted correctly")
+	}
+
+	// Verify maps have correct size
+	if len(nav3.Links) != 1 {
+		t.Errorf("After persist, expected 1 link, got %d", len(nav3.Links))
+	}
+	if len(nav3.ProjectLinks) != 1 {
+		t.Errorf("After persist, expected 1 project link, got %d", len(nav3.ProjectLinks))
+	}
+}

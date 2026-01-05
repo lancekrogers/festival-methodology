@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
@@ -18,6 +19,21 @@ import (
 )
 
 var shortcutNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_]{1,20}$`)
+
+// Styles for fest go list output
+var (
+	// Shortcut styling - pink/magenta for user shortcuts
+	shortcutNameStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
+
+	// Festival link styling - green for festival links
+	festivalLinkStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true)
+
+	// Path styling - gray for file paths
+	pathDisplayStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
+
+	// Header styling - bold for section headers
+	headerStyle = lipgloss.NewStyle().Bold(true)
+)
 
 // isValidShortcutName checks if a shortcut name is valid
 func isValidShortcutName(name string) bool {
@@ -284,12 +300,14 @@ func runGoList(jsonOutput bool) error {
 
 		// Print shortcuts section
 		if len(nav.Shortcuts) > 0 {
-			fmt.Println("SHORTCUTS")
+			fmt.Println(headerStyle.Render("SHORTCUTS"))
 			fmt.Println(strings.Repeat("=", 60))
 			fmt.Printf("%-12s %s\n", "Shortcut", "Path")
 			fmt.Println(strings.Repeat("-", 60))
 			for name, path := range nav.Shortcuts {
-				fmt.Printf("-%-11s %s\n", name, path)
+				styledName := shortcutNameStyle.Render("-" + name)
+				styledPath := pathDisplayStyle.Render(path)
+				fmt.Printf("%-21s %s\n", styledName, styledPath)
 			}
 			hasContent = true
 		}
@@ -299,12 +317,14 @@ func runGoList(jsonOutput bool) error {
 			if hasContent {
 				fmt.Println()
 			}
-			fmt.Println("FESTIVAL LINKS")
+			fmt.Println(headerStyle.Render("FESTIVAL LINKS"))
 			fmt.Println(strings.Repeat("=", 60))
 			fmt.Printf("%-25s %s\n", "Festival", "Project Path")
 			fmt.Println(strings.Repeat("-", 60))
 			for name, link := range nav.Links {
-				fmt.Printf("%-25s %s\n", name, link.Path)
+				styledFestival := festivalLinkStyle.Render(name)
+				styledPath := pathDisplayStyle.Render(link.Path)
+				fmt.Printf("%-34s %s\n", styledFestival, styledPath)
 			}
 			hasContent = true
 		}
@@ -435,7 +455,17 @@ func runGoFest() error {
 	for festivalName, link := range nav.Links {
 		// Check if cwd is within the linked project path
 		if strings.HasPrefix(cwd, link.Path) || cwd == link.Path {
-			// Find the festival path - need to search for it
+			// Use stored festival path if available (preferred)
+			if link.FestivalPath != "" {
+				// Verify the path still exists
+				if info, err := os.Stat(link.FestivalPath); err == nil && info.IsDir() {
+					fmt.Println(link.FestivalPath)
+					return nil
+				}
+				// Fall through to search if stored path is invalid
+			}
+
+			// Fall back to searching for the festival by name
 			festivalsPath, err := findFestivalPath(festivalName)
 			if err != nil {
 				return err
@@ -480,16 +510,23 @@ func findFestivalPath(festivalName string) (string, error) {
 	return "", errors.NotFound("festival").WithField("name", festivalName)
 }
 
-// findFestivalsDir walks up from the given path to find a festivals directory
+// findFestivalsDir walks up from the given path to find a festivals directory.
+// A valid festivals directory must contain a .festival/ subdirectory with a .workspace file.
+// This distinguishes actual working festivals from template libraries (which lack .workspace).
 func findFestivalsDir(startPath string) (string, error) {
 	dir := startPath
 	for {
 		festivalsPath := filepath.Join(dir, "festivals")
 		if info, err := os.Stat(festivalsPath); err == nil && info.IsDir() {
-			// Check for .festival subdirectory to confirm
+			// Check for .festival subdirectory
 			dotFestivalPath := filepath.Join(festivalsPath, ".festival")
 			if info, err := os.Stat(dotFestivalPath); err == nil && info.IsDir() {
-				return festivalsPath, nil
+				// Check for .workspace file to confirm this is a working festivals directory
+				// (not a template library which lacks .workspace)
+				workspacePath := filepath.Join(dotFestivalPath, ".workspace")
+				if _, err := os.Stat(workspacePath); err == nil {
+					return festivalsPath, nil
+				}
 			}
 		}
 

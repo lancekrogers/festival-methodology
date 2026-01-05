@@ -139,25 +139,9 @@ func linkFestivalToProject(cwd, targetPath string) error {
 
 		projectPath = absPath
 	} else {
-		// Prompt for directory
-		var inputPath string
-		form := huh.NewForm(
-			huh.NewGroup(
-				huh.NewInput().
-					Title(fmt.Sprintf("Link festival '%s' to which directory?", festivalName)).
-					Description("Enter an absolute path to the project directory").
-					Placeholder("/path/to/your/project").
-					Value(&inputPath).
-					Validate(func(s string) error {
-						if strings.TrimSpace(s) == "" {
-							return festErrors.Validation("path is required")
-						}
-						return nil
-					}),
-			),
-		).WithTheme(huh.ThemeCharm())
-
-		if err := form.Run(); err != nil {
+		// Show interactive directory picker
+		selectedPath, err := selectProjectDirectory(cwd, festivalName)
+		if err != nil {
 			// Silent exit on user cancel (Ctrl-C or Esc)
 			if errors.Is(err, huh.ErrUserAborted) {
 				return nil
@@ -165,21 +149,7 @@ func linkFestivalToProject(cwd, targetPath string) error {
 			return err
 		}
 
-		absPath, err := filepath.Abs(inputPath)
-		if err != nil {
-			return festErrors.Wrap(err, "resolving path").WithField("path", inputPath)
-		}
-
-		// Validate
-		info, err := os.Stat(absPath)
-		if err != nil {
-			return festErrors.NotFound("directory").WithField("path", absPath)
-		}
-		if !info.IsDir() {
-			return festErrors.Validation("path is not a directory").WithField("path", absPath)
-		}
-
-		projectPath = absPath
+		projectPath = selectedPath
 	}
 
 	// Load navigation state
@@ -188,8 +158,11 @@ func linkFestivalToProject(cwd, targetPath string) error {
 		return festErrors.Wrap(err, "loading navigation state")
 	}
 
-	// Set the bidirectional link
-	nav.SetLink(festivalName, projectPath)
+	// Get the festival path for reverse navigation
+	festivalPath := loc.Festival.Path
+
+	// Set the bidirectional link with festival path
+	nav.SetLinkWithPath(festivalName, projectPath, festivalPath)
 
 	// Save
 	if err := nav.Save(); err != nil {
@@ -263,14 +236,23 @@ func linkProjectToFestival(cwd string) error {
 		return nil
 	}
 
+	// Find the festival path from the selected festival
+	var festivalPath string
+	for _, f := range festivals {
+		if f.name == selectedFestival {
+			festivalPath = f.path
+			break
+		}
+	}
+
 	// Load navigation state
 	nav, err := navigation.LoadNavigation()
 	if err != nil {
 		return festErrors.Wrap(err, "loading navigation state")
 	}
 
-	// Set the bidirectional link
-	nav.SetLink(selectedFestival, absPath)
+	// Set the bidirectional link with festival path
+	nav.SetLinkWithPath(selectedFestival, absPath, festivalPath)
 
 	// Save
 	if err := nav.Save(); err != nil {
@@ -339,4 +321,110 @@ func resolveFestivalPath(festivalsDir, festivalName string) string {
 	}
 
 	return ""
+}
+
+// selectProjectDirectory shows an interactive directory picker for selecting a project directory.
+// It starts from the campaign root (parent of festivals/ directory) and allows selecting
+// any directory except the festivals/ directory itself.
+func selectProjectDirectory(festivalPath, festivalName string) (string, error) {
+	// Find campaign root by walking up from festival path
+	// festivalPath is like: /path/to/guild-framework/festivals/active/festival-name
+	// We want campaign root: /path/to/guild-framework
+	festivalsDir := filepath.Dir(filepath.Dir(festivalPath)) // → festivals/
+	campaignRoot := filepath.Dir(festivalsDir)              // → guild-framework/
+
+	// Collect directories from campaign root (excluding festivals/)
+	directories, err := collectDirectories(campaignRoot, festivalsDir)
+	if err != nil {
+		return "", festErrors.Wrap(err, "collecting directories")
+	}
+
+	if len(directories) == 0 {
+		return "", festErrors.NotFound("project directories").
+			WithField("hint", "no suitable directories found in campaign root")
+	}
+
+	// Build options for picker
+	options := make([]huh.Option[string], 0, len(directories))
+	for _, dir := range directories {
+		// Show relative path from campaign root for cleaner display
+		relPath, _ := filepath.Rel(campaignRoot, dir)
+		label := pathStyle.Render(relPath)
+		options = append(options, huh.NewOption(label, dir))
+	}
+
+	// Show picker
+	var selectedDir string
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title(fmt.Sprintf("Select project directory to link to '%s'", festivalName)).
+				Description(pathStyle.Render("Campaign: " + campaignRoot)).
+				Options(options...).
+				Value(&selectedDir),
+		),
+	).WithTheme(huh.ThemeCharm())
+
+	if err := form.Run(); err != nil {
+		return "", err
+	}
+
+	if selectedDir == "" {
+		return "", festErrors.Validation("no directory selected")
+	}
+
+	return selectedDir, nil
+}
+
+// collectDirectories recursively collects directories from root, excluding excludePath
+func collectDirectories(root, excludePath string) ([]string, error) {
+	var dirs []string
+
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		// Skip hidden directories
+		if strings.HasPrefix(entry.Name(), ".") {
+			continue
+		}
+
+		fullPath := filepath.Join(root, entry.Name())
+
+		// Skip the festivals directory
+		if fullPath == excludePath {
+			continue
+		}
+
+		// Add this directory
+		dirs = append(dirs, fullPath)
+
+		// Recursively add subdirectories (one level deep for performance)
+		subEntries, err := os.ReadDir(fullPath)
+		if err != nil {
+			continue
+		}
+		for _, subEntry := range subEntries {
+			if !subEntry.IsDir() {
+				continue
+			}
+			if strings.HasPrefix(subEntry.Name(), ".") {
+				continue
+			}
+			subPath := filepath.Join(fullPath, subEntry.Name())
+			// Skip festivals subdirectory if somehow inside
+			if strings.Contains(subPath, "festivals") {
+				continue
+			}
+			dirs = append(dirs, subPath)
+		}
+	}
+
+	return dirs, nil
 }

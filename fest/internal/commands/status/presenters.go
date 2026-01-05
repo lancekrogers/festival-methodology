@@ -10,6 +10,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 )
 
 // emitErrorJSON outputs an error message in JSON format.
@@ -65,7 +66,8 @@ func emitLocationText(loc *show.LocationInfo) error {
 	}
 
 	fmt.Printf("Festival: %s\n", loc.Festival.Name)
-	fmt.Printf("Status:   %s\n", loc.Festival.Status)
+	styledStatus := ui.GetStatusStyle(loc.Festival.Status).Render(loc.Festival.Status)
+	fmt.Printf("Status:   %s\n", styledStatus)
 	fmt.Printf("Location: %s\n", loc.Type)
 
 	if loc.Phase != "" {
@@ -206,7 +208,8 @@ func emitPhasesText(phases []*PhaseInfo, filterStatus string) error {
 	fmt.Println(strings.Repeat("─", 60))
 
 	for _, phase := range phases {
-		fmt.Printf("  %s [%s]", phase.Name, phase.Status)
+		styledStatus := ui.GetStatusStyle(phase.Status).Render(phase.Status)
+		fmt.Printf("  %s [%s]", phase.Name, styledStatus)
 		if phase.TaskStats.Total > 0 {
 			fmt.Printf(" (%d/%d tasks)", phase.TaskStats.Completed, phase.TaskStats.Total)
 		}
@@ -245,7 +248,8 @@ func emitSequencesText(sequences []*SequenceInfo, filterStatus string) error {
 	fmt.Println(strings.Repeat("─", 60))
 
 	for _, seq := range sequences {
-		fmt.Printf("  %s/%s [%s]", seq.PhaseName, seq.Name, seq.Status)
+		styledStatus := ui.GetStatusStyle(seq.Status).Render(seq.Status)
+		fmt.Printf("  %s/%s [%s]", seq.PhaseName, seq.Name, styledStatus)
 		if seq.TaskStats.Total > 0 {
 			fmt.Printf(" (%d/%d tasks)", seq.TaskStats.Completed, seq.TaskStats.Total)
 		}
@@ -284,11 +288,12 @@ func emitTasksText(tasks []*TaskInfo, filterStatus string) error {
 	fmt.Println(strings.Repeat("─", 60))
 
 	for _, task := range tasks {
+		styledStatus := ui.GetStatusStyle(task.Status).Render(task.Status)
 		fmt.Printf("  %s/%s/%s [%s]\n",
 			task.PhaseName,
 			task.SequenceName,
 			task.Name,
-			task.Status)
+			styledStatus)
 	}
 
 	return nil
