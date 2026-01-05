@@ -490,16 +490,23 @@ func findFestivalPath(festivalName string) (string, error) {
 	return "", errors.NotFound("festival").WithField("name", festivalName)
 }
 
-// findFestivalsDir walks up from the given path to find a festivals directory
+// findFestivalsDir walks up from the given path to find a festivals directory.
+// A valid festivals directory must contain a .festival/ subdirectory with a .workspace file.
+// This distinguishes actual working festivals from template libraries (which lack .workspace).
 func findFestivalsDir(startPath string) (string, error) {
 	dir := startPath
 	for {
 		festivalsPath := filepath.Join(dir, "festivals")
 		if info, err := os.Stat(festivalsPath); err == nil && info.IsDir() {
-			// Check for .festival subdirectory to confirm
+			// Check for .festival subdirectory
 			dotFestivalPath := filepath.Join(festivalsPath, ".festival")
 			if info, err := os.Stat(dotFestivalPath); err == nil && info.IsDir() {
-				return festivalsPath, nil
+				// Check for .workspace file to confirm this is a working festivals directory
+				// (not a template library which lacks .workspace)
+				workspacePath := filepath.Join(dotFestivalPath, ".workspace")
+				if _, err := os.Stat(workspacePath); err == nil {
+					return festivalsPath, nil
+				}
 			}
 		}
 
