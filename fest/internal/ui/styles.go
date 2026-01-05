@@ -30,11 +30,11 @@ var (
 //   - TaskColor: Use for task items in lists and progress displays
 //   - GateColor: Use for quality gate indicators and validation output
 var (
-	FestivalColor = ActiveColor            // Green (42) - reuse active color for top-level entities
-	PhaseColor    = PlannedColor           // Blue (33) - reuse planned color for major divisions
-	SequenceColor = lipgloss.Color("51")   // Cyan - distinct color for mid-level groupings
-	TaskColor     = lipgloss.Color("141")  // Purple - for individual work items
-	GateColor     = lipgloss.Color("214")  // Orange - for quality gates and checkpoints
+	FestivalColor = ActiveColor           // Green (42) - reuse active color for top-level entities
+	PhaseColor    = PlannedColor          // Blue (33) - reuse planned color for major divisions
+	SequenceColor = lipgloss.Color("51")  // Cyan - distinct color for mid-level groupings
+	TaskColor     = lipgloss.Color("141") // Purple - for individual work items
+	GateColor     = lipgloss.Color("214") // Orange - for quality gates and checkpoints
 )
 
 // State colors for progress and status indication across all entity types.

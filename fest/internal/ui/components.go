@@ -47,14 +47,15 @@ func DefaultBorderOptions() BorderOptions {
 // Border creates a styled border around the given content.
 //
 // Usage:
-//   // Simple border with defaults
-//   output := Border("Hello World", DefaultBorderOptions())
 //
-//   // Custom border with square style and custom color
-//   opts := DefaultBorderOptions()
-//   opts.Style = BorderSquare
-//   opts.Color = lipgloss.Color("42")
-//   output := Border("Status: Active", opts)
+//	// Simple border with defaults
+//	output := Border("Hello World", DefaultBorderOptions())
+//
+//	// Custom border with square style and custom color
+//	opts := DefaultBorderOptions()
+//	opts.Style = BorderSquare
+//	opts.Color = lipgloss.Color("42")
+//	output := Border("Status: Active", opts)
 func Border(content string, opts BorderOptions) string {
 	style := lipgloss.NewStyle().
 		BorderForeground(opts.Color).
@@ -140,18 +141,19 @@ func DefaultPanelOptions() PanelOptions {
 // Panels are containers for grouped content with visual separation.
 //
 // Usage:
-//   // Simple panel with title
-//   opts := DefaultPanelOptions()
-//   opts.Title = "Status"
-//   output := Panel("All systems operational", opts)
 //
-//   // Panel with custom colors and width
-//   opts := DefaultPanelOptions()
-//   opts.Title = "Error"
-//   opts.TitleColor = lipgloss.Color("196")
-//   opts.BorderColor = lipgloss.Color("196")
-//   opts.Width = 60
-//   output := Panel("Connection failed", opts)
+//	// Simple panel with title
+//	opts := DefaultPanelOptions()
+//	opts.Title = "Status"
+//	output := Panel("All systems operational", opts)
+//
+//	// Panel with custom colors and width
+//	opts := DefaultPanelOptions()
+//	opts.Title = "Error"
+//	opts.TitleColor = lipgloss.Color("196")
+//	opts.BorderColor = lipgloss.Color("196")
+//	opts.Width = 60
+//	output := Panel("Connection failed", opts)
 func Panel(content string, opts PanelOptions) string {
 	// Build the content with padding
 	contentStyle := lipgloss.NewStyle().
@@ -252,16 +254,17 @@ func DefaultHeaderOptions() HeaderOptions {
 // Header creates a styled section header.
 //
 // Usage:
-//   // H1 header with underline
-//   opts := DefaultHeaderOptions()
-//   opts.Level = HeaderH1
-//   opts.Underline = true
-//   output := Header("Festival Overview", opts)
 //
-//   // H2 header with custom color
-//   opts := DefaultHeaderOptions()
-//   opts.Color = lipgloss.Color("42")
-//   output := Header("Active Tasks", opts)
+//	// H1 header with underline
+//	opts := DefaultHeaderOptions()
+//	opts.Level = HeaderH1
+//	opts.Underline = true
+//	output := Header("Festival Overview", opts)
+//
+//	// H2 header with custom color
+//	opts := DefaultHeaderOptions()
+//	opts.Color = lipgloss.Color("42")
+//	output := Header("Active Tasks", opts)
 func Header(text string, opts HeaderOptions) string {
 	style := lipgloss.NewStyle().
 		Foreground(opts.Color).
@@ -355,18 +358,19 @@ func DefaultProgressBarOptions() ProgressBarOptions {
 // RenderProgressBar creates a visual progress indicator.
 //
 // Usage:
-//   // Simple percentage bar
-//   opts := DefaultProgressBarOptions()
-//   opts.Current = 75
-//   output := RenderProgressBar(opts)  // Shows 75% filled
 //
-//   // Custom total with fraction display
-//   opts := DefaultProgressBarOptions()
-//   opts.Current = 42
-//   opts.Total = 100
-//   opts.ShowPercentage = false
-//   opts.ShowFraction = true
-//   output := RenderProgressBar(opts)  // Shows "42/100"
+//	// Simple percentage bar
+//	opts := DefaultProgressBarOptions()
+//	opts.Current = 75
+//	output := RenderProgressBar(opts)  // Shows 75% filled
+//
+//	// Custom total with fraction display
+//	opts := DefaultProgressBarOptions()
+//	opts.Current = 42
+//	opts.Total = 100
+//	opts.ShowPercentage = false
+//	opts.ShowFraction = true
+//	output := RenderProgressBar(opts)  // Shows "42/100"
 func RenderProgressBar(opts ProgressBarOptions) string {
 	// Calculate fill percentage
 	percentage := 0
@@ -422,10 +426,11 @@ var SpinnerFrames = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "�
 // frame should be incremented each render to show animation.
 //
 // Usage:
-//   for i := 0; i < 10; i++ {
-//       fmt.Print("\r" + Spinner(i) + " Loading...")
-//       time.Sleep(100 * time.Millisecond)
-//   }
+//
+//	for i := 0; i < 10; i++ {
+//	    fmt.Print("\r" + Spinner(i) + " Loading...")
+//	    time.Sleep(100 * time.Millisecond)
+//	}
 func Spinner(frame int) string {
 	idx := frame % len(SpinnerFrames)
 	return lipgloss.NewStyle().

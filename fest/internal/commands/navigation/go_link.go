@@ -331,7 +331,7 @@ func selectProjectDirectory(festivalPath, festivalName string) (string, error) {
 	// festivalPath is like: /path/to/guild-framework/festivals/active/festival-name
 	// We want campaign root: /path/to/guild-framework
 	festivalsDir := filepath.Dir(filepath.Dir(festivalPath)) // → festivals/
-	campaignRoot := filepath.Dir(festivalsDir)              // → guild-framework/
+	campaignRoot := filepath.Dir(festivalsDir)               // → guild-framework/
 
 	// Collect directories from campaign root (excluding festivals/)
 	directories, err := collectDirectories(campaignRoot, festivalsDir)
