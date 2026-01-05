@@ -449,3 +449,165 @@ func TestPanel_MultilineContent(t *testing.T) {
 		t.Error("Panel should contain title")
 	}
 }
+
+// Header component tests
+
+func TestDefaultHeaderOptions(t *testing.T) {
+	opts := DefaultHeaderOptions()
+
+	if opts.Level != HeaderH2 {
+		t.Errorf("Expected default level HeaderH2, got %v", opts.Level)
+	}
+
+	if opts.Color != ValueColor {
+		t.Error("Expected color to be ValueColor")
+	}
+
+	if opts.Underline {
+		t.Error("Expected underline to be false by default")
+	}
+
+	if opts.UnderlineChar != "─" {
+		t.Errorf("Expected underline char '─', got %q", opts.UnderlineChar)
+	}
+}
+
+func TestHeader_H1(t *testing.T) {
+	text := "Top Level Header"
+	opts := DefaultHeaderOptions()
+	opts.Level = HeaderH1
+
+	result := Header(text, opts)
+
+	// H1 should be uppercase
+	if !strings.Contains(result, "TOP LEVEL HEADER") {
+		t.Error("H1 header should be uppercase")
+	}
+}
+
+func TestHeader_H2(t *testing.T) {
+	text := "Section Header"
+	opts := DefaultHeaderOptions()
+	opts.Level = HeaderH2
+
+	result := Header(text, opts)
+
+	if !strings.Contains(result, text) {
+		t.Errorf("H2 header should contain original text %q", text)
+	}
+}
+
+func TestHeader_H3(t *testing.T) {
+	text := "Subsection"
+	opts := DefaultHeaderOptions()
+	opts.Level = HeaderH3
+
+	result := Header(text, opts)
+
+	if !strings.Contains(result, text) {
+		t.Errorf("H3 header should contain text %q", text)
+	}
+}
+
+func TestHeader_WithUnderline(t *testing.T) {
+	text := "Header"
+	opts := DefaultHeaderOptions()
+	opts.Underline = true
+
+	result := Header(text, opts)
+
+	if !strings.Contains(result, text) {
+		t.Errorf("Header should contain text %q", text)
+	}
+
+	// Should have underline character
+	if !strings.Contains(result, "─") {
+		t.Error("Underlined header should contain underline character")
+	}
+
+	// Should have multiple lines
+	lines := strings.Split(result, "\n")
+	if len(lines) < 2 {
+		t.Error("Underlined header should have at least 2 lines")
+	}
+}
+
+func TestHeader_CustomUnderlineChar(t *testing.T) {
+	text := "Custom"
+	opts := DefaultHeaderOptions()
+	opts.Underline = true
+	opts.UnderlineChar = "="
+
+	result := Header(text, opts)
+
+	if !strings.Contains(result, "=") {
+		t.Error("Header should use custom underline character")
+	}
+}
+
+func TestHeader_CustomColor(t *testing.T) {
+	text := "Colored Header"
+	opts := DefaultHeaderOptions()
+	opts.Color = lipgloss.Color("42")
+
+	result := Header(text, opts)
+
+	if !strings.Contains(result, text) {
+		t.Errorf("Header should contain text %q", text)
+	}
+}
+
+func TestH1_Convenience(t *testing.T) {
+	text := "title"
+	result := H1(text)
+
+	// H1 should be uppercase and underlined
+	if !strings.Contains(result, "TITLE") {
+		t.Error("H1 should be uppercase")
+	}
+
+	if !strings.Contains(result, "─") {
+		t.Error("H1 should have underline by default")
+	}
+
+	// Should match Header with H1 + underline
+	opts := DefaultHeaderOptions()
+	opts.Level = HeaderH1
+	opts.Underline = true
+	expected := Header(text, opts)
+	if result != expected {
+		t.Error("H1 should match Header with HeaderH1 and underline")
+	}
+}
+
+func TestH2_Convenience(t *testing.T) {
+	text := "Section"
+	result := H2(text)
+
+	if !strings.Contains(result, text) {
+		t.Errorf("H2 should contain text %q", text)
+	}
+
+	opts := DefaultHeaderOptions()
+	opts.Level = HeaderH2
+	expected := Header(text, opts)
+	if result != expected {
+		t.Error("H2 should match Header with HeaderH2")
+	}
+}
+
+func TestH3_Convenience(t *testing.T) {
+	text := "Subsection"
+	result := H3(text)
+
+	if !strings.Contains(result, text) {
+		t.Errorf("H3 should contain text %q", text)
+	}
+
+	opts := DefaultHeaderOptions()
+	opts.Level = HeaderH3
+	expected := Header(text, opts)
+	if result != expected {
+		t.Error("H3 should match Header with HeaderH3")
+	}
+}

@@ -4,6 +4,8 @@
 package ui
 
 import (
+	"strings"
+
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -210,4 +212,104 @@ func ErrorPanel(title, content string) string {
 	opts.TitleColor = ErrorColor
 	opts.BorderColor = ErrorColor
 	return Panel(content, opts)
+}
+
+// HeaderLevel defines the visual hierarchy level of a header.
+type HeaderLevel int
+
+const (
+	// HeaderH1 is the top-level header (largest, most prominent).
+	HeaderH1 HeaderLevel = iota
+	// HeaderH2 is a major section header.
+	HeaderH2
+	// HeaderH3 is a subsection header.
+	HeaderH3
+)
+
+// HeaderOptions configures how a header component is rendered.
+type HeaderOptions struct {
+	// Level determines the header size and emphasis.
+	Level HeaderLevel
+	// Color sets the header text color (defaults to ValueColor).
+	Color lipgloss.Color
+	// Underline adds a line below the header text.
+	Underline bool
+	// UnderlineChar specifies the character to use for underlines.
+	UnderlineChar string
+}
+
+// DefaultHeaderOptions returns sensible defaults for header rendering.
+func DefaultHeaderOptions() HeaderOptions {
+	return HeaderOptions{
+		Level:         HeaderH2,
+		Color:         ValueColor,
+		Underline:     false,
+		UnderlineChar: "─",
+	}
+}
+
+// Header creates a styled section header.
+//
+// Usage:
+//   // H1 header with underline
+//   opts := DefaultHeaderOptions()
+//   opts.Level = HeaderH1
+//   opts.Underline = true
+//   output := Header("Festival Overview", opts)
+//
+//   // H2 header with custom color
+//   opts := DefaultHeaderOptions()
+//   opts.Color = lipgloss.Color("42")
+//   output := Header("Active Tasks", opts)
+func Header(text string, opts HeaderOptions) string {
+	style := lipgloss.NewStyle().
+		Foreground(opts.Color).
+		Bold(true)
+
+	// Adjust style based on level
+	switch opts.Level {
+	case HeaderH1:
+		// H1: Large, bold, uppercase
+		text = strings.ToUpper(text)
+	case HeaderH2:
+		// H2: Bold, title case (already set)
+	case HeaderH3:
+		// H3: Bold but slightly dimmer
+		style = style.Foreground(MetadataColor)
+	}
+
+	header := style.Render(text)
+
+	// Add underline if requested
+	if opts.Underline {
+		// Calculate width without ANSI codes for proper underline length
+		displayWidth := lipgloss.Width(text)
+		underline := strings.Repeat(opts.UnderlineChar, displayWidth)
+		underlineStyle := lipgloss.NewStyle().Foreground(opts.Color)
+		header = header + "\n" + underlineStyle.Render(underline)
+	}
+
+	return header
+}
+
+// H1 is a convenience function for creating top-level headers.
+func H1(text string) string {
+	opts := DefaultHeaderOptions()
+	opts.Level = HeaderH1
+	opts.Underline = true
+	return Header(text, opts)
+}
+
+// H2 is a convenience function for creating major section headers.
+func H2(text string) string {
+	opts := DefaultHeaderOptions()
+	opts.Level = HeaderH2
+	return Header(text, opts)
+}
+
+// H3 is a convenience function for creating subsection headers.
+func H3(text string) string {
+	opts := DefaultHeaderOptions()
+	opts.Level = HeaderH3
+	return Header(text, opts)
 }
