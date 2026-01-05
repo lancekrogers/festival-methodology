@@ -435,7 +435,17 @@ func runGoFest() error {
 	for festivalName, link := range nav.Links {
 		// Check if cwd is within the linked project path
 		if strings.HasPrefix(cwd, link.Path) || cwd == link.Path {
-			// Find the festival path - need to search for it
+			// Use stored festival path if available (preferred)
+			if link.FestivalPath != "" {
+				// Verify the path still exists
+				if info, err := os.Stat(link.FestivalPath); err == nil && info.IsDir() {
+					fmt.Println(link.FestivalPath)
+					return nil
+				}
+				// Fall through to search if stored path is invalid
+			}
+
+			// Fall back to searching for the festival by name
 			festivalsPath, err := findFestivalPath(festivalName)
 			if err != nil {
 				return err

@@ -188,8 +188,11 @@ func linkFestivalToProject(cwd, targetPath string) error {
 		return festErrors.Wrap(err, "loading navigation state")
 	}
 
-	// Set the bidirectional link
-	nav.SetLink(festivalName, projectPath)
+	// Get the festival path for reverse navigation
+	festivalPath := loc.Festival.Path
+
+	// Set the bidirectional link with festival path
+	nav.SetLinkWithPath(festivalName, projectPath, festivalPath)
 
 	// Save
 	if err := nav.Save(); err != nil {
@@ -263,14 +266,23 @@ func linkProjectToFestival(cwd string) error {
 		return nil
 	}
 
+	// Find the festival path from the selected festival
+	var festivalPath string
+	for _, f := range festivals {
+		if f.name == selectedFestival {
+			festivalPath = f.path
+			break
+		}
+	}
+
 	// Load navigation state
 	nav, err := navigation.LoadNavigation()
 	if err != nil {
 		return festErrors.Wrap(err, "loading navigation state")
 	}
 
-	// Set the bidirectional link
-	nav.SetLink(selectedFestival, absPath)
+	// Set the bidirectional link with festival path
+	nav.SetLinkWithPath(selectedFestival, absPath, festivalPath)
 
 	// Save
 	if err := nav.Save(); err != nil {

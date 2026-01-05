@@ -139,9 +139,10 @@ func runLink(targetPath string, opts *linkOptions) error {
 		return errors.Wrap(err, "loading navigation state")
 	}
 
-	// Create link
+	// Create link with festival path for reverse navigation
 	festivalName := loc.Festival.Name
-	nav.SetLink(festivalName, absPath)
+	festivalPath := loc.Festival.Path
+	nav.SetLinkWithPath(festivalName, absPath, festivalPath)
 
 	// Save navigation state
 	if err := nav.Save(); err != nil {
