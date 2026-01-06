@@ -15,6 +15,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/frontmatter"
 	"github.com/lancekrogers/festival-methodology/fest/internal/id"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -128,10 +129,11 @@ func outputResult(result *CommitResult) error {
 		fmt.Println(string(data))
 	} else {
 		if result.Success {
-			fmt.Printf("Committed: %s\n", result.Hash)
-			fmt.Printf("Message: %s\n", result.Message)
+			fmt.Println(ui.H1("Commit"))
+			fmt.Printf("%s %s\n", ui.Label("Hash"), ui.Value(result.Hash))
+			fmt.Printf("%s %s\n", ui.Label("Message"), highlightTaskRefs(result.Message))
 			if result.TaskRef != "" {
-				fmt.Printf("Task: %s\n", result.TaskRef)
+				fmt.Printf("%s %s\n", ui.Label("Task"), ui.Value(result.TaskRef, ui.TaskColor))
 			}
 		} else {
 			return errors.New(result.Error)
