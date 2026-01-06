@@ -315,23 +315,23 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 	display.Info("  └── %s", "PHASE_GOAL.md")
 
 	fmt.Println()
-	fmt.Println("   Next steps:")
-	fmt.Println("   1. cd", phaseDir)
+	fmt.Println(ui.H2("Next Steps"))
+	fmt.Printf("  %s\n", ui.Info(fmt.Sprintf("1. cd %s", phaseDir)))
 	if remainingMarkers > 0 {
-		fmt.Println("   2. Edit PHASE_GOAL.md to define phase objectives")
+		fmt.Printf("  %s\n", ui.Info("2. Edit PHASE_GOAL.md to define phase objectives"))
 	}
 	if opts.PhaseType == "research" {
-		fmt.Println("   3. Create subdirectories for research topics")
-		fmt.Println("   4. fest research create --type investigation --title \"topic\"")
+		fmt.Printf("  %s\n", ui.Info("3. Create subdirectories for research topics"))
+		fmt.Printf("  %s\n", ui.Info("4. fest research create --type investigation --title \"topic\""))
 	} else {
-		fmt.Println("   3. fest create sequence --name \"requirements\"")
-		fmt.Println("   4. fest validate  (check completion status)")
+		fmt.Printf("  %s\n", ui.Info("3. fest create sequence --name \"requirements\""))
+		fmt.Printf("  %s\n", ui.Info("4. fest validate (check completion status)"))
 	}
 	fmt.Println()
-	fmt.Println("   Discover more commands:")
-	fmt.Println("   • fest status        View festival progress")
-	fmt.Println("   • fest next          Find what to work on next")
-	fmt.Println("   • fest show plan     View the execution plan")
+	fmt.Println(ui.H2("Discover More Commands"))
+	fmt.Printf("  %s %s\n", ui.Value("fest status"), ui.Dim("View festival progress"))
+	fmt.Printf("  %s %s\n", ui.Value("fest next"), ui.Dim("Find what to work on next"))
+	fmt.Printf("  %s %s\n", ui.Value("fest show plan"), ui.Dim("View the execution plan"))
 	return nil
 }
 

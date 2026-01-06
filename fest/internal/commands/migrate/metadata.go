@@ -13,6 +13,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/id"
 	"github.com/lancekrogers/festival-methodology/fest/internal/registry"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -131,7 +132,7 @@ func checkExistingMigration(festivalPath, festivalsRoot string) (*migrationConte
 	// Check if directory already has an ID suffix
 	existingID, err := id.ExtractIDFromDirName(dirName)
 	if err == nil && existingID != "" {
-		fmt.Printf("Festival %s already has ID %s\n", dirName, existingID)
+		fmt.Printf("%s %s\n", ui.Warning("Already migrated:"), ui.Dim(fmt.Sprintf("%s (ID: %s)", dirName, existingID)))
 		return nil, true, nil
 	}
 
@@ -144,7 +145,7 @@ func checkExistingMigration(festivalPath, festivalsRoot string) (*migrationConte
 
 	// Check if metadata already exists
 	if festConfig.Metadata.ID != "" {
-		fmt.Printf("Festival %s already has metadata ID %s\n", dirName, festConfig.Metadata.ID)
+		fmt.Printf("%s %s\n", ui.Warning("Already migrated:"), ui.Dim(fmt.Sprintf("%s (ID: %s)", dirName, festConfig.Metadata.ID)))
 		return nil, true, nil
 	}
 
@@ -178,10 +179,10 @@ func checkExistingMigration(festivalPath, festivalsRoot string) (*migrationConte
 
 // printDryRunOutput prints what would be migrated in dry-run mode
 func printDryRunOutput(migCtx *migrationContext) {
-	fmt.Printf("[DRY-RUN] Would migrate:\n")
-	fmt.Printf("  Festival: %s\n", migCtx.dirName)
-	fmt.Printf("  New ID: %s\n", migCtx.newID)
-	fmt.Printf("  New path: %s\n", migCtx.newPath)
+	fmt.Println(ui.H2("Dry Run"))
+	fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(migCtx.dirName, ui.FestivalColor))
+	fmt.Printf("%s %s\n", ui.Label("New ID"), ui.Value(migCtx.newID))
+	fmt.Printf("%s %s\n", ui.Label("New path"), ui.Dim(migCtx.newPath))
 }
 
 // buildMigrationMetadata populates the festival config with migration metadata
@@ -227,7 +228,7 @@ func updateRegistryAfterMigration(ctx context.Context, migCtx *migrationContext)
 	regPath := registry.GetRegistryPath(migCtx.festivalsRoot)
 	reg, err := registry.Load(ctx, regPath)
 	if err != nil {
-		fmt.Printf("Warning: could not load registry: %v\n", err)
+		fmt.Println(ui.Warning(fmt.Sprintf("Could not load registry: %v", err)))
 		return
 	}
 
@@ -241,12 +242,12 @@ func updateRegistryAfterMigration(ctx context.Context, migCtx *migrationContext)
 	}
 
 	if err := reg.Add(ctx, entry); err != nil {
-		fmt.Printf("Warning: could not add to registry: %v\n", err)
+		fmt.Println(ui.Warning(fmt.Sprintf("Could not add to registry: %v", err)))
 		return
 	}
 
 	if err := reg.Save(ctx); err != nil {
-		fmt.Printf("Warning: could not save registry: %v\n", err)
+		fmt.Println(ui.Warning(fmt.Sprintf("Could not save registry: %v", err)))
 	}
 }
 
@@ -254,9 +255,10 @@ func updateRegistryAfterMigration(ctx context.Context, migCtx *migrationContext)
 func printMigrationSuccess(migCtx *migrationContext, verbose bool) {
 	newDirName := filepath.Base(migCtx.newPath)
 	if verbose {
-		fmt.Printf("Migrated %s -> %s (ID: %s)\n", migCtx.dirName, newDirName, migCtx.newID)
+		fmt.Printf("%s %s\n", ui.Success("Migrated"), ui.Value(fmt.Sprintf("%s -> %s", migCtx.dirName, newDirName), ui.FestivalColor))
+		fmt.Printf("%s %s\n", ui.Label("ID"), ui.Value(migCtx.newID))
 	} else {
-		fmt.Printf("Migrated: %s\n", newDirName)
+		fmt.Printf("%s %s\n", ui.Success("Migrated"), ui.Value(newDirName, ui.FestivalColor))
 	}
 }
 
@@ -301,7 +303,7 @@ func migrateAllFestivals(ctx context.Context, festivalsRoot string, dryRun, verb
 			err := migrateSingleFestival(ctx, festivalsRoot, festivalPath, dryRun, verbose)
 			if err != nil {
 				if verbose {
-					fmt.Printf("Error migrating %s: %v\n", entry.Name(), err)
+					fmt.Println(ui.Error(fmt.Sprintf("Error migrating %s: %v", entry.Name(), err)))
 				}
 				failed++
 			} else {
@@ -315,7 +317,11 @@ func migrateAllFestivals(ctx context.Context, festivalsRoot string, dryRun, verb
 		}
 	}
 
-	fmt.Printf("\nMigration complete: %d migrated, %d skipped (already have ID), %d failed\n", migrated, skipped, failed)
+	fmt.Println()
+	fmt.Println(ui.H1("Migration Complete"))
+	fmt.Printf("%s %s\n", ui.Label("Migrated"), ui.Value(fmt.Sprintf("%d", migrated), ui.SuccessColor))
+	fmt.Printf("%s %s\n", ui.Label("Skipped"), ui.Value(fmt.Sprintf("%d", skipped), ui.PendingColor))
+	fmt.Printf("%s %s\n", ui.Label("Failed"), ui.Value(fmt.Sprintf("%d", failed), ui.ErrorColor))
 	return nil
 }
 
@@ -350,7 +356,7 @@ func migrateCompletedDirectory(ctx context.Context, festivalsRoot, completedPath
 			err := migrateSingleFestival(ctx, festivalsRoot, festivalPath, dryRun, verbose)
 			if err != nil {
 				if verbose {
-					fmt.Printf("Error migrating %s: %v\n", festival.Name(), err)
+					fmt.Println(ui.Error(fmt.Sprintf("Error migrating %s: %v", festival.Name(), err)))
 				}
 				*failed++
 			} else {

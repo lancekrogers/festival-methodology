@@ -9,6 +9,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -96,12 +97,12 @@ Warning: This will permanently delete the phase and all its contents!`,
 
 			// Confirm removal if not forced
 			if !opts.force && !opts.dryRun {
-				fmt.Printf("Warning: This will permanently delete %s and all its contents!\n", filepath.Base(absPath))
-				fmt.Print("Are you sure? [y/N]: ")
+				fmt.Println(ui.Warning(fmt.Sprintf("This will permanently delete %s and all its contents.", filepath.Base(absPath))))
+				fmt.Print(ui.Info("Are you sure? [y/N]: "))
 				var response string
 				fmt.Scanln(&response)
 				if !strings.HasPrefix(strings.ToLower(response), "y") {
-					fmt.Println("Operation cancelled.")
+					fmt.Println(ui.Info("Operation cancelled."))
 					return nil
 				}
 			}
@@ -194,12 +195,12 @@ If --phase is omitted and you're inside a phase directory, it will use the curre
 
 			// Confirm removal if not forced
 			if !opts.force && !opts.dryRun {
-				fmt.Printf("Warning: This will permanently delete %s and all its contents!\n", filepath.Base(targetPath))
-				fmt.Print("Are you sure? [y/N]: ")
+				fmt.Println(ui.Warning(fmt.Sprintf("This will permanently delete %s and all its contents.", filepath.Base(targetPath))))
+				fmt.Print(ui.Info("Are you sure? [y/N]: "))
 				var response string
 				fmt.Scanln(&response)
 				if !strings.HasPrefix(strings.ToLower(response), "y") {
-					fmt.Println("Operation cancelled.")
+					fmt.Println(ui.Info("Operation cancelled."))
 					return nil
 				}
 			}
@@ -302,11 +303,11 @@ If --sequence is omitted and you're inside a sequence directory, it will use the
 					return errors.NotFound("task").WithField("number", num).WithField("sequence", filepath.Base(sequenceDir))
 				} else if len(matches) > 1 {
 					// Multiple tasks with same number
-					fmt.Println("Multiple tasks found with that number:")
+					fmt.Println(ui.H2("Multiple Tasks Found"))
 					for i, task := range matches {
-						fmt.Printf("  [%d] %s\n", i+1, task.FullName)
+						fmt.Printf("  %s %s\n", ui.Label(fmt.Sprintf("[%d]", i+1)), ui.Value(task.FullName, ui.TaskColor))
 					}
-					fmt.Print("Select task to remove (number): ")
+					fmt.Print(ui.Info("Select task to remove (number): "))
 					var choice int
 					fmt.Scanln(&choice)
 					if choice < 1 || choice > len(matches) {
@@ -326,12 +327,12 @@ If --sequence is omitted and you're inside a sequence directory, it will use the
 
 			// Confirm removal if not forced
 			if !opts.force && !opts.dryRun {
-				fmt.Printf("Warning: This will permanently delete %s!\n", filepath.Base(targetPath))
-				fmt.Print("Are you sure? [y/N]: ")
+				fmt.Println(ui.Warning(fmt.Sprintf("This will permanently delete %s.", filepath.Base(targetPath))))
+				fmt.Print(ui.Info("Are you sure? [y/N]: "))
 				var response string
 				fmt.Scanln(&response)
 				if !strings.HasPrefix(strings.ToLower(response), "y") {
-					fmt.Println("Operation cancelled.")
+					fmt.Println(ui.Info("Operation cancelled."))
 					return nil
 				}
 			}

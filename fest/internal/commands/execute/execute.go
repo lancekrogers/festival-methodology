@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/execute"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -77,7 +79,7 @@ func runExecute(cmd *cobra.Command, args []string) error {
 		if err := stateManager.Clear(ctx); err != nil {
 			return errors.IO("clearing execution state", err)
 		}
-		fmt.Println("Execution state cleared.")
+		fmt.Println(ui.Success("Execution state cleared."))
 		return nil
 	}
 
@@ -132,21 +134,18 @@ func showStatus(runner *execute.Runner) error {
 	state := runner.GetState()
 	plan := runner.GetPlan()
 
-	fmt.Println("═══════════════════════════════════════════════════════════")
-	fmt.Println("                    EXECUTION STATUS                        ")
-	fmt.Println("═══════════════════════════════════════════════════════════")
+	fmt.Println(ui.H1("Execution Status"))
+	fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(filepath.Base(plan.FestivalPath), ui.FestivalColor))
+	fmt.Printf("%s %s\n", ui.Label("Path"), ui.Dim(plan.FestivalPath))
 	fmt.Println()
 
-	fmt.Printf("Festival: %s\n\n", plan.FestivalPath)
-
-	fmt.Println("PROGRESS")
-	fmt.Println("────────")
-	fmt.Printf("  Total Tasks:     %d\n", state.TotalTasks)
-	fmt.Printf("  Completed:       %d\n", state.CompletedTasks)
-	fmt.Printf("  Skipped:         %d\n", state.SkippedTasks)
-	fmt.Printf("  Failed:          %d\n", state.FailedTasks)
-	fmt.Printf("  Pending:         %d\n", state.PendingTasks())
-	fmt.Printf("  Progress:        %.1f%%\n", state.Progress())
+	fmt.Println(ui.H2("Progress"))
+	fmt.Printf("%s %s\n", ui.Label("Total tasks"), ui.Value(fmt.Sprintf("%d", state.TotalTasks)))
+	fmt.Printf("%s %s\n", ui.Label("Completed"), ui.Value(fmt.Sprintf("%d", state.CompletedTasks), ui.SuccessColor))
+	fmt.Printf("%s %s\n", ui.Label("Skipped"), ui.Dim(fmt.Sprintf("%d", state.SkippedTasks)))
+	fmt.Printf("%s %s\n", ui.Label("Failed"), ui.Value(fmt.Sprintf("%d", state.FailedTasks), ui.ErrorColor))
+	fmt.Printf("%s %s\n", ui.Label("Pending"), ui.Value(fmt.Sprintf("%d", state.PendingTasks()), ui.PendingColor))
+	fmt.Printf("%s %s\n", ui.Label("Progress"), ui.Value(fmt.Sprintf("%.1f%%", state.Progress())))
 	fmt.Println()
 
 	// Show next step
@@ -156,28 +155,26 @@ func showStatus(runner *execute.Runner) error {
 	}
 
 	if step == nil {
-		fmt.Println("✓ All tasks completed!")
+		fmt.Println(ui.Success("All tasks completed."))
 		return nil
 	}
 
-	fmt.Println("NEXT STEP")
-	fmt.Println("─────────")
-	fmt.Printf("  Phase:    %s\n", phase.Name)
-	fmt.Printf("  Sequence: %s\n", seq.Name)
-	fmt.Printf("  Step:     %d\n", step.Number)
+	fmt.Println(ui.H2("Next Step"))
+	fmt.Printf("%s %s\n", ui.Label("Phase"), ui.Value(phase.Name, ui.PhaseColor))
+	fmt.Printf("%s %s\n", ui.Label("Sequence"), ui.Value(seq.Name, ui.SequenceColor))
+	fmt.Printf("%s %s\n", ui.Label("Step"), ui.Value(fmt.Sprintf("%d", step.Number)))
 	fmt.Println()
 
-	fmt.Println("  Tasks:")
+	fmt.Println(ui.H3("Tasks"))
 	for _, task := range step.Tasks {
-		fmt.Printf("    • %s\n", task.Name)
+		fmt.Printf("  - %s\n", ui.Value(task.Name, ui.TaskColor))
 	}
 	fmt.Println()
 
-	fmt.Println("COMMANDS")
-	fmt.Println("────────")
-	fmt.Println("  fest execute --agent      # Get agent instructions")
-	fmt.Println("  fest execute --dry-run    # Preview full plan")
-	fmt.Println("  fest execute --json       # Export as JSON")
+	fmt.Println(ui.H2("Commands"))
+	fmt.Printf("  %s %s\n", ui.Value("fest execute --agent"), ui.Dim("# Get agent instructions"))
+	fmt.Printf("  %s %s\n", ui.Value("fest execute --dry-run"), ui.Dim("# Preview full plan"))
+	fmt.Printf("  %s %s\n", ui.Value("fest execute --json"), ui.Dim("# Export as JSON"))
 
 	return nil
 }

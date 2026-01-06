@@ -11,6 +11,7 @@ import (
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -174,7 +175,7 @@ func runResearchSummary(ctx context.Context, cmd *cobra.Command, phase string, f
 		if err := os.WriteFile(output, []byte(result), 0644); err != nil {
 			return errors.IO("writing output file", err).WithField("path", output)
 		}
-		fmt.Fprintf(cmd.OutOrStdout(), "Summary written to: %s\n", output)
+		fmt.Fprintf(cmd.OutOrStdout(), "%s %s\n", ui.Success("Summary written"), ui.Dim(output))
 	} else {
 		fmt.Fprintln(cmd.OutOrStdout(), result)
 	}

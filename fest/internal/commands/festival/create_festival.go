@@ -401,16 +401,16 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 	}
 
 	fmt.Println()
-	fmt.Println("   Next steps:")
-	fmt.Println("   1. cd", destDir)
+	fmt.Println(ui.H2("Next Steps"))
+	fmt.Printf("  %s\n", ui.Info(fmt.Sprintf("1. cd %s", destDir)))
 	if remainingMarkers > 0 {
-		fmt.Println("   2. Edit FESTIVAL_GOAL.md to define your objectives")
-		fmt.Println("   3. fest create phase --name \"PLAN\" --after 0")
-		fmt.Println("   4. fest validate  (check completion status)")
+		fmt.Printf("  %s\n", ui.Info("2. Edit FESTIVAL_GOAL.md to define your objectives"))
+		fmt.Printf("  %s\n", ui.Info("3. fest create phase --name \"PLAN\" --after 0"))
+		fmt.Printf("  %s\n", ui.Info("4. fest validate (check completion status)"))
 	} else {
-		fmt.Println("   2. fest create phase --name \"PLAN\" --after 0")
-		fmt.Println("   3. fest create phase --name \"IMPLEMENT\" --after 1")
-		fmt.Println("   4. After creating tasks: fest gates apply --approve")
+		fmt.Printf("  %s\n", ui.Info("2. fest create phase --name \"PLAN\" --after 0"))
+		fmt.Printf("  %s\n", ui.Info("3. fest create phase --name \"IMPLEMENT\" --after 1"))
+		fmt.Printf("  %s\n", ui.Info("4. After creating tasks: fest gates apply --approve"))
 	}
 	return nil
 }

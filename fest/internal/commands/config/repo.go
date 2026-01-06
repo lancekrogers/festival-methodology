@@ -287,25 +287,23 @@ func runConfigList(ctx context.Context, jsonOutput bool) error {
 		return nil
 	}
 
-	display.Info("Config repositories:")
-	fmt.Println()
-
-	for _, repo := range repos {
-		marker := "  "
-		if repo.Name == activeName {
-			marker = "* "
-		}
-		fmt.Printf("%s%s\n", marker, repo.Name)
-		fmt.Printf("    Source: %s\n", repo.Source)
-		fmt.Printf("    Type: %s\n", repoType(repo.IsGitRepo))
-		if !repo.LastSync.IsZero() {
-			fmt.Printf("    Last sync: %s\n", repo.LastSync.Format(time.RFC3339))
-		}
-		fmt.Println()
+	fmt.Println(ui.H1("Config Repositories"))
+	fmt.Printf("%s %s\n", ui.Label("Total"), ui.Value(fmt.Sprintf("%d", len(repos))))
+	if activeName != "" {
+		fmt.Printf("%s %s\n", ui.Label("Active"), ui.Value(activeName))
 	}
 
-	if activeName != "" {
-		display.Info("* = active")
+	for _, repo := range repos {
+		fmt.Println()
+		fmt.Println(ui.H2(repo.Name))
+		if repo.Name == activeName {
+			fmt.Printf("%s %s\n", ui.Label("Status"), ui.Success("active"))
+		}
+		fmt.Printf("%s %s\n", ui.Label("Source"), ui.Dim(repo.Source))
+		fmt.Printf("%s %s\n", ui.Label("Type"), ui.Value(repoType(repo.IsGitRepo)))
+		if !repo.LastSync.IsZero() {
+			fmt.Printf("%s %s\n", ui.Label("Last sync"), ui.Dim(repo.LastSync.Format(time.RFC3339)))
+		}
 	}
 
 	return nil

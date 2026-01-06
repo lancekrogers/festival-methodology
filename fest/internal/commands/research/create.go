@@ -11,6 +11,7 @@ import (
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -182,13 +183,14 @@ func runResearchCreate(ctx context.Context, cmd *cobra.Command, docType, title, 
 	}
 
 	out := cmd.OutOrStdout()
-	fmt.Fprintf(out, "Created research document: %s\n", outputFile)
-	fmt.Fprintf(out, "  Type: %s\n", docType)
-	fmt.Fprintf(out, "  Path: %s\n", outputPath)
+	fmt.Fprintln(out, ui.H1("Research Document Created"))
+	fmt.Fprintf(out, "%s %s\n", ui.Label("File"), ui.Value(outputFile))
+	fmt.Fprintf(out, "%s %s\n", ui.Label("Type"), ui.Value(docType))
+	fmt.Fprintf(out, "%s %s\n", ui.Label("Path"), ui.Dim(outputPath))
 	fmt.Fprintln(out)
-	fmt.Fprintln(out, "Next steps:")
-	fmt.Fprintln(out, "  1. Open the document and fill in the [REPLACE: ...] markers")
-	fmt.Fprintln(out, "  2. Link to implementation phases with 'fest research link'")
+	fmt.Fprintln(out, ui.H2("Next Steps"))
+	fmt.Fprintf(out, "  %s\n", ui.Info("1. Open the document and fill in the [REPLACE: ...] markers"))
+	fmt.Fprintf(out, "  %s\n", ui.Info("2. Link to implementation phases with 'fest research link'"))
 
 	return nil
 }

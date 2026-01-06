@@ -377,20 +377,20 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 	}
 
 	fmt.Println()
-	fmt.Println("   Next steps:")
+	fmt.Println(ui.H2("Next Steps"))
 	if remainingMarkers > 0 {
-		fmt.Println("   1. Edit task file to define implementation steps")
-		fmt.Println("   2. fest create task --name \"next_step\" (add more tasks)")
+		fmt.Printf("  %s\n", ui.Info("1. Edit task file to define implementation steps"))
+		fmt.Printf("  %s\n", ui.Info("2. fest create task --name \"next_step\" (add more tasks)"))
 	} else {
-		fmt.Println("   • Add more tasks: fest create task --name \"next_step\"")
+		fmt.Printf("  %s\n", ui.Info("• Add more tasks: fest create task --name \"next_step\""))
 	}
-	fmt.Println("   • Add quality gates: fest gates apply --approve")
-	fmt.Println("   • Validate progress: fest validate")
+	fmt.Printf("  %s\n", ui.Info("• Add quality gates: fest gates apply --approve"))
+	fmt.Printf("  %s\n", ui.Info("• Validate progress: fest validate"))
 	fmt.Println()
-	fmt.Println("   Discover more commands:")
-	fmt.Println("   • fest status        View festival progress")
-	fmt.Println("   • fest next          Find what to work on next")
-	fmt.Println("   • fest show plan     View the execution plan")
+	fmt.Println(ui.H2("Discover More Commands"))
+	fmt.Printf("  %s %s\n", ui.Value("fest status"), ui.Dim("View festival progress"))
+	fmt.Printf("  %s %s\n", ui.Value("fest next"), ui.Dim("Find what to work on next"))
+	fmt.Printf("  %s %s\n", ui.Value("fest show plan"), ui.Dim("View the execution plan"))
 	return nil
 }
 
