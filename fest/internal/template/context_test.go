@@ -299,6 +299,9 @@ func TestFormatPhaseID(t *testing.T) {
 		{99, "FINAL PHASE", "099_FINAL_PHASE"},
 		{1, "planning", "001_PLANNING"},         // lowercase converted to uppercase
 		{5, "User Testing", "005_USER_TESTING"}, // spaces to underscores
+		{1, "001_PLANNING", "001_PLANNING"},      // strip numeric prefix
+		{2, "002 planning", "002_PLANNING"},      // strip numeric prefix with space
+		{3, "003-Review", "003_REVIEW"},          // strip numeric prefix with dash
 	}
 
 	for _, tt := range tests {
@@ -320,6 +323,9 @@ func TestFormatSequenceID(t *testing.T) {
 		{15, "integration testing", "15_integration_testing"},
 		{3, "BACKEND API", "03_backend_api"},       // uppercase converted to lowercase
 		{8, "User Interface", "08_user_interface"}, // spaces to underscores
+		{1, "01_requirements", "01_requirements"},  // strip numeric prefix
+		{2, "02 requirements", "02_requirements"},  // strip numeric prefix with space
+		{3, "03-Backend API", "03_backend_api"},    // strip numeric prefix with dash
 	}
 
 	for _, tt := range tests {
