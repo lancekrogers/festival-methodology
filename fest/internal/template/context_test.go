@@ -350,6 +350,9 @@ func TestFormatTaskID(t *testing.T) {
 		{25, "code review", "25_code_review.md"},
 		{5, "Database Schema", "05_database_schema.md"}, // mixed case normalized
 		{10, "API Design", "10_api_design.md"},          // spaces to underscores
+		{1, "01_setup", "01_setup.md"},                  // strip numeric prefix
+		{2, "02 setup", "02_setup.md"},                  // strip numeric prefix with space
+		{3, "03-Review", "03_review.md"},                // strip numeric prefix with dash
 	}
 
 	for _, tt := range tests {

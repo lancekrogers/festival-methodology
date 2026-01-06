@@ -282,7 +282,7 @@ func stripNumericPrefix(name string, digits int) string {
 
 // FormatTaskID creates formatted task ID: "01_user_research.md"
 func FormatTaskID(number int, name string) string {
-	// Normalize name: lowercase, replace spaces with underscores
-	normalized := strings.ToLower(strings.ReplaceAll(name, " ", "_"))
+	// Normalize name: strip numeric prefix, lowercase, replace spaces with underscores
+	normalized := normalizeName(name, 2, strings.ToLower)
 	return fmt.Sprintf("%02d_%s.md", number, normalized)
 }
