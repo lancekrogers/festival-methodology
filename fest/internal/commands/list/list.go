@@ -106,18 +106,7 @@ func listByStatus(festivalsDir, status string, opts *listOptions) error {
 		})
 	}
 
-	if len(festivals) == 0 {
-		fmt.Printf("No %s festivals found.\n", status)
-		return nil
-	}
-
-	// Color the status header
-	header := fmt.Sprintf("%s (%d)", strings.ToUpper(status), len(festivals))
-	fmt.Println(ui.GetStatusStyle(status).Render(header))
-	fmt.Println(strings.Repeat("─", 50))
-	for _, f := range festivals {
-		printFestival(f, status)
-	}
+	fmt.Print(show.FormatFestivalList(status, festivals))
 
 	return nil
 }
@@ -125,6 +114,8 @@ func listByStatus(festivalsDir, status string, opts *listOptions) error {
 func listAll(festivalsDir string, opts *listOptions) error {
 	result := make(map[string]interface{})
 	var totalCount int
+	allFestivals := make(map[string][]*show.FestivalInfo)
+	statusOrder := make([]string, 0, len(validStatuses))
 
 	for _, status := range validStatuses {
 		festivals, err := show.ListFestivalsByStatus(festivalsDir, status)
@@ -132,6 +123,8 @@ func listAll(festivalsDir string, opts *listOptions) error {
 			continue
 		}
 		if len(festivals) > 0 || opts.all {
+			allFestivals[status] = festivals
+			statusOrder = append(statusOrder, status)
 			result[status] = festivalsToMap(festivals)
 			totalCount += len(festivals)
 		}
@@ -143,44 +136,13 @@ func listAll(festivalsDir string, opts *listOptions) error {
 	}
 
 	if totalCount == 0 {
-		fmt.Println("No festivals found.")
-		fmt.Println("\nCreate a festival with: fest create festival")
+		fmt.Println(ui.Warning("No festivals found."))
+		fmt.Println(ui.Info("Create a festival with: fest create festival"))
 		return nil
 	}
 
-	for _, status := range validStatuses {
-		festivals, _ := show.ListFestivalsByStatus(festivalsDir, status)
-		if len(festivals) == 0 && !opts.all {
-			continue
-		}
-
-		// Color the status header
-		header := fmt.Sprintf("%s (%d)", strings.ToUpper(status), len(festivals))
-		fmt.Printf("\n%s\n", ui.GetStatusStyle(status).Render(header))
-		fmt.Println(strings.Repeat("─", 50))
-
-		if len(festivals) == 0 {
-			fmt.Println("  (none)")
-		} else {
-			for _, f := range festivals {
-				printFestival(f, status)
-			}
-		}
-	}
-
-	fmt.Printf("\nTotal: %d festivals\n", totalCount)
+	fmt.Print(show.FormatAllFestivals(allFestivals, statusOrder))
 	return nil
-}
-
-func printFestival(f *show.FestivalInfo, status string) {
-	progress := ""
-	if f.Stats != nil && f.Stats.Progress > 0 {
-		progress = fmt.Sprintf(" (%.0f%%)", f.Stats.Progress)
-	}
-
-	// Apply status-based styling to festival name
-	styledName := ui.GetStatusStyle(status).Render(f.Name)
-	fmt.Printf("  • %s%s\n", styledName, progress)
 }
 
 func festivalsToMap(festivals []*show.FestivalInfo) []map[string]interface{} {
