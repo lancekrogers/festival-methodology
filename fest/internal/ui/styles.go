@@ -118,3 +118,29 @@ func GetStatusColor(status string) lipgloss.Color {
 		return lipgloss.Color("")
 	}
 }
+
+// GetStateColor returns the appropriate color for a workflow state string.
+// Supports pending, in_progress, blocked, and completed (case-insensitive).
+func GetStateColor(state string) lipgloss.Color {
+	switch normalizeState(state) {
+	case "pending", "todo", "queued":
+		return PendingColor
+	case "in_progress", "inprogress", "active":
+		return InProgressColor
+	case "blocked", "error", "failed":
+		return BlockedColor
+	case "completed", "complete", "done":
+		return SuccessColor
+	default:
+		return lipgloss.Color("")
+	}
+}
+
+// GetStateStyle returns a bold style for a workflow state string.
+func GetStateStyle(state string) lipgloss.Style {
+	color := GetStateColor(state)
+	if color == "" {
+		return lipgloss.NewStyle()
+	}
+	return lipgloss.NewStyle().Foreground(color).Bold(true)
+}

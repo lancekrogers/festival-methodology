@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/fatih/color"
 )
 
 // UI handles user interface operations
@@ -18,9 +16,7 @@ type UI struct {
 
 // New creates a new UI handler
 func New(noColor, verbose bool) *UI {
-	if noColor {
-		color.NoColor = true
-	}
+	SetNoColor(noColor)
 
 	return &UI{
 		noColor: noColor,
@@ -32,37 +28,25 @@ func New(noColor, verbose bool) *UI {
 // Info prints an info message
 func (u *UI) Info(format string, args ...interface{}) {
 	message := fmt.Sprintf(format, args...)
-	fmt.Println(message)
+	fmt.Println(infoStyle.Render(message))
 }
 
 // Success prints a success message in green
 func (u *UI) Success(format string, args ...interface{}) {
 	message := fmt.Sprintf(format, args...)
-	if u.noColor {
-		fmt.Println("✓", message)
-	} else {
-		color.Green("✓ %s", message)
-	}
+	fmt.Println(successStyle.Render("✓ " + message))
 }
 
 // Warning prints a warning message in yellow
 func (u *UI) Warning(format string, args ...interface{}) {
 	message := fmt.Sprintf(format, args...)
-	if u.noColor {
-		fmt.Println("⚠", message)
-	} else {
-		color.Yellow("⚠ %s", message)
-	}
+	fmt.Println(warningStyle.Render("⚠ " + message))
 }
 
 // Error prints an error message in red
 func (u *UI) Error(format string, args ...interface{}) {
 	message := fmt.Sprintf(format, args...)
-	if u.noColor {
-		fmt.Fprintln(os.Stderr, "✗", message)
-	} else {
-		color.Red("✗ %s", message)
-	}
+	fmt.Fprintln(os.Stderr, errorStyle.Render("✗ "+message))
 }
 
 // Confirm asks for yes/no confirmation
