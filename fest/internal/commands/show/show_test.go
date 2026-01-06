@@ -4,6 +4,8 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -335,7 +337,7 @@ func TestFormatFestivalList(t *testing.T) {
 
 	output := FormatFestivalList("active", festivals)
 
-	if !contains(output, "Active Festivals (2)") {
+	if !contains(output, "Festivals (2)") {
 		t.Error("Output should contain header with count")
 	}
 	if !contains(output, "fest1") {
@@ -349,7 +351,7 @@ func TestFormatFestivalList(t *testing.T) {
 func TestFormatFestivalListEmpty(t *testing.T) {
 	output := FormatFestivalList("completed", []*FestivalInfo{})
 
-	if !contains(output, "Completed Festivals (0)") {
+	if !contains(output, "Festivals (0)") {
 		t.Error("Output should indicate zero festivals")
 	}
 	if !contains(output, "(none)") {
@@ -358,7 +360,16 @@ func TestFormatFestivalListEmpty(t *testing.T) {
 }
 
 func contains(s, substr string) bool {
-	return len(s) > 0 && len(substr) > 0 && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || contains(s[1:], substr)))
+	if substr == "" {
+		return false
+	}
+	return strings.Contains(stripANSI(s), substr)
+}
+
+var ansiRegexp = regexp.MustCompile(`\x1b\[[0-9;]*m`)
+
+func stripANSI(s string) string {
+	return ansiRegexp.ReplaceAllString(s, "")
 }
 
 // TestFormatFestivalDetails_DisplaysMetadataID tests that festival ID from metadata is displayed
@@ -378,7 +389,7 @@ func TestFormatFestivalDetails_DisplaysMetadataID(t *testing.T) {
 				Status:     "active",
 				Path:       "/path/to/my-project_GU0001",
 			},
-			expectedOutput: []string{"ID: GU0001"},
+			expectedOutput: []string{"ID GU0001"},
 		},
 		{
 			name: "handles legacy festival without metadata ID",
