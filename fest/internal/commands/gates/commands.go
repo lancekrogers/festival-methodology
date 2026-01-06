@@ -11,6 +11,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	gatescore "github.com/lancekrogers/festival-methodology/fest/internal/gates"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -169,36 +170,43 @@ func printGatesShowMergedTable(cmd *cobra.Command, merged *gatescore.MergedPolic
 	} else if phase != "" {
 		location = phase
 	}
-	fmt.Fprintf(out, "Merged gates for %s:\n\n", location)
+	fmt.Fprintln(out, ui.H1("Gate Policy"))
+	fmt.Fprintf(out, "%s %s\n", ui.Label("Scope"), ui.Value(location))
+	fmt.Fprintln(out, ui.Dim(strings.Repeat("─", 60)))
 
 	// Show configuration sources
-	fmt.Fprintf(out, "Configuration sources:\n")
-	for _, src := range merged.Sources {
-		if src.Path != "" {
-			fmt.Fprintf(out, "  [%s] %s\n", src.Level, src.Path)
-		} else {
-			fmt.Fprintf(out, "  [%s] %s\n", src.Level, src.Name)
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, ui.H2("Configuration Sources"))
+	if len(merged.Sources) == 0 {
+		fmt.Fprintln(out, ui.Dim("No configuration sources found."))
+	} else {
+		for _, src := range merged.Sources {
+			target := src.Path
+			if target == "" {
+				target = src.Name
+			}
+			fmt.Fprintf(out, "%s %s\n", ui.Dim(fmt.Sprintf("[%s]", src.Level)), ui.Dim(target))
 		}
 	}
-	fmt.Fprintln(out)
 
-	// Table header
-	fmt.Fprintf(out, "Active gates:\n")
-	fmt.Fprintf(out, "  %-24s %-12s %-30s\n", "Gate", "Source", "Template")
-	fmt.Fprintf(out, "  %-24s %-12s %-30s\n", strings.Repeat("-", 24), strings.Repeat("-", 12), strings.Repeat("-", 30))
+	// Active gates
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, ui.H2("Active Gates"))
 
 	// Gates
 	activeGates := merged.GetActiveGates()
+	if len(activeGates) == 0 {
+		fmt.Fprintln(out, ui.Dim("No active gates."))
+	}
 	for _, gate := range activeGates {
 		source := "builtin"
 		if gate.Source != nil {
 			source = string(gate.Source.Level)
 		}
-		fmt.Fprintf(out, "  %-24s [%-10s] %s\n", gate.ID, source, gate.Template)
-	}
-
-	if len(activeGates) == 0 {
-		fmt.Fprintf(out, "  (no gates active)\n")
+		fmt.Fprintf(out, "%s %s %s\n",
+			ui.Value(gate.ID, ui.GateColor),
+			ui.Dim(fmt.Sprintf("[%s]", source)),
+			ui.Dim(gate.Template))
 	}
 
 	// Show removed gates if any
@@ -206,22 +214,26 @@ func printGatesShowMergedTable(cmd *cobra.Command, merged *gatescore.MergedPolic
 	for _, gate := range merged.Gates {
 		if gate.Removed {
 			if !hasRemoved {
-				fmt.Fprintf(out, "\nRemoved gates:\n")
+				fmt.Fprintln(out)
+				fmt.Fprintln(out, ui.H2("Removed Gates"))
 				hasRemoved = true
 			}
 			source := "unknown"
 			if gate.Source != nil {
 				source = string(gate.Source.Level)
 			}
-			fmt.Fprintf(out, "  %-24s [%-10s] (removed at %s level)\n", gate.ID, source, source)
+			fmt.Fprintf(out, "%s %s\n",
+				ui.Warning(gate.ID),
+				ui.Dim(fmt.Sprintf("removed at %s level", source)))
 		}
 	}
 
 	// Show exclude patterns if any
 	if len(merged.ExcludePatterns) > 0 {
-		fmt.Fprintf(out, "\nExclude patterns:\n")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, ui.H2("Exclude Patterns"))
 		for _, pattern := range merged.ExcludePatterns {
-			fmt.Fprintf(out, "  %s\n", pattern)
+			fmt.Fprintf(out, "%s %s\n", ui.Dim("•"), ui.Dim(pattern))
 		}
 	}
 
@@ -334,19 +346,28 @@ func printGatesListTable(cmd *cobra.Command, policies []*gatescore.PolicyInfo, l
 	out := cmd.OutOrStdout()
 
 	// Show named policies
-	fmt.Fprintf(out, "Available gate policies:\n\n")
-	fmt.Fprintf(out, "  %-16s %-12s %s\n", "Name", "Source", "Description")
-	fmt.Fprintf(out, "  %-16s %-12s %s\n", strings.Repeat("-", 16), strings.Repeat("-", 12), strings.Repeat("-", 40))
-
-	for _, info := range policies {
-		fmt.Fprintf(out, "  %-16s [%-10s] %s\n", info.Name, info.Source, info.Description)
+	fmt.Fprintln(out, ui.H1("Gate Policies"))
+	if len(policies) == 0 {
+		fmt.Fprintln(out, ui.Dim("No gate policies available."))
+	} else {
+		fmt.Fprintln(out, ui.H2("Named Policies"))
+		for _, info := range policies {
+			fmt.Fprintf(out, "%s %s\n",
+				ui.Value(info.Name),
+				ui.Dim(fmt.Sprintf("[%s]", info.Source)))
+			if info.Description != "" {
+				fmt.Fprintf(out, "  %s\n", ui.Dim(info.Description))
+			}
+		}
 	}
 
 	// Show local templates if present
 	if len(localTemplates) > 0 {
-		fmt.Fprintf(out, "\nLocal gate templates (in gates/):\n")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, ui.H2("Local Gate Templates"))
+		fmt.Fprintf(out, "%s %s\n", ui.Label("Directory"), ui.Dim(gatesDir))
 		for _, tmpl := range localTemplates {
-			fmt.Fprintf(out, "  - %s\n", tmpl)
+			fmt.Fprintf(out, "%s %s\n", ui.Dim("•"), ui.Value(tmpl, ui.GateColor))
 		}
 	}
 
@@ -435,13 +456,20 @@ func runGatesValidate(ctx context.Context, cmd *cobra.Command, fix, jsonOutput b
 
 	out := cmd.OutOrStdout()
 	if len(issues) == 0 {
-		fmt.Fprintf(out, "Gate configuration is valid.\n")
+		fmt.Fprintln(out, ui.Success("✓ Gate configuration is valid."))
 		return nil
 	}
 
-	fmt.Fprintf(out, "Found %d issue(s):\n\n", len(issues))
+	fmt.Fprintln(out, ui.H1("Gate Validation"))
+	fmt.Fprintf(out, "%s %s\n", ui.Label("Issues"), ui.Value(fmt.Sprintf("%d", len(issues))))
 	for _, issue := range issues {
-		fmt.Fprintf(out, "  [%s] %s\n    %s\n\n", issue.Severity, issue.Path, issue.Message)
+		severity := strings.ToUpper(issue.Severity)
+		severityLabel := ui.Warning(severity)
+		if strings.EqualFold(issue.Severity, "error") {
+			severityLabel = ui.Error(severity)
+		}
+		fmt.Fprintf(out, "\n%s %s\n", severityLabel, ui.Dim(issue.Path))
+		fmt.Fprintf(out, "  %s\n", issue.Message)
 	}
 
 	return nil

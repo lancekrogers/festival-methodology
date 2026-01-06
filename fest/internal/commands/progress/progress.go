@@ -178,7 +178,8 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 			data, _ := json.MarshalIndent(result, "", "  ")
 			fmt.Println(string(data))
 		} else {
-			fmt.Printf("Blocker reported for %s\n", taskID)
+			task, _ := mgr.GetTaskProgress(taskID)
+			printTaskProgress("Task Blocked", task)
 		}
 		return nil
 	}
@@ -197,7 +198,8 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 			data, _ := json.MarshalIndent(result, "", "  ")
 			fmt.Println(string(data))
 		} else {
-			fmt.Printf("Blocker cleared for %s\n", taskID)
+			task, _ := mgr.GetTaskProgress(taskID)
+			printTaskProgress("Blocker Cleared", task)
 		}
 		return nil
 	}
@@ -219,7 +221,7 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 			fmt.Println(string(data))
 		} else {
 			task, _ := mgr.GetTaskProgress(taskID)
-			fmt.Printf("Task %s marked complete (time: %d min)\n", taskID, task.TimeSpentMinutes)
+			printTaskProgress("Task Completed", task)
 		}
 		return nil
 	}
@@ -238,7 +240,8 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 			data, _ := json.MarshalIndent(result, "", "  ")
 			fmt.Println(string(data))
 		} else {
-			fmt.Printf("Task %s marked in progress\n", taskID)
+			task, _ := mgr.GetTaskProgress(taskID)
+			printTaskProgress("Task In Progress", task)
 		}
 		return nil
 	}
@@ -263,7 +266,8 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 			data, _ := json.MarshalIndent(result, "", "  ")
 			fmt.Println(string(data))
 		} else {
-			fmt.Printf("Task %s progress updated to %d%%\n", taskID, pct)
+			task, _ := mgr.GetTaskProgress(taskID)
+			printTaskProgress("Progress Updated", task)
 		}
 		return nil
 	}
@@ -280,7 +284,11 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 			data, _ := json.MarshalIndent(result, "", "  ")
 			fmt.Println(string(data))
 		} else {
-			fmt.Printf("Task %s: pending (0%%)\n", taskID)
+			printTaskProgress("Task Progress", &progress.TaskProgress{
+				TaskID:   taskID,
+				Status:   progress.StatusPending,
+				Progress: 0,
+			})
 		}
 		return nil
 	}
@@ -289,18 +297,26 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 		data, _ := json.MarshalIndent(task, "", "  ")
 		fmt.Println(string(data))
 	} else {
-		fmt.Printf("Task: %s\n", task.TaskID)
-		fmt.Printf("Status: %s\n", task.Status)
-		fmt.Printf("Progress: %d%%\n", task.Progress)
-		if task.BlockerMessage != "" {
-			fmt.Printf("Blocker: %s\n", task.BlockerMessage)
-		}
-		if task.TimeSpentMinutes > 0 {
-			fmt.Printf("Time: %d min\n", task.TimeSpentMinutes)
-		}
+		printTaskProgress("Task Progress", task)
 	}
 
 	return nil
+}
+
+func printTaskProgress(title string, task *progress.TaskProgress) {
+	if task == nil {
+		return
+	}
+	fmt.Println(ui.H1(title))
+	fmt.Printf("%s %s\n", ui.Label("Task"), ui.Value(task.TaskID, ui.TaskColor))
+	fmt.Printf("%s %s\n", ui.Label("Status"), ui.GetStateStyle(task.Status).Render(task.Status))
+	fmt.Printf("%s %s\n", ui.Label("Progress"), ui.Value(fmt.Sprintf("%d%%", task.Progress)))
+	if task.BlockerMessage != "" {
+		fmt.Printf("%s %s\n", ui.Label("Blocker"), ui.Warning(task.BlockerMessage))
+	}
+	if task.TimeSpentMinutes > 0 {
+		fmt.Printf("%s %s\n", ui.Label("Time"), ui.Value(fmt.Sprintf("%d min", task.TimeSpentMinutes)))
+	}
 }
 
 func showProgressOverview(ctx context.Context, mgr *progress.Manager, loc *show.LocationInfo, opts *progressOptions) error {

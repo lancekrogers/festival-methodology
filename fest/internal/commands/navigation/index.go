@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/index"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -74,13 +76,14 @@ Use --output to write to a different location.`,
 			}
 
 			summary := idx.Summary()
-			fmt.Printf("Index written to: %s\n", outputPath)
-			fmt.Printf("  Festival: %s\n", idx.FestivalID)
-			fmt.Printf("  Phases: %d\n", summary.PhaseCount)
-			fmt.Printf("  Sequences: %d\n", summary.SequenceCount)
-			fmt.Printf("  Tasks: %d\n", summary.TaskCount)
+			fmt.Println(ui.H1("Festival Index"))
+			fmt.Printf("%s %s\n", ui.Label("Path"), ui.Dim(outputPath))
+			fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(idx.FestivalID, ui.FestivalColor))
+			fmt.Printf("%s %s\n", ui.Label("Phases"), ui.Value(fmt.Sprintf("%d", summary.PhaseCount)))
+			fmt.Printf("%s %s\n", ui.Label("Sequences"), ui.Value(fmt.Sprintf("%d", summary.SequenceCount)))
+			fmt.Printf("%s %s\n", ui.Label("Tasks"), ui.Value(fmt.Sprintf("%d", summary.TaskCount)))
 			if summary.ManagedCount > 0 {
-				fmt.Printf("  Managed gates: %d\n", summary.ManagedCount)
+				fmt.Printf("%s %s\n", ui.Label("Managed gates"), ui.Value(fmt.Sprintf("%d", summary.ManagedCount), ui.GateColor))
 			}
 
 			return nil
@@ -128,29 +131,33 @@ Reports:
 			}
 
 			// Print results
+			fmt.Println(ui.H1("Index Validation"))
 			if result.Valid && len(result.Warnings) == 0 && len(result.ExtraInFS) == 0 {
-				fmt.Println("Index is valid and synchronized with filesystem.")
+				fmt.Println(ui.Success("✓ Index is valid and synchronized with filesystem."))
 				return nil
 			}
 
 			if len(result.Errors) > 0 {
-				fmt.Println("Errors:")
+				fmt.Println(ui.H2("Errors"))
 				for _, e := range result.Errors {
-					fmt.Printf("  [%s] %s: %s\n", e.Type, e.Path, e.Message)
+					fmt.Printf("%s %s\n", ui.Error(strings.ToUpper(e.Type)), ui.Dim(e.Path))
+					fmt.Printf("  %s\n", e.Message)
 				}
 			}
 
 			if len(result.Warnings) > 0 {
-				fmt.Println("\nWarnings:")
+				fmt.Println()
+				fmt.Println(ui.H2("Warnings"))
 				for _, w := range result.Warnings {
-					fmt.Printf("  %s\n", w)
+					fmt.Printf("%s %s\n", ui.Warning("WARN"), ui.Dim(w))
 				}
 			}
 
 			if len(result.ExtraInFS) > 0 {
-				fmt.Println("\nFiles not in index:")
+				fmt.Println()
+				fmt.Println(ui.H2("Files Not In Index"))
 				for _, f := range result.ExtraInFS {
-					fmt.Printf("  %s\n", f)
+					fmt.Printf("%s %s\n", ui.Warning("EXTRA"), ui.Dim(f))
 				}
 			}
 
@@ -203,31 +210,36 @@ func newIndexShowCommand() *cobra.Command {
 			}
 
 			// Human-readable output
-			fmt.Printf("Festival: %s\n", idx.FestivalID)
-			fmt.Printf("Spec Version: %d\n", idx.FestSpec)
-			fmt.Printf("Generated: %s\n\n", idx.GeneratedAt.Format("2006-01-02 15:04:05"))
+			fmt.Println(ui.H1("Festival Index"))
+			fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(idx.FestivalID, ui.FestivalColor))
+			fmt.Printf("%s %s\n", ui.Label("Spec Version"), ui.Value(fmt.Sprintf("%d", idx.FestSpec)))
+			fmt.Printf("%s %s\n", ui.Label("Generated"), ui.Dim(idx.GeneratedAt.Format("2006-01-02 15:04:05")))
+			fmt.Println(ui.Dim(strings.Repeat("─", 60)))
 
 			for _, phase := range idx.Phases {
-				fmt.Printf("Phase: %s\n", phase.PhaseID)
+				fmt.Println()
+				fmt.Println(ui.H2(fmt.Sprintf("Phase %s", phase.PhaseID)))
 				if phase.GoalFile != "" {
-					fmt.Printf("  Goal: %s\n", phase.GoalFile)
+					fmt.Printf("%s %s\n", ui.Label("Goal"), ui.Dim(phase.GoalFile))
 				}
 
 				for _, seq := range phase.Sequences {
-					fmt.Printf("  Sequence: %s\n", seq.SequenceID)
+					fmt.Printf("%s %s\n", ui.Label("Sequence"), ui.Value(seq.SequenceID, ui.SequenceColor))
 					if seq.GoalFile != "" {
-						fmt.Printf("    Goal: %s\n", seq.GoalFile)
+						fmt.Printf("  %s %s\n", ui.Label("Goal"), ui.Dim(seq.GoalFile))
 					}
 
 					for _, task := range seq.Tasks {
 						if task.Managed {
-							fmt.Printf("    [M] %s (gate: %s)\n", task.TaskID, task.GateID)
-						} else {
-							fmt.Printf("    [ ] %s\n", task.TaskID)
+							fmt.Printf("  %s %s %s\n",
+								ui.Dim("•"),
+								ui.Value(task.TaskID, ui.TaskColor),
+								ui.Dim(fmt.Sprintf("(gate: %s)", task.GateID)))
+							continue
 						}
+						fmt.Printf("  %s %s\n", ui.Dim("•"), ui.Value(task.TaskID, ui.TaskColor))
 					}
 				}
-				fmt.Println()
 			}
 
 			return nil
@@ -285,9 +297,11 @@ and provides a complete hierarchical view for Guild v3 integration.`,
 			}
 
 			// Human-readable output
-			fmt.Printf("Workspace: %s\n", tree.Workspace.Path)
-			fmt.Printf("Festivals: %d\n", tree.Workspace.FestivalCount)
-			fmt.Printf("Tasks: %d/%d completed\n\n", tree.Workspace.CompletedTasks, tree.Workspace.TotalTasks)
+			fmt.Println(ui.H1("Workspace Index"))
+			fmt.Printf("%s %s\n", ui.Label("Workspace"), ui.Dim(tree.Workspace.Path))
+			fmt.Printf("%s %s\n", ui.Label("Festivals"), ui.Value(fmt.Sprintf("%d", tree.Workspace.FestivalCount)))
+			fmt.Printf("%s %s\n", ui.Label("Tasks"), ui.Value(fmt.Sprintf("%d/%d completed", tree.Workspace.CompletedTasks, tree.Workspace.TotalTasks)))
+			fmt.Println(ui.Dim(strings.Repeat("─", 60)))
 
 			printFestivalGroup("Planned", tree.Festivals.Planned)
 			printFestivalGroup("Active", tree.Festivals.Active)
@@ -308,13 +322,15 @@ func printFestivalGroup(name string, festivals []index.FestivalNode) {
 	if len(festivals) == 0 {
 		return
 	}
-	fmt.Printf("%s:\n", name)
+	fmt.Println()
+	fmt.Println(ui.H2(name))
 	for _, f := range festivals {
 		progress := int(f.Progress * 100)
-		fmt.Printf("  %s (%d phases, %d/%d tasks, %d%%)\n",
-			f.Name, f.PhaseCount, f.CompletedTasks, f.TaskCount, progress)
+		fmt.Printf("%s %s %s\n",
+			ui.Value(f.Name, ui.FestivalColor),
+			ui.Dim(fmt.Sprintf("(%d phases, %d/%d tasks)", f.PhaseCount, f.CompletedTasks, f.TaskCount)),
+			ui.Value(fmt.Sprintf("%d%%", progress)))
 	}
-	fmt.Println()
 }
 
 func newIndexDiffCommand() *cobra.Command {
@@ -370,24 +386,30 @@ since the last sync.`,
 
 			// Human-readable output
 			if !diff.HasChanges() {
-				fmt.Println("No changes detected.")
+				fmt.Println(ui.H1("Index Diff"))
+				fmt.Println(ui.Success("✓ No changes detected."))
 				return nil
 			}
 
-			fmt.Printf("Changes since %s:\n\n", oldTree.IndexedAt.Format("2006-01-02 15:04:05"))
+			fmt.Println(ui.H1("Index Diff"))
+			fmt.Printf("%s %s\n", ui.Label("Since"), ui.Dim(oldTree.IndexedAt.Format("2006-01-02 15:04:05")))
 
 			s := diff.Summary
 			if s.FestivalsAdded > 0 || s.FestivalsRemoved > 0 || s.FestivalsMoved > 0 {
-				fmt.Printf("Festivals: +%d -%d ~%d moved\n", s.FestivalsAdded, s.FestivalsRemoved, s.FestivalsMoved)
+				fmt.Printf("%s %s\n", ui.Label("Festivals"),
+					ui.Value(fmt.Sprintf("+%d -%d ~%d moved", s.FestivalsAdded, s.FestivalsRemoved, s.FestivalsMoved)))
 			}
 			if s.PhasesAdded > 0 || s.PhasesRemoved > 0 {
-				fmt.Printf("Phases: +%d -%d\n", s.PhasesAdded, s.PhasesRemoved)
+				fmt.Printf("%s %s\n", ui.Label("Phases"),
+					ui.Value(fmt.Sprintf("+%d -%d", s.PhasesAdded, s.PhasesRemoved)))
 			}
 			if s.SequencesAdded > 0 || s.SequencesRemoved > 0 {
-				fmt.Printf("Sequences: +%d -%d\n", s.SequencesAdded, s.SequencesRemoved)
+				fmt.Printf("%s %s\n", ui.Label("Sequences"),
+					ui.Value(fmt.Sprintf("+%d -%d", s.SequencesAdded, s.SequencesRemoved)))
 			}
 			if s.TasksAdded > 0 || s.TasksRemoved > 0 || s.TasksCompleted > 0 {
-				fmt.Printf("Tasks: +%d -%d ✓%d completed\n", s.TasksAdded, s.TasksRemoved, s.TasksCompleted)
+				fmt.Printf("%s %s\n", ui.Label("Tasks"),
+					ui.Value(fmt.Sprintf("+%d -%d ✓%d completed", s.TasksAdded, s.TasksRemoved, s.TasksCompleted)))
 			}
 
 			return nil

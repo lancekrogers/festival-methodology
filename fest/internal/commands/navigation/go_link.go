@@ -12,15 +12,16 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	festErrors "github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/navigation"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/lancekrogers/festival-methodology/fest/internal/workspace"
 	"github.com/spf13/cobra"
 )
 
 // Styles for festival status in TUI
 var (
-	activeStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true) // Green
-	plannedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Bold(true) // Blue
-	pathStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))           // Gray
+	activeStyle  = lipgloss.NewStyle().Foreground(ui.ActiveColor).Bold(true)
+	plannedStyle = lipgloss.NewStyle().Foreground(ui.PlannedColor).Bold(true)
+	pathStyle    = lipgloss.NewStyle().Foreground(ui.MetadataColor)
 )
 
 // NewGoLinkCommand creates the context-aware link subcommand for fest go
@@ -169,8 +170,11 @@ func linkFestivalToProject(cwd, targetPath string) error {
 		return festErrors.Wrap(err, "saving navigation state")
 	}
 
-	fmt.Printf("Linked: %s ↔ %s\n", festivalName, projectPath)
-	fmt.Println("Use 'fgo' to navigate between them.")
+	fmt.Println(ui.H1("Link Created"))
+	fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(festivalName, ui.FestivalColor))
+	fmt.Printf("%s %s\n", ui.Label("Project"), ui.Dim(projectPath))
+	fmt.Println()
+	fmt.Println(ui.Dim("Use 'fgo' to navigate between them."))
 
 	return nil
 }
@@ -259,8 +263,11 @@ func linkProjectToFestival(cwd string) error {
 		return festErrors.Wrap(err, "saving navigation state")
 	}
 
-	fmt.Printf("Linked: %s ↔ %s\n", selectedFestival, absPath)
-	fmt.Println("Use 'fgo' to navigate between them.")
+	fmt.Println(ui.H1("Link Created"))
+	fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(selectedFestival, ui.FestivalColor))
+	fmt.Printf("%s %s\n", ui.Label("Project"), ui.Dim(absPath))
+	fmt.Println()
+	fmt.Println(ui.Dim("Use 'fgo' to navigate between them."))
 
 	return nil
 }

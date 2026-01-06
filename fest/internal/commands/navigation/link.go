@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/navigation"
@@ -73,6 +73,7 @@ func runLink(targetPath string, opts *linkOptions) error {
 	if err != nil {
 		return errors.IO("getting current directory", err)
 	}
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	// Detect context: are we inside a festival?
 	loc, _ := show.DetectCurrentLocation(cwd)
@@ -122,13 +123,10 @@ func runLink(targetPath string, opts *linkOptions) error {
 	// Warn if path is inside festivals directory
 	festivalsRoot := filepath.Dir(filepath.Dir(loc.Festival.Path))
 	if strings.HasPrefix(absPath, festivalsRoot) {
-		fmt.Printf("Warning: Linking to a path inside festivals directory\n")
-		fmt.Printf("  This may not be what you intended.\n")
-		fmt.Printf("  Continue? [y/N]: ")
-		var response string
-		fmt.Scanln(&response)
-		if !strings.HasPrefix(strings.ToLower(response), "y") {
-			fmt.Println("Operation cancelled.")
+		display.Warning("Linking to a path inside festivals directory may be unintended.")
+		fmt.Printf("%s %s\n", ui.Label("Path"), ui.Dim(absPath))
+		if !display.Confirm("Continue") {
+			display.Info("Operation cancelled.")
 			return nil
 		}
 	}
@@ -160,9 +158,12 @@ func runLink(targetPath string, opts *linkOptions) error {
 		data, _ := json.MarshalIndent(result, "", "  ")
 		fmt.Println(string(data))
 	} else {
-		fmt.Printf("Linked '%s' → %s\n", festivalName, absPath)
-		fmt.Println("\nUse 'fgo project' to navigate to the project (after shell-init setup)")
-		fmt.Println("Use 'fest link --show' to view this link")
+		fmt.Println(ui.H1("Festival Link"))
+		fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(festivalName, ui.FestivalColor))
+		fmt.Printf("%s %s\n", ui.Label("Project"), ui.Dim(absPath))
+		fmt.Println()
+		fmt.Println(ui.Dim("Use 'fgo project' to navigate to the project (after shell-init setup)"))
+		fmt.Println(ui.Dim("Use 'fest link --show' to view this link"))
 	}
 
 	return nil
@@ -221,13 +222,15 @@ func runLinkShow(opts *linkOptions) error {
 		data, _ := json.MarshalIndent(result, "", "  ")
 		fmt.Println(string(data))
 	} else {
-		fmt.Printf("Festival: %s\n", festivalName)
+		fmt.Println(ui.H1("Festival Link"))
+		fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(festivalName, ui.FestivalColor))
 		if found {
-			fmt.Printf("Project:  %s\n", link.Path)
-			fmt.Printf("Linked:   %s\n", link.LinkedAt.Format("2006-01-02 15:04:05"))
+			fmt.Printf("%s %s\n", ui.Label("Project"), ui.Dim(link.Path))
+			fmt.Printf("%s %s\n", ui.Label("Linked"), ui.Dim(link.LinkedAt.Format("2006-01-02 15:04:05")))
 		} else {
-			fmt.Println("Project:  (not linked)")
-			fmt.Println("\nUse 'fest link <path>' to link a project directory")
+			fmt.Printf("%s %s\n", ui.Label("Project"), ui.Dim("(not linked)"))
+			fmt.Println()
+			fmt.Println(ui.Dim("Use 'fest link <path>' to link a project directory"))
 		}
 	}
 
@@ -313,9 +316,9 @@ func runUnlink(jsonOutput bool) error {
 		fmt.Println(string(data))
 	} else {
 		if removed {
-			fmt.Printf("Unlinked '%s'\n", festivalName)
+			fmt.Printf("%s %s\n", ui.Success("✓ Unlinked"), ui.Value(festivalName, ui.FestivalColor))
 		} else {
-			fmt.Printf("Festival '%s' was not linked\n", festivalName)
+			fmt.Printf("%s %s\n", ui.Warning("Not linked"), ui.Value(festivalName, ui.FestivalColor))
 		}
 	}
 
@@ -375,30 +378,37 @@ func runLinks(jsonOutput bool) error {
 		fmt.Println(string(data))
 	} else {
 		if len(links) == 0 {
-			fmt.Println("No festival-project links configured.")
-			fmt.Println("\nUse 'fest link <path>' from within a festival to create a link.")
+			fmt.Println(ui.H1("Festival Links"))
+			fmt.Println(ui.Dim("No festival-project links configured."))
+			fmt.Println()
+			fmt.Println(ui.Dim("Use 'fest link <path>' from within a festival to create a link."))
 			return nil
 		}
 
-		headerStyle := lipgloss.NewStyle().Bold(true)
-		fmt.Println(headerStyle.Render("Festival-Project Links:"))
-		fmt.Println(strings.Repeat("-", 60))
+		fmt.Println(ui.H1("Festival Links"))
+		fmt.Printf("%s %s\n", ui.Label("Total"), ui.Value(fmt.Sprintf("%d", len(links))))
+		fmt.Println(ui.Dim(strings.Repeat("─", 60)))
 
 		// Try to find festivals directory to look up statuses
 		cwd, _ := os.Getwd()
 		festivalsDir, _ := workspace.FindFestivals(cwd)
 
+		index := 0
 		for name, link := range links {
+			if index > 0 {
+				fmt.Println()
+			}
 			// Try to get festival status for coloring
-			styledName := name
+			styledName := ui.Value(name, ui.FestivalColor)
 			if festivalsDir != "" {
 				status := findFestivalStatus(festivalsDir, name)
 				if status != "" {
 					styledName = ui.GetStatusStyle(status).Render(name)
 				}
 			}
-			fmt.Printf("%-20s → %s\n", styledName, link.Path)
-			fmt.Printf("%-20s   (linked %s)\n", "", link.LinkedAt.Format("2006-01-02"))
+			fmt.Printf("%s %s %s\n", styledName, ui.Dim("→"), ui.Dim(link.Path))
+			fmt.Printf("%s %s\n", ui.Dim("Linked"), ui.Dim(link.LinkedAt.Format("2006-01-02")))
+			index++
 		}
 	}
 
