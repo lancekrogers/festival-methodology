@@ -73,7 +73,13 @@ func runCommit(cmd *cobra.Command, args []string) error {
 	result := &CommitResult{}
 
 	// Check if we're in a git repository
-	if !isGitRepo() {
+	inRepo, err := isGitRepo(ctx)
+	if err != nil {
+		result.Success = false
+		result.Error = err.Error()
+		return outputResult(result)
+	}
+	if !inRepo {
 		result.Success = false
 		result.Error = "not in a git repository"
 		return outputResult(result)
@@ -108,7 +114,7 @@ func runCommit(cmd *cobra.Command, args []string) error {
 	}
 
 	// Execute git commit
-	hash, err := executeGitCommit(commitMessage)
+	hash, err := executeGitCommit(ctx, commitMessage)
 	if err != nil {
 		result.Success = false
 		result.Error = err.Error()
@@ -142,13 +148,28 @@ func outputResult(result *CommitResult) error {
 	return nil
 }
 
-func isGitRepo() bool {
-	cmd := exec.Command("git", "rev-parse", "--git-dir")
-	return cmd.Run() == nil
+func isGitRepo(ctx context.Context) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, errors.Wrap(err, "context cancelled")
+	}
+	cmd := exec.CommandContext(ctx, "git", "rev-parse", "--git-dir")
+	if err := cmd.Run(); err != nil {
+		if ctx.Err() != nil {
+			return false, errors.Wrap(ctx.Err(), "context cancelled")
+		}
+		if _, ok := err.(*exec.ExitError); ok {
+			return false, nil
+		}
+		return false, errors.Wrap(err, "checking git repository")
+	}
+	return true, nil
 }
 
-func executeGitCommit(message string) (string, error) {
-	cmd := exec.Command("git", "commit", "-m", message)
+func executeGitCommit(ctx context.Context, message string) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", errors.Wrap(err, "context cancelled")
+	}
+	cmd := exec.CommandContext(ctx, "git", "commit", "-m", message)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -157,7 +178,7 @@ func executeGitCommit(message string) (string, error) {
 	}
 
 	// Get the commit hash
-	hashCmd := exec.Command("git", "rev-parse", "--short", "HEAD")
+	hashCmd := exec.CommandContext(ctx, "git", "rev-parse", "--short", "HEAD")
 	var out bytes.Buffer
 	hashCmd.Stdout = &out
 	if err := hashCmd.Run(); err != nil {

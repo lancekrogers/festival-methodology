@@ -293,18 +293,9 @@ func writeAgentTasks(sb *strings.Builder, r *Runner, step *StepGroup) {
 func writeAgentContextFiles(sb *strings.Builder, festivalPath, phasePath, seqPath string) {
 	sb.WriteString(ui.H2("Context Files"))
 	sb.WriteString("\n")
-	festivalGoal := "FESTIVAL_GOAL.md"
-	if festivalPath != "" {
-		festivalGoal = fmt.Sprintf("%s/%s", festivalPath, festivalGoal)
-	}
-	phaseGoal := "PHASE_GOAL.md"
-	if phasePath != "" {
-		phaseGoal = fmt.Sprintf("%s/%s", phasePath, phaseGoal)
-	}
-	sequenceGoal := "SEQUENCE_GOAL.md"
-	if seqPath != "" {
-		sequenceGoal = fmt.Sprintf("%s/%s", seqPath, sequenceGoal)
-	}
+	festivalGoal := filepath.Join(festivalPath, "FESTIVAL_GOAL.md")
+	phaseGoal := filepath.Join(phasePath, "PHASE_GOAL.md")
+	sequenceGoal := filepath.Join(seqPath, "SEQUENCE_GOAL.md")
 	sb.WriteString(fmt.Sprintf("  - %s\n", ui.Dim(festivalGoal)))
 	sb.WriteString(fmt.Sprintf("  - %s\n", ui.Dim(phaseGoal)))
 	sb.WriteString(fmt.Sprintf("  - %s\n", ui.Dim(sequenceGoal)))

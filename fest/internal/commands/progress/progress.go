@@ -179,6 +179,11 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 			fmt.Println(string(data))
 		} else {
 			task, _ := mgr.GetTaskProgress(taskID)
+			task = ensureTaskProgress(taskID, task, &progress.TaskProgress{
+				Status:         progress.StatusBlocked,
+				Progress:       0,
+				BlockerMessage: opts.blocker,
+			})
 			printTaskProgress("Task Blocked", task)
 		}
 		return nil
@@ -199,6 +204,10 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 			fmt.Println(string(data))
 		} else {
 			task, _ := mgr.GetTaskProgress(taskID)
+			task = ensureTaskProgress(taskID, task, &progress.TaskProgress{
+				Status:   progress.StatusInProgress,
+				Progress: 0,
+			})
 			printTaskProgress("Blocker Cleared", task)
 		}
 		return nil
@@ -211,16 +220,24 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 		}
 		if opts.json {
 			task, _ := mgr.GetTaskProgress(taskID)
+			timeSpent := 0
+			if task != nil {
+				timeSpent = task.TimeSpentMinutes
+			}
 			result := map[string]interface{}{
 				"success":            true,
 				"task":               taskID,
 				"status":             progress.StatusCompleted,
-				"time_spent_minutes": task.TimeSpentMinutes,
+				"time_spent_minutes": timeSpent,
 			}
 			data, _ := json.MarshalIndent(result, "", "  ")
 			fmt.Println(string(data))
 		} else {
 			task, _ := mgr.GetTaskProgress(taskID)
+			task = ensureTaskProgress(taskID, task, &progress.TaskProgress{
+				Status:   progress.StatusCompleted,
+				Progress: 100,
+			})
 			printTaskProgress("Task Completed", task)
 		}
 		return nil
@@ -241,6 +258,10 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 			fmt.Println(string(data))
 		} else {
 			task, _ := mgr.GetTaskProgress(taskID)
+			task = ensureTaskProgress(taskID, task, &progress.TaskProgress{
+				Status:   progress.StatusInProgress,
+				Progress: 0,
+			})
 			printTaskProgress("Task In Progress", task)
 		}
 		return nil
@@ -257,16 +278,24 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 		}
 		if opts.json {
 			task, _ := mgr.GetTaskProgress(taskID)
+			status := statusForProgress(pct)
+			if task != nil {
+				status = task.Status
+			}
 			result := map[string]interface{}{
 				"success":  true,
 				"task":     taskID,
 				"progress": pct,
-				"status":   task.Status,
+				"status":   status,
 			}
 			data, _ := json.MarshalIndent(result, "", "  ")
 			fmt.Println(string(data))
 		} else {
 			task, _ := mgr.GetTaskProgress(taskID)
+			task = ensureTaskProgress(taskID, task, &progress.TaskProgress{
+				Status:   statusForProgress(pct),
+				Progress: pct,
+			})
 			printTaskProgress("Progress Updated", task)
 		}
 		return nil
@@ -316,6 +345,31 @@ func printTaskProgress(title string, task *progress.TaskProgress) {
 	}
 	if task.TimeSpentMinutes > 0 {
 		fmt.Printf("%s %s\n", ui.Label("Time"), ui.Value(fmt.Sprintf("%d min", task.TimeSpentMinutes)))
+	}
+}
+
+func ensureTaskProgress(taskID string, task *progress.TaskProgress, fallback *progress.TaskProgress) *progress.TaskProgress {
+	if task != nil {
+		return task
+	}
+	if fallback == nil {
+		fallback = &progress.TaskProgress{
+			Status:   progress.StatusPending,
+			Progress: 0,
+		}
+	}
+	fallback.TaskID = taskID
+	return fallback
+}
+
+func statusForProgress(progressPct int) string {
+	switch {
+	case progressPct >= 100:
+		return progress.StatusCompleted
+	case progressPct > 0:
+		return progress.StatusInProgress
+	default:
+		return progress.StatusPending
 	}
 }
 
