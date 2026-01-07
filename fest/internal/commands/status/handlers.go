@@ -47,7 +47,7 @@ func runStatusShow(ctx context.Context, cmd *cobra.Command, opts *statusOptions)
 	if opts.json {
 		return emitLocationJSON(loc)
 	}
-	return emitLocationText(loc)
+	return emitLocationText(ctx, loc)
 }
 
 // runStatusSet handles the status set command.
@@ -106,8 +106,9 @@ func emitStatusSetPlaceholder(display *ui.UI, opts *statusOptions, entityType, n
 			"new_status": newStatus,
 			"note":       "frontmatter updates not yet implemented",
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		fmt.Println(ui.H1("Status Updated"))
 		fmt.Printf("%s %s\n", ui.Label("Entity"), ui.Value(string(entityType)))
@@ -147,8 +148,9 @@ func emitAlreadyAtStatus(display *ui.UI, opts *statusOptions, status string) err
 			"message": "already at requested status",
 			"status":  status,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		fmt.Printf("%s %s\n", ui.Info("Already at status"), ui.GetStateStyle(status).Render(status))
 	}
@@ -204,8 +206,9 @@ func emitFestivalMoveSuccess(opts *statusOptions, festival *show.FestivalInfo, n
 			"old_path":   festival.Path,
 			"new_path":   newPath,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		fmt.Println(ui.Success("✓ Festival status updated"))
 		fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(festival.Name, ui.FestivalColor))
@@ -234,8 +237,9 @@ func runFestivalListing(ctx context.Context, festivalsRoot, filterStatus string,
 				"count":     len(festivals),
 				"festivals": festivals,
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 		} else {
 			fmt.Println(show.FormatFestivalList(filterStatus, festivals))
 		}
@@ -574,8 +578,9 @@ func emitStatusHistory(opts *statusOptions, festivalName string, history []map[s
 				"history": []interface{}{},
 				"message": "no status history found",
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 		} else {
 			fmt.Println("No status history found for this festival.")
 		}
@@ -593,8 +598,9 @@ func emitStatusHistory(opts *statusOptions, festivalName string, history []map[s
 			"count":    len(history),
 			"history":  history,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		fmt.Printf("Status History for %s:\n", festivalName)
 		fmt.Println(strings.Repeat("-", 50))

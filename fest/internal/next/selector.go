@@ -79,7 +79,7 @@ func NewSelector(festivalPath string) *Selector {
 }
 
 // FindNext finds the next task to work on from the current location
-func (s *Selector) FindNext(currentPath string) (*NextTaskResult, error) {
+func (s *Selector) FindNext(ctx context.Context, currentPath string) (*NextTaskResult, error) {
 	// Build the dependency graph
 	graph, err := s.resolver.ResolveFestival()
 	if err != nil {
@@ -87,7 +87,7 @@ func (s *Selector) FindNext(currentPath string) (*NextTaskResult, error) {
 	}
 
 	// Update task statuses from progress system (YAML source of truth)
-	if err := s.updateTaskStatusesFromProgress(graph); err != nil {
+	if err := s.updateTaskStatusesFromProgress(ctx, graph); err != nil {
 		return nil, err
 	}
 
@@ -144,14 +144,14 @@ func (s *Selector) FindNext(currentPath string) (*NextTaskResult, error) {
 }
 
 // FindNextInSequence finds the next task within the current sequence
-func (s *Selector) FindNextInSequence(seqPath string) (*NextTaskResult, error) {
+func (s *Selector) FindNextInSequence(ctx context.Context, seqPath string) (*NextTaskResult, error) {
 	graph, err := s.resolver.ResolveSequence(seqPath)
 	if err != nil {
 		return nil, err
 	}
 
 	// Update task statuses from progress system (YAML source of truth)
-	if err := s.updateTaskStatusesFromProgress(graph); err != nil {
+	if err := s.updateTaskStatusesFromProgress(ctx, graph); err != nil {
 		return nil, err
 	}
 
@@ -411,9 +411,12 @@ func (s *Selector) GetProgress() (*ProgressStats, error) {
 
 // updateTaskStatusesFromProgress updates all task statuses in the graph
 // by querying the progress tracking system (YAML source of truth)
-func (s *Selector) updateTaskStatusesFromProgress(graph *deps.Graph) error {
+func (s *Selector) updateTaskStatusesFromProgress(ctx context.Context, graph *deps.Graph) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	// Create progress manager
-	mgr, err := progress.NewManager(context.Background(), s.festivalPath)
+	mgr, err := progress.NewManager(ctx, s.festivalPath)
 	if err != nil {
 		return err
 	}

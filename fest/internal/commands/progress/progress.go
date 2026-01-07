@@ -3,7 +3,6 @@ package progress
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
@@ -78,7 +77,7 @@ Use --festival to run outside a festival directory.`,
   fest progress --task 02_impl.md --blocker "Waiting on API spec"
   fest progress --task 02_impl.md --clear`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runProgress(opts)
+			return runProgress(cmd.Context(), opts)
 		},
 	}
 
@@ -97,8 +96,10 @@ Use --festival to run outside a festival directory.`,
 	return cmd
 }
 
-func runProgress(opts *progressOptions) error {
-	ctx := context.Background()
+func runProgress(ctx context.Context, opts *progressOptions) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -132,7 +133,7 @@ func runProgress(opts *progressOptions) error {
 	}
 
 	// Detect current location
-	loc, err := show.DetectCurrentLocation(targetPath)
+	loc, err := show.DetectCurrentLocation(ctx, targetPath)
 	if err != nil {
 		return errors.Wrap(err, "detecting festival location")
 	}
@@ -175,8 +176,9 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 				"status":  progress.StatusBlocked,
 				"blocker": opts.blocker,
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 		} else {
 			task, _ := mgr.GetTaskProgress(taskID)
 			task = ensureTaskProgress(taskID, task, &progress.TaskProgress{
@@ -200,8 +202,9 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 				"task":    taskID,
 				"cleared": true,
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 		} else {
 			task, _ := mgr.GetTaskProgress(taskID)
 			task = ensureTaskProgress(taskID, task, &progress.TaskProgress{
@@ -230,8 +233,9 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 				"status":             progress.StatusCompleted,
 				"time_spent_minutes": timeSpent,
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 		} else {
 			task, _ := mgr.GetTaskProgress(taskID)
 			task = ensureTaskProgress(taskID, task, &progress.TaskProgress{
@@ -254,8 +258,9 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 				"task":    taskID,
 				"status":  progress.StatusInProgress,
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 		} else {
 			task, _ := mgr.GetTaskProgress(taskID)
 			task = ensureTaskProgress(taskID, task, &progress.TaskProgress{
@@ -288,8 +293,9 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 				"progress": pct,
 				"status":   status,
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 		} else {
 			task, _ := mgr.GetTaskProgress(taskID)
 			task = ensureTaskProgress(taskID, task, &progress.TaskProgress{
@@ -310,8 +316,9 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 				"progress": 0,
 				"status":   progress.StatusPending,
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 		} else {
 			printTaskProgress("Task Progress", &progress.TaskProgress{
 				TaskID:   taskID,
@@ -323,8 +330,9 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 	}
 
 	if opts.json {
-		data, _ := json.MarshalIndent(task, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, task); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		printTaskProgress("Task Progress", task)
 	}
@@ -394,8 +402,9 @@ func showFestivalProgress(ctx context.Context, mgr *progress.Manager, loc *show.
 	}
 
 	if opts.json {
-		data, _ := json.MarshalIndent(festProgress, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, festProgress); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 		return nil
 	}
 
@@ -466,8 +475,9 @@ func showPhaseProgress(ctx context.Context, mgr *progress.Manager, loc *show.Loc
 	}
 
 	if opts.json {
-		data, _ := json.MarshalIndent(phaseProgress, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, phaseProgress); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 		return nil
 	}
 
@@ -526,8 +536,9 @@ func showSequenceProgress(ctx context.Context, mgr *progress.Manager, loc *show.
 	}
 
 	if opts.json {
-		data, _ := json.MarshalIndent(seqProgress, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, seqProgress); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 		return nil
 	}
 

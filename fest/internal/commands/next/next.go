@@ -67,6 +67,7 @@ func runNext(cmd *cobra.Command, args []string) error {
 	}
 
 	selector := next.NewSelector(festivalPath)
+	ctx := cmd.Context()
 
 	var result *next.NextTaskResult
 	if sequenceOnly {
@@ -74,9 +75,9 @@ func runNext(cmd *cobra.Command, args []string) error {
 		if seqPath == "" {
 			return errors.NotFound("not inside a sequence directory")
 		}
-		result, err = selector.FindNextInSequence(seqPath)
+		result, err = selector.FindNextInSequence(ctx, seqPath)
 	} else {
-		result, err = selector.FindNext(cwd)
+		result, err = selector.FindNext(ctx, cwd)
 	}
 
 	if err != nil {

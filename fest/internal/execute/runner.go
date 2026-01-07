@@ -42,7 +42,7 @@ func (r *Runner) Initialize(ctx context.Context) error {
 	}
 
 	// Build execution plan (includes syncing from progress system)
-	plan, err := r.planBuilder.BuildPlan()
+	plan, err := r.planBuilder.BuildPlan(ctx)
 	if err != nil {
 		return errors.Wrap(err, "failed to build plan")
 	}
@@ -195,23 +195,19 @@ func (r *Runner) FormatAgentInstructions() (string, error) {
 	return sb.String(), nil
 }
 
-func writeLabelValue(sb *strings.Builder, label, value string) {
-	sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label(label), value))
-}
-
 func writeDryRunSummary(sb *strings.Builder, r *Runner) {
-	writeLabelValue(sb, "Festival", ui.Value(filepath.Base(r.festivalPath), ui.FestivalColor))
-	writeLabelValue(sb, "Path", ui.Dim(r.festivalPath))
+	ui.WriteLabelValue(sb, "Festival", ui.Value(filepath.Base(r.festivalPath), ui.FestivalColor))
+	ui.WriteLabelValue(sb, "Path", ui.Dim(r.festivalPath))
 	sb.WriteString("\n")
 
 	sb.WriteString(ui.H2("Summary"))
 	sb.WriteString("\n")
-	writeLabelValue(sb, "Phases", ui.Value(fmt.Sprintf("%d", r.plan.Summary.TotalPhases)))
-	writeLabelValue(sb, "Sequences", ui.Value(fmt.Sprintf("%d", r.plan.Summary.TotalSequences)))
-	writeLabelValue(sb, "Tasks", ui.Value(fmt.Sprintf("%d", r.plan.Summary.TotalTasks)))
-	writeLabelValue(sb, "Execution steps", ui.Value(fmt.Sprintf("%d", r.plan.Summary.TotalSteps)))
-	writeLabelValue(sb, "Parallel groups", ui.Value(fmt.Sprintf("%d", r.plan.Summary.ParallelGroups)))
-	writeLabelValue(sb, "Quality gates", ui.Value(fmt.Sprintf("%d", r.plan.Summary.QualityGates)))
+	ui.WriteLabelValue(sb, "Phases", ui.Value(fmt.Sprintf("%d", r.plan.Summary.TotalPhases)))
+	ui.WriteLabelValue(sb, "Sequences", ui.Value(fmt.Sprintf("%d", r.plan.Summary.TotalSequences)))
+	ui.WriteLabelValue(sb, "Tasks", ui.Value(fmt.Sprintf("%d", r.plan.Summary.TotalTasks)))
+	ui.WriteLabelValue(sb, "Execution steps", ui.Value(fmt.Sprintf("%d", r.plan.Summary.TotalSteps)))
+	ui.WriteLabelValue(sb, "Parallel groups", ui.Value(fmt.Sprintf("%d", r.plan.Summary.ParallelGroups)))
+	ui.WriteLabelValue(sb, "Quality gates", ui.Value(fmt.Sprintf("%d", r.plan.Summary.QualityGates)))
 }
 
 func writeDryRunPhases(sb *strings.Builder, r *Runner) {
@@ -262,16 +258,16 @@ func formatExecutionComplete() string {
 func writeAgentProgress(sb *strings.Builder, r *Runner) {
 	state := r.stateManager.State()
 	progress := state.Progress()
-	writeLabelValue(sb, "Progress", ui.Value(fmt.Sprintf("%.1f%% (%d/%d tasks)", progress, state.CompletedTasks, state.TotalTasks)))
+	ui.WriteLabelValue(sb, "Progress", ui.Value(fmt.Sprintf("%.1f%% (%d/%d tasks)", progress, state.CompletedTasks, state.TotalTasks)))
 	sb.WriteString("\n")
 }
 
 func writeAgentCurrentPosition(sb *strings.Builder, phase *PhaseExecution, seq *SequenceExecution, step *StepGroup) {
 	sb.WriteString(ui.H2("Current Position"))
 	sb.WriteString("\n")
-	writeLabelValue(sb, "Phase", ui.Value(phase.Name, ui.PhaseColor))
-	writeLabelValue(sb, "Sequence", ui.Value(seq.Name, ui.SequenceColor))
-	writeLabelValue(sb, "Step", ui.Value(fmt.Sprintf("%d", step.Number)))
+	ui.WriteLabelValue(sb, "Phase", ui.Value(phase.Name, ui.PhaseColor))
+	ui.WriteLabelValue(sb, "Sequence", ui.Value(seq.Name, ui.SequenceColor))
+	ui.WriteLabelValue(sb, "Step", ui.Value(fmt.Sprintf("%d", step.Number)))
 	sb.WriteString("\n")
 }
 

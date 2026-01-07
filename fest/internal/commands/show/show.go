@@ -3,7 +3,6 @@ package show
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -118,13 +117,13 @@ func newShowAllCommand(opts *showOptions) *cobra.Command {
 	return cmd
 }
 
-func runShowCurrent(_ context.Context, opts *showOptions) error {
+func runShowCurrent(ctx context.Context, opts *showOptions) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return errors.IO("getting current directory", err)
 	}
 
-	festival, err := DetectCurrentFestival(cwd)
+	festival, err := DetectCurrentFestival(ctx, cwd)
 	if err != nil {
 		if errors.Is(err, errors.ErrCodeNotFound) {
 			if opts.json {
@@ -142,7 +141,7 @@ func runShowCurrent(_ context.Context, opts *showOptions) error {
 	return emitFestivalText(festival)
 }
 
-func runShow(_ context.Context, target string, opts *showOptions) error {
+func runShow(ctx context.Context, target string, opts *showOptions) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return errors.IO("getting current directory", err)
@@ -158,7 +157,7 @@ func runShow(_ context.Context, target string, opts *showOptions) error {
 	}
 
 	// Try to find festival by name in any status directory
-	festival, err := FindFestivalByName(festivalsDir, target)
+	festival, err := FindFestivalByName(ctx, festivalsDir, target)
 	if err != nil {
 		if opts.json {
 			return emitShowErrorJSON(fmt.Sprintf("festival '%s' not found", target))
@@ -172,7 +171,7 @@ func runShow(_ context.Context, target string, opts *showOptions) error {
 	return emitFestivalText(festival)
 }
 
-func runShowStatus(_ context.Context, status string, opts *showOptions) error {
+func runShowStatus(ctx context.Context, status string, opts *showOptions) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return errors.IO("getting current directory", err)
@@ -186,7 +185,7 @@ func runShowStatus(_ context.Context, status string, opts *showOptions) error {
 		return errors.NotFound("festivals directory")
 	}
 
-	festivals, err := ListFestivalsByStatus(festivalsDir, status)
+	festivals, err := ListFestivalsByStatus(ctx, festivalsDir, status)
 	if err != nil {
 		return err
 	}
@@ -197,7 +196,7 @@ func runShowStatus(_ context.Context, status string, opts *showOptions) error {
 	return emitFestivalListText(status, festivals)
 }
 
-func runShowAll(_ context.Context, opts *showOptions) error {
+func runShowAll(ctx context.Context, opts *showOptions) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return errors.IO("getting current directory", err)
@@ -215,7 +214,7 @@ func runShowAll(_ context.Context, opts *showOptions) error {
 	statusOrder := []string{"active", "planned", "completed", "dungeon"}
 
 	for _, status := range statusOrder {
-		festivals, err := ListFestivalsByStatus(festivalsDir, status)
+		festivals, err := ListFestivalsByStatus(ctx, festivalsDir, status)
 		if err != nil {
 			continue // Skip empty or inaccessible directories
 		}
@@ -232,17 +231,16 @@ func emitShowErrorJSON(message string) error {
 	result := map[string]interface{}{
 		"error": message,
 	}
-	data, _ := json.MarshalIndent(result, "", "  ")
-	fmt.Println(string(data))
+	if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+		return errors.Wrap(err, "encoding JSON output")
+	}
 	return nil
 }
 
 func emitFestivalJSON(festival *FestivalInfo) error {
-	data, err := json.MarshalIndent(festival, "", "  ")
-	if err != nil {
-		return errors.Wrap(err, "marshaling festival to JSON")
+	if err := shared.EncodeJSON(os.Stdout, festival); err != nil {
+		return errors.Wrap(err, "encoding JSON output")
 	}
-	fmt.Println(string(data))
 	return nil
 }
 
@@ -258,11 +256,9 @@ func emitFestivalListJSON(status string, festivals []*FestivalInfo) error {
 		"count":     len(festivals),
 		"festivals": festivals,
 	}
-	data, err := json.MarshalIndent(result, "", "  ")
-	if err != nil {
-		return errors.Wrap(err, "marshaling festival list to JSON")
+	if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+		return errors.Wrap(err, "encoding JSON output")
 	}
-	fmt.Println(string(data))
 	return nil
 }
 
@@ -284,11 +280,9 @@ func emitAllFestivalsJSON(allFestivals map[string][]*FestivalInfo, statusOrder [
 	}
 	result["total"] = total
 
-	data, err := json.MarshalIndent(result, "", "  ")
-	if err != nil {
-		return errors.Wrap(err, "marshaling all festivals to JSON")
+	if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+		return errors.Wrap(err, "encoding JSON output")
 	}
-	fmt.Println(string(data))
 	return nil
 }
 

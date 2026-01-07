@@ -25,7 +25,10 @@ const (
 
 // DetectCurrentFestival walks up from the given directory to find a festival root.
 // Returns the festival information if found, or an error if not in a festival.
-func DetectCurrentFestival(startDir string) (*FestivalInfo, error) {
+func DetectCurrentFestival(ctx context.Context, startDir string) (*FestivalInfo, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	absStart, err := filepath.Abs(startDir)
 	if err != nil {
 		return nil, errors.IO("getting absolute path", err)
@@ -34,7 +37,7 @@ func DetectCurrentFestival(startDir string) (*FestivalInfo, error) {
 	dir := absStart
 	for {
 		if isValidFestival(dir) {
-			return parseFestivalInfo(dir)
+			return parseFestivalInfo(ctx, dir)
 		}
 
 		parent := filepath.Dir(dir)
@@ -69,7 +72,10 @@ func isValidFestival(dir string) bool {
 }
 
 // FindFestivalByName searches for a festival by name in all status directories.
-func FindFestivalByName(festivalsDir, name string) (*FestivalInfo, error) {
+func FindFestivalByName(ctx context.Context, festivalsDir, name string) (*FestivalInfo, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	statusDirs := []string{"active", "planned", "completed", "dungeon"}
 
 	for _, status := range statusDirs {
@@ -88,7 +94,7 @@ func FindFestivalByName(festivalsDir, name string) (*FestivalInfo, error) {
 			if entry.Name() == name || strings.HasPrefix(entry.Name(), name+"_") || strings.Contains(entry.Name(), name) {
 				festivalDir := filepath.Join(statusDir, entry.Name())
 				if isValidFestival(festivalDir) {
-					info, err := parseFestivalInfo(festivalDir)
+					info, err := parseFestivalInfo(ctx, festivalDir)
 					if err != nil {
 						continue
 					}
@@ -103,7 +109,10 @@ func FindFestivalByName(festivalsDir, name string) (*FestivalInfo, error) {
 }
 
 // ListFestivalsByStatus returns all festivals in a given status directory.
-func ListFestivalsByStatus(festivalsDir, status string) ([]*FestivalInfo, error) {
+func ListFestivalsByStatus(ctx context.Context, festivalsDir, status string) ([]*FestivalInfo, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	statusDir := filepath.Join(festivalsDir, status)
 	entries, err := os.ReadDir(statusDir)
 	if err != nil {
@@ -124,7 +133,7 @@ func ListFestivalsByStatus(festivalsDir, status string) ([]*FestivalInfo, error)
 			continue
 		}
 
-		info, err := parseFestivalInfo(festivalDir)
+		info, err := parseFestivalInfo(ctx, festivalDir)
 		if err != nil {
 			// Include with minimal info on parse error
 			info = &FestivalInfo{
@@ -142,7 +151,10 @@ func ListFestivalsByStatus(festivalsDir, status string) ([]*FestivalInfo, error)
 }
 
 // parseFestivalInfo parses festival information from a directory.
-func parseFestivalInfo(festivalDir string) (*FestivalInfo, error) {
+func parseFestivalInfo(ctx context.Context, festivalDir string) (*FestivalInfo, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	info := &FestivalInfo{
 		ID:   filepath.Base(festivalDir),
 		Name: filepath.Base(festivalDir),
@@ -173,7 +185,6 @@ func parseFestivalInfo(festivalDir string) (*FestivalInfo, error) {
 	}
 
 	// Calculate statistics
-	ctx := context.Background()
 	stats, err := CalculateFestivalStats(ctx, festivalDir)
 	if err == nil {
 		info.Stats = stats
@@ -184,14 +195,17 @@ func parseFestivalInfo(festivalDir string) (*FestivalInfo, error) {
 
 // DetectCurrentLocation determines where we are in a festival hierarchy.
 // Returns the current location type (festival, phase, sequence, task) and path info.
-func DetectCurrentLocation(startDir string) (*LocationInfo, error) {
+func DetectCurrentLocation(ctx context.Context, startDir string) (*LocationInfo, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	absStart, err := filepath.Abs(startDir)
 	if err != nil {
 		return nil, errors.IO("getting absolute path", err)
 	}
 
 	// First find the festival root
-	festival, err := DetectCurrentFestival(absStart)
+	festival, err := DetectCurrentFestival(ctx, absStart)
 	if err != nil {
 		return nil, err
 	}

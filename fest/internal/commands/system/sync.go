@@ -42,7 +42,7 @@ Run this periodically to get the latest methodology templates and documentation.
   fest system sync --source github.com/user/repo  # Sync from specific repo
   fest system sync --force                       # Overwrite existing cache`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runSync(opts)
+			return runSync(cmd.Context(), opts)
 		},
 	}
 
@@ -56,8 +56,10 @@ Run this periodically to get the latest methodology templates and documentation.
 	return cmd
 }
 
-func runSync(opts *syncOptions) error {
-	ctx := context.Background()
+func runSync(ctx context.Context, opts *syncOptions) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	// Determine target directory
 	targetDir := filepath.Join(config.ConfigDir(), "festivals")

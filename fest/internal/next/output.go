@@ -53,7 +53,7 @@ func formatTextComplete(result *NextTaskResult) string {
 	sb.WriteString(ui.Success("All tasks have been completed."))
 	if result.Reason != "" {
 		sb.WriteString("\n")
-		writeLabelValue(&sb, "Reason", ui.Info(result.Reason))
+		ui.WriteLabelValue(&sb, "Reason", ui.Info(result.Reason))
 	}
 	return sb.String()
 }
@@ -64,9 +64,9 @@ func formatTextBlockingGate(result *NextTaskResult) string {
 
 	sb.WriteString(ui.H2("Quality Gate Required"))
 	sb.WriteString("\n")
-	writeLabelValue(&sb, "Phase", ui.Value(gate.Phase, ui.PhaseColor))
-	writeLabelValue(&sb, "Type", ui.Value(gate.GateType))
-	writeLabelValue(&sb, "Description", ui.Value(gate.Description))
+	ui.WriteLabelValue(&sb, "Phase", ui.Value(gate.Phase, ui.PhaseColor))
+	ui.WriteLabelValue(&sb, "Type", ui.Value(gate.GateType))
+	ui.WriteLabelValue(&sb, "Description", ui.Value(gate.Description))
 
 	if len(gate.Criteria) > 0 {
 		sb.WriteString("\n")
@@ -86,18 +86,18 @@ func formatTextNoTask(result *NextTaskResult) string {
 	sb.WriteString(ui.H2("No Tasks Available"))
 	sb.WriteString("\n")
 	if result.Reason != "" {
-		writeLabelValue(&sb, "Reason", ui.Info(result.Reason))
+		ui.WriteLabelValue(&sb, "Reason", ui.Info(result.Reason))
 	}
 	if result.Location != nil {
 		sb.WriteString("\n")
 		sb.WriteString(ui.H3("Location"))
 		sb.WriteString("\n")
-		writeLabelValue(&sb, "Festival", ui.Dim(result.Location.FestivalPath))
+		ui.WriteLabelValue(&sb, "Festival", ui.Dim(result.Location.FestivalPath))
 		if result.Location.PhasePath != "" {
-			writeLabelValue(&sb, "Phase", ui.Dim(filepath.Base(result.Location.PhasePath)))
+			ui.WriteLabelValue(&sb, "Phase", ui.Dim(filepath.Base(result.Location.PhasePath)))
 		}
 		if result.Location.SequencePath != "" {
-			writeLabelValue(&sb, "Sequence", ui.Dim(filepath.Base(result.Location.SequencePath)))
+			ui.WriteLabelValue(&sb, "Sequence", ui.Dim(filepath.Base(result.Location.SequencePath)))
 		}
 	}
 
@@ -109,17 +109,17 @@ func formatTextTask(result *NextTaskResult) string {
 
 	sb.WriteString(ui.H1("Next Task"))
 	sb.WriteString("\n")
-	writeLabelValue(&sb, "Task", ui.Value(result.Task.Name, ui.TaskColor))
-	writeLabelValue(&sb, "Path", ui.Dim(result.Task.Path))
-	writeLabelValue(&sb, "Sequence", ui.Value(result.Task.SequenceName, ui.SequenceColor))
-	writeLabelValue(&sb, "Phase", ui.Value(result.Task.PhaseName, ui.PhaseColor))
+	ui.WriteLabelValue(&sb, "Task", ui.Value(result.Task.Name, ui.TaskColor))
+	ui.WriteLabelValue(&sb, "Path", ui.Dim(result.Task.Path))
+	ui.WriteLabelValue(&sb, "Sequence", ui.Value(result.Task.SequenceName, ui.SequenceColor))
+	ui.WriteLabelValue(&sb, "Phase", ui.Value(result.Task.PhaseName, ui.PhaseColor))
 
 	if result.Task.AutonomyLevel != "" {
-		writeLabelValue(&sb, "Autonomy", ui.Value(result.Task.AutonomyLevel))
+		ui.WriteLabelValue(&sb, "Autonomy", ui.Value(result.Task.AutonomyLevel))
 	}
 
 	sb.WriteString("\n")
-	writeLabelValue(&sb, "Recommendation", ui.Info(result.Reason))
+		ui.WriteLabelValue(&sb, "Recommendation", ui.Info(result.Reason))
 
 	if len(result.ParallelTasks) > 0 {
 		sb.WriteString("\n")
@@ -143,7 +143,7 @@ func formatVerboseComplete(result *NextTaskResult) string {
 	sb.WriteString(ui.Info("Congratulations on finishing the festival!"))
 	if result.Reason != "" {
 		sb.WriteString("\n")
-		writeLabelValue(&sb, "Reason", ui.Info(result.Reason))
+		ui.WriteLabelValue(&sb, "Reason", ui.Info(result.Reason))
 	}
 
 	return sb.String()
@@ -155,8 +155,8 @@ func formatVerboseBlockingGate(result *NextTaskResult) string {
 
 	sb.WriteString(ui.H2("Quality Gate Required"))
 	sb.WriteString("\n")
-	writeLabelValue(&sb, "Phase", ui.Value(gate.Phase, ui.PhaseColor))
-	writeLabelValue(&sb, "Gate Type", ui.Value(gate.GateType))
+	ui.WriteLabelValue(&sb, "Phase", ui.Value(gate.Phase, ui.PhaseColor))
+	ui.WriteLabelValue(&sb, "Gate Type", ui.Value(gate.GateType))
 	sb.WriteString("\n")
 	sb.WriteString(ui.Info(gate.Description))
 	sb.WriteString("\n")
@@ -182,19 +182,19 @@ func formatVerboseNoTask(result *NextTaskResult) string {
 	sb.WriteString(ui.H2("No Tasks Available"))
 	sb.WriteString("\n")
 	if result.Reason != "" {
-		writeLabelValue(&sb, "Reason", ui.Info(result.Reason))
+		ui.WriteLabelValue(&sb, "Reason", ui.Info(result.Reason))
 	}
 
 	if result.Location != nil {
 		sb.WriteString("\n")
 		sb.WriteString(ui.H3("Location"))
 		sb.WriteString("\n")
-		writeLabelValue(&sb, "Festival", ui.Dim(result.Location.FestivalPath))
+		ui.WriteLabelValue(&sb, "Festival", ui.Dim(result.Location.FestivalPath))
 		if result.Location.PhasePath != "" {
-			writeLabelValue(&sb, "Phase", ui.Dim(filepath.Base(result.Location.PhasePath)))
+			ui.WriteLabelValue(&sb, "Phase", ui.Dim(filepath.Base(result.Location.PhasePath)))
 		}
 		if result.Location.SequencePath != "" {
-			writeLabelValue(&sb, "Sequence", ui.Dim(filepath.Base(result.Location.SequencePath)))
+			ui.WriteLabelValue(&sb, "Sequence", ui.Dim(filepath.Base(result.Location.SequencePath)))
 		}
 	}
 
@@ -217,24 +217,20 @@ func formatVerboseTask(result *NextTaskResult) string {
 	return sb.String()
 }
 
-func writeLabelValue(sb *strings.Builder, label, value string) {
-	sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label(label), value))
-}
-
 func writeTaskDetails(sb *strings.Builder, task *TaskInfo) {
 	sb.WriteString(ui.H2("Task Details"))
 	sb.WriteString("\n")
-	writeLabelValue(sb, "Task", ui.Value(task.Name, ui.TaskColor))
-	writeLabelValue(sb, "Number", ui.Value(fmt.Sprintf("%d", task.Number)))
-	writeLabelValue(sb, "Path", ui.Dim(task.Path))
+	ui.WriteLabelValue(sb, "Task", ui.Value(task.Name, ui.TaskColor))
+	ui.WriteLabelValue(sb, "Number", ui.Value(fmt.Sprintf("%d", task.Number)))
+	ui.WriteLabelValue(sb, "Path", ui.Dim(task.Path))
 	sb.WriteString("\n")
 }
 
 func writeTaskLocation(sb *strings.Builder, task *TaskInfo) {
 	sb.WriteString(ui.H2("Location"))
 	sb.WriteString("\n")
-	writeLabelValue(sb, "Phase", ui.Value(task.PhaseName, ui.PhaseColor))
-	writeLabelValue(sb, "Sequence", ui.Value(task.SequenceName, ui.SequenceColor))
+	ui.WriteLabelValue(sb, "Phase", ui.Value(task.PhaseName, ui.PhaseColor))
+	ui.WriteLabelValue(sb, "Sequence", ui.Value(task.SequenceName, ui.SequenceColor))
 	sb.WriteString("\n")
 }
 
@@ -246,10 +242,10 @@ func writeTaskProperties(sb *strings.Builder, task *TaskInfo) {
 	sb.WriteString(ui.H2("Properties"))
 	sb.WriteString("\n")
 	if task.AutonomyLevel != "" {
-		writeLabelValue(sb, "Autonomy", ui.Value(task.AutonomyLevel))
+		ui.WriteLabelValue(sb, "Autonomy", ui.Value(task.AutonomyLevel))
 	}
 	if task.ParallelGroup > 0 {
-		writeLabelValue(sb, "Parallel Group", ui.Value(fmt.Sprintf("%d", task.ParallelGroup)))
+		ui.WriteLabelValue(sb, "Parallel Group", ui.Value(fmt.Sprintf("%d", task.ParallelGroup)))
 	}
 	sb.WriteString("\n")
 }
@@ -302,12 +298,12 @@ func writeCurrentLocation(sb *strings.Builder, loc *LocationInfo) {
 		sb.WriteString(ui.Dim("Unknown location\n"))
 		return
 	}
-	writeLabelValue(sb, "Festival", ui.Dim(filepath.Base(loc.FestivalPath)))
+	ui.WriteLabelValue(sb, "Festival", ui.Dim(filepath.Base(loc.FestivalPath)))
 	if loc.PhasePath != "" {
-		writeLabelValue(sb, "Phase", ui.Dim(filepath.Base(loc.PhasePath)))
+		ui.WriteLabelValue(sb, "Phase", ui.Dim(filepath.Base(loc.PhasePath)))
 	}
 	if loc.SequencePath != "" {
-		writeLabelValue(sb, "Sequence", ui.Dim(filepath.Base(loc.SequencePath)))
+		ui.WriteLabelValue(sb, "Sequence", ui.Dim(filepath.Base(loc.SequencePath)))
 	}
 }
 

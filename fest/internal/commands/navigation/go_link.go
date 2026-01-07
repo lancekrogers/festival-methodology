@@ -1,6 +1,7 @@
 package navigation
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -56,14 +57,14 @@ Examples:
 			if len(args) > 0 {
 				path = args[0]
 			}
-			return runGoLink(path)
+			return runGoLink(cmd.Context(), path)
 		},
 	}
 
 	return cmd
 }
 
-func runGoLink(targetPath string) error {
+func runGoLink(ctx context.Context, targetPath string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return festErrors.IO("getting current directory", err)
@@ -71,7 +72,7 @@ func runGoLink(targetPath string) error {
 
 	// Detect context: are we inside a festival?
 	if isInsideFestival(cwd) {
-		return linkFestivalToProject(cwd, targetPath)
+		return linkFestivalToProject(ctx, cwd, targetPath)
 	}
 
 	// We're in a project directory, show festival picker
@@ -112,9 +113,9 @@ func isInsideFestival(path string) bool {
 }
 
 // linkFestivalToProject links the current festival to a project directory
-func linkFestivalToProject(cwd, targetPath string) error {
+func linkFestivalToProject(ctx context.Context, cwd, targetPath string) error {
 	// Detect current festival
-	loc, err := show.DetectCurrentLocation(cwd)
+	loc, err := show.DetectCurrentLocation(ctx, cwd)
 	if err != nil || loc == nil || loc.Festival == nil || loc.Festival.Name == "" {
 		return festErrors.Validation("not inside a recognized festival")
 	}

@@ -2,7 +2,6 @@ package navigation
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -119,8 +118,9 @@ func runGoMap(name, path string, jsonOutput bool) error {
 			"shortcut": name,
 			"path":     absPath,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		fmt.Println(ui.H1("Shortcut Created"))
 		fmt.Printf("%s %s\n", ui.Label("Shortcut"), ui.Value("-"+name))
@@ -180,8 +180,9 @@ func runGoUnmap(name string, jsonOutput bool) error {
 			"shortcut": name,
 			"removed":  exists,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		if exists {
 			fmt.Printf("%s %s\n", ui.Success("✓ Shortcut removed"), ui.Value("-"+name))
@@ -282,8 +283,9 @@ func runGoList(jsonOutput bool) error {
 			"shortcuts": shortcuts,
 			"links":     links,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		hasContent := false
 		fmt.Println(ui.H1("Navigation"))

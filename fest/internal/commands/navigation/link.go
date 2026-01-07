@@ -1,7 +1,7 @@
 package navigation
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -52,13 +52,13 @@ Use 'fest unlink' to remove the link for current festival.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.showLink {
-				return runLinkShow(opts)
+				return runLinkShow(cmd.Context(), opts)
 			}
 			targetPath := ""
 			if len(args) > 0 {
 				targetPath = args[0]
 			}
-			return runLink(targetPath, opts)
+			return runLink(cmd.Context(), targetPath, opts)
 		},
 	}
 
@@ -68,7 +68,7 @@ Use 'fest unlink' to remove the link for current festival.`,
 	return cmd
 }
 
-func runLink(targetPath string, opts *linkOptions) error {
+func runLink(ctx context.Context, targetPath string, opts *linkOptions) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return errors.IO("getting current directory", err)
@@ -76,7 +76,7 @@ func runLink(targetPath string, opts *linkOptions) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	// Detect context: are we inside a festival?
-	loc, _ := show.DetectCurrentLocation(cwd)
+	loc, _ := show.DetectCurrentLocation(ctx, cwd)
 
 	if loc == nil || loc.Festival == nil {
 		// Not in a festival - show picker to select festival to link
@@ -94,7 +94,7 @@ func runLink(targetPath string, opts *linkOptions) error {
 
 	// Inside a festival - if no path provided, use the TUI prompt from go_link
 	if targetPath == "" {
-		return linkFestivalToProject(cwd, "")
+		return linkFestivalToProject(ctx, cwd, "")
 	}
 
 	// Resolve target path
@@ -155,8 +155,9 @@ func runLink(targetPath string, opts *linkOptions) error {
 			"project":   absPath,
 			"linked_at": time.Now().UTC().Format(time.RFC3339),
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		fmt.Println(ui.H1("Festival Link"))
 		fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(festivalName, ui.FestivalColor))
@@ -169,21 +170,22 @@ func runLink(targetPath string, opts *linkOptions) error {
 	return nil
 }
 
-func runLinkShow(opts *linkOptions) error {
+func runLinkShow(ctx context.Context, opts *linkOptions) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return errors.IO("getting current directory", err)
 	}
 
 	// Detect current festival
-	loc, err := show.DetectCurrentLocation(cwd)
+	loc, err := show.DetectCurrentLocation(ctx, cwd)
 	if err != nil {
 		if opts.json {
 			result := map[string]interface{}{
 				"error": "not in a festival directory",
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 			return nil
 		}
 		return errors.Wrap(err, "detecting festival")
@@ -194,8 +196,9 @@ func runLinkShow(opts *linkOptions) error {
 			result := map[string]interface{}{
 				"error": "not in a festival directory",
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 			return nil
 		}
 		return errors.NotFound("festival")
@@ -219,8 +222,9 @@ func runLinkShow(opts *linkOptions) error {
 			result["project"] = link.Path
 			result["linked_at"] = link.LinkedAt.Format(time.RFC3339)
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		fmt.Println(ui.H1("Festival Link"))
 		fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(festivalName, ui.FestivalColor))
@@ -253,7 +257,7 @@ Context-aware behavior:
 This removes the association between the festival and its project directory.`,
 		Example: `  fest unlink   # Remove link for current festival or project`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runUnlink(jsonOutput)
+			return runUnlink(cmd.Context(), jsonOutput)
 		},
 	}
 
@@ -262,7 +266,7 @@ This removes the association between the festival and its project directory.`,
 	return cmd
 }
 
-func runUnlink(jsonOutput bool) error {
+func runUnlink(ctx context.Context, jsonOutput bool) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return errors.IO("getting current directory", err)
@@ -277,7 +281,7 @@ func runUnlink(jsonOutput bool) error {
 	var festivalName string
 
 	// Try to detect current festival
-	loc, _ := show.DetectCurrentLocation(cwd)
+	loc, _ := show.DetectCurrentLocation(ctx, cwd)
 
 	if loc != nil && loc.Festival != nil {
 		// Inside a festival - unlink it
@@ -312,8 +316,9 @@ func runUnlink(jsonOutput bool) error {
 			"festival": festivalName,
 			"removed":  removed,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		if removed {
 			fmt.Printf("%s %s\n", ui.Success("✓ Unlinked"), ui.Value(festivalName, ui.FestivalColor))
@@ -374,8 +379,9 @@ func runLinks(jsonOutput bool) error {
 			"count": len(linkList),
 			"links": linkList,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		if len(links) == 0 {
 			fmt.Println(ui.H1("Festival Links"))

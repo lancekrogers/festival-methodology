@@ -81,3 +81,14 @@ func normalizeState(state string) string {
 	normalized = strings.ReplaceAll(normalized, " ", "_")
 	return normalized
 }
+
+// WriteLabelValue writes a labeled value line to a builder.
+func WriteLabelValue(sb *strings.Builder, label, value string) {
+	if sb == nil {
+		return
+	}
+	sb.WriteString(Label(label))
+	sb.WriteByte(' ')
+	sb.WriteString(value)
+	sb.WriteByte('\n')
+}

@@ -44,7 +44,7 @@ INCORRECT STRUCTURE (common mistake):
 			if len(args) > 0 {
 				opts.path = args[0]
 			}
-			return runValidateTasks(opts)
+			return runValidateTasks(cmd.Context(), opts)
 		},
 	}
 
@@ -53,8 +53,11 @@ INCORRECT STRUCTURE (common mistake):
 	return cmd
 }
 
-func runValidateTasks(opts *validateOptions) error {
+func runValidateTasks(ctx context.Context, opts *validateOptions) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	festivalPath, err := resolveFestivalPath(opts.path)
 	if err != nil {
@@ -69,7 +72,7 @@ func runValidateTasks(opts *validateOptions) error {
 		Issues:   []ValidationIssue{},
 	}
 
-	validateTaskFilesChecks(festivalPath, result)
+	validateTaskFilesChecks(ctx, festivalPath, result)
 
 	result.Score = calculateScore(result)
 	for _, issue := range result.Issues {
@@ -87,8 +90,7 @@ func runValidateTasks(opts *validateOptions) error {
 	return nil
 }
 
-func validateTaskFilesChecks(festivalPath string, result *ValidationResult) {
-	ctx := context.Background()
+func validateTaskFilesChecks(ctx context.Context, festivalPath string, result *ValidationResult) {
 	parser := festival.NewParser()
 	phases, _ := parser.ParsePhases(ctx, festivalPath)
 	policy := gates.DefaultPolicy()

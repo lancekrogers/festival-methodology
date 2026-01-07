@@ -36,7 +36,7 @@ to determine which phase/sequence/task to work on next.`,
 			if len(args) > 0 {
 				opts.path = args[0]
 			}
-			return runValidateOrdering(opts)
+			return runValidateOrdering(cmd.Context(), opts)
 		},
 	}
 
@@ -45,8 +45,11 @@ to determine which phase/sequence/task to work on next.`,
 	return cmd
 }
 
-func runValidateOrdering(opts *validateOptions) error {
+func runValidateOrdering(ctx context.Context, opts *validateOptions) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	festivalPath, err := resolveFestivalPath(opts.path)
 	if err != nil {
@@ -61,7 +64,7 @@ func runValidateOrdering(opts *validateOptions) error {
 		Issues:   []ValidationIssue{},
 	}
 
-	validateOrderingChecks(festivalPath, result)
+	validateOrderingChecks(ctx, festivalPath, result)
 
 	result.Score = calculateScore(result)
 	for _, issue := range result.Issues {
@@ -87,9 +90,9 @@ func runValidateOrdering(opts *validateOptions) error {
 	return nil
 }
 
-func validateOrderingChecks(festivalPath string, result *ValidationResult) {
+func validateOrderingChecks(ctx context.Context, festivalPath string, result *ValidationResult) {
 	v := validator.NewOrderingValidator()
-	issues, err := v.Validate(context.Background(), festivalPath)
+	issues, err := v.Validate(ctx, festivalPath)
 	if err != nil {
 		result.Issues = append(result.Issues, ValidationIssue{
 			Level:   LevelError,

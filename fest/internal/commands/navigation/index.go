@@ -1,12 +1,12 @@
 package navigation
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/index"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
@@ -201,11 +201,9 @@ func newIndexShowCommand() *cobra.Command {
 			}
 
 			if showJSON {
-				data, err := json.MarshalIndent(idx, "", "  ")
-				if err != nil {
-					return errors.Wrap(err, "formatting index as JSON")
+				if err := shared.EncodeJSON(os.Stdout, idx); err != nil {
+					return errors.Wrap(err, "encoding JSON output")
 				}
-				fmt.Println(string(data))
 				return nil
 			}
 
@@ -288,11 +286,9 @@ and provides a complete hierarchical view for Guild v3 integration.`,
 			}
 
 			if showJSON {
-				data, err := json.MarshalIndent(tree, "", "  ")
-				if err != nil {
-					return errors.Wrap(err, "formatting tree as JSON")
+				if err := shared.EncodeJSON(os.Stdout, tree); err != nil {
+					return errors.Wrap(err, "encoding JSON output")
 				}
-				fmt.Println(string(data))
 				return nil
 			}
 
@@ -376,11 +372,9 @@ since the last sync.`,
 			diff := index.ComputeDiff(oldTree, newTree)
 
 			if showJSON {
-				data, err := json.MarshalIndent(diff, "", "  ")
-				if err != nil {
-					return errors.Wrap(err, "formatting diff as JSON")
+				if err := shared.EncodeJSON(os.Stdout, diff); err != nil {
+					return errors.Wrap(err, "encoding JSON output")
 				}
-				fmt.Println(string(data))
 				return nil
 			}
 

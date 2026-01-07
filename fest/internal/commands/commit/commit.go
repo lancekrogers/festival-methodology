@@ -4,13 +4,13 @@ package commit
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/frontmatter"
 	"github.com/lancekrogers/festival-methodology/fest/internal/id"
@@ -131,8 +131,9 @@ func runCommit(cmd *cobra.Command, args []string) error {
 
 func outputResult(result *CommitResult) error {
 	if jsonOut {
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		if result.Success {
 			fmt.Println(ui.H1("Commit"))

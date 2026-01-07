@@ -1,14 +1,15 @@
 package research
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -161,11 +162,11 @@ func runResearchSummary(ctx context.Context, cmd *cobra.Command, phase string, f
 	// Generate output
 	var result string
 	if format == "json" {
-		data, err := json.MarshalIndent(summary, "", "  ")
-		if err != nil {
-			return errors.Wrap(err, "marshaling JSON")
+		var buffer bytes.Buffer
+		if err := shared.EncodeJSON(&buffer, summary); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
 		}
-		result = string(data)
+		result = strings.TrimRight(buffer.String(), "\n")
 	} else {
 		result = formatMarkdownSummary(summary)
 	}

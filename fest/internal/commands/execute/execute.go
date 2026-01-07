@@ -2,7 +2,6 @@
 package execute
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -122,11 +121,9 @@ func runExecute(cmd *cobra.Command, args []string) error {
 }
 
 func outputJSON(data interface{}) error {
-	output, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		return errors.Parse("formatting JSON", err)
+	if err := shared.EncodeJSON(os.Stdout, data); err != nil {
+		return errors.Wrap(err, "encoding JSON output")
 	}
-	fmt.Println(string(output))
 	return nil
 }
 

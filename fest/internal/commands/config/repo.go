@@ -2,8 +2,8 @@ package config
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
@@ -210,8 +210,9 @@ func runConfigShow(ctx context.Context, jsonOutput bool) error {
 		if active != nil {
 			output["repo"] = active
 		}
-		data, _ := json.MarshalIndent(output, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, output); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 		return nil
 	}
 
@@ -276,8 +277,9 @@ func runConfigList(ctx context.Context, jsonOutput bool) error {
 			"active": activeName,
 			"repos":  repos,
 		}
-		data, _ := json.MarshalIndent(output, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, output); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 		return nil
 	}
 

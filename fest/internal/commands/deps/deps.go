@@ -2,12 +2,12 @@
 package deps
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/deps"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
@@ -94,11 +94,9 @@ func runDeps(cmd *cobra.Command, args []string) error {
 
 func showGraph(graph *deps.Graph) error {
 	if jsonOutput {
-		data, err := json.MarshalIndent(graph, "", "  ")
-		if err != nil {
-			return err
+		if err := shared.EncodeJSON(os.Stdout, graph); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
 		}
-		fmt.Println(string(data))
 		return nil
 	}
 
@@ -170,11 +168,9 @@ func showTaskDeps(graph *deps.Graph, taskName string) error {
 			DependsOn:  graph.GetDependencies(task.ID),
 			DependedBy: graph.GetDependents(task.ID),
 		}
-		data, err := json.MarshalIndent(output, "", "  ")
-		if err != nil {
-			return err
+		if err := shared.EncodeJSON(os.Stdout, output); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
 		}
-		fmt.Println(string(data))
 		return nil
 	}
 
@@ -241,11 +237,9 @@ func showCriticalPath(graph *deps.Graph) error {
 	path := graph.CriticalPath()
 
 	if jsonOutput {
-		data, err := json.MarshalIndent(path, "", "  ")
-		if err != nil {
-			return err
+		if err := shared.EncodeJSON(os.Stdout, path); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
 		}
-		fmt.Println(string(data))
 		return nil
 	}
 

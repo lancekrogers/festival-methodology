@@ -2,11 +2,12 @@ package status
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
@@ -18,8 +19,9 @@ func emitErrorJSON(message string) error {
 	result := map[string]interface{}{
 		"error": message,
 	}
-	data, _ := json.MarshalIndent(result, "", "  ")
-	fmt.Println(string(data))
+	if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+		return errors.Wrap(err, "encoding JSON output")
+	}
 	return nil
 }
 
@@ -50,16 +52,14 @@ func emitLocationJSON(loc *show.LocationInfo) error {
 		result["task"] = loc.Task
 	}
 
-	data, err := json.MarshalIndent(result, "", "  ")
-	if err != nil {
-		return errors.Wrap(err, "marshaling status to JSON")
+	if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+		return errors.Wrap(err, "encoding JSON output")
 	}
-	fmt.Println(string(data))
 	return nil
 }
 
 // emitLocationText outputs location information in human-readable text format.
-func emitLocationText(loc *show.LocationInfo) error {
+func emitLocationText(ctx context.Context, loc *show.LocationInfo) error {
 	if loc.Festival == nil {
 		fmt.Println("Not in a festival directory")
 		return nil
@@ -83,9 +83,9 @@ func emitLocationText(loc *show.LocationInfo) error {
 	// Display context-appropriate progress
 	switch loc.Type {
 	case "sequence":
-		return emitSequenceProgress(loc)
+		return emitSequenceProgress(ctx, loc)
 	case "phase":
-		return emitPhaseProgress(loc)
+		return emitPhaseProgress(ctx, loc)
 	case "festival", "task":
 		return emitFestivalProgress(loc)
 	default:
@@ -111,9 +111,10 @@ func emitFestivalProgress(loc *show.LocationInfo) error {
 	return nil
 }
 
-func emitPhaseProgress(loc *show.LocationInfo) error {
-	ctx := context.Background()
-
+func emitPhaseProgress(ctx context.Context, loc *show.LocationInfo) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	mgr, err := progress.NewManager(ctx, loc.Festival.Path)
 	if err != nil {
 		// Fall back to festival stats if progress manager fails
@@ -152,9 +153,10 @@ func emitPhaseProgress(loc *show.LocationInfo) error {
 	return nil
 }
 
-func emitSequenceProgress(loc *show.LocationInfo) error {
-	ctx := context.Background()
-
+func emitSequenceProgress(ctx context.Context, loc *show.LocationInfo) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	mgr, err := progress.NewManager(ctx, loc.Festival.Path)
 	if err != nil {
 		// Fall back to festival stats if progress manager fails
@@ -204,11 +206,9 @@ func emitPhasesJSON(phases []*PhaseInfo, filterStatus string) error {
 		result["status"] = filterStatus
 	}
 
-	data, err := json.MarshalIndent(result, "", "  ")
-	if err != nil {
-		return errors.Wrap(err, "marshaling phases to JSON")
+	if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+		return errors.Wrap(err, "encoding JSON output")
 	}
-	fmt.Println(string(data))
 	return nil
 }
 
@@ -246,11 +246,9 @@ func emitSequencesJSON(sequences []*SequenceInfo, filterStatus string) error {
 		result["status"] = filterStatus
 	}
 
-	data, err := json.MarshalIndent(result, "", "  ")
-	if err != nil {
-		return errors.Wrap(err, "marshaling sequences to JSON")
+	if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+		return errors.Wrap(err, "encoding JSON output")
 	}
-	fmt.Println(string(data))
 	return nil
 }
 
@@ -289,11 +287,9 @@ func emitTasksJSON(tasks []*TaskInfo, filterStatus string) error {
 		result["status"] = filterStatus
 	}
 
-	data, err := json.MarshalIndent(result, "", "  ")
-	if err != nil {
-		return errors.Wrap(err, "marshaling tasks to JSON")
+	if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+		return errors.Wrap(err, "encoding JSON output")
 	}
-	fmt.Println(string(data))
 	return nil
 }
 
@@ -331,8 +327,9 @@ func emitEmptyJSON(entityType, filterStatus string) error {
 		result["message"] = fmt.Sprintf("no %ss found", entityType)
 	}
 
-	data, _ := json.MarshalIndent(result, "", "  ")
-	fmt.Println(string(data))
+	if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+		return errors.Wrap(err, "encoding JSON output")
+	}
 	return nil
 }
 

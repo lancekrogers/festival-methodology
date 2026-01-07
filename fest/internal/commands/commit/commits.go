@@ -2,13 +2,13 @@ package commit
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os/exec"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/id"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -109,8 +109,9 @@ func runCommits(cmd *cobra.Command, args []string) error {
 	}
 
 	if queryJson {
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(cmd.OutOrStdout(), result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		printCommits(result)
 	}

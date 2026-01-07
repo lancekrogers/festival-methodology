@@ -32,7 +32,7 @@ Checks (auto-verified where possible):
 			if len(args) > 0 {
 				opts.path = args[0]
 			}
-			return runValidateChecklist(opts)
+			return runValidateChecklist(cmd.Context(), opts)
 		},
 	}
 
@@ -41,7 +41,10 @@ Checks (auto-verified where possible):
 	return cmd
 }
 
-func runValidateChecklist(opts *validateOptions) error {
+func runValidateChecklist(ctx context.Context, opts *validateOptions) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	festivalPath, err := resolveFestivalPath(opts.path)
 	if err != nil {
 		return emitValidateError(opts, err)
@@ -63,10 +66,10 @@ func runValidateChecklist(opts *validateOptions) error {
 	// Goals achievable is a manual check - always null
 	result.Checklist.GoalsAchievable = nil
 
-	taskFilesExist := checkTaskFilesExist(festivalPath)
+	taskFilesExist := checkTaskFilesExist(ctx, festivalPath)
 	result.Checklist.TaskFilesExist = &taskFilesExist
 
-	orderCorrect := checkOrderCorrect(festivalPath)
+	orderCorrect := checkOrderCorrect(ctx, festivalPath)
 	result.Checklist.OrderCorrect = &orderCorrect
 
 	parallelCorrect := checkParallelCorrect(festivalPath)
@@ -118,8 +121,7 @@ func checkTemplatesFilled(festivalPath string) bool {
 	return filled
 }
 
-func checkTaskFilesExist(festivalPath string) bool {
-	ctx := context.Background()
+func checkTaskFilesExist(ctx context.Context, festivalPath string) bool {
 	parser := festival.NewParser()
 	phases, _ := parser.ParsePhases(ctx, festivalPath)
 	policy := gates.DefaultPolicy()
@@ -139,9 +141,9 @@ func checkTaskFilesExist(festivalPath string) bool {
 	return true
 }
 
-func checkOrderCorrect(festivalPath string) bool {
+func checkOrderCorrect(ctx context.Context, festivalPath string) bool {
 	parser := festival.NewParser()
-	phases, err := parser.ParsePhases(context.Background(), festivalPath)
+	phases, err := parser.ParsePhases(ctx, festivalPath)
 	if err != nil {
 		return true // Can't check, assume OK
 	}
