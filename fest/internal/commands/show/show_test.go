@@ -474,7 +474,7 @@ quality_gates:
 		t.Fatal(err)
 	}
 
-	info, err := parseFestivalInfo(festivalDir)
+	info, err := parseFestivalInfo(context.Background(), festivalDir)
 	if err != nil {
 		t.Fatalf("parseFestivalInfo() error = %v", err)
 	}
@@ -506,7 +506,7 @@ quality_gates:
 		t.Fatal(err)
 	}
 
-	info, err := parseFestivalInfo(festivalDir)
+	info, err := parseFestivalInfo(context.Background(), festivalDir)
 	if err != nil {
 		t.Fatalf("parseFestivalInfo() error = %v", err)
 	}

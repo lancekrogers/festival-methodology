@@ -146,14 +146,17 @@ func (b *PlanBuilder) BuildPlan(ctx context.Context) (*ExecutionPlan, error) {
 }
 
 // BuildPlanForPhase creates execution plan for a specific phase
-func (b *PlanBuilder) BuildPlanForPhase(phasePath string) (*PhaseExecution, error) {
+func (b *PlanBuilder) BuildPlanForPhase(ctx context.Context, phasePath string) (*PhaseExecution, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	graph, err := b.resolver.ResolveFestival()
 	if err != nil {
 		return nil, err
 	}
 
 	// Update task statuses from progress system (YAML source of truth)
-	if err := b.updateTaskStatusesFromProgress(graph); err != nil {
+	if err := b.updateTaskStatusesFromProgress(ctx, graph); err != nil {
 		return nil, err
 	}
 
@@ -177,14 +180,17 @@ func (b *PlanBuilder) BuildPlanForPhase(phasePath string) (*PhaseExecution, erro
 }
 
 // BuildPlanForSequence creates execution plan for a specific sequence
-func (b *PlanBuilder) BuildPlanForSequence(seqPath string) (*SequenceExecution, error) {
+func (b *PlanBuilder) BuildPlanForSequence(ctx context.Context, seqPath string) (*SequenceExecution, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	graph, err := b.resolver.ResolveSequence(seqPath)
 	if err != nil {
 		return nil, err
 	}
 
 	// Update task statuses from progress system (YAML source of truth)
-	if err := b.updateTaskStatusesFromProgress(graph); err != nil {
+	if err := b.updateTaskStatusesFromProgress(ctx, graph); err != nil {
 		return nil, err
 	}
 
