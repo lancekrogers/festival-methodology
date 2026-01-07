@@ -36,7 +36,7 @@ func runStatusShow(ctx context.Context, cmd *cobra.Command, opts *statusOptions)
 	}
 
 	// Detect current location
-	loc, err := show.DetectCurrentLocation(festivalPath)
+	loc, err := show.DetectCurrentLocation(ctx, festivalPath)
 	if err != nil {
 		if opts.json {
 			return emitErrorJSON("not in a festival directory")
@@ -68,7 +68,7 @@ func runStatusSet(ctx context.Context, cmd *cobra.Command, newStatus string, opt
 	}
 
 	// Detect current location
-	loc, err := show.DetectCurrentLocation(festivalPath)
+	loc, err := show.DetectCurrentLocation(ctx, festivalPath)
 	if err != nil {
 		return err
 	}
@@ -226,7 +226,7 @@ func runFestivalListing(ctx context.Context, festivalsRoot, filterStatus string,
 	}
 
 	if filterStatus != "" {
-		festivals, err := show.ListFestivalsByStatus(festivalsRoot, filterStatus)
+		festivals, err := show.ListFestivalsByStatus(ctx, festivalsRoot, filterStatus)
 		if err != nil {
 			return err
 		}
@@ -455,7 +455,7 @@ func runStatusList(ctx context.Context, cmd *cobra.Command, filterStatus string,
 	}
 
 	// Detect current location
-	loc, err := show.DetectCurrentLocation(festivalPath)
+	loc, err := show.DetectCurrentLocation(ctx, festivalPath)
 	if err != nil {
 		return handleStatusListOutsideFestival(ctx, cwd, filterStatus, opts)
 	}
@@ -524,7 +524,7 @@ func runStatusHistory(ctx context.Context, cmd *cobra.Command, limit int, opts *
 		return errors.Wrap(err, "not inside a festival")
 	}
 
-	loc, err := show.DetectCurrentLocation(festivalPath)
+	loc, err := show.DetectCurrentLocation(ctx, festivalPath)
 	if err != nil {
 		return err
 	}

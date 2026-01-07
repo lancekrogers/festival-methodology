@@ -2,6 +2,7 @@
 package list
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -51,7 +52,7 @@ If no status is provided, lists all festivals grouped by status.`,
 						WithField("valid", strings.Join(validStatuses, ", "))
 				}
 			}
-			return runList(status, opts)
+			return runList(cmd.Context(), status, opts)
 		},
 	}
 
@@ -70,7 +71,7 @@ func isValidStatus(status string) bool {
 	return false
 }
 
-func runList(filterStatus string, opts *listOptions) error {
+func runList(ctx context.Context, filterStatus string, opts *listOptions) error {
 	// Find festivals workspace from anywhere
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -85,15 +86,15 @@ func runList(filterStatus string, opts *listOptions) error {
 
 	if filterStatus != "" {
 		// List single status
-		return listByStatus(festivalsDir, filterStatus, opts)
+		return listByStatus(ctx, festivalsDir, filterStatus, opts)
 	}
 
 	// List all statuses
-	return listAll(festivalsDir, opts)
+	return listAll(ctx, festivalsDir, opts)
 }
 
-func listByStatus(festivalsDir, status string, opts *listOptions) error {
-	festivals, err := show.ListFestivalsByStatus(festivalsDir, status)
+func listByStatus(ctx context.Context, festivalsDir, status string, opts *listOptions) error {
+	festivals, err := show.ListFestivalsByStatus(ctx, festivalsDir, status)
 	if err != nil {
 		return err
 	}
@@ -111,14 +112,14 @@ func listByStatus(festivalsDir, status string, opts *listOptions) error {
 	return nil
 }
 
-func listAll(festivalsDir string, opts *listOptions) error {
+func listAll(ctx context.Context, festivalsDir string, opts *listOptions) error {
 	result := make(map[string]interface{})
 	var totalCount int
 	allFestivals := make(map[string][]*show.FestivalInfo)
 	statusOrder := make([]string, 0, len(validStatuses))
 
 	for _, status := range validStatuses {
-		festivals, err := show.ListFestivalsByStatus(festivalsDir, status)
+		festivals, err := show.ListFestivalsByStatus(ctx, festivalsDir, status)
 		if err != nil {
 			continue
 		}

@@ -374,21 +374,21 @@ func NewGoProjectCommand() *cobra.Command {
 
 Use 'fest link <path>' to create a link from within a festival.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runGoProject()
+			return runGoProject(cmd.Context())
 		},
 	}
 
 	return cmd
 }
 
-func runGoProject() error {
+func runGoProject(ctx context.Context) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return errors.IO("getting current directory", err)
 	}
 
 	// Detect current festival
-	loc, err := show.DetectCurrentLocation(cwd)
+	loc, err := show.DetectCurrentLocation(ctx, cwd)
 	if err != nil {
 		return errors.NotFound("festival").
 			WithField("hint", "run from inside a festival directory")

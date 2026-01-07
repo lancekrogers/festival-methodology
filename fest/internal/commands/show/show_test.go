@@ -134,7 +134,7 @@ func TestDetectCurrentFestival(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		result, err := DetectCurrentFestival(tc.startDir)
+			result, err := DetectCurrentFestival(context.Background(), tc.startDir)
 		if tc.wantErr {
 			if err == nil {
 				t.Errorf("DetectCurrentFestival(%q) expected error, got nil", tc.startDir)
@@ -182,7 +182,7 @@ func TestDetectCurrentLocation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		result, err := DetectCurrentLocation(tc.startDir)
+			result, err := DetectCurrentLocation(context.Background(), tc.startDir)
 		if err != nil {
 			t.Errorf("DetectCurrentLocation(%q) unexpected error: %v", tc.startDir, err)
 			continue
@@ -275,7 +275,7 @@ func TestListFestivalsByStatus(t *testing.T) {
 	}
 
 	// Test active festivals
-	active, err := ListFestivalsByStatus(tmpDir, "active")
+	active, err := ListFestivalsByStatus(context.Background(), tmpDir, "active")
 	if err != nil {
 		t.Fatalf("ListFestivalsByStatus(active) unexpected error: %v", err)
 	}
@@ -284,7 +284,7 @@ func TestListFestivalsByStatus(t *testing.T) {
 	}
 
 	// Test planned festivals
-	planned, err := ListFestivalsByStatus(tmpDir, "planned")
+	planned, err := ListFestivalsByStatus(context.Background(), tmpDir, "planned")
 	if err != nil {
 		t.Fatalf("ListFestivalsByStatus(planned) unexpected error: %v", err)
 	}
@@ -293,7 +293,7 @@ func TestListFestivalsByStatus(t *testing.T) {
 	}
 
 	// Test non-existent status
-	empty, err := ListFestivalsByStatus(tmpDir, "completed")
+	empty, err := ListFestivalsByStatus(context.Background(), tmpDir, "completed")
 	if err != nil {
 		t.Fatalf("ListFestivalsByStatus(completed) unexpected error: %v", err)
 	}
