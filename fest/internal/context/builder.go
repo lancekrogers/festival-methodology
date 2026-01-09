@@ -308,6 +308,8 @@ func (b *Builder) loadPhaseContext(phasePath string) (*PhaseContext, error) {
 		ctx.PhaseType = "implementation"
 	} else if strings.Contains(name, "planning") {
 		ctx.PhaseType = "planning"
+	} else if strings.Contains(name, "review") || strings.Contains(name, "uat") {
+		ctx.PhaseType = "review"
 	}
 
 	// Count sequences

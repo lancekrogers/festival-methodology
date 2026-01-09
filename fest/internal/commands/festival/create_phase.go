@@ -47,6 +47,24 @@ type createPhaseResult struct {
 	Suggestions   []string                 `json:"suggestions,omitempty"`
 }
 
+// selectPhaseTemplate returns the appropriate template ID and filename for a given phase type.
+// Returns (templateID, templateFilename) tuple.
+func selectPhaseTemplate(phaseType string) (string, string) {
+	switch strings.ToLower(phaseType) {
+	case "planning":
+		return "phase-goal-planning", "PHASE_GOAL_PLANNING_TEMPLATE.md"
+	case "implementation":
+		return "phase-goal-implementation", "PHASE_GOAL_IMPLEMENTATION_TEMPLATE.md"
+	case "research":
+		return "phase-goal-research", "PHASE_GOAL_RESEARCH_TEMPLATE.md"
+	case "review":
+		return "phase-goal-review", "PHASE_GOAL_REVIEW_TEMPLATE.md"
+	default:
+		// Fallback to generic template for unknown types
+		return "phase-goal", "PHASE_GOAL_TEMPLATE.md"
+	}
+}
+
 // NewCreatePhaseCommand adds 'create phase'
 func NewCreatePhaseCommand() *cobra.Command {
 	opts := &CreatePhaseOptions{}
@@ -167,12 +185,7 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 	var renderErr error
 
 	// Select template based on phase type
-	templateID := "PHASE_GOAL"
-	templateFilename := "PHASE_GOAL_TEMPLATE.md"
-	if opts.PhaseType == "research" {
-		templateID = "RESEARCH_PHASE_GOAL"
-		templateFilename = "RESEARCH_PHASE_GOAL_TEMPLATE.md"
-	}
+	templateID, templateFilename := selectPhaseTemplate(opts.PhaseType)
 
 	if catalog != nil {
 		content, renderErr = mgr.RenderByID(ctx, catalog, templateID, tmplCtx)
