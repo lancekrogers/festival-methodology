@@ -271,20 +271,51 @@ func BuildElementName(number int, name string, elemType ElementType) string {
 	numStr := FormatNumber(number, elemType)
 
 	// Normalize name based on element type
-	var normalized string
-	switch elemType {
-	case PhaseType:
-		// Phases are UPPERCASE
-		normalized = strings.ToUpper(strings.ReplaceAll(name, " ", "_"))
-	case SequenceType, TaskType:
-		// Sequences and tasks are lowercase
-		normalized = strings.ToLower(strings.ReplaceAll(name, " ", "_"))
-	default:
-		// Unknown type: just replace spaces
-		normalized = strings.ReplaceAll(name, " ", "_")
-	}
+	normalized := normalizeElementName(name, elemType)
 
 	return fmt.Sprintf("%s_%s", numStr, normalized)
+}
+
+func normalizeElementName(name string, elemType ElementType) string {
+	trimmed := strings.TrimSpace(name)
+
+	switch elemType {
+	case PhaseType:
+		trimmed = stripNumericPrefix(trimmed, 3)
+		return strings.ToUpper(strings.ReplaceAll(trimmed, " ", "_"))
+	case SequenceType, TaskType:
+		trimmed = stripNumericPrefix(trimmed, 2)
+		return strings.ToLower(strings.ReplaceAll(trimmed, " ", "_"))
+	default:
+		return strings.ReplaceAll(trimmed, " ", "_")
+	}
+}
+
+func stripNumericPrefix(name string, digits int) string {
+	if len(name) <= digits {
+		return name
+	}
+
+	prefix := name[:digits]
+	if _, err := strconv.Atoi(prefix); err != nil {
+		return name
+	}
+
+	if len(name) == digits {
+		return name
+	}
+
+	sep := name[digits]
+	if sep != '_' && sep != '-' && sep != ' ' {
+		return name
+	}
+
+	remainder := strings.TrimLeft(strings.TrimSpace(name[digits+1:]), "_- ")
+	if remainder == "" {
+		return name
+	}
+
+	return remainder
 }
 
 // ParseElementName extracts number and name from a numbered element

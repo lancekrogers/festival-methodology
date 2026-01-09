@@ -91,14 +91,17 @@ func NewPlanBuilder(festivalPath string) *PlanBuilder {
 }
 
 // BuildPlan creates the complete execution plan for the festival
-func (b *PlanBuilder) BuildPlan() (*ExecutionPlan, error) {
+func (b *PlanBuilder) BuildPlan(ctx context.Context) (*ExecutionPlan, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	graph, err := b.resolver.ResolveFestival()
 	if err != nil {
 		return nil, err
 	}
 
 	// Update task statuses from progress system (YAML source of truth)
-	if err := b.updateTaskStatusesFromProgress(graph); err != nil {
+	if err := b.updateTaskStatusesFromProgress(ctx, graph); err != nil {
 		return nil, err
 	}
 
@@ -143,14 +146,17 @@ func (b *PlanBuilder) BuildPlan() (*ExecutionPlan, error) {
 }
 
 // BuildPlanForPhase creates execution plan for a specific phase
-func (b *PlanBuilder) BuildPlanForPhase(phasePath string) (*PhaseExecution, error) {
+func (b *PlanBuilder) BuildPlanForPhase(ctx context.Context, phasePath string) (*PhaseExecution, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	graph, err := b.resolver.ResolveFestival()
 	if err != nil {
 		return nil, err
 	}
 
 	// Update task statuses from progress system (YAML source of truth)
-	if err := b.updateTaskStatusesFromProgress(graph); err != nil {
+	if err := b.updateTaskStatusesFromProgress(ctx, graph); err != nil {
 		return nil, err
 	}
 
@@ -174,14 +180,17 @@ func (b *PlanBuilder) BuildPlanForPhase(phasePath string) (*PhaseExecution, erro
 }
 
 // BuildPlanForSequence creates execution plan for a specific sequence
-func (b *PlanBuilder) BuildPlanForSequence(seqPath string) (*SequenceExecution, error) {
+func (b *PlanBuilder) BuildPlanForSequence(ctx context.Context, seqPath string) (*SequenceExecution, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	graph, err := b.resolver.ResolveSequence(seqPath)
 	if err != nil {
 		return nil, err
 	}
 
 	// Update task statuses from progress system (YAML source of truth)
-	if err := b.updateTaskStatusesFromProgress(graph); err != nil {
+	if err := b.updateTaskStatusesFromProgress(ctx, graph); err != nil {
 		return nil, err
 	}
 
@@ -316,9 +325,12 @@ func extractSeqNumber(name string) int {
 
 // updateTaskStatusesFromProgress updates all task statuses in the graph
 // by querying the progress tracking system (YAML source of truth)
-func (b *PlanBuilder) updateTaskStatusesFromProgress(graph *deps.Graph) error {
+func (b *PlanBuilder) updateTaskStatusesFromProgress(ctx context.Context, graph *deps.Graph) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	// Create progress manager
-	mgr, err := progress.NewManager(context.Background(), b.festivalPath)
+	mgr, err := progress.NewManager(ctx, b.festivalPath)
 	if err != nil {
 		return err
 	}

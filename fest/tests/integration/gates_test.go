@@ -4,6 +4,7 @@
 package integration
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -69,7 +70,8 @@ func TestGatesCommands(t *testing.T) {
 	t.Run("GatesShow", func(t *testing.T) {
 		output, err := container.RunFestInDir("/festivals/test-gates-festival", "gates", "show")
 		require.NoError(t, err, "gates show should not fail")
-		require.Contains(t, output, "Merged gates", "Should show merged gates header")
+		require.Contains(t, output, "GATE POLICY", "Should show gate policy header")
+		require.Contains(t, output, "Active Gates", "Should list active gates")
 		require.Contains(t, output, "testing_and_verify", "Should show default gate")
 		require.Contains(t, output, "code_review", "Should show code review gate")
 		t.Logf("gates show: %s", output)
@@ -95,7 +97,7 @@ func TestGatesCommands(t *testing.T) {
 		// Run init
 		output, err := container.RunFestInDir("/festivals/test-gates-festival", "gates", "init")
 		require.NoError(t, err, "gates init should not fail")
-		require.Contains(t, output, "Created fest.yaml", "Should confirm fest.yaml creation")
+		require.Contains(t, output, "Festival configuration created", "Should confirm fest.yaml creation")
 		t.Logf("gates init: %s", output)
 
 		// Verify file was created
@@ -122,7 +124,7 @@ func TestGatesCommands(t *testing.T) {
 		// Run init with --phase flag
 		output, err := container.RunFestInDir("/festivals/test-gates-festival", "gates", "init", "--phase", "002_IMPLEMENT")
 		require.NoError(t, err, "gates init --phase should not fail")
-		require.Contains(t, output, "Created override file", "Should confirm creation")
+		require.Contains(t, output, "Override file created", "Should confirm creation")
 		t.Logf("gates init --phase: %s", output)
 
 		// Verify file was created
@@ -142,7 +144,7 @@ func TestGatesCommands(t *testing.T) {
 		// Run init with --sequence flag
 		output, err := container.RunFestInDir("/festivals/test-gates-festival", "gates", "init", "--sequence", "002_IMPLEMENT/01_core")
 		require.NoError(t, err, "gates init --sequence should not fail")
-		require.Contains(t, output, "Created override file", "Should confirm creation")
+		require.Contains(t, output, "Override file created", "Should confirm creation")
 		t.Logf("gates init --sequence: %s", output)
 
 		// Verify file was created
@@ -160,8 +162,8 @@ func TestGatesCommands(t *testing.T) {
 		// Apply strict policy with --policy-only to write the policy file
 		output, err := container.RunFestInDir("/festivals/apply-test-festival", "gates", "apply", "strict", "--policy-only", "--approve")
 		require.NoError(t, err, "gates apply strict --policy-only should not fail")
-		require.Contains(t, output, "Applied policy", "Should confirm application")
-		require.Contains(t, output, "strict", "Should mention policy name")
+		require.Contains(t, output, "Gate policy applied", "Should confirm application")
+		require.Contains(t, output, "Policy strict", "Should mention policy name")
 		t.Logf("gates apply strict: %s", output)
 
 		// Verify policy was written
@@ -182,7 +184,7 @@ func TestGatesCommands(t *testing.T) {
 		// Apply with --policy-only (dry-run is default)
 		output, err := container.RunFestInDir("/festivals/dry-run-test", "gates", "apply", "lightweight", "--policy-only")
 		require.NoError(t, err, "gates apply --policy-only should not fail")
-		require.Contains(t, output, "[dry-run]", "Should indicate dry run")
+		require.Contains(t, output, "DRY RUN", "Should indicate dry run")
 		require.Contains(t, output, "lightweight", "Should mention policy name")
 		t.Logf("gates apply --policy-only: %s", output)
 
@@ -219,7 +221,8 @@ func TestGatesCommands(t *testing.T) {
 		// Show gates for that phase
 		output, err := container.RunFestInDir("/festivals/test-gates-festival", "gates", "show", "--phase", "002_IMPLEMENT")
 		require.NoError(t, err, "gates show --phase should not fail")
-		require.Contains(t, output, "Merged gates", "Should show merged gates")
+		require.Contains(t, output, "GATE POLICY", "Should show gate policy header")
+		require.Contains(t, output, "Configuration Sources", "Should list configuration sources")
 		t.Logf("gates show --phase: %s", output)
 	})
 
@@ -227,7 +230,8 @@ func TestGatesCommands(t *testing.T) {
 	t.Run("GatesShowSequence", func(t *testing.T) {
 		output, err := container.RunFestInDir("/festivals/test-gates-festival", "gates", "show", "--sequence", "002_IMPLEMENT/01_core")
 		require.NoError(t, err, "gates show --sequence should not fail")
-		require.Contains(t, output, "Merged gates", "Should show merged gates")
+		require.Contains(t, output, "GATE POLICY", "Should show gate policy header")
+		require.Contains(t, output, "Configuration Sources", "Should list configuration sources")
 		t.Logf("gates show --sequence: %s", output)
 	})
 
@@ -266,6 +270,98 @@ append:
 		require.Contains(t, output, "testing_and_verify", "Should show gates from custom policy")
 		t.Logf("Hierarchical merge test: %s", output)
 	})
+}
+
+func TestGatesApplyVaryingSequenceCounts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	container := GetSharedContainer(t)
+	setupFestivalTemplates(t, container)
+
+	output, err := container.RunFestInDir(
+		"/festivals",
+		"create", "festival",
+		"--name", "gates-apply-varied",
+		"--goal", "Gates-apply-varied",
+		"--json",
+		"--skip-markers",
+	)
+	require.NoError(t, err, "create festival should succeed")
+
+	result := parseCreateFestivalOutput(t, output)
+	festivalPath := filepath.Join("/festivals", result.Festival.Dest, result.Festival.Directory)
+	phasePath := filepath.Join(festivalPath, "002_IMPLEMENT")
+
+	writeFile := func(path, content string) {
+		exitCode, _, err := container.container.Exec(container.ctx, []string{
+			"sh", "-c",
+			"printf '%s' '" + content + "' > " + path,
+		})
+		require.NoError(t, err)
+		require.Equal(t, 0, exitCode)
+	}
+
+	exitCode, _, err := container.container.Exec(container.ctx, []string{"mkdir", "-p", phasePath})
+	require.NoError(t, err)
+	require.Equal(t, 0, exitCode)
+
+	sequences := []struct {
+		name      string
+		taskCount int
+	}{
+		{name: "01_small", taskCount: 1},
+		{name: "02_medium", taskCount: 2},
+		{name: "03_large", taskCount: 0},
+	}
+
+	for _, seq := range sequences {
+		seqPath := filepath.Join(phasePath, seq.name)
+		exitCode, _, err := container.container.Exec(container.ctx, []string{"mkdir", "-p", seqPath})
+		require.NoError(t, err)
+		require.Equal(t, 0, exitCode)
+
+		writeFile(filepath.Join(seqPath, "SEQUENCE_GOAL.md"), "# Sequence Goal\n")
+
+		for i := 1; i <= seq.taskCount; i++ {
+			taskName := fmt.Sprintf("%02d_seed.md", i)
+			writeFile(filepath.Join(seqPath, taskName), fmt.Sprintf("# Task %02d\n", i))
+		}
+	}
+
+	output, err = container.RunFestInDir(festivalPath, "gates", "apply", "--approve")
+	require.NoError(t, err, "gates apply --approve should not fail")
+	require.NotContains(t, output, "No implementation sequences found", "should process sequences")
+
+	for _, seq := range sequences {
+		seqPath := filepath.Join(phasePath, seq.name)
+		files, err := container.ListDirectory(seqPath)
+		require.NoError(t, err)
+		requireGateTasks(t, files)
+	}
+}
+
+func requireGateTasks(t *testing.T, files []string) {
+	t.Helper()
+
+	expected := []string{
+		"_testing_and_verify.md",
+		"_code_review.md",
+		"_review_results_iterate.md",
+		"_commit.md",
+	}
+
+	for _, suffix := range expected {
+		found := false
+		for _, file := range files {
+			if strings.HasSuffix(file, suffix) {
+				found = true
+				break
+			}
+		}
+		require.True(t, found, "expected gate task %s", suffix)
+	}
 }
 
 // setupGatesTestFestival creates a test festival structure for gates testing

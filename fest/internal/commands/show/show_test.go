@@ -4,6 +4,8 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -132,7 +134,7 @@ func TestDetectCurrentFestival(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		result, err := DetectCurrentFestival(tc.startDir)
+			result, err := DetectCurrentFestival(context.Background(), tc.startDir)
 		if tc.wantErr {
 			if err == nil {
 				t.Errorf("DetectCurrentFestival(%q) expected error, got nil", tc.startDir)
@@ -180,7 +182,7 @@ func TestDetectCurrentLocation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		result, err := DetectCurrentLocation(tc.startDir)
+			result, err := DetectCurrentLocation(context.Background(), tc.startDir)
 		if err != nil {
 			t.Errorf("DetectCurrentLocation(%q) unexpected error: %v", tc.startDir, err)
 			continue
@@ -273,7 +275,7 @@ func TestListFestivalsByStatus(t *testing.T) {
 	}
 
 	// Test active festivals
-	active, err := ListFestivalsByStatus(tmpDir, "active")
+	active, err := ListFestivalsByStatus(context.Background(), tmpDir, "active")
 	if err != nil {
 		t.Fatalf("ListFestivalsByStatus(active) unexpected error: %v", err)
 	}
@@ -282,7 +284,7 @@ func TestListFestivalsByStatus(t *testing.T) {
 	}
 
 	// Test planned festivals
-	planned, err := ListFestivalsByStatus(tmpDir, "planned")
+	planned, err := ListFestivalsByStatus(context.Background(), tmpDir, "planned")
 	if err != nil {
 		t.Fatalf("ListFestivalsByStatus(planned) unexpected error: %v", err)
 	}
@@ -291,7 +293,7 @@ func TestListFestivalsByStatus(t *testing.T) {
 	}
 
 	// Test non-existent status
-	empty, err := ListFestivalsByStatus(tmpDir, "completed")
+	empty, err := ListFestivalsByStatus(context.Background(), tmpDir, "completed")
 	if err != nil {
 		t.Fatalf("ListFestivalsByStatus(completed) unexpected error: %v", err)
 	}
@@ -335,7 +337,7 @@ func TestFormatFestivalList(t *testing.T) {
 
 	output := FormatFestivalList("active", festivals)
 
-	if !contains(output, "Active Festivals (2)") {
+	if !contains(output, "Festivals (2)") {
 		t.Error("Output should contain header with count")
 	}
 	if !contains(output, "fest1") {
@@ -349,7 +351,7 @@ func TestFormatFestivalList(t *testing.T) {
 func TestFormatFestivalListEmpty(t *testing.T) {
 	output := FormatFestivalList("completed", []*FestivalInfo{})
 
-	if !contains(output, "Completed Festivals (0)") {
+	if !contains(output, "Festivals (0)") {
 		t.Error("Output should indicate zero festivals")
 	}
 	if !contains(output, "(none)") {
@@ -358,7 +360,16 @@ func TestFormatFestivalListEmpty(t *testing.T) {
 }
 
 func contains(s, substr string) bool {
-	return len(s) > 0 && len(substr) > 0 && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || contains(s[1:], substr)))
+	if substr == "" {
+		return false
+	}
+	return strings.Contains(stripANSI(s), substr)
+}
+
+var ansiRegexp = regexp.MustCompile(`\x1b\[[0-9;]*m`)
+
+func stripANSI(s string) string {
+	return ansiRegexp.ReplaceAllString(s, "")
 }
 
 // TestFormatFestivalDetails_DisplaysMetadataID tests that festival ID from metadata is displayed
@@ -378,7 +389,7 @@ func TestFormatFestivalDetails_DisplaysMetadataID(t *testing.T) {
 				Status:     "active",
 				Path:       "/path/to/my-project_GU0001",
 			},
-			expectedOutput: []string{"ID: GU0001"},
+			expectedOutput: []string{"ID GU0001"},
 		},
 		{
 			name: "handles legacy festival without metadata ID",
@@ -463,7 +474,7 @@ quality_gates:
 		t.Fatal(err)
 	}
 
-	info, err := parseFestivalInfo(festivalDir)
+	info, err := parseFestivalInfo(context.Background(), festivalDir)
 	if err != nil {
 		t.Fatalf("parseFestivalInfo() error = %v", err)
 	}
@@ -495,7 +506,7 @@ quality_gates:
 		t.Fatal(err)
 	}
 
-	info, err := parseFestivalInfo(festivalDir)
+	info, err := parseFestivalInfo(context.Background(), festivalDir)
 	if err != nil {
 		t.Fatalf("parseFestivalInfo() error = %v", err)
 	}

@@ -1,6 +1,7 @@
 package navigation
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -53,7 +54,7 @@ If no registered festivals are found, falls back to nearest festivals/.`,
 			if len(args) > 0 {
 				target = args[0]
 			}
-			return runGo(target, opts)
+			return runGo(cmd.Context(), target, opts)
 		},
 	}
 
@@ -74,7 +75,7 @@ If no registered festivals are found, falls back to nearest festivals/.`,
 	return cmd
 }
 
-func runGo(target string, opts *goOptions) error {
+func runGo(ctx context.Context, target string, opts *goOptions) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return errors.IO("getting current directory", err)
@@ -103,7 +104,7 @@ func runGo(target string, opts *goOptions) error {
 	// Smart navigation: no target provided
 	if target == "" {
 		// Try smart bidirectional navigation
-		if resultPath := trySmartNavigation(cwd, festivalsDir); resultPath != "" {
+		if resultPath := trySmartNavigation(ctx, cwd, festivalsDir); resultPath != "" {
 			if opts.json {
 				fmt.Printf(`{"path": "%s"}%s`, resultPath, "\n")
 			} else {
@@ -137,7 +138,7 @@ func runGo(target string, opts *goOptions) error {
 }
 
 // trySmartNavigation attempts bidirectional navigation based on current location
-func trySmartNavigation(cwd, festivalsDir string) string {
+func trySmartNavigation(ctx context.Context, cwd, festivalsDir string) string {
 	nav, err := navigation.LoadNavigation()
 	if err != nil {
 		return ""
@@ -146,7 +147,7 @@ func trySmartNavigation(cwd, festivalsDir string) string {
 	// Check if we're inside a festival
 	if isInsideFestival(cwd) {
 		// Try to find the festival name
-		loc, err := show.DetectCurrentLocation(cwd)
+		loc, err := show.DetectCurrentLocation(ctx, cwd)
 		if err == nil && loc != nil && loc.Festival != nil && loc.Festival.Name != "" {
 			// Check if there's a linked project
 			if projectPath := nav.GetLinkedProject(loc.Festival.Name); projectPath != "" {

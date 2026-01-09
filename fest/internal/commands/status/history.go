@@ -2,11 +2,13 @@
 package status
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
@@ -50,11 +52,12 @@ func RecordStatusChange(festivalDir, fromStatus, toStatus, note string) error {
 	}
 
 	// Write updated history
-	data, err := json.MarshalIndent(history, "", "  ")
-	if err != nil {
-		return errors.Wrap(err, "marshaling status history")
+	var buffer bytes.Buffer
+	if err := shared.EncodeJSON(&buffer, history); err != nil {
+		return errors.Wrap(err, "encoding status history JSON")
 	}
 
+	data := bytes.TrimRight(buffer.Bytes(), "\n")
 	if err := os.WriteFile(historyPath, data, 0644); err != nil {
 		return errors.IO("writing status history", err)
 	}

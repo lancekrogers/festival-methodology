@@ -8,6 +8,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -184,8 +185,10 @@ Note: Tasks are markdown files, so .md extension will be added automatically.`,
 
 			// For tasks, we need to handle file creation differently
 			// This would be implemented in the renumberer
-			fmt.Printf("Note: Task insertion would create: %s_%s.md\n",
-				festival.FormatNumber(opts.after+1, festival.TaskType), opts.name)
+			fmt.Printf("%s %s\n",
+				ui.Info("Note:"),
+				ui.Dim(fmt.Sprintf("Task insertion would create: %s_%s.md",
+					festival.FormatNumber(opts.after+1, festival.TaskType), opts.name)))
 
 			// For now, return a message since task insertion needs file creation
 			if !opts.dryRun {
@@ -199,12 +202,14 @@ Note: Tasks are markdown files, so .md extension will be added automatically.`,
 				return errors.Wrap(err, "parsing tasks").WithField("path", absPath)
 			}
 
-			fmt.Println("\nTask insertion preview:")
-			fmt.Printf("  ✓ Create: %02d_%s.md\n", opts.after+1, opts.name)
+			fmt.Println()
+			fmt.Println(ui.H2("Task Insertion Preview"))
+			fmt.Printf("  %s %s\n", ui.StateIcon("completed"), ui.Value(fmt.Sprintf("%02d_%s.md", opts.after+1, opts.name)))
 			for _, task := range tasks {
 				if task.Number > opts.after {
-					fmt.Printf("  → Rename: %s → %02d_%s\n",
-						task.FullName, task.Number+1, task.Name+".md")
+					fmt.Printf("  %s %s\n",
+						ui.Info("Rename"),
+						ui.Dim(fmt.Sprintf("%s → %02d_%s", task.FullName, task.Number+1, task.Name+".md")))
 				}
 			}
 

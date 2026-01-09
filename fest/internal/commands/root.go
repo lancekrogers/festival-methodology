@@ -30,6 +30,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/wizard"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 
 	// Import tui package for its init() side effects (registers hooks)
@@ -111,6 +112,7 @@ func init() {
 		shared.SetVerbose(verbose)
 		shared.SetNoColor(noColor)
 		shared.SetConfigFile(configFile)
+		ui.SetNoColor(noColor)
 
 		// Allow root (help/version), init, system, count, go, shell-init, understand, config, extension, index, gates, research, show, status, progress, context, deps, next, execute, migrate, link, unlink, links, commit, commits, parse, completion, list, validate, and markers to run anywhere
 		// Also allow subcommands of system, understand, config, extension, index, gates, research, show, status, progress, context, deps, next, execute, migrate, remove, renumber, reorder, validate, markers, wizard, and go

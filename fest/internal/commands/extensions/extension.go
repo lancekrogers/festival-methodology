@@ -103,21 +103,21 @@ func runExtensionList(jsonOutput bool, source, extType string) error {
 		return nil
 	}
 
-	display.Info("Loaded extensions (%d):", len(exts))
-	fmt.Println()
+	fmt.Println(ui.H1("Extensions"))
+	fmt.Printf("%s %s\n", ui.Label("Count"), ui.Value(fmt.Sprintf("%d", len(exts))))
 
 	for _, ext := range exts {
-		fmt.Printf("  %s", ext.Name)
+		fmt.Println()
+		fmt.Println(ui.H2(ext.Name))
 		if ext.Version != "" {
-			fmt.Printf(" (v%s)", ext.Version)
+			fmt.Printf("%s %s\n", ui.Label("Version"), ui.Value(fmt.Sprintf("v%s", ext.Version)))
 		}
-		fmt.Printf(" [%s]\n", ext.Source)
-
+		fmt.Printf("%s %s\n", ui.Label("Source"), ui.Dim(ext.Source))
 		if ext.Description != "" && shared.IsVerbose() {
-			fmt.Printf("    %s\n", ext.Description)
+			fmt.Printf("%s %s\n", ui.Label("Description"), ui.Info(ext.Description))
 		}
 		if ext.Type != "" {
-			fmt.Printf("    Type: %s\n", ext.Type)
+			fmt.Printf("%s %s\n", ui.Label("Type"), ui.Value(ext.Type))
 		}
 	}
 

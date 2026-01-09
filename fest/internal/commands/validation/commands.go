@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -114,7 +115,7 @@ Use --fix to automatically apply safe fixes (like adding quality gates).`,
 			if len(args) > 0 {
 				opts.path = args[0]
 			}
-			return runValidateAll(opts)
+			return runValidateAll(cmd.Context(), opts)
 		},
 	}
 
@@ -216,8 +217,11 @@ func validateDirExists(path string) bool {
 }
 
 // runValidateAll runs all validation checks
-func runValidateAll(opts *validateOptions) error {
+func runValidateAll(ctx context.Context, opts *validateOptions) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	festivalPath, err := resolveFestivalPath(opts.path)
 	if err != nil {
@@ -233,12 +237,12 @@ func runValidateAll(opts *validateOptions) error {
 	}
 
 	// Run all validation checks
-	validateStructureChecks(festivalPath, result)
-	validateCompletenessChecks(festivalPath, result)
-	validateTaskFilesChecks(festivalPath, result)
-	validateQualityGatesChecks(festivalPath, result, opts.fix)
+	validateStructureChecks(ctx, festivalPath, result)
+	validateCompletenessChecks(ctx, festivalPath, result)
+	validateTaskFilesChecks(ctx, festivalPath, result)
+	validateQualityGatesChecks(ctx, festivalPath, result, opts.fix)
 	validateTemplateMarkers(festivalPath, result)
-	validateOrderingChecks(festivalPath, result)
+	validateOrderingChecks(ctx, festivalPath, result)
 
 	// Calculate score
 	result.Score = calculateScore(result)

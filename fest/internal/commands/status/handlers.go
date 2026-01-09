@@ -11,6 +11,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +36,7 @@ func runStatusShow(ctx context.Context, cmd *cobra.Command, opts *statusOptions)
 	}
 
 	// Detect current location
-	loc, err := show.DetectCurrentLocation(festivalPath)
+	loc, err := show.DetectCurrentLocation(ctx, festivalPath)
 	if err != nil {
 		if opts.json {
 			return emitErrorJSON("not in a festival directory")
@@ -46,7 +47,7 @@ func runStatusShow(ctx context.Context, cmd *cobra.Command, opts *statusOptions)
 	if opts.json {
 		return emitLocationJSON(loc)
 	}
-	return emitLocationText(loc)
+	return emitLocationText(ctx, loc)
 }
 
 // runStatusSet handles the status set command.
@@ -67,7 +68,7 @@ func runStatusSet(ctx context.Context, cmd *cobra.Command, newStatus string, opt
 	}
 
 	// Detect current location
-	loc, err := show.DetectCurrentLocation(festivalPath)
+	loc, err := show.DetectCurrentLocation(ctx, festivalPath)
 	if err != nil {
 		return err
 	}
@@ -75,6 +76,8 @@ func runStatusSet(ctx context.Context, cmd *cobra.Command, newStatus string, opt
 	if loc.Festival == nil {
 		return errors.NotFound("festival")
 	}
+
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	// Determine entity type and validate status
 	entityType := EntityType(loc.Type)
@@ -87,15 +90,15 @@ func runStatusSet(ctx context.Context, cmd *cobra.Command, newStatus string, opt
 
 	// Handle festival status changes (directory moves)
 	if loc.Type == "festival" {
-		return handleFestivalStatusChange(ctx, loc.Festival, newStatus, opts)
+		return handleFestivalStatusChange(ctx, display, loc.Festival, newStatus, opts)
 	}
 
 	// For other entities, update frontmatter (placeholder - needs frontmatter support)
-	return emitStatusSetPlaceholder(opts, loc.Type, newStatus)
+	return emitStatusSetPlaceholder(display, opts, loc.Type, newStatus)
 }
 
 // emitStatusSetPlaceholder outputs a placeholder message for non-festival status changes.
-func emitStatusSetPlaceholder(opts *statusOptions, entityType, newStatus string) error {
+func emitStatusSetPlaceholder(display *ui.UI, opts *statusOptions, entityType, newStatus string) error {
 	if opts.json {
 		result := map[string]interface{}{
 			"success":    true,
@@ -103,29 +106,32 @@ func emitStatusSetPlaceholder(opts *statusOptions, entityType, newStatus string)
 			"new_status": newStatus,
 			"note":       "frontmatter updates not yet implemented",
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
-		fmt.Printf("Status change recorded: %s -> %s\n", entityType, newStatus)
-		fmt.Println("Note: Frontmatter updates pending implementation")
+		fmt.Println(ui.H1("Status Updated"))
+		fmt.Printf("%s %s\n", ui.Label("Entity"), ui.Value(string(entityType)))
+		fmt.Printf("%s %s\n", ui.Label("Status"), ui.GetStateStyle(newStatus).Render(newStatus))
+		fmt.Println(ui.Dim("Frontmatter updates pending implementation"))
 	}
 	return nil
 }
 
 // handleFestivalStatusChange handles changing a festival's status by moving its directory.
-func handleFestivalStatusChange(ctx context.Context, festival *show.FestivalInfo, newStatus string, opts *statusOptions) error {
+func handleFestivalStatusChange(ctx context.Context, display *ui.UI, festival *show.FestivalInfo, newStatus string, opts *statusOptions) error {
 	if err := ctx.Err(); err != nil {
 		return errors.Wrap(err, "context cancelled")
 	}
 
 	if festival.Status == newStatus {
-		return emitAlreadyAtStatus(opts, newStatus)
+		return emitAlreadyAtStatus(display, opts, newStatus)
 	}
 
 	// Confirm unless forced
 	if !opts.force {
-		if !confirmFestivalMove(festival, newStatus) {
-			fmt.Println("Operation cancelled.")
+		if !confirmFestivalMove(display, festival, newStatus) {
+			display.Info("Operation cancelled.")
 			return nil
 		}
 	}
@@ -135,27 +141,29 @@ func handleFestivalStatusChange(ctx context.Context, festival *show.FestivalInfo
 }
 
 // emitAlreadyAtStatus outputs a message when festival is already at the requested status.
-func emitAlreadyAtStatus(opts *statusOptions, status string) error {
+func emitAlreadyAtStatus(display *ui.UI, opts *statusOptions, status string) error {
 	if opts.json {
 		result := map[string]interface{}{
 			"success": true,
 			"message": "already at requested status",
 			"status":  status,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
-		fmt.Printf("Festival is already %s\n", status)
+		fmt.Printf("%s %s\n", ui.Info("Already at status"), ui.GetStateStyle(status).Render(status))
 	}
 	return nil
 }
 
 // confirmFestivalMove prompts the user to confirm a festival move operation.
-func confirmFestivalMove(festival *show.FestivalInfo, newStatus string) bool {
-	fmt.Printf("Move festival '%s' from %s to %s? [y/N]: ", festival.Name, festival.Status, newStatus)
-	var response string
-	fmt.Scanln(&response)
-	return strings.HasPrefix(strings.ToLower(response), "y")
+func confirmFestivalMove(display *ui.UI, festival *show.FestivalInfo, newStatus string) bool {
+	prompt := fmt.Sprintf("Move festival %s from %s to %s?",
+		ui.Value(festival.Name, ui.FestivalColor),
+		ui.GetStateStyle(festival.Status).Render(festival.Status),
+		ui.GetStateStyle(newStatus).Render(newStatus))
+	return display.Confirm("%s", prompt)
 }
 
 // executeFestivalMove performs the actual directory move for a festival status change.
@@ -198,11 +206,15 @@ func emitFestivalMoveSuccess(opts *statusOptions, festival *show.FestivalInfo, n
 			"old_path":   festival.Path,
 			"new_path":   newPath,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
-		fmt.Printf("Moved festival '%s' from %s to %s\n", festival.Name, festival.Status, newStatus)
-		fmt.Printf("New path: %s\n", newPath)
+		fmt.Println(ui.Success("✓ Festival status updated"))
+		fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(festival.Name, ui.FestivalColor))
+		fmt.Printf("%s %s\n", ui.Label("From"), ui.GetStateStyle(festival.Status).Render(festival.Status))
+		fmt.Printf("%s %s\n", ui.Label("To"), ui.GetStateStyle(newStatus).Render(newStatus))
+		fmt.Printf("%s %s\n", ui.Label("Path"), ui.Dim(newPath))
 	}
 	return nil
 }
@@ -214,7 +226,7 @@ func runFestivalListing(ctx context.Context, festivalsRoot, filterStatus string,
 	}
 
 	if filterStatus != "" {
-		festivals, err := show.ListFestivalsByStatus(festivalsRoot, filterStatus)
+		festivals, err := show.ListFestivalsByStatus(ctx, festivalsRoot, filterStatus)
 		if err != nil {
 			return err
 		}
@@ -225,8 +237,9 @@ func runFestivalListing(ctx context.Context, festivalsRoot, filterStatus string,
 				"count":     len(festivals),
 				"festivals": festivals,
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 		} else {
 			fmt.Println(show.FormatFestivalList(filterStatus, festivals))
 		}
@@ -288,11 +301,11 @@ func emitEmptyPhasesResult(opts *statusOptions, filterStatus string) error {
 	if opts.json {
 		return emitEmptyJSON("phase", filterStatus)
 	}
-	fmt.Printf("No phases found")
+	message := "No phases found"
 	if filterStatus != "" {
-		fmt.Printf(" with status '%s'", filterStatus)
+		message = fmt.Sprintf("No phases found with status '%s'", filterStatus)
 	}
-	fmt.Println()
+	fmt.Println(ui.Info(message))
 	return nil
 }
 
@@ -354,11 +367,11 @@ func emitEmptySequencesResult(opts *statusOptions, filterStatus string) error {
 	if opts.json {
 		return emitEmptyJSON("sequence", filterStatus)
 	}
-	fmt.Printf("No sequences found")
+	message := "No sequences found"
 	if filterStatus != "" {
-		fmt.Printf(" with status '%s'", filterStatus)
+		message = fmt.Sprintf("No sequences found with status '%s'", filterStatus)
 	}
-	fmt.Println()
+	fmt.Println(ui.Info(message))
 	return nil
 }
 
@@ -416,11 +429,11 @@ func emitEmptyTasksResult(opts *statusOptions, filterStatus string) error {
 	if opts.json {
 		return emitEmptyJSON("task", filterStatus)
 	}
-	fmt.Printf("No tasks found")
+	message := "No tasks found"
 	if filterStatus != "" {
-		fmt.Printf(" with status '%s'", filterStatus)
+		message = fmt.Sprintf("No tasks found with status '%s'", filterStatus)
 	}
-	fmt.Println()
+	fmt.Println(ui.Info(message))
 	return nil
 }
 
@@ -442,7 +455,7 @@ func runStatusList(ctx context.Context, cmd *cobra.Command, filterStatus string,
 	}
 
 	// Detect current location
-	loc, err := show.DetectCurrentLocation(festivalPath)
+	loc, err := show.DetectCurrentLocation(ctx, festivalPath)
 	if err != nil {
 		return handleStatusListOutsideFestival(ctx, cwd, filterStatus, opts)
 	}
@@ -511,7 +524,7 @@ func runStatusHistory(ctx context.Context, cmd *cobra.Command, limit int, opts *
 		return errors.Wrap(err, "not inside a festival")
 	}
 
-	loc, err := show.DetectCurrentLocation(festivalPath)
+	loc, err := show.DetectCurrentLocation(ctx, festivalPath)
 	if err != nil {
 		return err
 	}
@@ -565,8 +578,9 @@ func emitStatusHistory(opts *statusOptions, festivalName string, history []map[s
 				"history": []interface{}{},
 				"message": "no status history found",
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 		} else {
 			fmt.Println("No status history found for this festival.")
 		}
@@ -584,8 +598,9 @@ func emitStatusHistory(opts *statusOptions, festivalName string, history []map[s
 			"count":    len(history),
 			"history":  history,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		fmt.Printf("Status History for %s:\n", festivalName)
 		fmt.Println(strings.Repeat("-", 50))

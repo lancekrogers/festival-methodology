@@ -279,7 +279,7 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 			display.Warning("  ~ Skipped %s (%s)", r.Path, r.Reason)
 		case "exists":
 			if shared.IsVerbose() {
-				fmt.Fprintf(out, "  = %s (already exists)\n", r.Path)
+				display.Info("  = %s (already exists)", r.Path)
 			}
 		}
 	}
@@ -314,8 +314,12 @@ func runPolicyOnlyApply(ctx context.Context, cmd *cobra.Command, opts *applyOpti
 
 	out := cmd.OutOrStdout()
 	if opts.dryRun {
-		fmt.Fprintf(out, "[dry-run] Would apply policy %q to %s\n", opts.policyName, overridePath)
-		fmt.Fprintf(out, "Policy: %s - %s\n", info.Name, info.Description)
+		fmt.Fprintln(out, ui.H1("Gate Policy (Dry Run)"))
+		fmt.Fprintf(out, "%s %s\n", ui.Label("Policy"), ui.Value(info.Name))
+		if info.Description != "" {
+			fmt.Fprintf(out, "%s %s\n", ui.Label("Description"), ui.Dim(info.Description))
+		}
+		fmt.Fprintf(out, "%s %s\n", ui.Label("Target"), ui.Dim(overridePath))
 		return nil
 	}
 
@@ -338,6 +342,8 @@ func runPolicyOnlyApply(ctx context.Context, cmd *cobra.Command, opts *applyOpti
 		return emitApplyError(opts, errors.Wrap(err, "saving policy").WithField("path", overridePath))
 	}
 
-	fmt.Fprintf(out, "Applied policy %q to %s\n", opts.policyName, overridePath)
+	fmt.Fprintln(out, ui.Success("✓ Gate policy applied"))
+	fmt.Fprintf(out, "%s %s\n", ui.Label("Policy"), ui.Value(info.Name))
+	fmt.Fprintf(out, "%s %s\n", ui.Label("Path"), ui.Dim(overridePath))
 	return nil
 }

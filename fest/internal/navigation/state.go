@@ -27,8 +27,8 @@ type Navigation struct {
 
 // Link represents a festival-to-project link
 type Link struct {
-	Path         string    `yaml:"path"`                            // Project path
-	FestivalPath string    `yaml:"festival_path,omitempty"`         // Festival path (for reverse navigation)
+	Path         string    `yaml:"path"`                    // Project path
+	FestivalPath string    `yaml:"festival_path,omitempty"` // Festival path (for reverse navigation)
 	LinkedAt     time.Time `yaml:"linked_at"`
 }
 

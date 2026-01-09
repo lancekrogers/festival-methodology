@@ -15,6 +15,73 @@ These flags are available on all commands:
 
 ---
 
+## Styled Output and TTY Behavior
+
+Fest uses structured, styled output when running in a TTY (headers, labels, and color accents). When stdout is not a TTY (pipes, redirects, or CI logs), color is automatically disabled to avoid ANSI leakage. JSON output remains unstyled regardless of TTY mode.
+
+Use these options to control styling behavior:
+
+- `--no-color` to force plain output
+- `NO_COLOR=1` to disable color globally
+- `CLICOLOR_FORCE=1` to force color in supported terminals
+
+`--no-color` takes precedence over environment variables.
+
+Examples:
+
+```bash
+fest status > status.txt   # no ANSI codes
+fest status --json         # JSON output (unstyled)
+```
+
+Troubleshooting: see `docs/troubleshooting.md` for color and output issues.
+
+## Output Examples (TTY)
+
+Use these as visual references for styled output. Colors and emphasis appear in a real TTY.
+
+### fest status
+
+```text
+STATUS
+------
+Festival my-festival
+Status active
+Location festival
+
+Progress 73.0%
+Phases 4/6 completed
+Sequences 14/20 completed
+Tasks 46/63 completed
+```
+
+### fest next
+
+```text
+NEXT TASK
+---------
+Task 02_example_task
+Path /path/to/festivals/active/my-festival/002_PHASE/01_sequence/02_example_task.md
+Sequence 01_sequence
+Phase 002_PHASE
+Autonomy high
+
+Recommendation Next available task in festival
+```
+
+### fest progress --path <task>
+
+```text
+TASK PROGRESS
+-------------
+Task 005_TESTING_AND_DOCS/01_tty_nontty_testing/03_test_all_styled_commands_in_nontty_environment.md
+Status completed
+Progress 100%
+Time 5 min
+```
+
+---
+
 ## Creation Commands
 
 ### fest create festival

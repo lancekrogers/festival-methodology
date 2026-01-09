@@ -3,6 +3,7 @@ package template
 import (
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -233,21 +234,55 @@ func (c *Context) Get(key string) (interface{}, bool) {
 
 // FormatPhaseID creates formatted phase ID: "001_PLANNING"
 func FormatPhaseID(number int, name string) string {
-	// Normalize name: uppercase, replace spaces with underscores
-	normalized := strings.ToUpper(strings.ReplaceAll(name, " ", "_"))
+	// Normalize name: strip numeric prefix, uppercase, replace spaces with underscores
+	normalized := normalizeName(name, 3, strings.ToUpper)
 	return fmt.Sprintf("%03d_%s", number, normalized)
 }
 
 // FormatSequenceID creates formatted sequence ID: "01_requirements"
 func FormatSequenceID(number int, name string) string {
-	// Normalize name: lowercase, replace spaces with underscores
-	normalized := strings.ToLower(strings.ReplaceAll(name, " ", "_"))
+	// Normalize name: strip numeric prefix, lowercase, replace spaces with underscores
+	normalized := normalizeName(name, 2, strings.ToLower)
 	return fmt.Sprintf("%02d_%s", number, normalized)
+}
+
+func normalizeName(name string, prefixDigits int, transform func(string) string) string {
+	trimmed := strings.TrimSpace(name)
+	trimmed = stripNumericPrefix(trimmed, prefixDigits)
+	trimmed = strings.ReplaceAll(trimmed, " ", "_")
+	return transform(trimmed)
+}
+
+func stripNumericPrefix(name string, digits int) string {
+	if len(name) <= digits {
+		return name
+	}
+
+	prefix := name[:digits]
+	if _, err := strconv.Atoi(prefix); err != nil {
+		return name
+	}
+
+	if len(name) == digits {
+		return name
+	}
+
+	sep := name[digits]
+	if sep != '_' && sep != '-' && sep != ' ' {
+		return name
+	}
+
+	remainder := strings.TrimLeft(strings.TrimSpace(name[digits+1:]), "_- ")
+	if remainder == "" {
+		return name
+	}
+
+	return remainder
 }
 
 // FormatTaskID creates formatted task ID: "01_user_research.md"
 func FormatTaskID(number int, name string) string {
-	// Normalize name: lowercase, replace spaces with underscores
-	normalized := strings.ToLower(strings.ReplaceAll(name, " ", "_"))
+	// Normalize name: strip numeric prefix, lowercase, replace spaces with underscores
+	normalized := normalizeName(name, 2, strings.ToLower)
 	return fmt.Sprintf("%02d_%s.md", number, normalized)
 }

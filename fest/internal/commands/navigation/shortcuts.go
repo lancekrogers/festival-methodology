@@ -2,7 +2,6 @@ package navigation
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,30 +9,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/navigation"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
+	"github.com/lancekrogers/festival-methodology/fest/internal/workspace"
 	"github.com/spf13/cobra"
 )
 
 var shortcutNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_]{1,20}$`)
-
-// Styles for fest go list output
-var (
-	// Shortcut styling - pink/magenta for user shortcuts
-	shortcutNameStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
-
-	// Festival link styling - green for festival links
-	festivalLinkStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true)
-
-	// Path styling - gray for file paths
-	pathDisplayStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
-
-	// Header styling - bold for section headers
-	headerStyle = lipgloss.NewStyle().Bold(true)
-)
 
 // isValidShortcutName checks if a shortcut name is valid
 func isValidShortcutName(name string) bool {
@@ -133,11 +118,15 @@ func runGoMap(name, path string, jsonOutput bool) error {
 			"shortcut": name,
 			"path":     absPath,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
-		fmt.Printf("Created shortcut '-%s' → %s\n", name, absPath)
-		fmt.Println("\nUse 'fgo -" + name + "' to navigate")
+		fmt.Println(ui.H1("Shortcut Created"))
+		fmt.Printf("%s %s\n", ui.Label("Shortcut"), ui.Value("-"+name))
+		fmt.Printf("%s %s\n", ui.Label("Path"), ui.Dim(absPath))
+		fmt.Println()
+		fmt.Println(ui.Dim(fmt.Sprintf("Use 'fgo -%s' to navigate", name)))
 	}
 
 	return nil
@@ -191,13 +180,14 @@ func runGoUnmap(name string, jsonOutput bool) error {
 			"shortcut": name,
 			"removed":  exists,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		if exists {
-			fmt.Printf("Removed shortcut '-%s'\n", name)
+			fmt.Printf("%s %s\n", ui.Success("✓ Shortcut removed"), ui.Value("-"+name))
 		} else {
-			fmt.Printf("Shortcut '%s' not found\n", name)
+			fmt.Printf("%s %s\n", ui.Warning("Shortcut not found"), ui.Value(name))
 		}
 	}
 
@@ -293,21 +283,19 @@ func runGoList(jsonOutput bool) error {
 			"shortcuts": shortcuts,
 			"links":     links,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		hasContent := false
+		fmt.Println(ui.H1("Navigation"))
 
 		// Print shortcuts section
 		if len(nav.Shortcuts) > 0 {
-			fmt.Println(headerStyle.Render("SHORTCUTS"))
-			fmt.Println(strings.Repeat("=", 60))
-			fmt.Printf("%-12s %s\n", "Shortcut", "Path")
-			fmt.Println(strings.Repeat("-", 60))
+			fmt.Println(ui.H2("Shortcuts"))
+			fmt.Println(ui.Dim(strings.Repeat("─", 60)))
 			for name, path := range nav.Shortcuts {
-				styledName := shortcutNameStyle.Render("-" + name)
-				styledPath := pathDisplayStyle.Render(path)
-				fmt.Printf("%-21s %s\n", styledName, styledPath)
+				fmt.Printf("%s %s\n", ui.Value("-"+name), ui.Dim(path))
 			}
 			hasContent = true
 		}
@@ -317,23 +305,28 @@ func runGoList(jsonOutput bool) error {
 			if hasContent {
 				fmt.Println()
 			}
-			fmt.Println(headerStyle.Render("FESTIVAL LINKS"))
-			fmt.Println(strings.Repeat("=", 60))
-			fmt.Printf("%-25s %s\n", "Festival", "Project Path")
-			fmt.Println(strings.Repeat("-", 60))
+			fmt.Println(ui.H2("Festival Links"))
+			fmt.Println(ui.Dim(strings.Repeat("─", 60)))
+			cwd, _ := os.Getwd()
+			festivalsDir, _ := workspace.FindFestivals(cwd)
 			for name, link := range nav.Links {
-				styledFestival := festivalLinkStyle.Render(name)
-				styledPath := pathDisplayStyle.Render(link.Path)
-				fmt.Printf("%-34s %s\n", styledFestival, styledPath)
+				styledFestival := ui.Value(name, ui.FestivalColor)
+				if festivalsDir != "" {
+					status := findFestivalStatus(festivalsDir, name)
+					if status != "" {
+						styledFestival = ui.GetStatusStyle(status).Render(name)
+					}
+				}
+				fmt.Printf("%s %s\n", styledFestival, ui.Dim(link.Path))
 			}
 			hasContent = true
 		}
 
 		if !hasContent {
-			fmt.Println("No shortcuts or festival links configured.")
+			fmt.Println(ui.Dim("No shortcuts or festival links configured."))
 			fmt.Println()
-			fmt.Println("Create a shortcut:    fest go map <name> [path]")
-			fmt.Println("Create a link:        fest link <path>  (from within a festival)")
+			fmt.Println(ui.Dim("Create a shortcut:    fest go map <name> [path]"))
+			fmt.Println(ui.Dim("Create a link:        fest link <path>  (from within a festival)"))
 		}
 	}
 
@@ -381,21 +374,21 @@ func NewGoProjectCommand() *cobra.Command {
 
 Use 'fest link <path>' to create a link from within a festival.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runGoProject()
+			return runGoProject(cmd.Context())
 		},
 	}
 
 	return cmd
 }
 
-func runGoProject() error {
+func runGoProject(ctx context.Context) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return errors.IO("getting current directory", err)
 	}
 
 	// Detect current festival
-	loc, err := show.DetectCurrentLocation(cwd)
+	loc, err := show.DetectCurrentLocation(ctx, cwd)
 	if err != nil {
 		return errors.NotFound("festival").
 			WithField("hint", "run from inside a festival directory")

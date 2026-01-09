@@ -1,6 +1,7 @@
 package navigation
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -12,15 +13,16 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	festErrors "github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/navigation"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/lancekrogers/festival-methodology/fest/internal/workspace"
 	"github.com/spf13/cobra"
 )
 
 // Styles for festival status in TUI
 var (
-	activeStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true) // Green
-	plannedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("33")).Bold(true) // Blue
-	pathStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))           // Gray
+	activeStyle  = lipgloss.NewStyle().Foreground(ui.ActiveColor).Bold(true)
+	plannedStyle = lipgloss.NewStyle().Foreground(ui.PlannedColor).Bold(true)
+	pathStyle    = lipgloss.NewStyle().Foreground(ui.MetadataColor)
 )
 
 // NewGoLinkCommand creates the context-aware link subcommand for fest go
@@ -55,14 +57,14 @@ Examples:
 			if len(args) > 0 {
 				path = args[0]
 			}
-			return runGoLink(path)
+			return runGoLink(cmd.Context(), path)
 		},
 	}
 
 	return cmd
 }
 
-func runGoLink(targetPath string) error {
+func runGoLink(ctx context.Context, targetPath string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return festErrors.IO("getting current directory", err)
@@ -70,7 +72,7 @@ func runGoLink(targetPath string) error {
 
 	// Detect context: are we inside a festival?
 	if isInsideFestival(cwd) {
-		return linkFestivalToProject(cwd, targetPath)
+		return linkFestivalToProject(ctx, cwd, targetPath)
 	}
 
 	// We're in a project directory, show festival picker
@@ -111,9 +113,9 @@ func isInsideFestival(path string) bool {
 }
 
 // linkFestivalToProject links the current festival to a project directory
-func linkFestivalToProject(cwd, targetPath string) error {
+func linkFestivalToProject(ctx context.Context, cwd, targetPath string) error {
 	// Detect current festival
-	loc, err := show.DetectCurrentLocation(cwd)
+	loc, err := show.DetectCurrentLocation(ctx, cwd)
 	if err != nil || loc == nil || loc.Festival == nil || loc.Festival.Name == "" {
 		return festErrors.Validation("not inside a recognized festival")
 	}
@@ -169,8 +171,11 @@ func linkFestivalToProject(cwd, targetPath string) error {
 		return festErrors.Wrap(err, "saving navigation state")
 	}
 
-	fmt.Printf("Linked: %s ↔ %s\n", festivalName, projectPath)
-	fmt.Println("Use 'fgo' to navigate between them.")
+	fmt.Println(ui.H1("Link Created"))
+	fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(festivalName, ui.FestivalColor))
+	fmt.Printf("%s %s\n", ui.Label("Project"), ui.Dim(projectPath))
+	fmt.Println()
+	fmt.Println(ui.Dim("Use 'fgo' to navigate between them."))
 
 	return nil
 }
@@ -259,8 +264,11 @@ func linkProjectToFestival(cwd string) error {
 		return festErrors.Wrap(err, "saving navigation state")
 	}
 
-	fmt.Printf("Linked: %s ↔ %s\n", selectedFestival, absPath)
-	fmt.Println("Use 'fgo' to navigate between them.")
+	fmt.Println(ui.H1("Link Created"))
+	fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(selectedFestival, ui.FestivalColor))
+	fmt.Printf("%s %s\n", ui.Label("Project"), ui.Dim(absPath))
+	fmt.Println()
+	fmt.Println(ui.Dim("Use 'fgo' to navigate between them."))
 
 	return nil
 }
@@ -331,7 +339,7 @@ func selectProjectDirectory(festivalPath, festivalName string) (string, error) {
 	// festivalPath is like: /path/to/guild-framework/festivals/active/festival-name
 	// We want campaign root: /path/to/guild-framework
 	festivalsDir := filepath.Dir(filepath.Dir(festivalPath)) // → festivals/
-	campaignRoot := filepath.Dir(festivalsDir)              // → guild-framework/
+	campaignRoot := filepath.Dir(festivalsDir)               // → guild-framework/
 
 	// Collect directories from campaign root (excluding festivals/)
 	directories, err := collectDirectories(campaignRoot, festivalsDir)

@@ -33,7 +33,7 @@ Planning sequences (*_planning, *_research, etc.) are excluded.`,
 			if len(args) > 0 {
 				opts.path = args[0]
 			}
-			return runValidateQualityGates(opts)
+			return runValidateQualityGates(cmd.Context(), opts)
 		},
 	}
 
@@ -43,8 +43,11 @@ Planning sequences (*_planning, *_research, etc.) are excluded.`,
 	return cmd
 }
 
-func runValidateQualityGates(opts *validateOptions) error {
+func runValidateQualityGates(ctx context.Context, opts *validateOptions) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	festivalPath, err := resolveFestivalPath(opts.path)
 	if err != nil {
@@ -59,7 +62,7 @@ func runValidateQualityGates(opts *validateOptions) error {
 		Issues:   []ValidationIssue{},
 	}
 
-	validateQualityGatesChecks(festivalPath, result, opts.fix)
+	validateQualityGatesChecks(ctx, festivalPath, result, opts.fix)
 
 	result.Score = calculateScore(result)
 	for _, issue := range result.Issues {
@@ -77,8 +80,7 @@ func runValidateQualityGates(opts *validateOptions) error {
 	return nil
 }
 
-func validateQualityGatesChecks(festivalPath string, result *ValidationResult, autoFix bool) {
-	ctx := context.Background()
+func validateQualityGatesChecks(ctx context.Context, festivalPath string, result *ValidationResult, autoFix bool) {
 	parser := festival.NewParser()
 	phases, _ := parser.ParsePhases(ctx, festivalPath)
 	policy := gates.DefaultPolicy()

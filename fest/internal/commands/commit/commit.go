@@ -4,17 +4,18 @@ package commit
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/frontmatter"
 	"github.com/lancekrogers/festival-methodology/fest/internal/id"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -72,7 +73,13 @@ func runCommit(cmd *cobra.Command, args []string) error {
 	result := &CommitResult{}
 
 	// Check if we're in a git repository
-	if !isGitRepo() {
+	inRepo, err := isGitRepo(ctx)
+	if err != nil {
+		result.Success = false
+		result.Error = err.Error()
+		return outputResult(result)
+	}
+	if !inRepo {
 		result.Success = false
 		result.Error = "not in a git repository"
 		return outputResult(result)
@@ -107,7 +114,7 @@ func runCommit(cmd *cobra.Command, args []string) error {
 	}
 
 	// Execute git commit
-	hash, err := executeGitCommit(commitMessage)
+	hash, err := executeGitCommit(ctx, commitMessage)
 	if err != nil {
 		result.Success = false
 		result.Error = err.Error()
@@ -124,14 +131,16 @@ func runCommit(cmd *cobra.Command, args []string) error {
 
 func outputResult(result *CommitResult) error {
 	if jsonOut {
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		if result.Success {
-			fmt.Printf("Committed: %s\n", result.Hash)
-			fmt.Printf("Message: %s\n", result.Message)
+			fmt.Println(ui.H1("Commit"))
+			fmt.Printf("%s %s\n", ui.Label("Hash"), ui.Value(result.Hash))
+			fmt.Printf("%s %s\n", ui.Label("Message"), highlightTaskRefs(result.Message))
 			if result.TaskRef != "" {
-				fmt.Printf("Task: %s\n", result.TaskRef)
+				fmt.Printf("%s %s\n", ui.Label("Task"), ui.Value(result.TaskRef, ui.TaskColor))
 			}
 		} else {
 			return errors.New(result.Error)
@@ -140,13 +149,28 @@ func outputResult(result *CommitResult) error {
 	return nil
 }
 
-func isGitRepo() bool {
-	cmd := exec.Command("git", "rev-parse", "--git-dir")
-	return cmd.Run() == nil
+func isGitRepo(ctx context.Context) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, errors.Wrap(err, "context cancelled")
+	}
+	cmd := exec.CommandContext(ctx, "git", "rev-parse", "--git-dir")
+	if err := cmd.Run(); err != nil {
+		if ctx.Err() != nil {
+			return false, errors.Wrap(ctx.Err(), "context cancelled")
+		}
+		if _, ok := err.(*exec.ExitError); ok {
+			return false, nil
+		}
+		return false, errors.Wrap(err, "checking git repository")
+	}
+	return true, nil
 }
 
-func executeGitCommit(message string) (string, error) {
-	cmd := exec.Command("git", "commit", "-m", message)
+func executeGitCommit(ctx context.Context, message string) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", errors.Wrap(err, "context cancelled")
+	}
+	cmd := exec.CommandContext(ctx, "git", "commit", "-m", message)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -155,7 +179,7 @@ func executeGitCommit(message string) (string, error) {
 	}
 
 	// Get the commit hash
-	hashCmd := exec.Command("git", "rev-parse", "--short", "HEAD")
+	hashCmd := exec.CommandContext(ctx, "git", "rev-parse", "--short", "HEAD")
 	var out bytes.Buffer
 	hashCmd.Stdout = &out
 	if err := hashCmd.Run(); err != nil {

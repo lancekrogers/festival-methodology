@@ -14,7 +14,10 @@ import (
 // AtomicStatusChange performs an atomic status change for a festival.
 // For "completed" status, it uses date-based directories.
 // Returns the new path of the festival.
-func AtomicStatusChange(festivalPath, fromStatus, toStatus string) (string, error) {
+func AtomicStatusChange(ctx context.Context, festivalPath, fromStatus, toStatus string) (string, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	festivalName := filepath.Base(festivalPath)
 	festivalsRoot := filepath.Dir(filepath.Dir(festivalPath))
 
@@ -52,15 +55,17 @@ func AtomicStatusChange(festivalPath, fromStatus, toStatus string) (string, erro
 	}
 
 	// Update registry with new path/status
-	updateRegistry(festivalsRoot, festivalName, toStatus, newPath)
+	updateRegistry(ctx, festivalsRoot, festivalName, toStatus, newPath)
 
 	return newPath, nil
 }
 
 // updateRegistry updates the ID registry with the new festival status and path.
 // This is best-effort - registry updates are non-blocking.
-func updateRegistry(festivalsRoot, festivalName, newStatus, newPath string) {
-	ctx := context.Background()
+func updateRegistry(ctx context.Context, festivalsRoot, festivalName, newStatus, newPath string) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	regPath := registry.GetRegistryPath(festivalsRoot)
 	reg, err := registry.Load(ctx, regPath)
 	if err != nil {

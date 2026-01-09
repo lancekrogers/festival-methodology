@@ -1,11 +1,12 @@
 package understand
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/extensions"
 	"github.com/lancekrogers/festival-methodology/fest/internal/gates"
 	"github.com/lancekrogers/festival-methodology/fest/internal/plugins"
@@ -28,8 +29,8 @@ Gates can be customized at multiple levels:
   2. User config repo (~/.config/fest/active/user/policies/gates/)
   3. Project-local (.festival/policies/gates/)
   4. Phase override (.fest.gates.yml in phase directory)`,
-		Run: func(cmd *cobra.Command, args []string) {
-			printGates(jsonOutput)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return printGates(jsonOutput)
 		},
 	}
 
@@ -37,7 +38,7 @@ Gates can be customized at multiple levels:
 	return cmd
 }
 
-func printGates(jsonOutput bool) {
+func printGates(jsonOutput bool) error {
 	policy := gates.DefaultPolicy()
 
 	if jsonOutput {
@@ -46,9 +47,10 @@ func printGates(jsonOutput bool) {
 			"source":  "built-in",
 			"enabled": policy.GetEnabledTasks(),
 		}
-		data, _ := json.MarshalIndent(output, "", "  ")
-		fmt.Println(string(data))
-		return
+		if err := shared.EncodeJSON(os.Stdout, output); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
+		return nil
 	}
 
 	fmt.Print(`
@@ -90,6 +92,7 @@ Or add phase-level overrides:
 
 See: fest help gates
 `)
+	return nil
 }
 
 func newUnderstandPluginsCmd() *cobra.Command {
@@ -108,8 +111,8 @@ Plugins extend fest with additional commands. They are discovered from:
 Plugin executables follow the naming convention:
   fest-<group>-<name>  →  "fest <group> <name>"
   fest-export-jira     →  "fest export jira"`,
-		Run: func(cmd *cobra.Command, args []string) {
-			printPlugins(jsonOutput)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return printPlugins(jsonOutput)
 		},
 	}
 
@@ -117,7 +120,7 @@ Plugin executables follow the naming convention:
 	return cmd
 }
 
-func printPlugins(jsonOutput bool) {
+func printPlugins(jsonOutput bool) error {
 	discovery := plugins.NewPluginDiscovery()
 	_ = discovery.DiscoverAll()
 	discovered := discovery.Plugins()
@@ -127,9 +130,10 @@ func printPlugins(jsonOutput bool) {
 			"count":   len(discovered),
 			"plugins": discovered,
 		}
-		data, _ := json.MarshalIndent(output, "", "  ")
-		fmt.Println(string(data))
-		return
+		if err := shared.EncodeJSON(os.Stdout, output); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
+		return nil
 	}
 
 	fmt.Print(`
@@ -153,7 +157,7 @@ To add plugins:
 
 See: fest help plugins
 `)
-		return
+		return nil
 	}
 
 	fmt.Printf("Found %d plugin(s):\n\n", len(discovered))
@@ -182,6 +186,7 @@ See: fest help plugins
 		}
 		fmt.Println()
 	}
+	return nil
 }
 
 func newUnderstandExtensionsCmd() *cobra.Command {
@@ -200,8 +205,8 @@ They are loaded from three sources with the following precedence:
   3. Built-in: ~/.config/fest/festivals/.festival/extensions/ (lowest priority)
 
 Higher priority sources override lower ones when extensions have the same name.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			printExtensions(jsonOutput)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return printExtensions(jsonOutput)
 		},
 	}
 
@@ -209,7 +214,7 @@ Higher priority sources override lower ones when extensions have the same name.`
 	return cmd
 }
 
-func printExtensions(jsonOutput bool) {
+func printExtensions(jsonOutput bool) error {
 	// Get festival root if available
 	cwd, _ := os.Getwd()
 	festivalRoot := ""
@@ -239,9 +244,10 @@ func printExtensions(jsonOutput bool) {
 			"count":      len(exts),
 			"extensions": exts,
 		}
-		data, _ := json.MarshalIndent(output, "", "  ")
-		fmt.Println(string(data))
-		return
+		if err := shared.EncodeJSON(os.Stdout, output); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
+		return nil
 	}
 
 	fmt.Print(`
@@ -263,7 +269,7 @@ To add extensions:
 
 See: fest extension list
 `)
-		return
+		return nil
 	}
 
 	fmt.Printf("Found %d extension(s):\n\n", len(exts))
@@ -291,4 +297,5 @@ See: fest extension list
 	}
 
 	fmt.Println("For detailed info: fest extension info <name>")
+	return nil
 }

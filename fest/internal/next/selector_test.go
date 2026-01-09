@@ -1,6 +1,7 @@
 package next
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -223,7 +224,7 @@ func TestSelector_FindNext_Integration(t *testing.T) {
 	}
 
 	s := NewSelector(testFestival)
-	result, err := s.FindNext(testFestival)
+	result, err := s.FindNext(context.Background(), testFestival)
 	if err != nil {
 		t.Fatalf("FindNext error: %v", err)
 	}

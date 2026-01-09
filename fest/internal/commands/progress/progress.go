@@ -3,7 +3,6 @@ package progress
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
@@ -17,6 +16,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -77,7 +77,7 @@ Use --festival to run outside a festival directory.`,
   fest progress --task 02_impl.md --blocker "Waiting on API spec"
   fest progress --task 02_impl.md --clear`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runProgress(opts)
+			return runProgress(cmd.Context(), opts)
 		},
 	}
 
@@ -96,8 +96,10 @@ Use --festival to run outside a festival directory.`,
 	return cmd
 }
 
-func runProgress(opts *progressOptions) error {
-	ctx := context.Background()
+func runProgress(ctx context.Context, opts *progressOptions) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -131,7 +133,7 @@ func runProgress(opts *progressOptions) error {
 	}
 
 	// Detect current location
-	loc, err := show.DetectCurrentLocation(targetPath)
+	loc, err := show.DetectCurrentLocation(ctx, targetPath)
 	if err != nil {
 		return errors.Wrap(err, "detecting festival location")
 	}
@@ -174,10 +176,17 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 				"status":  progress.StatusBlocked,
 				"blocker": opts.blocker,
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 		} else {
-			fmt.Printf("Blocker reported for %s\n", taskID)
+			task, _ := mgr.GetTaskProgress(taskID)
+			task = ensureTaskProgress(taskID, task, &progress.TaskProgress{
+				Status:         progress.StatusBlocked,
+				Progress:       0,
+				BlockerMessage: opts.blocker,
+			})
+			printTaskProgress("Task Blocked", task)
 		}
 		return nil
 	}
@@ -193,10 +202,16 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 				"task":    taskID,
 				"cleared": true,
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 		} else {
-			fmt.Printf("Blocker cleared for %s\n", taskID)
+			task, _ := mgr.GetTaskProgress(taskID)
+			task = ensureTaskProgress(taskID, task, &progress.TaskProgress{
+				Status:   progress.StatusInProgress,
+				Progress: 0,
+			})
+			printTaskProgress("Blocker Cleared", task)
 		}
 		return nil
 	}
@@ -208,17 +223,26 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 		}
 		if opts.json {
 			task, _ := mgr.GetTaskProgress(taskID)
+			timeSpent := 0
+			if task != nil {
+				timeSpent = task.TimeSpentMinutes
+			}
 			result := map[string]interface{}{
 				"success":            true,
 				"task":               taskID,
 				"status":             progress.StatusCompleted,
-				"time_spent_minutes": task.TimeSpentMinutes,
+				"time_spent_minutes": timeSpent,
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 		} else {
 			task, _ := mgr.GetTaskProgress(taskID)
-			fmt.Printf("Task %s marked complete (time: %d min)\n", taskID, task.TimeSpentMinutes)
+			task = ensureTaskProgress(taskID, task, &progress.TaskProgress{
+				Status:   progress.StatusCompleted,
+				Progress: 100,
+			})
+			printTaskProgress("Task Completed", task)
 		}
 		return nil
 	}
@@ -234,10 +258,16 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 				"task":    taskID,
 				"status":  progress.StatusInProgress,
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 		} else {
-			fmt.Printf("Task %s marked in progress\n", taskID)
+			task, _ := mgr.GetTaskProgress(taskID)
+			task = ensureTaskProgress(taskID, task, &progress.TaskProgress{
+				Status:   progress.StatusInProgress,
+				Progress: 0,
+			})
+			printTaskProgress("Task In Progress", task)
 		}
 		return nil
 	}
@@ -253,16 +283,26 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 		}
 		if opts.json {
 			task, _ := mgr.GetTaskProgress(taskID)
+			status := statusForProgress(pct)
+			if task != nil {
+				status = task.Status
+			}
 			result := map[string]interface{}{
 				"success":  true,
 				"task":     taskID,
 				"progress": pct,
-				"status":   task.Status,
+				"status":   status,
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 		} else {
-			fmt.Printf("Task %s progress updated to %d%%\n", taskID, pct)
+			task, _ := mgr.GetTaskProgress(taskID)
+			task = ensureTaskProgress(taskID, task, &progress.TaskProgress{
+				Status:   statusForProgress(pct),
+				Progress: pct,
+			})
+			printTaskProgress("Progress Updated", task)
 		}
 		return nil
 	}
@@ -276,30 +316,69 @@ func handleTaskUpdate(ctx context.Context, mgr *progress.Manager, festivalPath s
 				"progress": 0,
 				"status":   progress.StatusPending,
 			}
-			data, _ := json.MarshalIndent(result, "", "  ")
-			fmt.Println(string(data))
+			if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+				return errors.Wrap(err, "encoding JSON output")
+			}
 		} else {
-			fmt.Printf("Task %s: pending (0%%)\n", taskID)
+			printTaskProgress("Task Progress", &progress.TaskProgress{
+				TaskID:   taskID,
+				Status:   progress.StatusPending,
+				Progress: 0,
+			})
 		}
 		return nil
 	}
 
 	if opts.json {
-		data, _ := json.MarshalIndent(task, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, task); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
-		fmt.Printf("Task: %s\n", task.TaskID)
-		fmt.Printf("Status: %s\n", task.Status)
-		fmt.Printf("Progress: %d%%\n", task.Progress)
-		if task.BlockerMessage != "" {
-			fmt.Printf("Blocker: %s\n", task.BlockerMessage)
-		}
-		if task.TimeSpentMinutes > 0 {
-			fmt.Printf("Time: %d min\n", task.TimeSpentMinutes)
-		}
+		printTaskProgress("Task Progress", task)
 	}
 
 	return nil
+}
+
+func printTaskProgress(title string, task *progress.TaskProgress) {
+	if task == nil {
+		return
+	}
+	fmt.Println(ui.H1(title))
+	fmt.Printf("%s %s\n", ui.Label("Task"), ui.Value(task.TaskID, ui.TaskColor))
+	fmt.Printf("%s %s\n", ui.Label("Status"), ui.GetStateStyle(task.Status).Render(task.Status))
+	fmt.Printf("%s %s\n", ui.Label("Progress"), ui.Value(fmt.Sprintf("%d%%", task.Progress)))
+	if task.BlockerMessage != "" {
+		fmt.Printf("%s %s\n", ui.Label("Blocker"), ui.Warning(task.BlockerMessage))
+	}
+	if task.TimeSpentMinutes > 0 {
+		fmt.Printf("%s %s\n", ui.Label("Time"), ui.Value(fmt.Sprintf("%d min", task.TimeSpentMinutes)))
+	}
+}
+
+func ensureTaskProgress(taskID string, task *progress.TaskProgress, fallback *progress.TaskProgress) *progress.TaskProgress {
+	if task != nil {
+		return task
+	}
+	if fallback == nil {
+		fallback = &progress.TaskProgress{
+			Status:   progress.StatusPending,
+			Progress: 0,
+		}
+	}
+	fallback.TaskID = taskID
+	return fallback
+}
+
+func statusForProgress(progressPct int) string {
+	switch {
+	case progressPct >= 100:
+		return progress.StatusCompleted
+	case progressPct > 0:
+		return progress.StatusInProgress
+	default:
+		return progress.StatusPending
+	}
 }
 
 func showProgressOverview(ctx context.Context, mgr *progress.Manager, loc *show.LocationInfo, opts *progressOptions) error {
@@ -323,57 +402,65 @@ func showFestivalProgress(ctx context.Context, mgr *progress.Manager, loc *show.
 	}
 
 	if opts.json {
-		data, _ := json.MarshalIndent(festProgress, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, festProgress); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 		return nil
 	}
 
 	// Human-readable output
-	fmt.Printf("FESTIVAL PROGRESS: %s\n", festProgress.FestivalName)
-	fmt.Println(strings.Repeat("=", 60))
+	fmt.Println(ui.H1("Festival Progress"))
+	fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(festProgress.FestivalName, ui.FestivalColor))
+	fmt.Println(ui.Dim(strings.Repeat("─", 60)))
 
 	// Overall progress bar
 	overall := festProgress.Overall
-	fmt.Printf("\nOverall: %s %d%% (%d/%d tasks)\n",
-		progressBar(overall.Percentage),
-		overall.Percentage,
-		overall.Completed,
-		overall.Total)
+	fmt.Printf("\n%s %s %s %s\n",
+		ui.Label("Overall"),
+		renderProgressBar(overall.Percentage),
+		ui.Value(fmt.Sprintf("%d%%", overall.Percentage)),
+		ui.Dim(fmt.Sprintf("(%d/%d tasks)", overall.Completed, overall.Total)))
 
 	if overall.Blocked > 0 {
-		fmt.Printf("⚠️  %d task(s) blocked\n", overall.Blocked)
+		fmt.Printf("%s %s\n",
+			ui.StateIcon("blocked"),
+			ui.Value(fmt.Sprintf("%d task(s) blocked", overall.Blocked), ui.WarningColor))
 	}
 
 	if overall.TimeSpentMin > 0 {
-		fmt.Printf("⏱️  Total time: %d min\n", overall.TimeSpentMin)
+		fmt.Printf("%s %s\n",
+			ui.Label("Total time"),
+			ui.Value(fmt.Sprintf("%d min", overall.TimeSpentMin)))
 	}
 
 	// Phase breakdown
 	if len(festProgress.Phases) > 0 {
-		fmt.Println("\nPHASES")
-		fmt.Println(strings.Repeat("-", 60))
+		fmt.Printf("\n%s\n", ui.H2("Phases"))
+		fmt.Println(ui.Dim(strings.Repeat("─", 60)))
 		for _, phase := range festProgress.Phases {
-			status := "○"
+			state := "pending"
 			if phase.Progress.Completed == phase.Progress.Total && phase.Progress.Total > 0 {
-				status = "✓"
+				state = "completed"
 			} else if phase.Progress.InProgress > 0 || phase.Progress.Completed > 0 {
-				status = "●"
+				state = "in_progress"
 			}
-			fmt.Printf("%s %-20s %3d%% (%d/%d)\n",
-				status,
-				phase.PhaseName,
-				phase.Progress.Percentage,
-				phase.Progress.Completed,
-				phase.Progress.Total)
+			fmt.Printf("%s %s %s %s\n",
+				ui.StateIcon(state),
+				ui.Value(phase.PhaseName, ui.PhaseColor),
+				ui.Dim(fmt.Sprintf("%3d%%", phase.Progress.Percentage)),
+				ui.Dim(fmt.Sprintf("(%d/%d)", phase.Progress.Completed, phase.Progress.Total)))
 		}
 	}
 
 	// Show blockers if any
 	if len(overall.Blockers) > 0 {
-		fmt.Println("\nBLOCKERS")
-		fmt.Println(strings.Repeat("-", 60))
+		fmt.Printf("\n%s\n", ui.H2("Blockers"))
+		fmt.Println(ui.Dim(strings.Repeat("─", 60)))
 		for _, blocker := range overall.Blockers {
-			fmt.Printf("🚫 %s: %s\n", blocker.TaskID, blocker.BlockerMessage)
+			fmt.Printf("%s %s %s\n",
+				ui.StateIcon("blocked"),
+				ui.Value(blocker.TaskID, ui.TaskColor),
+				ui.Dim(blocker.BlockerMessage))
 		}
 	}
 
@@ -388,42 +475,53 @@ func showPhaseProgress(ctx context.Context, mgr *progress.Manager, loc *show.Loc
 	}
 
 	if opts.json {
-		data, _ := json.MarshalIndent(phaseProgress, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, phaseProgress); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 		return nil
 	}
 
 	// Human-readable output
-	fmt.Printf("PHASE PROGRESS: %s\n", phaseProgress.PhaseName)
-	fmt.Printf("Festival: %s\n", loc.Festival.Name)
-	fmt.Println(strings.Repeat("=", 60))
+	fmt.Println(ui.H2("Phase Progress"))
+	fmt.Printf("%s %s\n", ui.Label("Phase"), ui.Value(phaseProgress.PhaseName, ui.PhaseColor))
+	fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(loc.Festival.Name, ui.FestivalColor))
+	fmt.Println(ui.Dim(strings.Repeat("─", 60)))
 
 	// Phase progress bar
 	prog := phaseProgress.Progress
-	fmt.Printf("\nPhase: %s %d%% (%d/%d tasks)\n",
-		progressBar(prog.Percentage),
-		prog.Percentage,
-		prog.Completed,
-		prog.Total)
+	fmt.Printf("\n%s %s %s %s\n",
+		ui.Label("Progress"),
+		renderProgressBar(prog.Percentage),
+		ui.Value(fmt.Sprintf("%d%%", prog.Percentage)),
+		ui.Dim(fmt.Sprintf("(%d/%d tasks)", prog.Completed, prog.Total)))
 
 	if prog.InProgress > 0 {
-		fmt.Printf("  In Progress: %d\n", prog.InProgress)
+		fmt.Printf("%s %s\n",
+			ui.Label("In progress"),
+			ui.Value(fmt.Sprintf("%d", prog.InProgress), ui.InProgressColor))
 	}
 
 	if prog.Blocked > 0 {
-		fmt.Printf("⚠️  Blocked: %d task(s)\n", prog.Blocked)
+		fmt.Printf("%s %s\n",
+			ui.StateIcon("blocked"),
+			ui.Value(fmt.Sprintf("%d task(s) blocked", prog.Blocked), ui.WarningColor))
 	}
 
 	if prog.TimeSpentMin > 0 {
-		fmt.Printf("⏱️  Time spent: %d min\n", prog.TimeSpentMin)
+		fmt.Printf("%s %s\n",
+			ui.Label("Time spent"),
+			ui.Value(fmt.Sprintf("%d min", prog.TimeSpentMin)))
 	}
 
 	// Show blockers if any
 	if len(prog.Blockers) > 0 {
-		fmt.Println("\nBLOCKERS")
-		fmt.Println(strings.Repeat("-", 60))
+		fmt.Printf("\n%s\n", ui.H3("Blockers"))
+		fmt.Println(ui.Dim(strings.Repeat("─", 60)))
 		for _, blocker := range prog.Blockers {
-			fmt.Printf("🚫 %s: %s\n", blocker.TaskID, blocker.BlockerMessage)
+			fmt.Printf("%s %s %s\n",
+				ui.StateIcon("blocked"),
+				ui.Value(blocker.TaskID, ui.TaskColor),
+				ui.Dim(blocker.BlockerMessage))
 		}
 	}
 
@@ -438,57 +536,76 @@ func showSequenceProgress(ctx context.Context, mgr *progress.Manager, loc *show.
 	}
 
 	if opts.json {
-		data, _ := json.MarshalIndent(seqProgress, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, seqProgress); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 		return nil
 	}
 
 	// Human-readable output
-	fmt.Printf("SEQUENCE PROGRESS: %s\n", seqProgress.SequenceName)
-	fmt.Printf("Phase: %s\n", loc.Phase)
-	fmt.Printf("Festival: %s\n", loc.Festival.Name)
-	fmt.Println(strings.Repeat("=", 60))
+	fmt.Println(ui.H2("Sequence Progress"))
+	fmt.Printf("%s %s\n", ui.Label("Sequence"), ui.Value(seqProgress.SequenceName, ui.SequenceColor))
+	fmt.Printf("%s %s\n", ui.Label("Phase"), ui.Value(loc.Phase, ui.PhaseColor))
+	fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(loc.Festival.Name, ui.FestivalColor))
+	fmt.Println(ui.Dim(strings.Repeat("─", 60)))
 
 	// Sequence progress bar
 	prog := seqProgress.Progress
-	fmt.Printf("\nSequence: %s %d%% (%d/%d tasks)\n",
-		progressBar(prog.Percentage),
-		prog.Percentage,
-		prog.Completed,
-		prog.Total)
+	fmt.Printf("\n%s %s %s %s\n",
+		ui.Label("Progress"),
+		renderProgressBar(prog.Percentage),
+		ui.Value(fmt.Sprintf("%d%%", prog.Percentage)),
+		ui.Dim(fmt.Sprintf("(%d/%d tasks)", prog.Completed, prog.Total)))
 
 	if prog.InProgress > 0 {
-		fmt.Printf("  In Progress: %d\n", prog.InProgress)
+		fmt.Printf("%s %s\n",
+			ui.Label("In progress"),
+			ui.Value(fmt.Sprintf("%d", prog.InProgress), ui.InProgressColor))
 	}
 
 	if prog.Pending > 0 {
-		fmt.Printf("  Pending: %d\n", prog.Pending)
+		fmt.Printf("%s %s\n",
+			ui.Label("Pending"),
+			ui.Value(fmt.Sprintf("%d", prog.Pending), ui.PendingColor))
 	}
 
 	if prog.Blocked > 0 {
-		fmt.Printf("⚠️  Blocked: %d task(s)\n", prog.Blocked)
+		fmt.Printf("%s %s\n",
+			ui.StateIcon("blocked"),
+			ui.Value(fmt.Sprintf("%d task(s) blocked", prog.Blocked), ui.WarningColor))
 	}
 
 	if prog.TimeSpentMin > 0 {
-		fmt.Printf("⏱️  Time spent: %d min\n", prog.TimeSpentMin)
+		fmt.Printf("%s %s\n",
+			ui.Label("Time spent"),
+			ui.Value(fmt.Sprintf("%d min", prog.TimeSpentMin)))
 	}
 
 	// Show blockers if any
 	if len(prog.Blockers) > 0 {
-		fmt.Println("\nBLOCKERS")
-		fmt.Println(strings.Repeat("-", 60))
+		fmt.Printf("\n%s\n", ui.H3("Blockers"))
+		fmt.Println(ui.Dim(strings.Repeat("─", 60)))
 		for _, blocker := range prog.Blockers {
-			fmt.Printf("🚫 %s: %s\n", blocker.TaskID, blocker.BlockerMessage)
+			fmt.Printf("%s %s %s\n",
+				ui.StateIcon("blocked"),
+				ui.Value(blocker.TaskID, ui.TaskColor),
+				ui.Dim(blocker.BlockerMessage))
 		}
 	}
 
 	return nil
 }
 
-func progressBar(percentage int) string {
-	filled := (percentage * ProgressBarWidth) / 100
-	empty := ProgressBarWidth - filled
-	return "[" + strings.Repeat("█", filled) + strings.Repeat("░", empty) + "]"
+func renderProgressBar(percentage int) string {
+	opts := ui.DefaultProgressBarOptions()
+	opts.Current = percentage
+	opts.Total = 100
+	opts.Width = ProgressBarWidth
+	opts.ShowPercentage = false
+	opts.ShowFraction = false
+	opts.FilledColor = ui.SuccessColor
+	opts.EmptyColor = ui.BorderColor
+	return ui.RenderProgressBar(opts)
 }
 
 func parsePercentage(s string) (int, error) {

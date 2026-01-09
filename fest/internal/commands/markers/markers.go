@@ -226,15 +226,15 @@ func runList(opts *markersOptions) error {
 	// Human-readable output
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
-	fmt.Printf("Festival Markers: %s\n", filepath.Base(festivalPath))
-	fmt.Println(strings.Repeat("=", 50))
+	fmt.Println(ui.H1("Festival Markers"))
+	fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(filepath.Base(festivalPath), ui.FestivalColor))
 
 	if summary.TotalMarkers == 0 {
-		display.Success("\nNo unfilled template markers found!")
+		display.Success("No unfilled template markers found!")
 		return nil
 	}
 
-	display.Warning("\nFound %d markers in %d files\n", summary.TotalMarkers, summary.TotalFiles)
+	display.Warning("Found %d markers in %d files", summary.TotalMarkers, summary.TotalFiles)
 
 	// Group by file
 	byFile := make(map[string][]MarkerOccurrence)
@@ -244,9 +244,13 @@ func runList(opts *markersOptions) error {
 
 	// Print grouped by file
 	for file, occurrences := range byFile {
-		fmt.Printf("\n%s (%d markers):\n", file, len(occurrences))
+		fmt.Printf("\n%s\n", ui.H2(fmt.Sprintf("%s (%d markers)", file, len(occurrences))))
 		for _, occ := range occurrences {
-			fmt.Printf("  Line %d: %s\n", occ.Line, occ.Content)
+			fmt.Printf("  %s %s %s\n",
+				ui.Label("Line"),
+				ui.Value(fmt.Sprintf("%d", occ.Line)),
+				ui.Warning(occ.Content),
+			)
 		}
 	}
 
@@ -284,21 +288,22 @@ func runCount(opts *markersOptions) error {
 	// Human-readable output
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
-	fmt.Printf("Marker Count: %s\n", filepath.Base(festivalPath))
-	fmt.Println(strings.Repeat("=", 50))
+	fmt.Println(ui.H1("Marker Count"))
+	fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(filepath.Base(festivalPath), ui.FestivalColor))
 
 	if summary.TotalMarkers == 0 {
-		display.Success("\nNo unfilled template markers found!")
+		display.Success("No unfilled template markers found!")
 		return nil
 	}
 
-	fmt.Printf("\nTotal Markers: %d\n", summary.TotalMarkers)
-	fmt.Printf("Files Affected: %d\n", summary.TotalFiles)
+	fmt.Printf("%s %s\n", ui.Label("Total Markers"), ui.Value(fmt.Sprintf("%d", summary.TotalMarkers)))
+	fmt.Printf("%s %s\n", ui.Label("Files Affected"), ui.Value(fmt.Sprintf("%d", summary.TotalFiles)))
 
 	if len(summary.ByType) > 0 {
-		fmt.Println("\nBy Type:")
+		fmt.Println()
+		fmt.Println(ui.H3("By Type"))
 		for markerType, count := range summary.ByType {
-			fmt.Printf("  %s: %d\n", markerType, count)
+			fmt.Printf("  %s %s\n", ui.Label(markerType), ui.Value(fmt.Sprintf("%d", count)))
 		}
 	}
 

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -90,7 +91,7 @@ func runResearchLink(ctx context.Context, cmd *cobra.Command, docPath string, ph
 		bidirectionalCount, err = createBidirectionalLinks(absDocPath, phases, sequences, tasks)
 		if err != nil {
 			// Log warning but don't fail
-			fmt.Fprintf(cmd.ErrOrStderr(), "Warning: failed to create some bidirectional links: %v\n", err)
+			fmt.Fprintln(cmd.ErrOrStderr(), ui.Warning(fmt.Sprintf("Failed to create some bidirectional links: %v", err)))
 		}
 	}
 
@@ -122,12 +123,14 @@ func runResearchLink(ctx context.Context, cmd *cobra.Command, docPath string, ph
 	}
 
 	out := cmd.OutOrStdout()
+	fmt.Fprintln(out, ui.H1("Research Links Updated"))
+	fmt.Fprintf(out, "%s %s\n", ui.Label("Document"), ui.Value(docPath))
 	if unlink {
-		fmt.Fprintf(out, "Removed %d link(s) from: %s\n", linksRemoved, docPath)
+		fmt.Fprintf(out, "%s %s\n", ui.Label("Removed"), ui.Value(fmt.Sprintf("%d link(s)", linksRemoved)))
 	} else {
-		fmt.Fprintf(out, "Added %d link(s) to: %s\n", linksAdded, docPath)
+		fmt.Fprintf(out, "%s %s\n", ui.Label("Added"), ui.Value(fmt.Sprintf("%d link(s)", linksAdded)))
 		if bidirectionalCount > 0 {
-			fmt.Fprintf(out, "Created %d bidirectional reference(s)\n", bidirectionalCount)
+			fmt.Fprintf(out, "%s %s\n", ui.Label("Bidirectional"), ui.Value(fmt.Sprintf("%d reference(s)", bidirectionalCount)))
 		}
 	}
 

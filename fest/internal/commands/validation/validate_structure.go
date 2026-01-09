@@ -28,7 +28,7 @@ func newValidateStructureCmd(parentOpts *validateOptions) *cobra.Command {
 			if len(args) > 0 {
 				opts.path = args[0]
 			}
-			return runValidateStructure(opts)
+			return runValidateStructure(cmd.Context(), opts)
 		},
 	}
 
@@ -37,8 +37,11 @@ func newValidateStructureCmd(parentOpts *validateOptions) *cobra.Command {
 	return cmd
 }
 
-func runValidateStructure(opts *validateOptions) error {
+func runValidateStructure(ctx context.Context, opts *validateOptions) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	festivalPath, err := resolveFestivalPath(opts.path)
 	if err != nil {
@@ -53,7 +56,7 @@ func runValidateStructure(opts *validateOptions) error {
 		Issues:   []ValidationIssue{},
 	}
 
-	validateStructureChecks(festivalPath, result)
+	validateStructureChecks(ctx, festivalPath, result)
 
 	result.Score = calculateScore(result)
 	for _, issue := range result.Issues {
@@ -71,8 +74,7 @@ func runValidateStructure(opts *validateOptions) error {
 	return nil
 }
 
-func validateStructureChecks(festivalPath string, result *ValidationResult) {
-	ctx := context.Background()
+func validateStructureChecks(ctx context.Context, festivalPath string, result *ValidationResult) {
 	parser := festival.NewParser()
 
 	// Parse festival structure

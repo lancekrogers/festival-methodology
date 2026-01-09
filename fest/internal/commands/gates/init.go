@@ -8,6 +8,7 @@ import (
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -101,7 +102,9 @@ inherit: true  # Set to false to not inherit from parent levels
 		return errors.IO("writing override file", err).WithField("path", overridePath)
 	}
 
-	fmt.Fprintf(cmd.OutOrStdout(), "Created override file: %s\n", overridePath)
+	out := cmd.OutOrStdout()
+	fmt.Fprintln(out, ui.Success("✓ Override file created"))
+	fmt.Fprintf(out, "%s %s\n", ui.Label("Path"), ui.Dim(overridePath))
 	return nil
 }
 
@@ -160,6 +163,8 @@ tracking:
 		return errors.IO("writing fest.yaml", err).WithField("path", festYAMLPath)
 	}
 
-	fmt.Fprintf(cmd.OutOrStdout(), "Created fest.yaml: %s\n", festYAMLPath)
+	out := cmd.OutOrStdout()
+	fmt.Fprintln(out, ui.Success("✓ Festival configuration created"))
+	fmt.Fprintf(out, "%s %s\n", ui.Label("Path"), ui.Dim(festYAMLPath))
 	return nil
 }

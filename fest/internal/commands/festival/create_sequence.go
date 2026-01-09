@@ -341,33 +341,34 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 
 	// Show education message
 	display.Warning("Sequences need task files to be executable.")
-	fmt.Println("   SEQUENCE_GOAL.md defines WHAT to accomplish.")
-	fmt.Println("   Task files (01_*.md, 02_*.md) define HOW to do it.")
+	fmt.Printf("  %s\n", ui.Info("SEQUENCE_GOAL.md defines WHAT to accomplish."))
+	fmt.Printf("  %s\n", ui.Info("Task files (01_*.md, 02_*.md) define HOW to do it."))
 	fmt.Println()
-	fmt.Println("   Next steps:")
+	fmt.Println(ui.H2("Next Steps"))
 	if remainingMarkers > 0 {
-		fmt.Println("   1. Edit SEQUENCE_GOAL.md to define sequence objectives")
-		fmt.Println("   2. fest create task --name \"your_task_name\"")
+		fmt.Printf("  %s\n", ui.Info("1. Edit SEQUENCE_GOAL.md to define sequence objectives"))
+		fmt.Printf("  %s\n", ui.Info("2. fest create task --name \"your_task_name\""))
 	} else {
-		fmt.Println("   1. fest create task --name \"your_task_name\"")
+		fmt.Printf("  %s\n", ui.Info("1. fest create task --name \"your_task_name\""))
 	}
-	fmt.Println("   💡 Run 'fest understand tasks' to learn more about task structure.")
+	fmt.Printf("  %s\n", ui.Info("💡 Run 'fest understand tasks' to learn more about task structure."))
 	fmt.Println()
-	fmt.Println("   Discover more commands:")
-	fmt.Println("   • fest status        View festival progress")
-	fmt.Println("   • fest next          Find what to work on next")
-	fmt.Println("   • fest show plan     View the execution plan")
+	fmt.Println(ui.H2("Discover More Commands"))
+	fmt.Printf("  %s %s\n", ui.Value("fest status"), ui.Dim("View festival progress"))
+	fmt.Printf("  %s %s\n", ui.Value("fest next"), ui.Dim("Find what to work on next"))
+	fmt.Printf("  %s %s\n", ui.Value("fest show plan"), ui.Dim("View the execution plan"))
 	fmt.Println()
 
 	// Blocking prompt (skip if --no-prompt or --json)
 	if !opts.NoPrompt && !opts.JSONOutput {
 		if display.Confirm("Create task files now?") {
 			fmt.Println()
-			fmt.Println("   To create tasks, run:")
-			fmt.Println("     fest create task --name \"your_task_name\"")
+			fmt.Println(ui.H2("Create Tasks"))
+			fmt.Printf("  %s\n", ui.Info("To create tasks, run:"))
+			fmt.Printf("  %s\n", ui.Value("fest create task --name \"your_task_name\""))
 			fmt.Println()
-			fmt.Println("   Or start the interactive TUI:")
-			fmt.Println("     fest create task")
+			fmt.Printf("  %s\n", ui.Info("Or start the interactive TUI:"))
+			fmt.Printf("  %s\n", ui.Value("fest create task"))
 		}
 	}
 

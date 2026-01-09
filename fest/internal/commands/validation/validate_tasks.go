@@ -44,7 +44,7 @@ INCORRECT STRUCTURE (common mistake):
 			if len(args) > 0 {
 				opts.path = args[0]
 			}
-			return runValidateTasks(opts)
+			return runValidateTasks(cmd.Context(), opts)
 		},
 	}
 
@@ -53,8 +53,11 @@ INCORRECT STRUCTURE (common mistake):
 	return cmd
 }
 
-func runValidateTasks(opts *validateOptions) error {
+func runValidateTasks(ctx context.Context, opts *validateOptions) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	festivalPath, err := resolveFestivalPath(opts.path)
 	if err != nil {
@@ -69,7 +72,7 @@ func runValidateTasks(opts *validateOptions) error {
 		Issues:   []ValidationIssue{},
 	}
 
-	validateTaskFilesChecks(festivalPath, result)
+	validateTaskFilesChecks(ctx, festivalPath, result)
 
 	result.Score = calculateScore(result)
 	for _, issue := range result.Issues {
@@ -87,8 +90,7 @@ func runValidateTasks(opts *validateOptions) error {
 	return nil
 }
 
-func validateTaskFilesChecks(festivalPath string, result *ValidationResult) {
-	ctx := context.Background()
+func validateTaskFilesChecks(ctx context.Context, festivalPath string, result *ValidationResult) {
 	parser := festival.NewParser()
 	phases, _ := parser.ParsePhases(ctx, festivalPath)
 	policy := gates.DefaultPolicy()
@@ -119,29 +121,30 @@ func validateTaskFilesChecks(festivalPath string, result *ValidationResult) {
 }
 
 func printTaskValidationSection(display *ui.UI, issues []ValidationIssue) {
-	fmt.Println("\nTASK FILES (Critical for AI Execution)")
+	printSectionHeader("Task Files", issues)
+	fmt.Println(ui.Dim("Critical for AI execution"))
 
 	if len(issues) == 0 {
-		display.Success("[OK] All implementation sequences have task files")
+		display.Success("All implementation sequences have task files")
 		return
 	}
 
-	display.Error("[ERROR] Implementation sequences need task files, not just goals")
+	display.Error("Implementation sequences need task files, not just goals")
 	fmt.Println()
-	fmt.Println("        Goals define WHAT to achieve; tasks define HOW to execute.")
-	fmt.Println("        AI agents EXECUTE task files.")
+	fmt.Println(ui.Info("Goals define what to achieve; tasks define how to execute."))
+	fmt.Println(ui.Info("AI agents execute task files."))
 	fmt.Println()
-	fmt.Println("        Sequences without tasks:")
+	fmt.Println(ui.H3("Sequences without tasks"))
 
 	for _, issue := range issues {
-		fmt.Printf("        - %s\n", issue.Path)
+		fmt.Printf("  - %s\n", ui.Dim(issue.Path))
 	}
 
 	fmt.Println()
-	fmt.Println("        For each sequence, create task files:")
-	fmt.Println("          fest create task --name \"design\" --json")
-	fmt.Println("          fest create task --name \"implement\" --json")
-	fmt.Println("          fest create task --name \"test\" --json")
+	fmt.Println(ui.H3("For each sequence, create task files"))
+	fmt.Println("  fest create task --name \"design\" --json")
+	fmt.Println("  fest create task --name \"implement\" --json")
+	fmt.Println("  fest create task --name \"test\" --json")
 }
 
 func printTaskValidationResult(display *ui.UI, result *ValidationResult) {

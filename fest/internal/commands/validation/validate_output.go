@@ -67,13 +67,12 @@ func extractLeadingNumber(s string) int {
 // printContextHeader prints the current context header with node reference
 func printContextHeader(festivalPath string) {
 	fmt.Println()
-	fmt.Println(strings.Repeat("=", 80))
+	fmt.Println(ui.H2("Current Context"))
 
 	// Load festival metadata
 	festConfig, err := config.LoadFestivalConfig(festivalPath)
 	if err != nil || festConfig.Metadata.ID == "" {
-		fmt.Println("Current Context: (no ID - legacy festival)")
-		fmt.Println(strings.Repeat("=", 80))
+		fmt.Println(ui.Dim("No ID detected (legacy festival)."))
 		return
 	}
 
@@ -82,22 +81,23 @@ func printContextHeader(festivalPath string) {
 
 	// Format and print node reference
 	nodeRef := formatNodeReference(festConfig.Metadata.ID, phase, seq, task)
-	fmt.Printf("Current Context: %s\n", nodeRef)
-	fmt.Println(strings.Repeat("=", 80))
+	fmt.Printf("%s %s\n", ui.Label("Node"), ui.Value(nodeRef))
 
 	// Print agent guidance with TODO example
 	fmt.Println()
-	fmt.Println("Self-Check Guidance:")
-	fmt.Println("  Use this reference in code comments for traceability:")
-	fmt.Printf("  // TODO(%s): Description of work needed\n", nodeRef)
+	fmt.Println(ui.H3("Self-Check Guidance"))
+	fmt.Println(ui.Dim("Use this reference in code comments for traceability:"))
+	fmt.Printf("  %s\n", ui.Dim(fmt.Sprintf("// TODO(%s): Description of work needed", nodeRef)))
 }
 
 func printValidationResult(display *ui.UI, festivalPath string, result *ValidationResult) {
 	// Print context header with node reference
 	printContextHeader(festivalPath)
 
-	fmt.Printf("\nFestival Validation: %s\n", result.Festival)
-	fmt.Println(strings.Repeat("=", 50))
+	fmt.Println()
+	fmt.Println(ui.H1("Festival Validation"))
+	fmt.Printf("%s %s\n", ui.Label("Festival"), ui.Value(result.Festival, ui.FestivalColor))
+	fmt.Printf("%s %s\n", ui.Label("Path"), ui.Dim(festivalPath))
 
 	// Group issues by category
 	structureIssues := filterIssuesByCode(result.Issues, CodeNamingConvention)
@@ -115,18 +115,20 @@ func printValidationResult(display *ui.UI, festivalPath string, result *Validati
 	printValidationSection(display, "ORDERING", orderingIssues)
 
 	// Score and summary
-	fmt.Printf("\nScore: %d/100", result.Score)
+	fmt.Println()
+	fmt.Printf("%s %s\n", ui.Label("Score"), ui.Value(fmt.Sprintf("%d/100", result.Score)))
 	if result.Valid {
-		fmt.Println(" - Festival structure is valid")
+		fmt.Println(ui.Success("Festival structure is valid"))
 	} else {
-		fmt.Println(" - Festival structure needs attention")
+		fmt.Println(ui.Warning("Festival structure needs attention"))
 	}
 
 	// Suggestions
 	if len(result.Suggestions) > 0 {
-		fmt.Println("\nSuggestions:")
+		fmt.Println()
+		fmt.Println(ui.H3("Suggestions"))
 		for _, s := range result.Suggestions {
-			fmt.Printf("  • %s\n", s)
+			fmt.Printf("  • %s\n", ui.Info(s))
 		}
 	}
 
@@ -135,97 +137,125 @@ func printValidationResult(display *ui.UI, festivalPath string, result *Validati
 }
 
 func printValidationSection(display *ui.UI, title string, issues []ValidationIssue) {
-	fmt.Printf("\n%s\n", title)
+	printSectionHeader(title, issues)
 
 	if len(issues) == 0 {
-		display.Success("[OK] All checks passed")
+		display.Success("All checks passed")
 		return
 	}
 
 	for _, issue := range issues {
-		switch issue.Level {
-		case LevelError:
-			display.Error("[ERROR] %s", issue.Message)
-		case LevelWarning:
-			display.Warning("[WARN] %s", issue.Message)
-		case LevelInfo:
-			display.Info("[INFO] %s", issue.Message)
-		}
-		if issue.Path != "" {
-			fmt.Printf("        Path: %s\n", issue.Path)
-		}
-		if issue.Fix != "" {
-			fmt.Printf("        FIX: %s\n", issue.Fix)
-		}
+		printValidationIssue(display, issue)
 	}
 }
 
 func printMarkerValidationSection(display *ui.UI, issues []ValidationIssue, markerInfo *MarkerInfo) {
-	fmt.Println("\nMARKERS (Template Completion Status)")
+	printSectionHeader("Markers", issues)
+	fmt.Println(ui.Dim("Template completion status"))
 
 	if len(issues) == 0 {
-		display.Success("[OK] All template markers have been filled (0 markers found)")
+		if markerInfo != nil && markerInfo.TotalCount > 0 {
+			display.Success("All template markers have been filled (%d markers found)", markerInfo.TotalCount)
+		} else {
+			display.Success("All template markers have been filled (0 markers found)")
+		}
 		return
 	}
 
 	// Show error with count
 	if markerInfo != nil {
-		display.Error("[ERROR] Found %d unfilled markers in %d files", markerInfo.TotalCount, markerInfo.TotalFiles)
+		display.Error("Found %d unfilled markers in %d files", markerInfo.TotalCount, markerInfo.TotalFiles)
 	} else {
-		display.Error("[ERROR] Files contain unfilled template markers")
+		display.Error("Files contain unfilled template markers")
 	}
 
 	fmt.Println()
-	fmt.Println("        Template markers are PLACEHOLDERS that MUST be replaced with actual content.")
-	fmt.Println("        A festival with unfilled markers is INCOMPLETE.")
+	fmt.Println(ui.Info("Template markers are placeholders that must be replaced with actual content."))
+	fmt.Println(ui.Info("A festival with unfilled markers is incomplete."))
 	fmt.Println()
 
 	if len(issues) > 0 {
-		fmt.Println("        Files needing attention:")
+		fmt.Println(ui.H3("Files needing attention"))
 		for _, issue := range issues {
-			fmt.Printf("          • %s\n", issue.Path)
-			fmt.Printf("            %s\n", issue.Message)
+			fmt.Printf("  • %s\n", ui.Dim(issue.Path))
+			fmt.Printf("    %s\n", ui.Info(issue.Message))
 		}
 	}
 
 	fmt.Println()
-	fmt.Println("        Common marker types to replace:")
-	fmt.Println("          [FILL: description]    → Write actual content")
-	fmt.Println("          [REPLACE: guidance]    → Replace with your content")
-	fmt.Println("          [GUIDANCE: hint]       → Remove and write real content")
-	fmt.Println("          {{ placeholder }}      → Fill in the value")
+	fmt.Println(ui.H3("Common marker types to replace"))
+	fmt.Println("  [FILL: description]    → Write actual content")
+	fmt.Println("  [REPLACE: guidance]    → Replace with your content")
+	fmt.Println("  [GUIDANCE: hint]       → Remove and write real content")
+	fmt.Println("  {{ placeholder }}      → Fill in the value")
 	fmt.Println()
-	fmt.Println("        Run 'fest markers list' to see all unfilled markers")
+	fmt.Println(ui.Info("Run 'fest markers list' to see all unfilled markers"))
 }
 
 func printAgentReflection(display *ui.UI, result *ValidationResult) {
 	fmt.Println()
-	fmt.Println(strings.Repeat("─", 50))
-	fmt.Println("AGENT SELF-CHECK")
-	fmt.Println(strings.Repeat("─", 50))
-	fmt.Println()
+	fmt.Println(ui.H2("Agent Self-Check"))
 
 	if !result.Valid || result.Score < 100 {
 		display.Warning("Before continuing, reflect on these questions:")
 		fmt.Println()
-		fmt.Println("  1. Did you follow the festival methodology exactly as written?")
+		fmt.Println(ui.Info("  1. Did you follow the festival methodology exactly as written?"))
 		fmt.Println()
-		fmt.Println("  2. Did you understand the PURPOSE of each level in the hierarchy?")
-		fmt.Println("     • Phases organize major milestones")
-		fmt.Println("     • Sequences group related work toward a goal")
-		fmt.Println("     • Tasks define specific executable work")
+		fmt.Println(ui.Info("  2. Did you understand the purpose of each level in the hierarchy?"))
+		fmt.Println(ui.Dim("     • Phases organize major milestones"))
+		fmt.Println(ui.Dim("     • Sequences group related work toward a goal"))
+		fmt.Println(ui.Dim("     • Tasks define specific executable work"))
 		fmt.Println()
-		fmt.Println("  3. If someone follows this festival structure exactly,")
-		fmt.Println("     will the goals at each level be achieved?")
+		fmt.Println(ui.Info("  3. If someone follows this festival structure exactly,"))
+		fmt.Println(ui.Info("     will the goals at each level be achieved?"))
 		fmt.Println()
-		fmt.Println("  4. Are ALL placeholder markers filled with real content?")
-		fmt.Println("     Templates exist to guide you, not to remain as-is.")
+		fmt.Println(ui.Info("  4. Are all placeholder markers filled with real content?"))
+		fmt.Println(ui.Dim("     Templates exist to guide you, not to remain as-is."))
 		fmt.Println()
 	} else {
 		display.Success("Festival structure passes all checks.")
 		fmt.Println()
-		fmt.Println("  Verify: If an agent executes each task in order,")
-		fmt.Println("  will the sequence goals, phase goals, and festival goal be achieved?")
+		fmt.Println(ui.Info("  Verify: If an agent executes each task in order,"))
+		fmt.Println(ui.Info("  will the sequence goals, phase goals, and festival goal be achieved?"))
+	}
+}
+
+func printSectionHeader(title string, issues []ValidationIssue) {
+	state := sectionState(issues)
+	fmt.Printf("\n%s %s\n", ui.StateIcon(state), ui.H2(title))
+}
+
+func sectionState(issues []ValidationIssue) string {
+	state := "completed"
+	for _, issue := range issues {
+		switch issue.Level {
+		case LevelError:
+			return "blocked"
+		case LevelWarning:
+			state = "in_progress"
+		case LevelInfo:
+			if state == "completed" {
+				state = "pending"
+			}
+		}
+	}
+	return state
+}
+
+func printValidationIssue(display *ui.UI, issue ValidationIssue) {
+	switch issue.Level {
+	case LevelError:
+		display.Error("%s", issue.Message)
+	case LevelWarning:
+		display.Warning("%s", issue.Message)
+	case LevelInfo:
+		display.Info("%s", issue.Message)
+	}
+	if issue.Path != "" {
+		fmt.Printf("  %s %s\n", ui.Label("Path"), ui.Dim(issue.Path))
+	}
+	if issue.Fix != "" {
+		fmt.Printf("  %s %s\n", ui.Label("Fix"), ui.Dim(issue.Fix))
 	}
 }
 

@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 	"github.com/lancekrogers/festival-methodology/fest/internal/gates"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -33,7 +32,7 @@ Checks (auto-verified where possible):
 			if len(args) > 0 {
 				opts.path = args[0]
 			}
-			return runValidateChecklist(opts)
+			return runValidateChecklist(cmd.Context(), opts)
 		},
 	}
 
@@ -42,9 +41,10 @@ Checks (auto-verified where possible):
 	return cmd
 }
 
-func runValidateChecklist(opts *validateOptions) error {
-	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
-
+func runValidateChecklist(ctx context.Context, opts *validateOptions) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	festivalPath, err := resolveFestivalPath(opts.path)
 	if err != nil {
 		return emitValidateError(opts, err)
@@ -66,10 +66,10 @@ func runValidateChecklist(opts *validateOptions) error {
 	// Goals achievable is a manual check - always null
 	result.Checklist.GoalsAchievable = nil
 
-	taskFilesExist := checkTaskFilesExist(festivalPath)
+	taskFilesExist := checkTaskFilesExist(ctx, festivalPath)
 	result.Checklist.TaskFilesExist = &taskFilesExist
 
-	orderCorrect := checkOrderCorrect(festivalPath)
+	orderCorrect := checkOrderCorrect(ctx, festivalPath)
 	result.Checklist.OrderCorrect = &orderCorrect
 
 	parallelCorrect := checkParallelCorrect(festivalPath)
@@ -79,7 +79,7 @@ func runValidateChecklist(opts *validateOptions) error {
 		return emitValidateJSON(result)
 	}
 
-	printChecklistResult(display, result.Checklist)
+	printChecklistResult(result.Checklist)
 	return nil
 }
 
@@ -121,8 +121,7 @@ func checkTemplatesFilled(festivalPath string) bool {
 	return filled
 }
 
-func checkTaskFilesExist(festivalPath string) bool {
-	ctx := context.Background()
+func checkTaskFilesExist(ctx context.Context, festivalPath string) bool {
 	parser := festival.NewParser()
 	phases, _ := parser.ParsePhases(ctx, festivalPath)
 	policy := gates.DefaultPolicy()
@@ -142,9 +141,9 @@ func checkTaskFilesExist(festivalPath string) bool {
 	return true
 }
 
-func checkOrderCorrect(festivalPath string) bool {
+func checkOrderCorrect(ctx context.Context, festivalPath string) bool {
 	parser := festival.NewParser()
-	phases, err := parser.ParsePhases(context.Background(), festivalPath)
+	phases, err := parser.ParsePhases(ctx, festivalPath)
 	if err != nil {
 		return true // Can't check, assume OK
 	}
@@ -169,31 +168,32 @@ func checkParallelCorrect(festivalPath string) bool {
 
 // Output functions for checklist
 
-func printChecklistResult(display *ui.UI, checklist *Checklist) {
-	fmt.Println("\nPost-Completion Checklist")
-	fmt.Println(strings.Repeat("=", 50))
+func printChecklistResult(checklist *Checklist) {
+	fmt.Println()
+	fmt.Println(ui.H1("Post-Completion Checklist"))
+	fmt.Println(ui.Dim(strings.Repeat("─", 60)))
 
-	printCheckItem(display, 1, "Templates Filled",
+	printCheckItem(1, "Templates Filled",
 		"Did you fill out ALL templates?",
 		checklist.TemplatesFilled,
 		"Search for [REPLACE:], [FILL:], or {{ }} markers and replace with actual content")
 
-	printCheckItem(display, 2, "Goals Achievable",
+	printCheckItem(2, "Goals Achievable",
 		"Does this plan achieve project goals?",
 		checklist.GoalsAchievable,
 		"Review FESTIVAL_OVERVIEW.md and verify alignment")
 
-	printCheckItem(display, 3, "Task Files Exist",
+	printCheckItem(3, "Task Files Exist",
 		"Did you create TASK FILES for implementation?",
 		checklist.TaskFilesExist,
 		"Run 'fest understand tasks' to learn about task files")
 
-	printCheckItem(display, 4, "Order Correct",
+	printCheckItem(4, "Order Correct",
 		"Are items in order of operation?",
 		checklist.OrderCorrect,
 		"Lower numbers execute first (01_ before 02_)")
 
-	printCheckItem(display, 5, "Parallel Correct",
+	printCheckItem(5, "Parallel Correct",
 		"Did you follow parallelization standards?",
 		checklist.ParallelCorrect,
 		"Same-numbered items (01_a, 01_b) run in parallel")
@@ -226,20 +226,33 @@ func printChecklistResult(display *ui.UI, checklist *Checklist) {
 		}
 	}
 
-	fmt.Printf("\nOverall: %d/%d auto-checks passed (1 manual check required)\n", passed, total)
+	fmt.Println()
+	fmt.Printf("%s %s\n", ui.Label("Summary"), ui.Value(fmt.Sprintf("%d/%d auto-checks passed", passed, total)))
+	fmt.Println(ui.Dim("1 manual check required"))
 }
 
-func printCheckItem(display *ui.UI, num int, title, question string, result *bool, guidance string) {
-	fmt.Printf("\n%d. %s\n", num, title)
-	fmt.Printf("   Question: %s\n", question)
+func printCheckItem(num int, title, question string, result *bool, guidance string) {
+	fmt.Println()
+	fmt.Println(ui.H3(fmt.Sprintf("%d. %s", num, title)))
+	fmt.Printf("%s %s\n", ui.Label("Question"), ui.Dim(question))
+
+	statusLabel := ""
+	switch {
+	case result == nil:
+		statusLabel = ui.Warning("MANUAL CHECK REQUIRED")
+	case *result:
+		statusLabel = ui.Success("PASS")
+	default:
+		statusLabel = ui.Error("FAIL")
+	}
+	fmt.Printf("%s %s\n", ui.Label("Status"), statusLabel)
 
 	if result == nil {
-		fmt.Println("   Status: [MANUAL CHECK REQUIRED]")
-		fmt.Printf("   Guidance: %s\n", guidance)
-	} else if *result {
-		display.Success("   Auto-check: [PASS]")
-	} else {
-		display.Error("   Auto-check: [FAIL]")
-		fmt.Printf("   Fix: %s\n", guidance)
+		fmt.Printf("%s %s\n", ui.Label("Guidance"), ui.Dim(guidance))
+		return
+	}
+
+	if !*result {
+		fmt.Printf("%s %s\n", ui.Label("Fix"), ui.Dim(guidance))
 	}
 }
