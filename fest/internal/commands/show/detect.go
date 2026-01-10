@@ -43,7 +43,7 @@ func DetectCurrentFestival(ctx context.Context, startDir string) (*FestivalInfo,
 		parent := filepath.Dir(dir)
 		if parent == dir {
 			// Reached filesystem root
-			return nil, errors.NotFound("festival")
+			return nil, errors.NotFound("festival").WithHint(errors.HintFestivalNotFound)
 		}
 		dir = parent
 	}
@@ -105,7 +105,8 @@ func FindFestivalByName(ctx context.Context, festivalsDir, name string) (*Festiv
 		}
 	}
 
-	return nil, errors.NotFound("festival").WithField("name", name)
+	return nil, errors.NotFound("festival").WithField("name", name).
+		WithHint("Run 'fest show all' to see available festivals")
 }
 
 // ListFestivalsByStatus returns all festivals in a given status directory.

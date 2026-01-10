@@ -18,6 +18,25 @@ const (
 	ErrCodePermission = "PERMISSION"
 )
 
+// Standard hints for common error scenarios.
+const (
+	HintFestivalNotFound     = "Navigate to a festival directory or run 'fest show all' to see available festivals"
+	HintPhaseNotFound        = "Run 'fest status list --type phase' to see available phases"
+	HintSequenceNotFound     = "Run 'fest status list --type sequence' to see available sequences"
+	HintCreateFestival       = "Run 'fest create festival' or 'fest tui' to create a new festival"
+	HintCheckPath            = "Check the path and try again, or run from a different directory"
+	HintCheckConfig          = "Check your fest.yaml configuration for syntax errors"
+	HintCheckTemplate        = "Run 'fest validate' to check for template issues"
+	HintRunInit              = "Run 'fest init' to initialize a festival workspace"
+	HintCheckPermissions     = "Check file/directory permissions and try again"
+	HintUseForce             = "Use --force to skip confirmation prompts"
+	HintNavigateToFestival   = "Navigate to a festival directory first"
+	HintUseInteractiveMode   = "Use 'fest tui' for interactive mode"
+	HintCheckStatus          = "Run 'fest status' to see current location and status"
+	HintSeeHelp              = "Run 'fest help' for more information"
+	HintUnderstandMethodology = "Run 'fest understand methodology' to learn about the festival structure"
+)
+
 // Error is a structured error type with code, context, and chain support.
 type Error struct {
 	Code    string                 `json:"code"`
@@ -25,20 +44,26 @@ type Error struct {
 	Op      string                 `json:"op,omitempty"`
 	Err     error                  `json:"-"`
 	Fields  map[string]interface{} `json:"fields,omitempty"`
+	Hint    string                 `json:"hint,omitempty"` // actionable suggestion
 }
 
 // Error returns the error string with context.
 func (e *Error) Error() string {
+	var msg string
 	if e.Op != "" && e.Err != nil {
-		return fmt.Sprintf("%s: %s: %v", e.Op, e.Message, e.Err)
+		msg = fmt.Sprintf("%s: %s: %v", e.Op, e.Message, e.Err)
+	} else if e.Op != "" {
+		msg = fmt.Sprintf("%s: %s", e.Op, e.Message)
+	} else if e.Err != nil {
+		msg = fmt.Sprintf("%s: %v", e.Message, e.Err)
+	} else {
+		msg = e.Message
 	}
-	if e.Op != "" {
-		return fmt.Sprintf("%s: %s", e.Op, e.Message)
+
+	if e.Hint != "" {
+		msg = fmt.Sprintf("%s\nHint: %s", msg, e.Hint)
 	}
-	if e.Err != nil {
-		return fmt.Sprintf("%s: %v", e.Message, e.Err)
-	}
-	return e.Message
+	return msg
 }
 
 // Unwrap returns the wrapped error.
@@ -53,6 +78,7 @@ func (e *Error) MarshalJSON() ([]byte, error) {
 		Message string                 `json:"message"`
 		Op      string                 `json:"op,omitempty"`
 		Cause   string                 `json:"cause,omitempty"`
+		Hint    string                 `json:"hint,omitempty"`
 		Fields  map[string]interface{} `json:"fields,omitempty"`
 	}
 
@@ -60,6 +86,7 @@ func (e *Error) MarshalJSON() ([]byte, error) {
 		Code:    e.Code,
 		Message: e.Message,
 		Op:      e.Op,
+		Hint:    e.Hint,
 		Fields:  e.Fields,
 	}
 	if e.Err != nil {
@@ -127,6 +154,18 @@ func (e *Error) WithFields(fields map[string]interface{}) *Error {
 	for k, v := range fields {
 		e.Fields[k] = v
 	}
+	return e
+}
+
+// WithHint adds an actionable suggestion to the error.
+func (e *Error) WithHint(hint string) *Error {
+	e.Hint = hint
+	return e
+}
+
+// WithHintf adds a formatted actionable suggestion to the error.
+func (e *Error) WithHintf(format string, args ...interface{}) *Error {
+	e.Hint = fmt.Sprintf(format, args...)
 	return e
 }
 
