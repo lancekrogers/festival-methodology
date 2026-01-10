@@ -52,11 +52,13 @@ type Local struct {
 
 // Behavior contains behavior configuration
 type Behavior struct {
-	AutoBackup  bool   `json:"auto_backup"`
-	Interactive bool   `json:"interactive"`
-	UseColor    bool   `json:"use_color"`
-	Verbose     bool   `json:"verbose"`
-	Editor      string `json:"editor"` // Preferred editor for wizard fill (default: vim)
+	AutoBackup  bool     `json:"auto_backup"`
+	Interactive bool     `json:"interactive"`
+	UseColor    bool     `json:"use_color"`
+	Verbose     bool     `json:"verbose"`
+	Editor      string   `json:"editor"`       // Preferred editor for wizard fill (default: vim)
+	EditorMode  string   `json:"editor_mode"`  // Editor window mode: buffer, tab, split, hsplit (default: buffer)
+	EditorFlags []string `json:"editor_flags"` // Custom editor flags (overrides mode)
 }
 
 // Network contains network configuration
@@ -162,7 +164,9 @@ func DefaultConfig() *Config {
 			Interactive: true,
 			UseColor:    true,
 			Verbose:     false,
-			Editor:      "", // Empty default - falls back to $EDITOR then "vim"
+			Editor:      "",       // Empty default - falls back to $EDITOR then "vim"
+			EditorMode:  "buffer", // Default to buffer mode (clean single window)
+			EditorFlags: nil,      // No custom flags by default
 		},
 		Network: Network{
 			Timeout:    30,
@@ -218,4 +222,11 @@ func applyDefaults(cfg *Config) {
 
 	// Note: Behavior.Editor intentionally not defaulted here
 	// Empty means: use $EDITOR env var, then fall back to "vim"
+
+	// Default EditorMode to "buffer" if not set
+	if cfg.Behavior.EditorMode == "" {
+		cfg.Behavior.EditorMode = defaults.Behavior.EditorMode
+	}
+
+	// EditorFlags intentionally not defaulted - nil means no custom flags
 }

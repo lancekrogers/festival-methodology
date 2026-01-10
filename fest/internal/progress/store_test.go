@@ -1,6 +1,7 @@
 package progress
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -8,10 +9,11 @@ import (
 )
 
 func TestStore_LoadNew(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 
 	store := NewStore(tmpDir)
-	err := store.Load()
+	err := store.Load(ctx)
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
@@ -26,11 +28,12 @@ func TestStore_LoadNew(t *testing.T) {
 }
 
 func TestStore_SaveAndLoad(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 
 	// Create and save
 	store1 := NewStore(tmpDir)
-	if err := store1.Load(); err != nil {
+	if err := store1.Load(ctx); err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
 
@@ -42,7 +45,7 @@ func TestStore_SaveAndLoad(t *testing.T) {
 		StartedAt: &now,
 	})
 
-	if err := store1.Save(); err != nil {
+	if err := store1.Save(ctx); err != nil {
 		t.Fatalf("Save() error = %v", err)
 	}
 
@@ -54,7 +57,7 @@ func TestStore_SaveAndLoad(t *testing.T) {
 
 	// Load in new store
 	store2 := NewStore(tmpDir)
-	if err := store2.Load(); err != nil {
+	if err := store2.Load(ctx); err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
 
@@ -73,9 +76,10 @@ func TestStore_SaveAndLoad(t *testing.T) {
 }
 
 func TestStore_GetTask(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 	store := NewStore(tmpDir)
-	if err := store.Load(); err != nil {
+	if err := store.Load(ctx); err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
 
@@ -97,9 +101,10 @@ func TestStore_GetTask(t *testing.T) {
 }
 
 func TestStore_AllTasks(t *testing.T) {
+	ctx := context.Background()
 	tmpDir := t.TempDir()
 	store := NewStore(tmpDir)
-	if err := store.Load(); err != nil {
+	if err := store.Load(ctx); err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
 

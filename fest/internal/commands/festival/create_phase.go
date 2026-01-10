@@ -47,6 +47,24 @@ type createPhaseResult struct {
 	Suggestions   []string                 `json:"suggestions,omitempty"`
 }
 
+// selectPhaseTemplate returns the appropriate template ID and filename for a given phase type.
+// Returns (templateID, templateFilename) tuple.
+func selectPhaseTemplate(phaseType string) (string, string) {
+	switch strings.ToLower(phaseType) {
+	case "planning":
+		return "phase-goal-planning", "PHASE_GOAL_PLANNING_TEMPLATE.md"
+	case "implementation":
+		return "phase-goal-implementation", "PHASE_GOAL_IMPLEMENTATION_TEMPLATE.md"
+	case "research":
+		return "phase-goal-research", "PHASE_GOAL_RESEARCH_TEMPLATE.md"
+	case "review":
+		return "phase-goal-review", "PHASE_GOAL_REVIEW_TEMPLATE.md"
+	default:
+		// Fallback to generic template for unknown types
+		return "phase-goal", "PHASE_GOAL_TEMPLATE.md"
+	}
+}
+
 // NewCreatePhaseCommand adds 'create phase'
 func NewCreatePhaseCommand() *cobra.Command {
 	opts := &CreatePhaseOptions{}
@@ -167,12 +185,7 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 	var renderErr error
 
 	// Select template based on phase type
-	templateID := "PHASE_GOAL"
-	templateFilename := "PHASE_GOAL_TEMPLATE.md"
-	if opts.PhaseType == "research" {
-		templateID = "RESEARCH_PHASE_GOAL"
-		templateFilename = "RESEARCH_PHASE_GOAL_TEMPLATE.md"
-	}
+	templateID, templateFilename := selectPhaseTemplate(opts.PhaseType)
 
 	if catalog != nil {
 		content, renderErr = mgr.RenderByID(ctx, catalog, templateID, tmplCtx)
@@ -315,23 +328,23 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 	display.Info("  └── %s", "PHASE_GOAL.md")
 
 	fmt.Println()
-	fmt.Println("   Next steps:")
-	fmt.Println("   1. cd", phaseDir)
+	fmt.Println(ui.H2("Next Steps"))
+	fmt.Printf("  %s\n", ui.Info(fmt.Sprintf("1. cd %s", phaseDir)))
 	if remainingMarkers > 0 {
-		fmt.Println("   2. Edit PHASE_GOAL.md to define phase objectives")
+		fmt.Printf("  %s\n", ui.Info("2. Edit PHASE_GOAL.md to define phase objectives"))
 	}
 	if opts.PhaseType == "research" {
-		fmt.Println("   3. Create subdirectories for research topics")
-		fmt.Println("   4. fest research create --type investigation --title \"topic\"")
+		fmt.Printf("  %s\n", ui.Info("3. Create subdirectories for research topics"))
+		fmt.Printf("  %s\n", ui.Info("4. fest research create --type investigation --title \"topic\""))
 	} else {
-		fmt.Println("   3. fest create sequence --name \"requirements\"")
-		fmt.Println("   4. fest validate  (check completion status)")
+		fmt.Printf("  %s\n", ui.Info("3. fest create sequence --name \"requirements\""))
+		fmt.Printf("  %s\n", ui.Info("4. fest validate (check completion status)"))
 	}
 	fmt.Println()
-	fmt.Println("   Discover more commands:")
-	fmt.Println("   • fest status        View festival progress")
-	fmt.Println("   • fest next          Find what to work on next")
-	fmt.Println("   • fest show plan     View the execution plan")
+	fmt.Println(ui.H2("Discover More Commands"))
+	fmt.Printf("  %s %s\n", ui.Value("fest status"), ui.Dim("View festival progress"))
+	fmt.Printf("  %s %s\n", ui.Value("fest next"), ui.Dim("Find what to work on next"))
+	fmt.Printf("  %s %s\n", ui.Value("fest show plan"), ui.Dim("View the execution plan"))
 	return nil
 }
 

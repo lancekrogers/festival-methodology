@@ -2,15 +2,16 @@ package commit
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os/exec"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/id"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -21,6 +22,8 @@ var (
 	queryLimit    int
 	queryJson     bool
 )
+
+var taskRefPattern = regexp.MustCompile(`\[FEST-[a-z0-9]{6}\]`)
 
 // NewCommitsCommand creates the fest commits query command
 func NewCommitsCommand() *cobra.Command {
@@ -106,8 +109,9 @@ func runCommits(cmd *cobra.Command, args []string) error {
 	}
 
 	if queryJson {
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(cmd.OutOrStdout(), result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		printCommits(result)
 	}
@@ -177,25 +181,32 @@ func parseGitLog(output string) ([]Commit, error) {
 
 func printCommits(result *CommitsResult) {
 	if result.Count == 0 {
-		fmt.Printf("No commits found matching: %s\n", result.Query)
+		fmt.Printf("%s %s\n", ui.Warning("No commits found"), ui.Dim(fmt.Sprintf("query: %s", result.Query)))
 		return
 	}
 
-	fmt.Printf("Found %d commit(s) matching: %s\n\n", result.Count, result.Query)
+	fmt.Println(ui.H1("Commits"))
+	fmt.Printf("%s %s\n", ui.Label("Query"), ui.Value(result.Query))
+	fmt.Printf("%s %s\n", ui.Label("Count"), ui.Value(fmt.Sprintf("%d", result.Count)))
 
 	for _, commit := range result.Commits {
-		// Color the refs
-		message := commit.Message
-		refPattern := regexp.MustCompile(`\[FEST-[a-z0-9]{6}\]`)
-		message = refPattern.ReplaceAllStringFunc(message, func(match string) string {
-			return fmt.Sprintf("\033[1;33m%s\033[0m", match) // Yellow bold
-		})
+		message := highlightTaskRefs(commit.Message)
 
-		fmt.Printf("\033[1;34m%s\033[0m %s\n", commit.ShortHash, message)
-		fmt.Printf("  Author: %s | Date: %s\n", commit.Author, commit.Date.Format("2006-01-02 15:04"))
+		fmt.Printf("\n%s %s\n", ui.Value(commit.ShortHash), message)
+		fmt.Printf("  %s %s\n", ui.Label("Author"), ui.Value(commit.Author))
+		fmt.Printf("  %s %s\n", ui.Label("Date"), ui.Dim(commit.Date.Format("2006-01-02 15:04")))
 		if len(commit.TaskRefs) > 0 {
-			fmt.Printf("  Tasks: %s\n", strings.Join(commit.TaskRefs, ", "))
+			fmt.Printf("  %s %s\n", ui.Label("Tasks"), ui.Value(strings.Join(commit.TaskRefs, ", "), ui.TaskColor))
 		}
-		fmt.Println()
 	}
+}
+
+func highlightTaskRefs(message string) string {
+	if message == "" {
+		return message
+	}
+
+	return taskRefPattern.ReplaceAllStringFunc(message, func(match string) string {
+		return ui.Value(match, ui.TaskColor)
+	})
 }

@@ -2,6 +2,7 @@
 package progress
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"time"
@@ -62,7 +63,11 @@ func (s *Store) progressFilePath() string {
 }
 
 // Load loads progress data from disk
-func (s *Store) Load() error {
+func (s *Store) Load(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled")
+	}
+
 	progressPath := s.progressFilePath()
 
 	// Check if file exists
@@ -96,7 +101,11 @@ func (s *Store) Load() error {
 }
 
 // Save writes progress data to disk
-func (s *Store) Save() error {
+func (s *Store) Save(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled")
+	}
+
 	if s.data == nil {
 		return errors.Validation("no progress data to save")
 	}

@@ -2,15 +2,16 @@
 package deps
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/deps"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -93,27 +94,25 @@ func runDeps(cmd *cobra.Command, args []string) error {
 
 func showGraph(graph *deps.Graph) error {
 	if jsonOutput {
-		data, err := json.MarshalIndent(graph, "", "  ")
-		if err != nil {
-			return err
+		if err := shared.EncodeJSON(os.Stdout, graph); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
 		}
-		fmt.Println(string(data))
 		return nil
 	}
 
 	// Text output
 	sorted, err := graph.TopologicalSort()
 	if err != nil {
-		fmt.Printf("Warning: %v\n\n", err)
+		fmt.Println(ui.Warning(fmt.Sprintf("Warning: %v", err)))
+		fmt.Println()
 	}
 
-	fmt.Println("=== DEPENDENCY GRAPH ===")
-	fmt.Println()
+	fmt.Println(ui.H1("Dependency Graph"))
 
 	// Show parallel groups
 	groups := graph.GetParallelGroups()
 	for i, group := range groups {
-		fmt.Printf("Level %d (can run in parallel):\n", i)
+		fmt.Printf("\n%s %s\n", ui.H2(fmt.Sprintf("Level %d", i)), ui.Dim("(can run in parallel)"))
 		for _, task := range group {
 			deps := graph.GetDependencies(task.ID)
 			depNames := make([]string, len(deps))
@@ -121,18 +120,22 @@ func showGraph(graph *deps.Graph) error {
 				depNames[j] = d.Name
 			}
 			if len(depNames) > 0 {
-				fmt.Printf("  - %s <- [%s]\n", task.Name, strings.Join(depNames, ", "))
+				fmt.Printf("  - %s %s %s\n",
+					ui.Value(task.Name, ui.TaskColor),
+					ui.Dim("<-"),
+					ui.Dim(strings.Join(depNames, ", ")),
+				)
 			} else {
-				fmt.Printf("  - %s\n", task.Name)
+				fmt.Printf("  - %s\n", ui.Value(task.Name, ui.TaskColor))
 			}
 		}
-		fmt.Println()
 	}
 
 	if sorted != nil {
-		fmt.Println("Execution order:")
+		fmt.Println()
+		fmt.Println(ui.H2("Execution Order"))
 		for i, task := range sorted {
-			fmt.Printf("  %d. %s\n", i+1, task.Name)
+			fmt.Printf("  %s %s\n", ui.Value(fmt.Sprintf("%d.", i+1)), ui.Value(task.Name, ui.TaskColor))
 		}
 	}
 
@@ -165,70 +168,66 @@ func showTaskDeps(graph *deps.Graph, taskName string) error {
 			DependsOn:  graph.GetDependencies(task.ID),
 			DependedBy: graph.GetDependents(task.ID),
 		}
-		data, err := json.MarshalIndent(output, "", "  ")
-		if err != nil {
-			return err
+		if err := shared.EncodeJSON(os.Stdout, output); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
 		}
-		fmt.Println(string(data))
 		return nil
 	}
 
 	// Text output
-	fmt.Printf("=== DEPENDENCIES: %s ===\n\n", task.Name)
-
-	fmt.Println("Task Info:")
-	fmt.Printf("  Number: %d\n", task.Number)
-	fmt.Printf("  Parallel Group: %d\n", task.ParallelGroup)
-	if task.AutonomyLevel != "" {
-		fmt.Printf("  Autonomy: %s\n", task.AutonomyLevel)
-	}
-	fmt.Println()
+	fmt.Println(ui.H1("Dependencies"))
+	fmt.Printf("%s %s\n", ui.Label("Task"), ui.Value(task.Name, ui.TaskColor))
+	printTaskInfo(task)
 
 	deps := graph.GetDependencies(task.ID)
-	if len(deps) > 0 {
-		fmt.Println("Depends On (must complete first):")
-		for _, dep := range deps {
-			fmt.Printf("  - %s\n", dep.Name)
-		}
-		fmt.Println()
-	} else {
-		fmt.Println("No dependencies (can start immediately)")
-		fmt.Println()
-	}
+	printTaskList("Depends On", deps, "No dependencies (can start immediately)")
 
 	dependents := graph.GetDependents(task.ID)
-	if len(dependents) > 0 {
-		fmt.Println("Depended By (waiting on this task):")
-		for _, dep := range dependents {
-			fmt.Printf("  - %s\n", dep.Name)
-		}
-		fmt.Println()
-	} else {
-		fmt.Println("No dependents (nothing waiting on this task)")
-		fmt.Println()
-	}
+	printTaskList("Depended By", dependents, "No dependents (nothing waiting on this task)")
 
-	// Show the dependency chain
-	fmt.Println("Dependency Tree:")
+	fmt.Println(ui.H2("Dependency Tree"))
 	printDepTree(graph, task, "  ", make(map[string]bool))
 
 	return nil
 }
 
+func printTaskInfo(task *deps.Task) {
+	fmt.Println(ui.H2("Task Info"))
+	fmt.Printf("%s %s\n", ui.Label("Number"), ui.Value(fmt.Sprintf("%d", task.Number)))
+	fmt.Printf("%s %s\n", ui.Label("Parallel Group"), ui.Value(fmt.Sprintf("%d", task.ParallelGroup)))
+	if task.AutonomyLevel != "" {
+		fmt.Printf("%s %s\n", ui.Label("Autonomy"), ui.Value(task.AutonomyLevel))
+	}
+	fmt.Println()
+}
+
+func printTaskList(title string, tasks []*deps.Task, emptyMessage string) {
+	fmt.Println(ui.H2(title))
+	if len(tasks) == 0 {
+		fmt.Println(ui.Info(emptyMessage))
+		fmt.Println()
+		return
+	}
+	for _, task := range tasks {
+		fmt.Printf("  - %s\n", ui.Value(task.Name, ui.TaskColor))
+	}
+	fmt.Println()
+}
+
 func printDepTree(graph *deps.Graph, task *deps.Task, indent string, visited map[string]bool) {
 	if visited[task.ID] {
-		fmt.Printf("%s└─ %s (cycle)\n", indent, task.Name)
+		fmt.Printf("%s└─ %s %s\n", indent, ui.Value(task.Name, ui.TaskColor), ui.Dim("(cycle)"))
 		return
 	}
 	visited[task.ID] = true
 
 	deps := graph.GetDependencies(task.ID)
 	if len(deps) == 0 {
-		fmt.Printf("%s└─ %s (root)\n", indent, task.Name)
+		fmt.Printf("%s└─ %s %s\n", indent, ui.Value(task.Name, ui.TaskColor), ui.Dim("(root)"))
 		return
 	}
 
-	fmt.Printf("%s└─ %s\n", indent, task.Name)
+	fmt.Printf("%s└─ %s\n", indent, ui.Value(task.Name, ui.TaskColor))
 	for _, dep := range deps {
 		printDepTree(graph, dep, indent+"  ", visited)
 	}
@@ -238,34 +237,35 @@ func showCriticalPath(graph *deps.Graph) error {
 	path := graph.CriticalPath()
 
 	if jsonOutput {
-		data, err := json.MarshalIndent(path, "", "  ")
-		if err != nil {
-			return err
+		if err := shared.EncodeJSON(os.Stdout, path); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
 		}
-		fmt.Println(string(data))
 		return nil
 	}
 
-	fmt.Println("=== CRITICAL PATH ===")
-	fmt.Println()
-	fmt.Println("The critical path is the longest chain of dependencies.")
-	fmt.Println("Optimizing these tasks reduces overall completion time.")
-	fmt.Println()
+	fmt.Println(ui.H1("Critical Path"))
+	fmt.Println(ui.Info("The critical path is the longest chain of dependencies."))
+	fmt.Println(ui.Info("Optimizing these tasks reduces overall completion time."))
 
 	if len(path) == 0 {
-		fmt.Println("No critical path (no dependencies or cycle detected)")
+		fmt.Println(ui.Info("No critical path (no dependencies or cycle detected)."))
 		return nil
 	}
 
 	for i, task := range path {
 		if i < len(path)-1 {
-			fmt.Printf("  %d. %s\n     ↓\n", i+1, task.Name)
+			fmt.Printf("  %s %s\n  %s\n",
+				ui.Value(fmt.Sprintf("%d.", i+1)),
+				ui.Value(task.Name, ui.TaskColor),
+				ui.Dim("↓"),
+			)
 		} else {
-			fmt.Printf("  %d. %s\n", i+1, task.Name)
+			fmt.Printf("  %s %s\n", ui.Value(fmt.Sprintf("%d.", i+1)), ui.Value(task.Name, ui.TaskColor))
 		}
 	}
 
-	fmt.Printf("\nCritical path length: %d tasks\n", len(path))
+	fmt.Println()
+	fmt.Printf("%s %s\n", ui.Label("Critical path length"), ui.Value(fmt.Sprintf("%d tasks", len(path))))
 
 	return nil
 }

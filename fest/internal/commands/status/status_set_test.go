@@ -1,6 +1,7 @@
 package status
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -47,7 +48,7 @@ func TestAtomicStatusChange(t *testing.T) {
 			baseDir := t.TempDir()
 			festivalPath := tc.setupFn(baseDir)
 
-			newPath, err := AtomicStatusChange(festivalPath, tc.fromStatus, tc.toStatus)
+			newPath, err := AtomicStatusChange(context.Background(), festivalPath, tc.fromStatus, tc.toStatus)
 			if (err != nil) != tc.wantError {
 				t.Errorf("AtomicStatusChange() error = %v, wantError %v", err, tc.wantError)
 			}
@@ -89,7 +90,7 @@ func TestAtomicStatusChangeRollback(t *testing.T) {
 	}
 
 	// Attempt status change - should fail
-	_, err := AtomicStatusChange(sourcePath, "active", "completed")
+	_, err := AtomicStatusChange(context.Background(), sourcePath, "active", "completed")
 	if err == nil {
 		t.Error("Expected error when destination conflicts")
 	}
@@ -198,7 +199,7 @@ func TestCompletedUsesDateDirectory(t *testing.T) {
 		t.Fatalf("Failed to create overview: %v", err)
 	}
 
-	newPath, err := AtomicStatusChange(sourcePath, "active", "completed")
+	newPath, err := AtomicStatusChange(context.Background(), sourcePath, "active", "completed")
 	if err != nil {
 		t.Fatalf("AtomicStatusChange() error = %v", err)
 	}

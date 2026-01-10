@@ -1,10 +1,12 @@
 package execute
 
 import (
+	"context"
 	"path/filepath"
 	"sort"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/deps"
+	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
 )
 
 // ExecutionPlan represents the complete plan for executing a festival
@@ -89,9 +91,17 @@ func NewPlanBuilder(festivalPath string) *PlanBuilder {
 }
 
 // BuildPlan creates the complete execution plan for the festival
-func (b *PlanBuilder) BuildPlan() (*ExecutionPlan, error) {
+func (b *PlanBuilder) BuildPlan(ctx context.Context) (*ExecutionPlan, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	graph, err := b.resolver.ResolveFestival()
 	if err != nil {
+		return nil, err
+	}
+
+	// Update task statuses from progress system (YAML source of truth)
+	if err := b.updateTaskStatusesFromProgress(ctx, graph); err != nil {
 		return nil, err
 	}
 
@@ -136,9 +146,17 @@ func (b *PlanBuilder) BuildPlan() (*ExecutionPlan, error) {
 }
 
 // BuildPlanForPhase creates execution plan for a specific phase
-func (b *PlanBuilder) BuildPlanForPhase(phasePath string) (*PhaseExecution, error) {
+func (b *PlanBuilder) BuildPlanForPhase(ctx context.Context, phasePath string) (*PhaseExecution, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	graph, err := b.resolver.ResolveFestival()
 	if err != nil {
+		return nil, err
+	}
+
+	// Update task statuses from progress system (YAML source of truth)
+	if err := b.updateTaskStatusesFromProgress(ctx, graph); err != nil {
 		return nil, err
 	}
 
@@ -162,9 +180,17 @@ func (b *PlanBuilder) BuildPlanForPhase(phasePath string) (*PhaseExecution, erro
 }
 
 // BuildPlanForSequence creates execution plan for a specific sequence
-func (b *PlanBuilder) BuildPlanForSequence(seqPath string) (*SequenceExecution, error) {
+func (b *PlanBuilder) BuildPlanForSequence(ctx context.Context, seqPath string) (*SequenceExecution, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	graph, err := b.resolver.ResolveSequence(seqPath)
 	if err != nil {
+		return nil, err
+	}
+
+	// Update task statuses from progress system (YAML source of truth)
+	if err := b.updateTaskStatusesFromProgress(ctx, graph); err != nil {
 		return nil, err
 	}
 
@@ -295,4 +321,37 @@ func extractPhaseNumber(name string) int {
 // extractSeqNumber extracts the numeric prefix from a sequence name
 func extractSeqNumber(name string) int {
 	return extractPhaseNumber(name)
+}
+
+// updateTaskStatusesFromProgress updates all task statuses in the graph
+// by querying the progress tracking system (YAML source of truth)
+func (b *PlanBuilder) updateTaskStatusesFromProgress(ctx context.Context, graph *deps.Graph) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	// Create progress manager
+	mgr, err := progress.NewManager(ctx, b.festivalPath)
+	if err != nil {
+		return err
+	}
+
+	// Update each task's status from YAML (or markdown fallback)
+	for _, task := range graph.Tasks {
+		// ResolveTaskStatus checks YAML first, falls back to markdown
+		status := progress.ResolveTaskStatus(mgr.Store(), b.festivalPath, task.Path)
+
+		// Map progress status to execute status constants
+		switch status {
+		case progress.StatusCompleted:
+			task.Status = StatusCompleted // "completed"
+		case progress.StatusInProgress:
+			task.Status = StatusInProgress // "in_progress"
+		case progress.StatusBlocked:
+			task.Status = "blocked"
+		default:
+			task.Status = StatusPending // "pending"
+		}
+	}
+
+	return nil
 }

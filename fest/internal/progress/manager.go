@@ -1,6 +1,7 @@
 package progress
 
 import (
+	"context"
 	"time"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
@@ -12,16 +13,24 @@ type Manager struct {
 }
 
 // NewManager creates a new progress manager
-func NewManager(festivalPath string) (*Manager, error) {
+func NewManager(ctx context.Context, festivalPath string) (*Manager, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, errors.Wrap(err, "context cancelled")
+	}
+
 	store := NewStore(festivalPath)
-	if err := store.Load(); err != nil {
+	if err := store.Load(ctx); err != nil {
 		return nil, errors.Wrap(err, "loading progress data")
 	}
 	return &Manager{store: store}, nil
 }
 
 // UpdateProgress updates the progress percentage for a task
-func (m *Manager) UpdateProgress(taskID string, progress int) error {
+func (m *Manager) UpdateProgress(ctx context.Context, taskID string, progress int) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled")
+	}
+
 	if progress < 0 || progress > 100 {
 		return errors.Validation("progress must be between 0 and 100").
 			WithField("progress", progress)
@@ -67,11 +76,15 @@ func (m *Manager) UpdateProgress(taskID string, progress int) error {
 	}
 
 	m.store.SetTask(task)
-	return m.store.Save()
+	return m.store.Save(ctx)
 }
 
 // MarkComplete marks a task as complete
-func (m *Manager) MarkComplete(taskID string) error {
+func (m *Manager) MarkComplete(ctx context.Context, taskID string) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled")
+	}
+
 	task, exists := m.store.GetTask(taskID)
 	if !exists {
 		task = &TaskProgress{
@@ -96,11 +109,15 @@ func (m *Manager) MarkComplete(taskID string) error {
 	task.BlockedAt = nil
 
 	m.store.SetTask(task)
-	return m.store.Save()
+	return m.store.Save(ctx)
 }
 
 // MarkInProgress marks a task as in progress
-func (m *Manager) MarkInProgress(taskID string) error {
+func (m *Manager) MarkInProgress(ctx context.Context, taskID string) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled")
+	}
+
 	task, exists := m.store.GetTask(taskID)
 	if !exists {
 		task = &TaskProgress{
@@ -118,11 +135,15 @@ func (m *Manager) MarkInProgress(taskID string) error {
 	task.Status = StatusInProgress
 
 	m.store.SetTask(task)
-	return m.store.Save()
+	return m.store.Save(ctx)
 }
 
 // ReportBlocker reports a blocker for a task
-func (m *Manager) ReportBlocker(taskID, message string) error {
+func (m *Manager) ReportBlocker(ctx context.Context, taskID, message string) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled")
+	}
+
 	if message == "" {
 		return errors.Validation("blocker message required")
 	}
@@ -146,11 +167,15 @@ func (m *Manager) ReportBlocker(taskID, message string) error {
 	}
 
 	m.store.SetTask(task)
-	return m.store.Save()
+	return m.store.Save(ctx)
 }
 
 // ClearBlocker clears a blocker for a task
-func (m *Manager) ClearBlocker(taskID string) error {
+func (m *Manager) ClearBlocker(ctx context.Context, taskID string) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled")
+	}
+
 	task, exists := m.store.GetTask(taskID)
 	if !exists {
 		return errors.NotFound("task").WithField("taskID", taskID)
@@ -169,7 +194,7 @@ func (m *Manager) ClearBlocker(taskID string) error {
 	}
 
 	m.store.SetTask(task)
-	return m.store.Save()
+	return m.store.Save(ctx)
 }
 
 // GetTaskProgress retrieves progress for a specific task

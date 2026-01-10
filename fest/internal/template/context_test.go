@@ -299,6 +299,11 @@ func TestFormatPhaseID(t *testing.T) {
 		{99, "FINAL PHASE", "099_FINAL_PHASE"},
 		{1, "planning", "001_PLANNING"},         // lowercase converted to uppercase
 		{5, "User Testing", "005_USER_TESTING"}, // spaces to underscores
+		{1, "001_PLANNING", "001_PLANNING"},     // strip numeric prefix
+		{2, "002 planning", "002_PLANNING"},     // strip numeric prefix with space
+		{3, "003-Review", "003_REVIEW"},         // strip numeric prefix with dash
+		{999, "Launch", "999_LAUNCH"},           // max phase number width
+		{7, "QA & Review", "007_QA_&_REVIEW"},   // special characters preserved
 	}
 
 	for _, tt := range tests {
@@ -320,6 +325,10 @@ func TestFormatSequenceID(t *testing.T) {
 		{15, "integration testing", "15_integration_testing"},
 		{3, "BACKEND API", "03_backend_api"},       // uppercase converted to lowercase
 		{8, "User Interface", "08_user_interface"}, // spaces to underscores
+		{1, "01_requirements", "01_requirements"},  // strip numeric prefix
+		{2, "02 requirements", "02_requirements"},  // strip numeric prefix with space
+		{3, "03-Backend API", "03_backend_api"},    // strip numeric prefix with dash
+		{99, "API v2", "99_api_v2"},                // max sequence number width
 	}
 
 	for _, tt := range tests {
@@ -341,6 +350,9 @@ func TestFormatTaskID(t *testing.T) {
 		{25, "code review", "25_code_review.md"},
 		{5, "Database Schema", "05_database_schema.md"}, // mixed case normalized
 		{10, "API Design", "10_api_design.md"},          // spaces to underscores
+		{1, "01_setup", "01_setup.md"},                  // strip numeric prefix
+		{2, "02 setup", "02_setup.md"},                  // strip numeric prefix with space
+		{3, "03-Review", "03_review.md"},                // strip numeric prefix with dash
 	}
 
 	for _, tt := range tests {

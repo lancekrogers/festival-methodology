@@ -11,11 +11,12 @@ import (
 func NewShellInitCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "shell-init <shell>",
-		Short: "Output shell integration code for directory navigation",
-		Long: `Output shell code for directory navigation integration.
+		Short: "Output shell integration code for festival helpers",
+		Long: `Output shell code that provides shell helper functions.
 
-This command outputs shell-specific code that creates the 'fgo' function,
-which wraps 'fest go' to actually change your working directory.
+This command outputs shell-specific code that creates helper functions:
+- fgo: Wraps 'fest go' to change your working directory
+- fls: Wraps 'fest list' for quick festival listing
 
 SETUP (one-time):
   # For zsh, add to ~/.zshrc:
@@ -29,25 +30,30 @@ SETUP (one-time):
 
 After setup, reload your shell or run: source ~/.zshrc
 
-USAGE:
+USAGE - fgo (navigation):
   fgo              Smart navigation (linked project ↔ festival, or festivals root)
   fgo 002          Navigate to phase 002
   fgo 2/1          Navigate to phase 2, sequence 1
   fgo active       Navigate to active directory
   fgo link         Link current festival to project (or vice versa)
-  fgo --help       Show this help message
+  fgo --help       Show fgo help
 
-The 'fgo' function calls 'fest go' internally and uses cd to change
-directories. Without shell integration, use: cd $(fest go)`,
+USAGE - fls (listing):
+  fls              List all festivals grouped by status
+  fls active       List active festivals only
+  fls --json       List festivals in JSON format
+  fls --help       Show fest list help`,
 		Example: `  # Output zsh integration code
   fest shell-init zsh
 
   # Add to your shell config (zsh)
   eval "$(fest shell-init zsh)"
 
-  # After setup, navigate with:
+  # After setup, use the helpers:
   fgo              # Go to festivals root
-  fgo 2            # Go to phase 002`,
+  fgo 2            # Go to phase 002
+  fls              # List all festivals
+  fls active       # List active festivals`,
 		Args: cobra.ExactArgs(1),
 		RunE: runShellInit,
 	}
@@ -71,9 +77,11 @@ func runShellInit(cmd *cobra.Command, args []string) error {
 }
 
 func bashZshInit() string {
-	return `# fest shell integration - directory navigation
+	return `# fest shell integration - helper functions
 # Add to ~/.zshrc or ~/.bashrc:
 #   eval "$(fest shell-init zsh)"
+#
+# Provides: fgo (navigation), fls (listing)
 
 # Tab completion for fgo
 _fgo_completions() {
@@ -95,6 +103,33 @@ if [[ -n "$ZSH_VERSION" ]]; then
     compdef _fgo_zsh fgo 2>/dev/null
 fi
 
+# Tab completion for fls - complete status names and flags
+_fls_completions() {
+    local completions="active planned completed dungeon --json --all --help"
+    COMPREPLY=($(compgen -W "$completions" -- "${COMP_WORDS[COMP_CWORD]}"))
+}
+
+# Register completion
+complete -F _fls_completions fls
+
+# Zsh-specific: use compdef if available for fls
+if [[ -n "$ZSH_VERSION" ]]; then
+    _fls_zsh() {
+        local -a completions
+        completions=(
+            'active:List active festivals'
+            'planned:List planned festivals'
+            'completed:List completed festivals'
+            'dungeon:List dungeon festivals'
+            '--json:Output in JSON format'
+            '--all:Include empty status categories'
+            '--help:Show help for fest list'
+        )
+        _describe 'fls' completions
+    }
+    compdef _fls_zsh fls 2>/dev/null
+fi
+
 fgo() {
     case "$1" in
         --help|-h|help)
@@ -104,6 +139,10 @@ fgo() {
         link)
             # Context-aware linking (no cd needed, shows TUI if needed)
             command fest go "$@"
+            ;;
+        unlink)
+            # Remove festival-project link (no cd needed)
+            command fest unlink
             ;;
         map|unmap)
             # Pass through to fest go subcommands (no cd needed)
@@ -174,16 +213,40 @@ fgo() {
             ;;
     esac
 }
+
+# fls - shorthand for 'fest list'
+# Simple pass-through wrapper that calls fest list with all arguments
+fls() {
+    case "$1" in
+        --help|-h|help)
+            # Show fest list help
+            command fest list --help
+            ;;
+        *)
+            # Pass all arguments through to fest list
+            command fest list "$@"
+            ;;
+    esac
+}
 `
 }
 
 func fishInit() string {
-	return `# fest shell integration - directory navigation
+	return `# fest shell integration - helper functions
 # Add to ~/.config/fish/config.fish:
 #   fest shell-init fish | source
+#
+# Provides: fgo (navigation), fls (listing)
 
 # Tab completion for fgo
 complete -c fgo -f -a "(command fest go completions 2>/dev/null)"
+
+# Tab completion for fls
+complete -c fls -f -a "active planned completed dungeon"
+complete -c fls -l json -d "Output in JSON format"
+complete -c fls -l all -d "Include empty status categories"
+complete -c fls -l help -d "Show help for fest list"
+complete -c fls -s h -d "Show help for fest list"
 
 function fgo
     switch $argv[1]
@@ -193,6 +256,9 @@ function fgo
         case link
             # Context-aware linking (no cd needed, shows TUI if needed)
             command fest go $argv
+        case unlink
+            # Remove festival-project link (no cd needed)
+            command fest unlink
         case map unmap
             # Pass through to fest go subcommands (no cd needed)
             command fest go $argv
@@ -249,6 +315,18 @@ function fgo
                 end
                 return 1
             end
+    end
+end
+
+# fls - shorthand for 'fest list'
+function fls
+    switch $argv[1]
+        case --help -h help
+            # Show fest list help
+            command fest list --help
+        case '*'
+            # Pass all arguments through to fest list
+            command fest list $argv
     end
 end
 `

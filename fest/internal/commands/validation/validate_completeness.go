@@ -28,7 +28,7 @@ func newValidateCompletenessCmd(parentOpts *validateOptions) *cobra.Command {
 			if len(args) > 0 {
 				opts.path = args[0]
 			}
-			return runValidateCompleteness(opts)
+			return runValidateCompleteness(cmd.Context(), opts)
 		},
 	}
 
@@ -37,8 +37,11 @@ func newValidateCompletenessCmd(parentOpts *validateOptions) *cobra.Command {
 	return cmd
 }
 
-func runValidateCompleteness(opts *validateOptions) error {
+func runValidateCompleteness(ctx context.Context, opts *validateOptions) error {
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	festivalPath, err := resolveFestivalPath(opts.path)
 	if err != nil {
@@ -53,7 +56,7 @@ func runValidateCompleteness(opts *validateOptions) error {
 		Issues:   []ValidationIssue{},
 	}
 
-	validateCompletenessChecks(festivalPath, result)
+	validateCompletenessChecks(ctx, festivalPath, result)
 
 	result.Score = calculateScore(result)
 	for _, issue := range result.Issues {
@@ -71,7 +74,7 @@ func runValidateCompleteness(opts *validateOptions) error {
 	return nil
 }
 
-func validateCompletenessChecks(festivalPath string, result *ValidationResult) {
+func validateCompletenessChecks(ctx context.Context, festivalPath string, result *ValidationResult) {
 	// Check FESTIVAL_OVERVIEW.md
 	overviewPath := filepath.Join(festivalPath, "FESTIVAL_OVERVIEW.md")
 	if !validateFileExists(overviewPath) {
@@ -95,7 +98,6 @@ func validateCompletenessChecks(festivalPath string, result *ValidationResult) {
 		})
 	}
 
-	ctx := context.Background()
 	parser := festival.NewParser()
 	phases, _ := parser.ParsePhases(ctx, festivalPath)
 

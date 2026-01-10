@@ -291,8 +291,10 @@ func categorizeChanges(ctx context.Context, stored, current map[string]fileops.C
 }
 
 func promptForFile(display *ui.UI, file string) string {
-	fmt.Printf("\nFile modified: %s\n", file)
-	fmt.Print("Update this file? [Y/s/a] (Y=yes, s=skip, a=accept all): ")
+	fmt.Println()
+	fmt.Println(ui.H2("File Modified"))
+	fmt.Printf("%s %s\n", ui.Label("File"), ui.Dim(file))
+	fmt.Print(ui.Info("Update this file? [Y/s/a] (Y=yes, s=skip, a=accept all): "))
 
 	var response string
 	fmt.Scanln(&response)

@@ -1,10 +1,22 @@
 package progress
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+)
+
+var (
+	// phasePattern matches phase directory names (e.g., "001_Phase_Name")
+	phasePattern = regexp.MustCompile(`^\d{3}_`)
+	// sequencePattern matches sequence directory names (e.g., "01_Sequence_Name")
+	sequencePattern = regexp.MustCompile(`^\d{2}_`)
+	// taskPattern matches task file names (e.g., "01_task.md" or "01.5_task.md")
+	taskPattern = regexp.MustCompile(`^\d{2}[\._].*\.md$`)
 )
 
 // AggregateProgress holds aggregated progress stats
@@ -43,12 +55,15 @@ type FestivalProgress struct {
 // isTask checks if a filename looks like a task file
 func isTask(name string) bool {
 	// Task files match pattern: NN_name.md or NN.N_name.md
-	matched, _ := regexp.MatchString(`^\d{2}[\._].*\.md$`, name)
-	return matched && !strings.HasPrefix(name, "SEQUENCE")
+	return taskPattern.MatchString(name) && !strings.HasPrefix(name, "SEQUENCE")
 }
 
 // GetFestivalProgress calculates overall festival progress
-func (m *Manager) GetFestivalProgress(festivalPath string) (*FestivalProgress, error) {
+func (m *Manager) GetFestivalProgress(ctx context.Context, festivalPath string) (*FestivalProgress, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, errors.Wrap(err, "context cancelled")
+	}
+
 	festivalName := filepath.Base(festivalPath)
 	overall := &AggregateProgress{}
 	var phases []*PhaseProgress
@@ -66,13 +81,12 @@ func (m *Manager) GetFestivalProgress(festivalPath string) (*FestivalProgress, e
 		}
 
 		// Check if it's a phase directory (starts with NNN_)
-		matched, _ := regexp.MatchString(`^\d{3}_`, entry.Name())
-		if !matched {
+		if !phasePattern.MatchString(entry.Name()) {
 			continue
 		}
 
 		phasePath := filepath.Join(festivalPath, entry.Name())
-		phaseProgress, err := m.GetPhaseProgress(phasePath)
+		phaseProgress, err := m.GetPhaseProgress(ctx, phasePath)
 		if err != nil {
 			continue
 		}
@@ -102,7 +116,11 @@ func (m *Manager) GetFestivalProgress(festivalPath string) (*FestivalProgress, e
 }
 
 // GetPhaseProgress calculates progress for a phase
-func (m *Manager) GetPhaseProgress(phasePath string) (*PhaseProgress, error) {
+func (m *Manager) GetPhaseProgress(ctx context.Context, phasePath string) (*PhaseProgress, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, errors.Wrap(err, "context cancelled")
+	}
+
 	phaseName := filepath.Base(phasePath)
 	aggregate := &AggregateProgress{}
 
@@ -119,13 +137,12 @@ func (m *Manager) GetPhaseProgress(phasePath string) (*PhaseProgress, error) {
 		}
 
 		// Check if it's a sequence directory (starts with NN_)
-		matched, _ := regexp.MatchString(`^\d{2}_`, entry.Name())
-		if !matched {
+		if !sequencePattern.MatchString(entry.Name()) {
 			continue
 		}
 
 		seqPath := filepath.Join(phasePath, entry.Name())
-		seqProgress, err := m.GetSequenceProgress(seqPath)
+		seqProgress, err := m.GetSequenceProgress(ctx, seqPath)
 		if err != nil {
 			continue
 		}
@@ -153,7 +170,11 @@ func (m *Manager) GetPhaseProgress(phasePath string) (*PhaseProgress, error) {
 }
 
 // GetSequenceProgress calculates progress for a sequence
-func (m *Manager) GetSequenceProgress(seqPath string) (*SequenceProgress, error) {
+func (m *Manager) GetSequenceProgress(ctx context.Context, seqPath string) (*SequenceProgress, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, errors.Wrap(err, "context cancelled")
+	}
+
 	seqName := filepath.Base(seqPath)
 	aggregate := &AggregateProgress{}
 
@@ -176,37 +197,28 @@ func (m *Manager) GetSequenceProgress(seqPath string) (*SequenceProgress, error)
 		aggregate.Total++
 		taskPath := filepath.Join(seqPath, entry.Name())
 
-		// Check if we have progress data for this task (prefer relative path keys)
-		task, exists := ResolveTaskProgress(m.store, m.store.festivalPath, taskPath)
-		if !exists {
-			// No YAML data - parse markdown file for checkbox status
-			status := ParseTaskStatus(taskPath)
-			switch status {
-			case StatusCompleted:
-				aggregate.Completed++
-			case StatusInProgress:
-				aggregate.InProgress++
-			case StatusBlocked:
-				aggregate.Blocked++
-			default:
-				aggregate.Pending++
-			}
-			continue
-		}
+		// Use ResolveTaskStatus which prioritizes markdown checkboxes as source of truth
+		status := ResolveTaskStatus(m.store, m.store.festivalPath, taskPath)
 
-		switch task.Status {
+		switch status {
 		case StatusCompleted:
 			aggregate.Completed++
 		case StatusInProgress:
 			aggregate.InProgress++
 		case StatusBlocked:
 			aggregate.Blocked++
-			aggregate.Blockers = append(aggregate.Blockers, task)
+			// Get task from YAML for blocker details if available
+			if task, exists := ResolveTaskProgress(m.store, m.store.festivalPath, taskPath); exists && task.Status == StatusBlocked {
+				aggregate.Blockers = append(aggregate.Blockers, task)
+			}
 		default:
 			aggregate.Pending++
 		}
 
-		aggregate.TimeSpentMin += task.TimeSpentMinutes
+		// Get time tracking from YAML if available (markdown doesn't track time)
+		if task, exists := ResolveTaskProgress(m.store, m.store.festivalPath, taskPath); exists {
+			aggregate.TimeSpentMin += task.TimeSpentMinutes
+		}
 	}
 
 	// Calculate percentage

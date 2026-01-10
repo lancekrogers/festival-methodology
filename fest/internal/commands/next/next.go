@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/next"
-	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/spf13/cobra"
 )
 
@@ -60,12 +60,14 @@ func runNext(cmd *cobra.Command, args []string) error {
 		return errors.IO("getting current directory", err)
 	}
 
-	festivalPath, err := tpl.FindFestivalRoot(cwd)
+	// Resolve festival path (supports linked festivals via fest link)
+	festivalPath, err := shared.ResolveFestivalPath(cwd, "")
 	if err != nil {
 		return errors.Wrap(err, "not inside a festival")
 	}
 
 	selector := next.NewSelector(festivalPath)
+	ctx := cmd.Context()
 
 	var result *next.NextTaskResult
 	if sequenceOnly {
@@ -73,9 +75,9 @@ func runNext(cmd *cobra.Command, args []string) error {
 		if seqPath == "" {
 			return errors.NotFound("not inside a sequence directory")
 		}
-		result, err = selector.FindNextInSequence(seqPath)
+		result, err = selector.FindNextInSequence(ctx, seqPath)
 	} else {
-		result, err = selector.FindNext(cwd)
+		result, err = selector.FindNext(ctx, cwd)
 	}
 
 	if err != nil {

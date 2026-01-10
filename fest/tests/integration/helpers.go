@@ -4,6 +4,7 @@
 package integration
 
 import (
+ "bytes"
  "context"
  "fmt"
  "io"
@@ -13,6 +14,7 @@ import (
  "testing"
  "time"
 
+ "github.com/docker/docker/pkg/stdcopy"
  "github.com/stretchr/testify/require"
  "github.com/testcontainers/testcontainers-go"
  "github.com/testcontainers/testcontainers-go/wait"
@@ -101,16 +103,22 @@ func (tc *TestContainer) RunFest(args ...string) (string, error) {
   return "", fmt.Errorf("failed to execute fest: %w", err)
  }
 
- output, err := io.ReadAll(reader)
- if err != nil {
-  return "", fmt.Errorf("failed to read output: %w", err)
+ // Demultiplex Docker stream
+ var stdout, stderr bytes.Buffer
+ if _, err := stdcopy.StdCopy(&stdout, &stderr, reader); err != nil {
+  return "", fmt.Errorf("failed to demultiplex output: %w", err)
+ }
+
+ output := stdout.String()
+ if stderr.Len() > 0 {
+  output += stderr.String()
  }
 
  if exitCode != 0 {
-  return string(output), fmt.Errorf("fest exited with code %d: %s", exitCode, output)
+  return output, fmt.Errorf("fest exited with code %d: %s", exitCode, output)
  }
 
- return string(output), nil
+ return output, nil
 }
 
 // RunFestInDir runs fest command from a specific directory
@@ -128,17 +136,24 @@ func (tc *TestContainer) runCommand(cmd []string) (string, error) {
   return "", fmt.Errorf("failed to execute command: %w", err)
  }
 
- output, err := io.ReadAll(reader)
- if err != nil {
-  return "", fmt.Errorf("failed to read output: %w", err)
+ // Demultiplex Docker stream (removes the \x01 header bytes)
+ var stdout, stderr bytes.Buffer
+ if _, err := stdcopy.StdCopy(&stdout, &stderr, reader); err != nil {
+  return "", fmt.Errorf("failed to demultiplex output: %w", err)
+ }
+
+ // Combine stdout and stderr
+ output := stdout.String()
+ if stderr.Len() > 0 {
+  output += stderr.String()
  }
 
  // Don't return error on non-zero exit - let tests check output
  if exitCode != 0 {
-  return string(output), nil
+  return output, nil
  }
 
- return string(output), nil
+ return output, nil
 }
 
 // CopyToContainer copies a file to the container
@@ -195,12 +210,15 @@ func (tc *TestContainer) ListDirectory(path string) ([]string, error) {
   return nil, fmt.Errorf("find command failed with exit code %d", exitCode)
  }
 
- output, err := io.ReadAll(reader)
- if err != nil {
-  return nil, fmt.Errorf("failed to read output: %w", err)
+ // Demultiplex Docker stream
+ var stdout, stderr bytes.Buffer
+ if _, err := stdcopy.StdCopy(&stdout, &stderr, reader); err != nil {
+  return nil, fmt.Errorf("failed to demultiplex output: %w", err)
  }
 
- lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+ output := stdout.String()
+
+ lines := strings.Split(strings.TrimSpace(output), "\n")
  var files []string
  for _, line := range lines {
   if line != "" && line != path {
@@ -218,16 +236,19 @@ func (tc *TestContainer) ReadFile(path string) (string, error) {
   return "", fmt.Errorf("failed to read file: %w", err)
  }
 
- output, err := io.ReadAll(reader)
- if err != nil {
-  return "", fmt.Errorf("failed to read output: %w", err)
+ // Demultiplex Docker stream
+ var stdout, stderr bytes.Buffer
+ if _, err := stdcopy.StdCopy(&stdout, &stderr, reader); err != nil {
+  return "", fmt.Errorf("failed to demultiplex output: %w", err)
  }
+
+ output := stdout.String()
 
  if exitCode != 0 {
   return "", fmt.Errorf("cat command failed with exit code %d: %s", exitCode, output)
  }
 
- return string(output), nil
+ return output, nil
 }
 
 // CheckFileExists checks if a file exists in the container

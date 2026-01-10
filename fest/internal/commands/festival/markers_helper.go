@@ -8,6 +8,7 @@ import (
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/markers"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 )
 
 // MarkerOptions holds options for marker processing.
@@ -123,13 +124,15 @@ func PrintDryRunMarkers(result *MarkerResult, jsonOutput bool) error {
 		return nil
 	}
 
-	fmt.Println("\nREPLACE markers in template:")
+	fmt.Println()
+	fmt.Println(ui.H2("Replace Markers in Template"))
 	for i, m := range result.Markers {
 		hint, _ := m["hint"].(string)
 		line, _ := m["line"].(int)
-		fmt.Printf("  %d. [line %d] %s\n", i+1, line, hint)
+		fmt.Printf("  %s %s\n", ui.Value(fmt.Sprintf("%d.", i+1)), ui.Warning(fmt.Sprintf("[line %d] %s", line, hint)))
 	}
-	fmt.Println("\nUse --markers '{\"hint\": \"value\", ...}' to fill these markers.")
+	fmt.Println()
+	fmt.Println(ui.Info("Use --markers '{\"hint\": \"value\", ...}' to fill these markers."))
 
 	return nil
 }

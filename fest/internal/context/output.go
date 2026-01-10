@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 )
 
 // Formatter formats context output
@@ -20,120 +22,206 @@ func NewFormatter(verbose bool) *Formatter {
 func (f *Formatter) FormatText(ctx *ContextOutput) string {
 	var sb strings.Builder
 
-	// Location header
-	sb.WriteString("=== CONTEXT ===\n\n")
-	sb.WriteString(fmt.Sprintf("Location: %s (level: %s)\n", ctx.Location.FestivalName, ctx.Location.Level))
-	if ctx.Location.PhaseName != "" {
-		sb.WriteString(fmt.Sprintf("Phase: %s\n", ctx.Location.PhaseName))
-	}
-	if ctx.Location.SequenceName != "" {
-		sb.WriteString(fmt.Sprintf("Sequence: %s\n", ctx.Location.SequenceName))
-	}
-	if ctx.Location.TaskName != "" {
-		sb.WriteString(fmt.Sprintf("Task: %s\n", ctx.Location.TaskName))
-	}
-	sb.WriteString(fmt.Sprintf("Depth: %s\n\n", ctx.Depth))
+	sb.WriteString(ui.H1("Context"))
 
-	// Festival context
-	if ctx.Festival != nil && ctx.Festival.Goal != nil {
-		sb.WriteString("--- FESTIVAL ---\n")
-		if ctx.Festival.Goal.Title != "" {
-			sb.WriteString(fmt.Sprintf("Title: %s\n", ctx.Festival.Goal.Title))
-		}
-		if ctx.Festival.Goal.Objective != "" {
-			sb.WriteString(fmt.Sprintf("Objective: %s\n", truncate(ctx.Festival.Goal.Objective, 200)))
-		}
-		sb.WriteString(fmt.Sprintf("Phases: %d\n", ctx.Festival.PhaseCount))
-		sb.WriteString("\n")
+	sections := []string{
+		formatLocationSection(ctx),
+		formatFestivalSection(ctx),
+		formatPhaseSection(ctx),
+		formatSequenceSection(ctx),
+		formatTaskSection(ctx),
+		formatRulesSection(ctx.Rules, f.verbose),
+		formatDecisionsSection(ctx.Decisions, f.verbose),
+		formatDependencyOutputsSection(ctx.DependencyOutputs),
 	}
 
-	// Phase context
-	if ctx.Phase != nil {
-		sb.WriteString("--- PHASE ---\n")
-		sb.WriteString(fmt.Sprintf("Name: %s\n", ctx.Phase.Name))
-		if ctx.Phase.PhaseType != "" {
-			sb.WriteString(fmt.Sprintf("Type: %s\n", ctx.Phase.PhaseType))
-		}
-		if ctx.Phase.Goal != nil && ctx.Phase.Goal.Objective != "" {
-			sb.WriteString(fmt.Sprintf("Objective: %s\n", truncate(ctx.Phase.Goal.Objective, 200)))
-		}
-		sb.WriteString(fmt.Sprintf("Sequences: %d\n", ctx.Phase.SequenceCount))
-		sb.WriteString("\n")
+	body := joinSections(sections...)
+	if body != "" {
+		sb.WriteString("\n\n")
+		sb.WriteString(body)
 	}
-
-	// Sequence context
-	if ctx.Sequence != nil {
-		sb.WriteString("--- SEQUENCE ---\n")
-		sb.WriteString(fmt.Sprintf("Name: %s\n", ctx.Sequence.Name))
-		if ctx.Sequence.Goal != nil && ctx.Sequence.Goal.Objective != "" {
-			sb.WriteString(fmt.Sprintf("Objective: %s\n", truncate(ctx.Sequence.Goal.Objective, 200)))
-		}
-		sb.WriteString(fmt.Sprintf("Tasks: %d\n", ctx.Sequence.TaskCount))
-		sb.WriteString("\n")
-	}
-
-	// Task context
-	if ctx.Task != nil {
-		sb.WriteString("--- TASK ---\n")
-		sb.WriteString(fmt.Sprintf("Name: %s\n", ctx.Task.Name))
-		sb.WriteString(fmt.Sprintf("Number: %d\n", ctx.Task.TaskNumber))
-		if ctx.Task.AutonomyLevel != "" {
-			sb.WriteString(fmt.Sprintf("Autonomy: %s\n", ctx.Task.AutonomyLevel))
-		}
-		sb.WriteString(fmt.Sprintf("Parallel: %v\n", ctx.Task.ParallelAllowed))
-		if ctx.Task.Objective != "" {
-			sb.WriteString(fmt.Sprintf("Objective: %s\n", truncate(ctx.Task.Objective, 300)))
-		}
-		if len(ctx.Task.Dependencies) > 0 {
-			sb.WriteString(fmt.Sprintf("Dependencies: %s\n", strings.Join(ctx.Task.Dependencies, ", ")))
-		}
-		if len(ctx.Task.Deliverables) > 0 {
-			sb.WriteString("Deliverables:\n")
-			for _, d := range ctx.Task.Deliverables {
-				sb.WriteString(fmt.Sprintf("  - %s\n", d))
-			}
-		}
-		sb.WriteString("\n")
-	}
-
-	// Rules (standard and full depth)
-	if len(ctx.Rules) > 0 {
-		sb.WriteString("--- RULES ---\n")
-		for _, rule := range ctx.Rules {
-			sb.WriteString(fmt.Sprintf("[%s] %s\n", rule.Category, rule.Title))
-			if f.verbose && rule.Description != "" {
-				sb.WriteString(fmt.Sprintf("  %s\n", truncate(rule.Description, 150)))
-			}
-		}
-		sb.WriteString("\n")
-	}
-
-	// Decisions
-	if len(ctx.Decisions) > 0 {
-		sb.WriteString("--- DECISIONS ---\n")
-		for _, d := range ctx.Decisions {
-			date := d.Date.Format("2006-01-02")
-			sb.WriteString(fmt.Sprintf("[%s] %s\n", date, d.Summary))
-			if f.verbose && d.Rationale != "" {
-				sb.WriteString(fmt.Sprintf("  Rationale: %s\n", truncate(d.Rationale, 100)))
-			}
-		}
-		sb.WriteString("\n")
-	}
-
-	// Dependency outputs (full depth)
-	if len(ctx.DependencyOutputs) > 0 {
-		sb.WriteString("--- DEPENDENCY OUTPUTS ---\n")
-		for _, dep := range ctx.DependencyOutputs {
-			sb.WriteString(fmt.Sprintf("%s:\n", dep.TaskName))
-			for _, output := range dep.Outputs {
-				sb.WriteString(fmt.Sprintf("  - %s\n", output))
-			}
-		}
-		sb.WriteString("\n")
-	}
+	sb.WriteString("\n")
 
 	return sb.String()
+}
+
+func formatLocationSection(ctx *ContextOutput) string {
+	if ctx == nil || ctx.Location == nil {
+		return ""
+	}
+
+	var sb strings.Builder
+	sb.WriteString(ui.H2("Location"))
+	sb.WriteString("\n")
+	sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Festival"), ui.Value(ctx.Location.FestivalName, ui.FestivalColor)))
+	sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Level"), ui.Value(ctx.Location.Level)))
+	if ctx.Location.PhaseName != "" {
+		sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Phase"), ui.Value(ctx.Location.PhaseName, ui.PhaseColor)))
+	}
+	if ctx.Location.SequenceName != "" {
+		sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Sequence"), ui.Value(ctx.Location.SequenceName, ui.SequenceColor)))
+	}
+	if ctx.Location.TaskName != "" {
+		sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Task"), ui.Value(ctx.Location.TaskName, ui.TaskColor)))
+	}
+	sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Depth"), ui.Value(string(ctx.Depth))))
+
+	return strings.TrimRight(sb.String(), "\n")
+}
+
+func formatFestivalSection(ctx *ContextOutput) string {
+	if ctx == nil || ctx.Festival == nil || ctx.Festival.Goal == nil {
+		return ""
+	}
+
+	var sb strings.Builder
+	sb.WriteString(ui.H2("Festival"))
+	sb.WriteString("\n")
+	if ctx.Festival.Goal.Title != "" {
+		sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Title"), ui.Value(ctx.Festival.Goal.Title, ui.FestivalColor)))
+	}
+	if ctx.Festival.Goal.Objective != "" {
+		sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Objective"), ui.Info(truncate(ctx.Festival.Goal.Objective, 200))))
+	}
+	sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Phases"), ui.Value(fmt.Sprintf("%d", ctx.Festival.PhaseCount))))
+
+	return strings.TrimRight(sb.String(), "\n")
+}
+
+func formatPhaseSection(ctx *ContextOutput) string {
+	if ctx == nil || ctx.Phase == nil {
+		return ""
+	}
+
+	var sb strings.Builder
+	sb.WriteString(ui.H2("Phase"))
+	sb.WriteString("\n")
+	sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Name"), ui.Value(ctx.Phase.Name, ui.PhaseColor)))
+	if ctx.Phase.PhaseType != "" {
+		sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Type"), ui.Value(ctx.Phase.PhaseType)))
+	}
+	if ctx.Phase.Goal != nil && ctx.Phase.Goal.Objective != "" {
+		sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Objective"), ui.Info(truncate(ctx.Phase.Goal.Objective, 200))))
+	}
+	sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Sequences"), ui.Value(fmt.Sprintf("%d", ctx.Phase.SequenceCount))))
+
+	return strings.TrimRight(sb.String(), "\n")
+}
+
+func formatSequenceSection(ctx *ContextOutput) string {
+	if ctx == nil || ctx.Sequence == nil {
+		return ""
+	}
+
+	var sb strings.Builder
+	sb.WriteString(ui.H2("Sequence"))
+	sb.WriteString("\n")
+	sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Name"), ui.Value(ctx.Sequence.Name, ui.SequenceColor)))
+	if ctx.Sequence.Goal != nil && ctx.Sequence.Goal.Objective != "" {
+		sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Objective"), ui.Info(truncate(ctx.Sequence.Goal.Objective, 200))))
+	}
+	sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Tasks"), ui.Value(fmt.Sprintf("%d", ctx.Sequence.TaskCount))))
+
+	return strings.TrimRight(sb.String(), "\n")
+}
+
+func formatTaskSection(ctx *ContextOutput) string {
+	if ctx == nil || ctx.Task == nil {
+		return ""
+	}
+
+	var sb strings.Builder
+	sb.WriteString(ui.H2("Task"))
+	sb.WriteString("\n")
+	sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Name"), ui.Value(ctx.Task.Name, ui.TaskColor)))
+	sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Number"), ui.Value(fmt.Sprintf("%d", ctx.Task.TaskNumber))))
+	if ctx.Task.AutonomyLevel != "" {
+		sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Autonomy"), ui.Value(ctx.Task.AutonomyLevel)))
+	}
+	sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Parallel"), ui.Value(fmt.Sprintf("%v", ctx.Task.ParallelAllowed))))
+	if ctx.Task.Objective != "" {
+		sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Objective"), ui.Info(truncate(ctx.Task.Objective, 300))))
+	}
+	if len(ctx.Task.Dependencies) > 0 {
+		sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Dependencies"), ui.Value(strings.Join(ctx.Task.Dependencies, ", "), ui.TaskColor)))
+	}
+	if len(ctx.Task.Deliverables) > 0 {
+		sb.WriteString(fmt.Sprintf("%s\n", ui.Label("Deliverables")))
+		for _, d := range ctx.Task.Deliverables {
+			sb.WriteString(fmt.Sprintf("  - %s\n", ui.Value(d)))
+		}
+	}
+
+	return strings.TrimRight(sb.String(), "\n")
+}
+
+func formatRulesSection(rules []Rule, verbose bool) string {
+	if len(rules) == 0 {
+		return ""
+	}
+
+	var sb strings.Builder
+	sb.WriteString(ui.H2("Rules"))
+	sb.WriteString("\n")
+	for _, rule := range rules {
+		sb.WriteString(fmt.Sprintf("  %s %s\n", ui.Label(rule.Category), ui.Value(rule.Title)))
+		if verbose && rule.Description != "" {
+			sb.WriteString(fmt.Sprintf("    %s\n", ui.Dim(truncate(rule.Description, 150))))
+		}
+	}
+
+	return strings.TrimRight(sb.String(), "\n")
+}
+
+func formatDecisionsSection(decisions []Decision, verbose bool) string {
+	if len(decisions) == 0 {
+		return ""
+	}
+
+	var sb strings.Builder
+	sb.WriteString(ui.H2("Decisions"))
+	sb.WriteString("\n")
+	for _, d := range decisions {
+		date := d.Date.Format("2006-01-02")
+		sb.WriteString(fmt.Sprintf("  %s %s\n", ui.Label(date), ui.Value(d.Summary)))
+		if verbose && d.Rationale != "" {
+			sb.WriteString(fmt.Sprintf("    %s %s\n", ui.Label("Rationale"), ui.Dim(truncate(d.Rationale, 100))))
+		}
+	}
+
+	return strings.TrimRight(sb.String(), "\n")
+}
+
+func formatDependencyOutputsSection(outputs []DepOutput) string {
+	if len(outputs) == 0 {
+		return ""
+	}
+
+	var sb strings.Builder
+	sb.WriteString(ui.H2("Dependency Outputs"))
+	sb.WriteString("\n")
+	for idx, dep := range outputs {
+		if idx > 0 {
+			sb.WriteString("\n")
+		}
+		sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Task"), ui.Value(dep.TaskName, ui.TaskColor)))
+		for _, output := range dep.Outputs {
+			sb.WriteString(fmt.Sprintf("  - %s\n", ui.Value(output)))
+		}
+	}
+
+	return strings.TrimRight(sb.String(), "\n")
+}
+
+func joinSections(sections ...string) string {
+	nonEmpty := make([]string, 0, len(sections))
+	for _, section := range sections {
+		if strings.TrimSpace(section) != "" {
+			nonEmpty = append(nonEmpty, section)
+		}
+	}
+
+	return strings.Join(nonEmpty, "\n\n")
 }
 
 // FormatJSON formats context as JSON

@@ -1,6 +1,7 @@
 package show
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -47,11 +48,11 @@ type GateCounts struct {
 }
 
 // CalculateFestivalStats calculates statistics for a festival.
-func CalculateFestivalStats(festivalDir string) (*FestivalStats, error) {
+func CalculateFestivalStats(ctx context.Context, festivalDir string) (*FestivalStats, error) {
 	stats := &FestivalStats{}
 	festivalRoot := resolveFestivalRoot(festivalDir)
 	var store *progress.Store
-	if mgr, err := progress.NewManager(festivalRoot); err == nil {
+	if mgr, err := progress.NewManager(ctx, festivalRoot); err == nil {
 		store = mgr.Store()
 	}
 

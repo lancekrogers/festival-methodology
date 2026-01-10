@@ -27,8 +27,9 @@ type Navigation struct {
 
 // Link represents a festival-to-project link
 type Link struct {
-	Path     string    `yaml:"path"`
-	LinkedAt time.Time `yaml:"linked_at"`
+	Path         string    `yaml:"path"`                    // Project path
+	FestivalPath string    `yaml:"festival_path,omitempty"` // Festival path (for reverse navigation)
+	LinkedAt     time.Time `yaml:"linked_at"`
 }
 
 // NavigationPath returns the path to the navigation state file
@@ -105,6 +106,11 @@ func (n *Navigation) Save() error {
 
 // SetLink creates or updates a bidirectional festival-to-project link
 func (n *Navigation) SetLink(festivalName, projectPath string) {
+	n.SetLinkWithPath(festivalName, projectPath, "")
+}
+
+// SetLinkWithPath creates or updates a bidirectional festival-to-project link with festival path
+func (n *Navigation) SetLinkWithPath(festivalName, projectPath, festivalPath string) {
 	// Remove old reverse link if this festival was linked elsewhere
 	if oldLink, ok := n.Links[festivalName]; ok {
 		delete(n.ProjectLinks, oldLink.Path)
@@ -117,8 +123,9 @@ func (n *Navigation) SetLink(festivalName, projectPath string) {
 
 	// Set forward link: festival -> project
 	n.Links[festivalName] = &Link{
-		Path:     projectPath,
-		LinkedAt: time.Now().UTC(),
+		Path:         projectPath,
+		FestivalPath: festivalPath,
+		LinkedAt:     time.Now().UTC(),
 	}
 
 	// Set reverse link: project -> festival

@@ -2,7 +2,6 @@ package navigation
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,6 +13,8 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/navigation"
+	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
+	"github.com/lancekrogers/festival-methodology/fest/internal/workspace"
 	"github.com/spf13/cobra"
 )
 
@@ -117,11 +118,15 @@ func runGoMap(name, path string, jsonOutput bool) error {
 			"shortcut": name,
 			"path":     absPath,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
-		fmt.Printf("Created shortcut '-%s' → %s\n", name, absPath)
-		fmt.Println("\nUse 'fgo -" + name + "' to navigate")
+		fmt.Println(ui.H1("Shortcut Created"))
+		fmt.Printf("%s %s\n", ui.Label("Shortcut"), ui.Value("-"+name))
+		fmt.Printf("%s %s\n", ui.Label("Path"), ui.Dim(absPath))
+		fmt.Println()
+		fmt.Println(ui.Dim(fmt.Sprintf("Use 'fgo -%s' to navigate", name)))
 	}
 
 	return nil
@@ -175,13 +180,14 @@ func runGoUnmap(name string, jsonOutput bool) error {
 			"shortcut": name,
 			"removed":  exists,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		if exists {
-			fmt.Printf("Removed shortcut '-%s'\n", name)
+			fmt.Printf("%s %s\n", ui.Success("✓ Shortcut removed"), ui.Value("-"+name))
 		} else {
-			fmt.Printf("Shortcut '%s' not found\n", name)
+			fmt.Printf("%s %s\n", ui.Warning("Shortcut not found"), ui.Value(name))
 		}
 	}
 
@@ -277,19 +283,19 @@ func runGoList(jsonOutput bool) error {
 			"shortcuts": shortcuts,
 			"links":     links,
 		}
-		data, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(data))
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
 	} else {
 		hasContent := false
+		fmt.Println(ui.H1("Navigation"))
 
 		// Print shortcuts section
 		if len(nav.Shortcuts) > 0 {
-			fmt.Println("SHORTCUTS")
-			fmt.Println(strings.Repeat("=", 60))
-			fmt.Printf("%-12s %s\n", "Shortcut", "Path")
-			fmt.Println(strings.Repeat("-", 60))
+			fmt.Println(ui.H2("Shortcuts"))
+			fmt.Println(ui.Dim(strings.Repeat("─", 60)))
 			for name, path := range nav.Shortcuts {
-				fmt.Printf("-%-11s %s\n", name, path)
+				fmt.Printf("%s %s\n", ui.Value("-"+name), ui.Dim(path))
 			}
 			hasContent = true
 		}
@@ -299,21 +305,28 @@ func runGoList(jsonOutput bool) error {
 			if hasContent {
 				fmt.Println()
 			}
-			fmt.Println("FESTIVAL LINKS")
-			fmt.Println(strings.Repeat("=", 60))
-			fmt.Printf("%-25s %s\n", "Festival", "Project Path")
-			fmt.Println(strings.Repeat("-", 60))
+			fmt.Println(ui.H2("Festival Links"))
+			fmt.Println(ui.Dim(strings.Repeat("─", 60)))
+			cwd, _ := os.Getwd()
+			festivalsDir, _ := workspace.FindFestivals(cwd)
 			for name, link := range nav.Links {
-				fmt.Printf("%-25s %s\n", name, link.Path)
+				styledFestival := ui.Value(name, ui.FestivalColor)
+				if festivalsDir != "" {
+					status := findFestivalStatus(festivalsDir, name)
+					if status != "" {
+						styledFestival = ui.GetStatusStyle(status).Render(name)
+					}
+				}
+				fmt.Printf("%s %s\n", styledFestival, ui.Dim(link.Path))
 			}
 			hasContent = true
 		}
 
 		if !hasContent {
-			fmt.Println("No shortcuts or festival links configured.")
+			fmt.Println(ui.Dim("No shortcuts or festival links configured."))
 			fmt.Println()
-			fmt.Println("Create a shortcut:    fest go map <name> [path]")
-			fmt.Println("Create a link:        fest link <path>  (from within a festival)")
+			fmt.Println(ui.Dim("Create a shortcut:    fest go map <name> [path]"))
+			fmt.Println(ui.Dim("Create a link:        fest link <path>  (from within a festival)"))
 		}
 	}
 
@@ -361,21 +374,21 @@ func NewGoProjectCommand() *cobra.Command {
 
 Use 'fest link <path>' to create a link from within a festival.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runGoProject()
+			return runGoProject(cmd.Context())
 		},
 	}
 
 	return cmd
 }
 
-func runGoProject() error {
+func runGoProject(ctx context.Context) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return errors.IO("getting current directory", err)
 	}
 
 	// Detect current festival
-	loc, err := show.DetectCurrentLocation(cwd)
+	loc, err := show.DetectCurrentLocation(ctx, cwd)
 	if err != nil {
 		return errors.NotFound("festival").
 			WithField("hint", "run from inside a festival directory")
@@ -435,7 +448,17 @@ func runGoFest() error {
 	for festivalName, link := range nav.Links {
 		// Check if cwd is within the linked project path
 		if strings.HasPrefix(cwd, link.Path) || cwd == link.Path {
-			// Find the festival path - need to search for it
+			// Use stored festival path if available (preferred)
+			if link.FestivalPath != "" {
+				// Verify the path still exists
+				if info, err := os.Stat(link.FestivalPath); err == nil && info.IsDir() {
+					fmt.Println(link.FestivalPath)
+					return nil
+				}
+				// Fall through to search if stored path is invalid
+			}
+
+			// Fall back to searching for the festival by name
 			festivalsPath, err := findFestivalPath(festivalName)
 			if err != nil {
 				return err
@@ -480,16 +503,23 @@ func findFestivalPath(festivalName string) (string, error) {
 	return "", errors.NotFound("festival").WithField("name", festivalName)
 }
 
-// findFestivalsDir walks up from the given path to find a festivals directory
+// findFestivalsDir walks up from the given path to find a festivals directory.
+// A valid festivals directory must contain a .festival/ subdirectory with a .workspace file.
+// This distinguishes actual working festivals from template libraries (which lack .workspace).
 func findFestivalsDir(startPath string) (string, error) {
 	dir := startPath
 	for {
 		festivalsPath := filepath.Join(dir, "festivals")
 		if info, err := os.Stat(festivalsPath); err == nil && info.IsDir() {
-			// Check for .festival subdirectory to confirm
+			// Check for .festival subdirectory
 			dotFestivalPath := filepath.Join(festivalsPath, ".festival")
 			if info, err := os.Stat(dotFestivalPath); err == nil && info.IsDir() {
-				return festivalsPath, nil
+				// Check for .workspace file to confirm this is a working festivals directory
+				// (not a template library which lacks .workspace)
+				workspacePath := filepath.Join(dotFestivalPath, ".workspace")
+				if _, err := os.Stat(workspacePath); err == nil {
+					return festivalsPath, nil
+				}
 			}
 		}
 
