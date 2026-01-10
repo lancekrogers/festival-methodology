@@ -10,8 +10,10 @@ import (
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
+	"github.com/lancekrogers/festival-methodology/fest/internal/commands/tui"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
+	"github.com/lancekrogers/festival-methodology/fest/internal/workspace"
 	"github.com/spf13/cobra"
 )
 
@@ -61,10 +63,26 @@ func runStatusSet(ctx context.Context, cmd *cobra.Command, newStatus string, opt
 		return errors.IO("getting current directory", err)
 	}
 
+	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
+
 	// Resolve festival path (supports linked festivals via fest link)
 	festivalPath, err := shared.ResolveFestivalPath(cwd, "")
-	if err != nil {
-		return errors.Wrap(err, "not inside a festival")
+
+	// Handle case when not inside a festival or interactive mode requested
+	if err != nil || opts.interactive {
+		// Interactive selection mode
+		selectedFestival, selectErr := selectFestivalForStatus(ctx, cwd, newStatus)
+		if selectErr != nil {
+			return selectErr
+		}
+		if selectedFestival == nil {
+			// User cancelled
+			display.Info("Selection cancelled.")
+			return nil
+		}
+
+		// Use selected festival
+		return applyStatusToFestival(ctx, display, selectedFestival, newStatus, opts)
 	}
 
 	// Detect current location
@@ -76,8 +94,6 @@ func runStatusSet(ctx context.Context, cmd *cobra.Command, newStatus string, opt
 	if loc.Festival == nil {
 		return errors.NotFound("festival")
 	}
-
-	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	// Determine entity type and validate status
 	entityType := EntityType(loc.Type)
@@ -95,6 +111,55 @@ func runStatusSet(ctx context.Context, cmd *cobra.Command, newStatus string, opt
 
 	// For other entities, update frontmatter (placeholder - needs frontmatter support)
 	return emitStatusSetPlaceholder(display, opts, loc.Type, newStatus)
+}
+
+// selectFestivalForStatus opens an interactive selector for choosing a festival.
+func selectFestivalForStatus(ctx context.Context, cwd, newStatus string) (*show.FestivalInfo, error) {
+	// Find festivals directory
+	festivalsDir, err := workspace.FindFestivals(cwd)
+	if err != nil {
+		return nil, errors.Wrap(err, "finding festivals directory")
+	}
+	if festivalsDir == "" {
+		return nil, errors.NotFound("festivals directory").
+			WithField("hint", "navigate to a workspace with festivals/ directory")
+	}
+
+	// Configure selector with appropriate title
+	config := tui.DefaultSelectorConfig()
+	config.Title = "Select Festival to Change Status"
+	config.Description = fmt.Sprintf("Choose festival to set to '%s'", newStatus)
+
+	// Create and run selector
+	selector := tui.NewFestivalSelector(festivalsDir, config)
+	result, err := selector.Run(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Cancelled {
+		return nil, nil // User cancelled - not an error
+	}
+
+	return result.Selected, nil
+}
+
+// applyStatusToFestival applies a status change to a festival.
+func applyStatusToFestival(ctx context.Context, display *ui.UI, festival *show.FestivalInfo, newStatus string, opts *statusOptions) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled")
+	}
+
+	// Validate status for festivals
+	if !isValidStatus(EntityFestival, newStatus) {
+		validOptions := ValidStatuses[EntityFestival]
+		return errors.Validation("invalid status").
+			WithField("status", newStatus).
+			WithField("valid_options", strings.Join(validOptions, ", "))
+	}
+
+	// Apply the status change
+	return handleFestivalStatusChange(ctx, display, festival, newStatus, opts)
 }
 
 // emitStatusSetPlaceholder outputs a placeholder message for non-festival status changes.
