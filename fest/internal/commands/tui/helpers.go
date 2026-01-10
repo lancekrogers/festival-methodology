@@ -358,3 +358,370 @@ func nextTaskAfter(ctx context.Context, seqDir string) int {
 	}
 	return max
 }
+
+// FestivalInfo holds information about a discovered festival.
+type FestivalInfo struct {
+	Name   string // Directory name
+	Path   string // Full path
+	Status string // active, planned, completed, dungeon
+	Goal   string // Extracted from FESTIVAL_GOAL.md if available
+}
+
+// listFestivalsInDir lists all festivals in a status directory.
+func listFestivalsInDir(statusDir string) ([]FestivalInfo, error) {
+	entries, err := os.ReadDir(statusDir)
+	if err != nil {
+		return nil, err
+	}
+
+	var festivals []FestivalInfo
+	status := filepath.Base(statusDir)
+
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+
+		festPath := filepath.Join(statusDir, e.Name())
+
+		// Verify it's a festival (has FESTIVAL_GOAL.md or similar)
+		if !isFestivalDir(festPath) {
+			continue
+		}
+
+		info := FestivalInfo{
+			Name:   e.Name(),
+			Path:   festPath,
+			Status: status,
+			Goal:   extractFestivalGoal(festPath),
+		}
+		festivals = append(festivals, info)
+	}
+
+	return festivals, nil
+}
+
+// isFestivalDir checks if a directory is a festival.
+func isFestivalDir(dir string) bool {
+	markers := []string{
+		"FESTIVAL_GOAL.md",
+		"FESTIVAL_OVERVIEW.md",
+		"FESTIVAL_RULES.md",
+		"fest.yaml",
+	}
+	for _, m := range markers {
+		if exists(filepath.Join(dir, m)) {
+			return true
+		}
+	}
+	// Also check for phase directories
+	return len(listPhaseDirs(dir)) > 0
+}
+
+// extractFestivalGoal extracts the goal from FESTIVAL_GOAL.md.
+func extractFestivalGoal(festDir string) string {
+	goalPath := filepath.Join(festDir, "FESTIVAL_GOAL.md")
+	data, err := os.ReadFile(goalPath)
+	if err != nil {
+		return ""
+	}
+
+	// Extract first non-empty, non-header line as goal summary
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		// Truncate long goals
+		if len(line) > 60 {
+			return line[:57] + "..."
+		}
+		return line
+	}
+	return ""
+}
+
+// listAllFestivals lists festivals across all status directories.
+func listAllFestivals(festivalsRoot string) (map[string][]FestivalInfo, error) {
+	result := make(map[string][]FestivalInfo)
+
+	statuses := []string{"active", "planned", "completed", "dungeon"}
+	for _, status := range statuses {
+		statusDir := filepath.Join(festivalsRoot, status)
+		if !exists(statusDir) {
+			continue
+		}
+
+		festivals, err := listFestivalsInDir(statusDir)
+		if err != nil {
+			continue // Skip dirs we can't read
+		}
+
+		if len(festivals) > 0 {
+			result[status] = festivals
+		}
+	}
+
+	return result, nil
+}
+
+// PhaseInfo holds information about a discovered phase.
+type PhaseInfo struct {
+	Number    int
+	Name      string // Full directory name (e.g., "001_PLANNING")
+	ShortName string // Name without number (e.g., "PLANNING")
+	Path      string
+	Type      string // planning, implementation, research, review, deployment
+	Goal      string // Extracted from PHASE_GOAL.md
+}
+
+// getPhaseType determines the phase type from its name.
+func getPhaseType(phaseName string) string {
+	lower := strings.ToLower(phaseName)
+
+	switch {
+	case strings.Contains(lower, "planning") || strings.Contains(lower, "plan"):
+		return "planning"
+	case strings.Contains(lower, "research") || strings.Contains(lower, "design"):
+		return "research"
+	case strings.Contains(lower, "implementation") || strings.Contains(lower, "implement"):
+		return "implementation"
+	case strings.Contains(lower, "review") || strings.Contains(lower, "qa"):
+		return "review"
+	case strings.Contains(lower, "deployment") || strings.Contains(lower, "deploy"):
+		return "deployment"
+	default:
+		return "implementation" // Default
+	}
+}
+
+// listPhaseInfos returns detailed info about phases in a festival.
+func listPhaseInfos(festivalDir string) ([]PhaseInfo, error) {
+	phaseNames := listPhaseDirs(festivalDir)
+	if len(phaseNames) == 0 {
+		return nil, nil
+	}
+
+	phases := make([]PhaseInfo, 0, len(phaseNames))
+
+	for _, name := range phaseNames {
+		phasePath := filepath.Join(festivalDir, name)
+
+		// Extract number and short name
+		parts := strings.SplitN(name, "_", 2)
+		number := 0
+		shortName := name
+		if len(parts) == 2 {
+			number, _ = strconv.Atoi(parts[0])
+			shortName = parts[1]
+		}
+
+		info := PhaseInfo{
+			Number:    number,
+			Name:      name,
+			ShortName: shortName,
+			Path:      phasePath,
+			Type:      getPhaseType(name),
+			Goal:      extractPhaseGoal(phasePath),
+		}
+		phases = append(phases, info)
+	}
+
+	return phases, nil
+}
+
+// extractPhaseGoal extracts the goal from PHASE_GOAL.md.
+func extractPhaseGoal(phaseDir string) string {
+	goalPath := filepath.Join(phaseDir, "PHASE_GOAL.md")
+	data, err := os.ReadFile(goalPath)
+	if err != nil {
+		return ""
+	}
+
+	// Look for "Primary Goal:" line
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "**Primary Goal:**") {
+			goal := strings.TrimPrefix(line, "**Primary Goal:**")
+			goal = strings.TrimSpace(goal)
+			if len(goal) > 50 {
+				return goal[:47] + "..."
+			}
+			return goal
+		}
+	}
+
+	return ""
+}
+
+// phaseTypeIcon returns an icon for the phase type.
+func phaseTypeIcon(phaseType string) string {
+	switch phaseType {
+	case "planning":
+		return "[plan]"
+	case "research":
+		return "[research]"
+	case "implementation":
+		return "[impl]"
+	case "review":
+		return "[review]"
+	case "deployment":
+		return "[deploy]"
+	default:
+		return "[phase]"
+	}
+}
+
+// SequenceInfo holds information about a discovered sequence.
+type SequenceInfo struct {
+	Number    int
+	Name      string // Full directory name (e.g., "01_requirements")
+	ShortName string // Name without number (e.g., "requirements")
+	Path      string
+	TaskCount int
+	Completed int    // Number of completed tasks
+	Goal      string // Extracted from SEQUENCE_GOAL.md
+}
+
+// listSequenceInfos returns detailed info about sequences in a phase.
+func listSequenceInfos(phaseDir string) ([]SequenceInfo, error) {
+	seqNames := listSequenceDirs(phaseDir)
+	if len(seqNames) == 0 {
+		return nil, nil
+	}
+
+	sequences := make([]SequenceInfo, 0, len(seqNames))
+
+	for _, name := range seqNames {
+		seqPath := filepath.Join(phaseDir, name)
+
+		// Extract number and short name
+		parts := strings.SplitN(name, "_", 2)
+		number := 0
+		shortName := name
+		if len(parts) == 2 {
+			number, _ = strconv.Atoi(parts[0])
+			shortName = parts[1]
+		}
+
+		// Count tasks
+		taskCount, completed := countTasks(seqPath)
+
+		info := SequenceInfo{
+			Number:    number,
+			Name:      name,
+			ShortName: shortName,
+			Path:      seqPath,
+			TaskCount: taskCount,
+			Completed: completed,
+			Goal:      extractSequenceGoal(seqPath),
+		}
+		sequences = append(sequences, info)
+	}
+
+	return sequences, nil
+}
+
+// countTasks counts task files in a sequence directory.
+func countTasks(seqDir string) (total, completed int) {
+	entries, err := os.ReadDir(seqDir)
+	if err != nil {
+		return 0, 0
+	}
+
+	taskRe := regexp.MustCompile(`^[0-9]{2}_.*\.md$`)
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		if !taskRe.MatchString(e.Name()) {
+			continue
+		}
+		// Skip SEQUENCE_GOAL.md
+		if e.Name() == "SEQUENCE_GOAL.md" {
+			continue
+		}
+
+		total++
+
+		// Check if completed (look for completion markers in file)
+		taskPath := filepath.Join(seqDir, e.Name())
+		if isTaskCompleted(taskPath) {
+			completed++
+		}
+	}
+
+	return total, completed
+}
+
+// isTaskCompleted checks if a task file is marked as completed.
+func isTaskCompleted(taskPath string) bool {
+	data, err := os.ReadFile(taskPath)
+	if err != nil {
+		return false
+	}
+
+	content := string(data)
+	// Check for common completion patterns
+	if strings.Contains(content, "**Status:** Completed") ||
+		strings.Contains(content, "Status: completed") {
+		return true
+	}
+
+	// Count checkboxes
+	unchecked := strings.Count(content, "- [ ]")
+	checked := strings.Count(content, "- [x]") + strings.Count(content, "- [X]")
+
+	// Consider complete if all checkboxes are checked and there are some
+	if checked > 0 && unchecked == 0 {
+		return true
+	}
+
+	return false
+}
+
+// extractSequenceGoal extracts the goal from SEQUENCE_GOAL.md.
+func extractSequenceGoal(seqDir string) string {
+	goalPath := filepath.Join(seqDir, "SEQUENCE_GOAL.md")
+	data, err := os.ReadFile(goalPath)
+	if err != nil {
+		return ""
+	}
+
+	// Look for "Primary Goal:" line
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "**Primary Goal:**") {
+			goal := strings.TrimPrefix(line, "**Primary Goal:**")
+			goal = strings.TrimSpace(goal)
+			if len(goal) > 40 {
+				return goal[:37] + "..."
+			}
+			return goal
+		}
+	}
+
+	return ""
+}
+
+// sequenceProgressIndicator returns a text indicator based on completion.
+func sequenceProgressIndicator(completed, total int) string {
+	if total == 0 {
+		return "[empty]"
+	}
+
+	percent := float64(completed) / float64(total) * 100
+	switch {
+	case percent == 100:
+		return "[done]"
+	case percent >= 50:
+		return "[prog]"
+	case percent > 0:
+		return "[start]"
+	default:
+		return "[todo]"
+	}
+}
