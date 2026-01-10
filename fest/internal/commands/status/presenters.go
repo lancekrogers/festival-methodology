@@ -111,7 +111,20 @@ func emitFestivalProgress(loc *show.LocationInfo) error {
 	return nil
 }
 
+// isFreeformPhase checks if the phase uses freeform structure.
+func isFreeformPhase(phaseName string) bool {
+	name := strings.ToLower(phaseName)
+	return strings.Contains(name, "planning") ||
+		strings.Contains(name, "research") ||
+		strings.Contains(name, "design")
+}
+
 func emitPhaseProgress(ctx context.Context, loc *show.LocationInfo) error {
+	// Check if this is a freeform phase
+	if isFreeformPhase(loc.Phase) {
+		return emitFreeformPhaseProgress(loc)
+	}
+
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -148,6 +161,70 @@ func emitPhaseProgress(ctx context.Context, loc *show.LocationInfo) error {
 		fmt.Printf("%s %s\n",
 			ui.Label("Blocked"),
 			ui.GetStateStyle("blocked").Render(fmt.Sprintf("%d", prog.Blocked)))
+	}
+
+	return nil
+}
+
+// emitFreeformPhaseProgress displays progress for planning/research phases.
+func emitFreeformPhaseProgress(loc *show.LocationInfo) error {
+	phasePath := filepath.Join(loc.Festival.Path, loc.Phase)
+
+	// Count topic directories and documents
+	entries, err := os.ReadDir(phasePath)
+	if err != nil {
+		return err
+	}
+
+	type topicInfo struct {
+		name     string
+		docCount int
+	}
+	var topics []topicInfo
+	var totalDocs int
+
+	for _, entry := range entries {
+		if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
+			topicPath := filepath.Join(phasePath, entry.Name())
+			files, _ := filepath.Glob(filepath.Join(topicPath, "*.md"))
+			topics = append(topics, topicInfo{entry.Name(), len(files)})
+			totalDocs += len(files)
+		} else if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".md") {
+			// Count root-level markdown files (excluding PHASE_GOAL.md)
+			if entry.Name() != "PHASE_GOAL.md" {
+				totalDocs++
+			}
+		}
+	}
+
+	fmt.Printf("\n%s\n", ui.H2("Planning Progress"))
+	fmt.Printf("%s %s\n", ui.Label("Topics"), ui.Value(fmt.Sprintf("%d areas", len(topics))))
+	fmt.Printf("%s %s\n", ui.Label("Documents"), ui.Value(fmt.Sprintf("%d created", totalDocs)))
+
+	if len(topics) > 0 {
+		fmt.Printf("\n%s\n", ui.Label("Topic Areas"))
+		for _, t := range topics {
+			fmt.Printf("  • %s %s\n", ui.Value(t.name), ui.Dim(fmt.Sprintf("(%d docs)", t.docCount)))
+		}
+	}
+
+	// Check for key planning deliverables
+	fmt.Printf("\n%s\n", ui.Label("Key Deliverables"))
+	deliverables := []struct {
+		name string
+		path string
+	}{
+		{"PHASE_GOAL.md", filepath.Join(phasePath, "PHASE_GOAL.md")},
+		{"PLANNING_SUMMARY.md", filepath.Join(phasePath, "PLANNING_SUMMARY.md")},
+		{"START_HERE.md", filepath.Join(phasePath, "START_HERE.md")},
+	}
+
+	for _, d := range deliverables {
+		status := "✗"
+		if _, err := os.Stat(d.path); err == nil {
+			status = "✓"
+		}
+		fmt.Printf("  %s %s\n", status, d.name)
 	}
 
 	return nil

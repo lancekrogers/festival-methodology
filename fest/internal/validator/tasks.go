@@ -28,8 +28,8 @@ func ValidateTasks(ctx context.Context, festivalPath string) ([]Issue, error) {
 	policy := gates.DefaultPolicy()
 
 	for _, phase := range phases {
-		// Skip research phases - they use freeform structure
-		if isResearchPhaseForTasks(phase.Name) {
+		// Skip freeform phases (research, planning, design) - they use flexible structure
+		if isFreeformPhaseForTasks(phase.Name) {
 			continue
 		}
 
@@ -95,9 +95,11 @@ func CheckTaskFilesExist(path string) bool {
 	return len(issues) == 0
 }
 
-// isResearchPhaseForTasks checks if a phase is a research phase.
-// Research phases use freeform subdirectory structure and don't require numbered tasks.
-func isResearchPhaseForTasks(phaseName string) bool {
+// isFreeformPhaseForTasks checks if a phase uses freeform structure.
+// Freeform phases (research, planning, design) don't require numbered tasks.
+func isFreeformPhaseForTasks(phaseName string) bool {
 	normalized := strings.ToUpper(phaseName)
-	return strings.Contains(normalized, "RESEARCH")
+	return strings.Contains(normalized, "RESEARCH") ||
+		strings.Contains(normalized, "PLANNING") ||
+		strings.Contains(normalized, "DESIGN")
 }

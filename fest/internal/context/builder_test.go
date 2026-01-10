@@ -141,8 +141,12 @@ func TestBuilder_Build_PhaseLevel(t *testing.T) {
 		t.Fatal("Phase should not be nil")
 	}
 
-	if output.Phase.SequenceCount != 1 {
-		t.Errorf("SequenceCount = %d, want 1", output.Phase.SequenceCount)
+	// Research phases are freeform, so they have TopicDirs instead of SequenceCount
+	if !output.Phase.IsFreeform {
+		t.Error("Research phase should be freeform")
+	}
+	if len(output.Phase.TopicDirs) != 1 {
+		t.Errorf("TopicDirs = %d, want 1 (the 01_analysis directory)", len(output.Phase.TopicDirs))
 	}
 }
 
