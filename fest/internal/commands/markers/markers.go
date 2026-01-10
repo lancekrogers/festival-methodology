@@ -166,7 +166,7 @@ func scanMarkers(festivalPath string) (*MarkerSummary, error) {
 		if err != nil {
 			return nil
 		}
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 
 		scanner := bufio.NewScanner(file)
 		lineNum := 0
