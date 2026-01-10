@@ -134,7 +134,7 @@ func TestDetectCurrentFestival(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-			result, err := DetectCurrentFestival(context.Background(), tc.startDir)
+		result, err := DetectCurrentFestival(context.Background(), tc.startDir)
 		if tc.wantErr {
 			if err == nil {
 				t.Errorf("DetectCurrentFestival(%q) expected error, got nil", tc.startDir)
@@ -182,7 +182,7 @@ func TestDetectCurrentLocation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-			result, err := DetectCurrentLocation(context.Background(), tc.startDir)
+		result, err := DetectCurrentLocation(context.Background(), tc.startDir)
 		if err != nil {
 			t.Errorf("DetectCurrentLocation(%q) unexpected error: %v", tc.startDir, err)
 			continue
