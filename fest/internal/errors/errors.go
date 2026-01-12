@@ -169,25 +169,41 @@ func (e *Error) WithHintf(format string, args ...interface{}) *Error {
 	return e
 }
 
-// NotFound creates a NOT_FOUND error.
+// NotFound creates a NOT_FOUND error with context-aware hints.
 func NotFound(resource string) *Error {
 	return &Error{
 		Code:    ErrCodeNotFound,
 		Message: fmt.Sprintf("%s not found", resource),
 		Fields:  map[string]interface{}{"resource": resource},
+		Hint:    hintForResource(resource),
 	}
 }
 
-// Validation creates a VALIDATION error.
+// hintForResource returns an appropriate hint based on the resource type.
+func hintForResource(resource string) string {
+	switch resource {
+	case "festival":
+		return HintFestivalNotFound
+	case "phase":
+		return HintPhaseNotFound
+	case "sequence":
+		return HintSequenceNotFound
+	default:
+		return HintCheckPath
+	}
+}
+
+// Validation creates a VALIDATION error with a helpful hint.
 func Validation(message string) *Error {
 	return &Error{
 		Code:    ErrCodeValidation,
 		Message: message,
 		Fields:  make(map[string]interface{}),
+		Hint:    HintSeeHelp,
 	}
 }
 
-// IO creates an IO error.
+// IO creates an IO error with permission check hint.
 func IO(op string, err error) *Error {
 	return &Error{
 		Code:    ErrCodeIO,
@@ -195,34 +211,38 @@ func IO(op string, err error) *Error {
 		Op:      op,
 		Err:     err,
 		Fields:  make(map[string]interface{}),
+		Hint:    HintCheckPermissions,
 	}
 }
 
-// Config creates a CONFIG error.
+// Config creates a CONFIG error with configuration check hint.
 func Config(message string) *Error {
 	return &Error{
 		Code:    ErrCodeConfig,
 		Message: message,
 		Fields:  make(map[string]interface{}),
+		Hint:    HintCheckConfig,
 	}
 }
 
-// Template creates a TEMPLATE error.
+// Template creates a TEMPLATE error with template check hint.
 func Template(message string) *Error {
 	return &Error{
 		Code:    ErrCodeTemplate,
 		Message: message,
 		Fields:  make(map[string]interface{}),
+		Hint:    HintCheckTemplate,
 	}
 }
 
-// Parse creates a PARSE error.
+// Parse creates a PARSE error with configuration check hint.
 func Parse(message string, err error) *Error {
 	return &Error{
 		Code:    ErrCodeParse,
 		Message: message,
 		Err:     err,
 		Fields:  make(map[string]interface{}),
+		Hint:    HintCheckConfig,
 	}
 }
 

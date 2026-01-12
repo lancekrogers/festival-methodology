@@ -39,16 +39,22 @@ type FestivalSelectorConfig struct {
 	AllowCancel bool
 	// ShowStats shows festival statistics in the list
 	ShowStats bool
+	// EnableFiltering enables type-to-filter search in the selector
+	EnableFiltering bool
+	// FilterPlaceholder is the placeholder text shown in the filter input
+	FilterPlaceholder string
 }
 
 // DefaultSelectorConfig returns the default configuration.
 func DefaultSelectorConfig() FestivalSelectorConfig {
 	return FestivalSelectorConfig{
-		Title:          "Select Festival",
-		Description:    "Choose a festival from the list",
-		FilterByStatus: nil, // All statuses
-		AllowCancel:    true,
-		ShowStats:      true,
+		Title:             "Select Festival",
+		Description:       "Choose a festival from the list",
+		FilterByStatus:    nil, // All statuses
+		AllowCancel:       true,
+		ShowStats:         true,
+		EnableFiltering:   true,
+		FilterPlaceholder: "Type to filter...",
 	}
 }
 
@@ -108,14 +114,19 @@ func (s *FestivalSelector) Run(ctx context.Context) (*FestivalSelectorResult, er
 	options := s.buildOptions()
 
 	var selected string
+	selectField := huh.NewSelect[string]().
+		Title(s.config.Title).
+		Description(s.config.Description).
+		Options(options...).
+		Value(&selected)
+
+	// Enable filtering if configured
+	if s.config.EnableFiltering {
+		selectField = selectField.Filtering(true)
+	}
+
 	form := huh.NewForm(
-		huh.NewGroup(
-			huh.NewSelect[string]().
-				Title(s.config.Title).
-				Description(s.config.Description).
-				Options(options...).
-				Value(&selected),
-		),
+		huh.NewGroup(selectField),
 	).WithTheme(theme())
 
 	if err := form.Run(); err != nil {
@@ -123,6 +134,11 @@ func (s *FestivalSelector) Run(ctx context.Context) (*FestivalSelectorResult, er
 			return &FestivalSelectorResult{Cancelled: true}, nil
 		}
 		return nil, err
+	}
+
+	// Ignore header selections (users shouldn't select these)
+	if strings.HasPrefix(selected, headerMarker) {
+		return &FestivalSelectorResult{Cancelled: true}, nil
 	}
 
 	// Find the selected festival
@@ -209,16 +225,34 @@ func GroupByStatus(festivals []*show.FestivalInfo) []GroupedFestivals {
 	return result
 }
 
-// buildOptions creates huh.Option slice for the selector.
+// buildOptions creates huh.Option slice for the selector with grouped headers.
 func (s *FestivalSelector) buildOptions() []huh.Option[string] {
-	options := make([]huh.Option[string], 0, len(s.festivals))
+	options := make([]huh.Option[string], 0, len(s.festivals)+4) // +4 for potential headers
 
+	var currentStatus string
 	for _, f := range s.festivals {
+		// Insert status group header when status changes
+		if f.Status != currentStatus {
+			currentStatus = f.Status
+			header := formatStatusHeader(currentStatus)
+			// Header uses a special marker value that won't match any real path
+			options = append(options, huh.NewOption(header, headerMarker+currentStatus))
+		}
 		opt := formatFestivalOption(f, s.config.ShowStats)
 		options = append(options, huh.NewOption(opt.Label, f.Path))
 	}
 
 	return options
+}
+
+// headerMarker is the prefix used to identify header options (not actual festivals).
+const headerMarker = "__HEADER__"
+
+// formatStatusHeader creates a visually distinct header for a status group.
+func formatStatusHeader(status string) string {
+	icon := statusIcon(status)
+	name := strings.ToUpper(status)
+	return fmt.Sprintf("── %s %s ──", icon, name)
 }
 
 // FestivalOption represents a festival in the selection list.
@@ -329,11 +363,13 @@ func SelectFestivalInteractive(ctx context.Context, title, description string) (
 // SelectActiveFestival runs the selector filtered to only active festivals.
 func SelectActiveFestival(ctx context.Context) (string, error) {
 	config := FestivalSelectorConfig{
-		Title:          "Select Active Festival",
-		Description:    "Choose an active festival to work on",
-		FilterByStatus: []string{"active"},
-		AllowCancel:    true,
-		ShowStats:      true,
+		Title:             "Select Active Festival",
+		Description:       "Choose an active festival to work on",
+		FilterByStatus:    []string{"active"},
+		AllowCancel:       true,
+		ShowStats:         true,
+		EnableFiltering:   true,
+		FilterPlaceholder: "Type to filter...",
 	}
 
 	selector, err := NewFestivalSelectorFromCwd(config)
