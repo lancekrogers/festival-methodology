@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
 )
 
 // Resolver handles dependency resolution for a festival
@@ -142,6 +144,12 @@ func (r *Resolver) loadSequenceTasks(seqPath, phasePath string) ([]*Task, error)
 		}
 
 		taskPath := filepath.Join(seqPath, name)
+
+		// Skip untracked files (files with tracking: false in frontmatter)
+		if !progress.IsTracked(taskPath) {
+			continue
+		}
+
 		task := &Task{
 			ID:            taskPath,
 			Name:          strings.TrimSuffix(name, ".md"),
