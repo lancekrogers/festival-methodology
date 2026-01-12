@@ -39,8 +39,9 @@ func TestStructureValidator(t *testing.T) {
 			name: "uppercase sequence",
 			setup: func(t *testing.T) string {
 				dir := t.TempDir()
-				os.MkdirAll(filepath.Join(dir, "001_PLANNING"), 0755)
-				os.MkdirAll(filepath.Join(dir, "001_PLANNING", "01_REQUIREMENTS"), 0755)
+				// Use IMPLEMENTATION phase since PLANNING is now freeform
+				os.MkdirAll(filepath.Join(dir, "001_IMPLEMENTATION"), 0755)
+				os.MkdirAll(filepath.Join(dir, "001_IMPLEMENTATION", "01_REQUIREMENTS"), 0755)
 				return dir
 			},
 			wantIssues: 1,

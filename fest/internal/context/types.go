@@ -49,7 +49,9 @@ type PhaseContext struct {
 	Path          string       `json:"path"`
 	Goal          *GoalContext `json:"goal,omitempty"`
 	PhaseType     string       `json:"phase_type,omitempty"`
-	SequenceCount int          `json:"sequence_count"`
+	IsFreeform    bool         `json:"is_freeform"`              // true for planning/research phases
+	SequenceCount int          `json:"sequence_count,omitempty"` // For implementation phases
+	TopicDirs     []string     `json:"topic_dirs,omitempty"`     // For freeform phases
 }
 
 // SequenceContext holds sequence-level context

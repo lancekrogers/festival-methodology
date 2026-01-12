@@ -11,11 +11,15 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
 )
 
-// isResearchPhase checks if a phase is a research phase based on naming or type.
-// Research phases use freeform subdirectory structure and don't require numbered sequences/tasks.
-func isResearchPhase(phaseName string) bool {
+// isFreeformPhase checks if a phase uses freeform structure (not numbered sequences/tasks).
+// Research and planning phases use freeform subdirectory structure because:
+// - Research explores topics in any order
+// - Planning naturally works backward from goals to dependencies
+func isFreeformPhase(phaseName string) bool {
 	normalized := strings.ToUpper(phaseName)
-	return strings.Contains(normalized, "RESEARCH")
+	return strings.Contains(normalized, "RESEARCH") ||
+		strings.Contains(normalized, "PLANNING") ||
+		strings.Contains(normalized, "DESIGN")
 }
 
 // ValidateStructure checks naming conventions and hierarchy only.
@@ -48,9 +52,9 @@ func ValidateStructure(ctx context.Context, festivalPath string) ([]Issue, error
 			}
 		}
 
-		// Skip sequence/task validation for research phases
-		// Research phases use freeform subdirectory structure
-		if isResearchPhase(phase.Name) {
+		// Skip sequence/task validation for freeform phases (research, planning, design)
+		// Freeform phases use flexible subdirectory structure
+		if isFreeformPhase(phase.Name) {
 			continue
 		}
 

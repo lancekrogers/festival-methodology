@@ -490,6 +490,65 @@ Each phase should have:
 - **Dependencies** on other phases
 - **Deliverables** that feed into subsequent phases
 
+## Freeform Phase Types
+
+Some phases use **freeform subdirectory structure** instead of numbered sequences and tasks.
+
+### Planning Phases
+
+Planning phases use freeform structure because thought naturally flows **backward** from goals to requirements:
+- "What do we need to build?" → Goal
+- "What does that require?" → Dependencies
+- "What decisions need to be made?" → Decision points
+
+This backward thinking is **correct for planning** but doesn't fit sequential task structure.
+
+**Planning Phase Structure:**
+```
+001_PLANNING/
+├── PHASE_GOAL.md           # Planning phase objective
+├── requirements/           # Topic directory
+│   ├── functional.md       # Exploration document
+│   └── non-functional.md
+├── architecture/           # Topic directory
+│   ├── overview.md
+│   └── decisions.md
+├── decisions/              # Decision records
+│   ├── database.md
+│   └── auth-strategy.md
+├── START_HERE.md           # Entry point for agents
+└── PLANNING_SUMMARY.md     # Synthesis document
+```
+
+**Common Planning Topic Directories:**
+- `requirements/` - Feature requirements, user stories
+- `architecture/` - System design, component diagrams
+- `decisions/` - Architecture Decision Records (ADRs)
+- `specs/` - Technical specifications
+- `research/` - Investigation findings
+
+### Research Phases
+
+Research phases also use freeform structure for exploratory work:
+- Investigation of approaches
+- Prototype development
+- Comparative analysis
+
+### Design Phases
+
+Design phases explore solution space before committing to implementation:
+- UI/UX exploration
+- System design
+- API design
+
+### Validation
+
+Freeform phases are validated differently:
+- ✓ PHASE_GOAL.md required
+- ✓ At least one topic directory recommended
+- ✗ No numbered sequence requirement
+- ✗ No numbered task requirement
+
 ## Summary
 
 Phase patterns provide structure while maintaining flexibility. Choose patterns that match your project's actual needs, not what seems "standard." The best phase structure is one that:

@@ -84,13 +84,36 @@ This directory contains all the resources needed to implement Festival Methodolo
 
 **Use this when:** Starting with basic requirements gathering and implementation.
 
+### Phase Types
+
+The methodology supports different phase types with appropriate structure:
+
+| Phase Type | Structure | Use Case |
+|------------|-----------|----------|
+| Planning | Freeform (topics) | Requirements gathering, architecture decisions |
+| Research | Freeform (topics) | Investigation, exploration, prototyping |
+| Design | Freeform (topics) | UI/UX exploration, system design |
+| Implementation | Numbered (sequences/tasks) | Building features, writing code |
+| Review | Numbered (sequences/tasks) | Testing, validation, sign-off |
+
+**Freeform Phases (Planning, Research, Design):**
+- Use any directory structure that makes sense
+- Topic-based directories (requirements/, architecture/, decisions/)
+- No numbered sequences or tasks required
+- Progress measured by documents and decisions made
+
+**Numbered Phases (Implementation, Review):**
+- Use the standard hierarchy: `NN_sequence_name/` with `NN_task_name.md`
+- Sequential execution order
+- Progress measured by tasks completed
+
 ### Phase Flexibility Principles
 
-**Planning Phases (Unstructured):**
+**Planning Phases (Freeform):**
 
-- Used for research, requirements gathering, and documentation
-- Often just contain documents, not sequences/tasks
-- Add only when requirements aren't clear
+- Use topic-based directories instead of numbered sequences
+- Perfect for backward thinking from goals to requirements
+- Contains documents, decisions, and research findings
 
 **Implementation Phases (Structured):**
 

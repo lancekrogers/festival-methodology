@@ -119,7 +119,7 @@ func formatTextTask(result *NextTaskResult) string {
 	}
 
 	sb.WriteString("\n")
-		ui.WriteLabelValue(&sb, "Recommendation", ui.Info(result.Reason))
+	ui.WriteLabelValue(&sb, "Recommendation", ui.Info(result.Reason))
 
 	if len(result.ParallelTasks) > 0 {
 		sb.WriteString("\n")

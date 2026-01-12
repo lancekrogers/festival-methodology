@@ -300,29 +300,51 @@ func (b *Builder) loadPhaseContext(phasePath string) (*PhaseContext, error) {
 		ctx.Goal = goal
 	}
 
-	// Detect phase type from name
-	name := strings.ToLower(ctx.Name)
-	if strings.Contains(name, "research") || strings.Contains(name, "design") {
-		ctx.PhaseType = "research"
-	} else if strings.Contains(name, "implementation") {
-		ctx.PhaseType = "implementation"
-	} else if strings.Contains(name, "planning") {
-		ctx.PhaseType = "planning"
-	} else if strings.Contains(name, "review") || strings.Contains(name, "uat") {
-		ctx.PhaseType = "review"
-	}
+	// Detect phase type and freeform status
+	ctx.PhaseType, ctx.IsFreeform = detectPhaseType(ctx.Name)
 
-	// Count sequences
+	// Count sequences or list topic directories based on phase type
 	entries, err := os.ReadDir(phasePath)
 	if err == nil {
-		for _, entry := range entries {
-			if entry.IsDir() && isSequenceDir(entry.Name()) {
-				ctx.SequenceCount++
+		if ctx.IsFreeform {
+			// For freeform phases, list topic directories
+			for _, entry := range entries {
+				if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
+					ctx.TopicDirs = append(ctx.TopicDirs, entry.Name())
+				}
+			}
+		} else {
+			// For structured phases, count sequences
+			for _, entry := range entries {
+				if entry.IsDir() && isSequenceDir(entry.Name()) {
+					ctx.SequenceCount++
+				}
 			}
 		}
 	}
 
 	return ctx, nil
+}
+
+// detectPhaseType determines the phase type and whether it uses freeform structure.
+// Returns (phaseType, isFreeform)
+func detectPhaseType(phaseName string) (string, bool) {
+	name := strings.ToLower(phaseName)
+
+	switch {
+	case strings.Contains(name, "planning"):
+		return "planning", true
+	case strings.Contains(name, "research"):
+		return "research", true
+	case strings.Contains(name, "design"):
+		return "research", true // Design phases use research-like structure
+	case strings.Contains(name, "implementation"):
+		return "implementation", false
+	case strings.Contains(name, "review"), strings.Contains(name, "uat"):
+		return "review", false
+	default:
+		return "", false
+	}
 }
 
 // loadSequenceContext loads sequence-level context

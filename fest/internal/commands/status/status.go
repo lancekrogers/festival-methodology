@@ -29,10 +29,11 @@ var ValidStatuses = map[EntityType][]string{
 
 // statusOptions holds options shared across status subcommands.
 type statusOptions struct {
-	json       bool
-	entityType string
-	force      bool
-	path       string
+	json        bool
+	entityType  string
+	force       bool
+	path        string
+	interactive bool // force interactive selection
 }
 
 // NewStatusCommand creates the status command with all subcommands.
@@ -91,8 +92,11 @@ func newStatusSetCommand(opts *statusOptions) *cobra.Command {
 For festivals, this will move the directory between status folders
 (planned, active, completed, dungeon).
 
+If not inside a festival, an interactive selector will be shown.
+
 For other entities, this updates the frontmatter in the relevant files.`,
 		Example: `  fest status set active               # Set current festival to active
+  fest status set active -i            # Force interactive selection
   fest status set completed --force    # Set without confirmation
   fest status set in_progress          # Set phase/sequence/task status`,
 		Args: cobra.ExactArgs(1),
@@ -107,6 +111,7 @@ For other entities, this updates the frontmatter in the relevant files.`,
 
 	cmd.Flags().BoolVar(&opts.force, "force", false, "skip confirmation prompts")
 	cmd.Flags().BoolVar(&opts.json, "json", false, "output in JSON format")
+	cmd.Flags().BoolVarP(&opts.interactive, "interactive", "i", false, "force interactive festival selection")
 
 	return cmd
 }
