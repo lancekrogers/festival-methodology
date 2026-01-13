@@ -184,10 +184,10 @@ func TestGetTaskPriority(t *testing.T) {
 		name     string
 		expected int
 	}{
-		{"setup_database", 0},                 // "setup" is first
-		{"init_config", 1},                    // "init" is second
-		{"database_schema", 3},                // "database" is in list
-		{"random_task", len(TaskPriority)},    // Not in list, returns len(TaskPriority)
+		{"setup_database", 0},              // "setup" is first
+		{"init_config", 1},                 // "init" is second
+		{"database_schema", 3},             // "database" is in list
+		{"random_task", len(TaskPriority)}, // Not in list, returns len(TaskPriority)
 	}
 
 	for _, tt := range tests {

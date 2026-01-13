@@ -13,10 +13,10 @@ func boolPtr(b bool) *bool {
 
 func TestParseFrontmatter(t *testing.T) {
 	tests := []struct {
-		name        string
-		content     string
+		name         string
+		content      string
 		wantTracking *bool
-		wantNil     bool
+		wantNil      bool
 	}{
 		{
 			name:         "tracking false",

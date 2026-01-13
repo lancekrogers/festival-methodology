@@ -23,9 +23,9 @@ type TopicDirectory struct {
 
 // Decision represents an Architecture Decision Record.
 type Decision struct {
-	ID       string `json:"id"`        // e.g., "ADR-001"
+	ID       string `json:"id"` // e.g., "ADR-001"
 	Title    string `json:"title"`
-	Status   string `json:"status"`    // accepted, proposed, deprecated
+	Status   string `json:"status"` // accepted, proposed, deprecated
 	FilePath string `json:"file_path"`
 	Summary  string `json:"summary,omitempty"`
 }

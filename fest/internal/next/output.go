@@ -1,12 +1,65 @@
 package next
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
+)
+
+// Templates for output formatting - all output formats visible at a glance
+var (
+	taskTemplate = template.Must(template.New("task").Parse(`{{.Header}}
+{{.TaskLine}}
+{{.PathLine}}
+{{.SequenceLine}}
+{{.PhaseLine}}
+{{- if .AutonomyLine}}
+{{.AutonomyLine}}
+{{- end}}
+
+{{.RecommendationLine}}
+{{- if .ParallelSection}}
+
+{{.ParallelSection}}
+{{- end}}
+
+{{.ActionInstruction}}
+
+When complete, mark it done with:
+  {{.ProgressCmd}}
+`))
+
+	completeTemplate = template.Must(template.New("complete").Parse(`{{.Header}}
+{{.Message}}
+{{- if .ReasonLine}}
+{{.ReasonLine}}
+{{- end}}
+`))
+
+	blockingGateTemplate = template.Must(template.New("gate").Parse(`{{.Header}}
+{{.PhaseLine}}
+{{.TypeLine}}
+{{.DescriptionLine}}
+{{- if .CriteriaSection}}
+
+{{.CriteriaSection}}
+{{- end}}
+`))
+
+	noTaskTemplate = template.Must(template.New("notask").Parse(`{{.Header}}
+{{- if .ReasonLine}}
+{{.ReasonLine}}
+{{- end}}
+{{- if .LocationSection}}
+
+{{.LocationSection}}
+{{- end}}
+`))
 )
 
 // FormatText formats the result as human-readable text
@@ -47,49 +100,68 @@ func FormatVerbose(result *NextTaskResult) string {
 }
 
 func formatTextComplete(result *NextTaskResult) string {
-	var sb strings.Builder
-	sb.WriteString(ui.H2("Festival Complete"))
-	sb.WriteString("\n")
-	sb.WriteString(ui.Success("All tasks have been completed."))
+	var reasonLine string
 	if result.Reason != "" {
-		sb.WriteString("\n")
-		ui.WriteLabelValue(&sb, "Reason", ui.Info(result.Reason))
+		reasonLine = labelValue("Reason", ui.Info(result.Reason))
 	}
-	return sb.String()
+
+	data := struct {
+		Header     string
+		Message    string
+		ReasonLine string
+	}{
+		Header:     ui.H2("Festival Complete"),
+		Message:    ui.Success("All tasks have been completed."),
+		ReasonLine: reasonLine,
+	}
+
+	var buf bytes.Buffer
+	completeTemplate.Execute(&buf, data)
+	return buf.String()
 }
 
 func formatTextBlockingGate(result *NextTaskResult) string {
-	var sb strings.Builder
 	gate := result.BlockingGate
 
-	sb.WriteString(ui.H2("Quality Gate Required"))
-	sb.WriteString("\n")
-	ui.WriteLabelValue(&sb, "Phase", ui.Value(gate.Phase, ui.PhaseColor))
-	ui.WriteLabelValue(&sb, "Type", ui.Value(gate.GateType))
-	ui.WriteLabelValue(&sb, "Description", ui.Value(gate.Description))
-
+	var criteriaSection string
 	if len(gate.Criteria) > 0 {
-		sb.WriteString("\n")
+		var sb strings.Builder
 		sb.WriteString(ui.H3("Criteria"))
 		sb.WriteString("\n")
 		for _, c := range gate.Criteria {
 			sb.WriteString(fmt.Sprintf("  - %s\n", ui.Info(c)))
 		}
+		criteriaSection = sb.String()
 	}
 
-	return sb.String()
+	data := struct {
+		Header          string
+		PhaseLine       string
+		TypeLine        string
+		DescriptionLine string
+		CriteriaSection string
+	}{
+		Header:          ui.H2("Quality Gate Required"),
+		PhaseLine:       labelValue("Phase", ui.Value(gate.Phase, ui.PhaseColor)),
+		TypeLine:        labelValue("Type", ui.Value(gate.GateType)),
+		DescriptionLine: labelValue("Description", ui.Value(gate.Description)),
+		CriteriaSection: criteriaSection,
+	}
+
+	var buf bytes.Buffer
+	blockingGateTemplate.Execute(&buf, data)
+	return buf.String()
 }
 
 func formatTextNoTask(result *NextTaskResult) string {
-	var sb strings.Builder
-
-	sb.WriteString(ui.H2("No Tasks Available"))
-	sb.WriteString("\n")
+	var reasonLine string
 	if result.Reason != "" {
-		ui.WriteLabelValue(&sb, "Reason", ui.Info(result.Reason))
+		reasonLine = labelValue("Reason", ui.Info(result.Reason))
 	}
+
+	var locationSection string
 	if result.Location != nil {
-		sb.WriteString("\n")
+		var sb strings.Builder
 		sb.WriteString(ui.H3("Location"))
 		sb.WriteString("\n")
 		ui.WriteLabelValue(&sb, "Festival", ui.Dim(result.Location.FestivalPath))
@@ -99,38 +171,82 @@ func formatTextNoTask(result *NextTaskResult) string {
 		if result.Location.SequencePath != "" {
 			ui.WriteLabelValue(&sb, "Sequence", ui.Dim(filepath.Base(result.Location.SequencePath)))
 		}
+		locationSection = sb.String()
 	}
 
-	return sb.String()
+	data := struct {
+		Header          string
+		ReasonLine      string
+		LocationSection string
+	}{
+		Header:          ui.H2("No Tasks Available"),
+		ReasonLine:      reasonLine,
+		LocationSection: locationSection,
+	}
+
+	var buf bytes.Buffer
+	noTaskTemplate.Execute(&buf, data)
+	return buf.String()
 }
 
 func formatTextTask(result *NextTaskResult) string {
-	var sb strings.Builder
-
-	sb.WriteString(ui.H1("Next Task"))
-	sb.WriteString("\n")
-	ui.WriteLabelValue(&sb, "Task", ui.Value(result.Task.Name, ui.TaskColor))
-	ui.WriteLabelValue(&sb, "Path", ui.Dim(result.Task.Path))
-	ui.WriteLabelValue(&sb, "Sequence", ui.Value(result.Task.SequenceName, ui.SequenceColor))
-	ui.WriteLabelValue(&sb, "Phase", ui.Value(result.Task.PhaseName, ui.PhaseColor))
-
-	if result.Task.AutonomyLevel != "" {
-		ui.WriteLabelValue(&sb, "Autonomy", ui.Value(result.Task.AutonomyLevel))
-	}
-
-	sb.WriteString("\n")
-	ui.WriteLabelValue(&sb, "Recommendation", ui.Info(result.Reason))
-
+	// Build parallel tasks section if present
+	var parallelSection string
 	if len(result.ParallelTasks) > 0 {
-		sb.WriteString("\n")
+		var sb strings.Builder
 		sb.WriteString(ui.H3("Parallel Tasks"))
 		sb.WriteString("\n")
 		for _, task := range result.ParallelTasks {
 			sb.WriteString(fmt.Sprintf("  - %s %s\n", ui.Value(task.Name, ui.TaskColor), ui.Dim(task.SequenceName)))
 		}
+		parallelSection = sb.String()
 	}
 
-	return sb.String()
+	// Build autonomy line if present
+	var autonomyLine string
+	if result.Task.AutonomyLevel != "" {
+		var sb strings.Builder
+		ui.WriteLabelValue(&sb, "Autonomy", ui.Value(result.Task.AutonomyLevel))
+		autonomyLine = strings.TrimSuffix(sb.String(), "\n")
+	}
+
+	// Build label lines
+	taskRelPath := filepath.Join(result.Task.PhaseName, result.Task.SequenceName, result.Task.Name+".md")
+
+	data := struct {
+		Header             string
+		TaskLine           string
+		PathLine           string
+		SequenceLine       string
+		PhaseLine          string
+		AutonomyLine       string
+		RecommendationLine string
+		ParallelSection    string
+		ActionInstruction  string
+		ProgressCmd        string
+	}{
+		Header:             ui.H1("Next Task"),
+		TaskLine:           labelValue("Task", ui.Value(result.Task.Name, ui.TaskColor)),
+		PathLine:           labelValue("Path", ui.Dim(result.Task.Path)),
+		SequenceLine:       labelValue("Sequence", ui.Value(result.Task.SequenceName, ui.SequenceColor)),
+		PhaseLine:          labelValue("Phase", ui.Value(result.Task.PhaseName, ui.PhaseColor)),
+		AutonomyLine:       autonomyLine,
+		RecommendationLine: labelValue("Recommendation", ui.Info(result.Reason)),
+		ParallelSection:    parallelSection,
+		ActionInstruction:  ui.Info("Read this file and follow the instructions laid out exactly."),
+		ProgressCmd:        ui.Value(fmt.Sprintf("fest progress --task %s --complete", taskRelPath)),
+	}
+
+	var buf bytes.Buffer
+	taskTemplate.Execute(&buf, data)
+	return buf.String()
+}
+
+// labelValue formats a label-value pair without trailing newline
+func labelValue(label, value string) string {
+	var sb strings.Builder
+	ui.WriteLabelValue(&sb, label, value)
+	return strings.TrimSuffix(sb.String(), "\n")
 }
 
 func formatVerboseComplete(result *NextTaskResult) string {
