@@ -11,15 +11,41 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 )
 
-// Templates for output formatting - all output formats visible at a glance
+// =============================================================================
+// OUTPUT TEMPLATES
+// =============================================================================
+// Each template shows the exact output format. Example output in comments above.
+
 var (
+	// taskTemplate - shown when there's a next task available
+	// Example output:
+	//   NEXT TASK
+	//   ─────────
+	//   Task           03_testing_and_verify
+	//   Path           /path/to/03_testing_and_verify.md
+	//   Sequence       04_stdlib_integration
+	//   Phase          007_TUIREALM_INTEGRATION
+	//   Autonomy       medium
+	//
+	//   Recommendation Next available task in festival
+	//
+	//   Read this file and follow the instructions laid out exactly.
+	//
+	//   When complete, mark it done with:
+	//     fest progress --task 007_.../04_.../03_testing_and_verify.md --complete
 	taskTemplate = template.Must(template.New("task").Parse(`{{.Header}}
-{{.TaskLine}}
-{{.PathLine}}
 {{.SequenceLine}}
 {{.PhaseLine}}
 {{- if .AutonomyLine}}
 {{.AutonomyLine}}
+
+{{.TaskLine}}
+
+{{.ActionInstruction}}
+
+{{.PathLine}}
+
+
 {{- end}}
 
 {{.RecommendationLine}}
@@ -28,12 +54,16 @@ var (
 {{.ParallelSection}}
 {{- end}}
 
-{{.ActionInstruction}}
 
 When complete, mark it done with:
   {{.ProgressCmd}}
 `))
 
+	// completeTemplate - shown when all tasks are done
+	// Example output:
+	//   Festival Complete
+	//   All tasks have been completed.
+	//   Reason All tasks in the festival are complete
 	completeTemplate = template.Must(template.New("complete").Parse(`{{.Header}}
 {{.Message}}
 {{- if .ReasonLine}}
@@ -41,6 +71,16 @@ When complete, mark it done with:
 {{- end}}
 `))
 
+	// blockingGateTemplate - shown when a quality gate blocks progress
+	// Example output:
+	//   Quality Gate Required
+	//   Phase       002_IMPLEMENTATION
+	//   Type        review
+	//   Description Phase review required before proceeding
+	//
+	//   Criteria
+	//     - All tests pass
+	//     - Code reviewed
 	blockingGateTemplate = template.Must(template.New("gate").Parse(`{{.Header}}
 {{.PhaseLine}}
 {{.TypeLine}}
@@ -51,6 +91,14 @@ When complete, mark it done with:
 {{- end}}
 `))
 
+	// noTaskTemplate - shown when no tasks are available
+	// Example output:
+	//   No Tasks Available
+	//   Reason No tasks are currently ready (dependencies not satisfied)
+	//
+	//   Location
+	//   Festival /path/to/festival
+	//   Phase    001_PLANNING
 	noTaskTemplate = template.Must(template.New("notask").Parse(`{{.Header}}
 {{- if .ReasonLine}}
 {{.ReasonLine}}
