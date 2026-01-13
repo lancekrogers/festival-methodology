@@ -38,8 +38,9 @@ func TestRunner_FormatAgentInstructions_IncludesCommands(t *testing.T) {
 		"Current Position",
 		"Tasks to Execute",
 		"01_task",
-		"Completion Commands",
-		"fest status set 01_task completed",
+		"Read the task file and follow the instructions laid out exactly",
+		"fest progress --task",
+		"--complete",
 	} {
 		if !contains(output, snippet) {
 			t.Errorf("expected output to contain %q", snippet)

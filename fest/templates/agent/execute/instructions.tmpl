@@ -1,27 +1,47 @@
 {{/*
 TEMPLATE: execute/instructions.tmpl
-PURPOSE: Shows execution instructions including how to mark task complete
+PURPOSE: Agent execution instructions showing current position, tasks, and completion commands
 
 EXAMPLE OUTPUT:
-  EXECUTING FESTIVAL
-  ──────────────────
-  Festival   my-festival
-  Phase      001_PLANNING
-  Task       01_design_document
+  Agent Execution Instructions
+  ────────────────────────────
 
-  Read the task file and follow the instructions.
+  Progress       45.0% (9/20 tasks)
+
+  Current Position
+  ────────────────
+  Phase          002_IMPLEMENTATION
+  Sequence       03_core_features
+  Step           2
+
+  Tasks to Execute
+  ────────────────
+  ○ implement_feature
+    Path           /path/to/implement_feature.md
+    Autonomy       high
+
+  Read the task file and follow the instructions laid out exactly.
 
   When complete, mark it done with:
-    fest execute --completed
-    OR
-    fest progress --task 001_.../01_.../01_design_document.md --complete
+    fest progress --task 002_.../03_.../implement_feature.md --complete
+
+  Context Files
+  ─────────────
+    - /path/to/FESTIVAL_GOAL.md
+    - /path/to/PHASE_GOAL.md
+    - /path/to/SEQUENCE_GOAL.md
 */}}
 {{.Header}}
-{{.FestivalLine}}
-{{.PhaseLine}}
-{{.TaskLine}}
+
+{{.ProgressLine}}
+
+{{.PositionSection}}
+
+{{.TasksSection}}
 
 {{.ActionInstruction}}
 
 When complete, mark it done with:
-  {{.CompletionCmd}}
+  {{.ProgressCmd}}
+
+{{.ContextSection}}
