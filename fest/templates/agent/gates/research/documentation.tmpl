@@ -1,0 +1,9 @@
+{{/*
+TEMPLATE: gates/research/documentation.tmpl
+PURPOSE: Documentation gate for research phases
+*/}}
+{{.Header}}
+Documentation checklist:
+{{range .Criteria}}
+  - [ ] {{.}}
+{{end}}

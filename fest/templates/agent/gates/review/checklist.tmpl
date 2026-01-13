@@ -1,0 +1,9 @@
+{{/*
+TEMPLATE: gates/review/checklist.tmpl
+PURPOSE: Checklist gate for review phases
+*/}}
+{{.Header}}
+Review checklist:
+{{range .Criteria}}
+  - [ ] {{.}}
+{{end}}

@@ -1,0 +1,20 @@
+{{/*
+TEMPLATE: validate/markers.tmpl
+PURPOSE: Marker guidance for filling in template placeholders
+
+EXAMPLE OUTPUT:
+  UNFILLED MARKERS
+  ────────────────
+  The following markers need to be filled in:
+    - NN_task_name in file.md
+    - Yes/No in file.md
+*/}}
+{{.Header}}
+{{if .Markers}}
+The following markers need to be filled in:
+{{range .Markers}}
+  - {{.Marker}} in {{.File}}
+{{end}}
+{{else}}
+All markers have been filled in.
+{{end}}

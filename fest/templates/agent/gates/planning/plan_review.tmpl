@@ -1,0 +1,9 @@
+{{/*
+TEMPLATE: gates/planning/plan_review.tmpl
+PURPOSE: Plan review gate for planning phases
+*/}}
+{{.Header}}
+Plan review checklist:
+{{range .Criteria}}
+  - [ ] {{.}}
+{{end}}

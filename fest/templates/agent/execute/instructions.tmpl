@@ -1,0 +1,27 @@
+{{/*
+TEMPLATE: execute/instructions.tmpl
+PURPOSE: Shows execution instructions including how to mark task complete
+
+EXAMPLE OUTPUT:
+  EXECUTING FESTIVAL
+  ──────────────────
+  Festival   my-festival
+  Phase      001_PLANNING
+  Task       01_design_document
+
+  Read the task file and follow the instructions.
+
+  When complete, mark it done with:
+    fest execute --completed
+    OR
+    fest progress --task 001_.../01_.../01_design_document.md --complete
+*/}}
+{{.Header}}
+{{.FestivalLine}}
+{{.PhaseLine}}
+{{.TaskLine}}
+
+{{.ActionInstruction}}
+
+When complete, mark it done with:
+  {{.CompletionCmd}}

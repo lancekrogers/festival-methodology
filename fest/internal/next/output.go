@@ -6,108 +6,9 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
-	"text/template"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
-)
-
-// =============================================================================
-// OUTPUT TEMPLATES
-// =============================================================================
-// Each template shows the exact output format. Example output in comments above.
-
-var (
-	// taskTemplate - shown when there's a next task available
-	// Example output:
-	//   NEXT TASK
-	//   ─────────
-	//   Task           03_testing_and_verify
-	//   Path           /path/to/03_testing_and_verify.md
-	//   Sequence       04_stdlib_integration
-	//   Phase          007_TUIREALM_INTEGRATION
-	//   Autonomy       medium
-	//
-	//   Recommendation Next available task in festival
-	//
-	//   Read this file and follow the instructions laid out exactly.
-	//
-	//   When complete, mark it done with:
-	//     fest progress --task 007_.../04_.../03_testing_and_verify.md --complete
-	taskTemplate = template.Must(template.New("task").Parse(`{{.Header}}
-{{.SequenceLine}}
-{{.PhaseLine}}
-{{- if .AutonomyLine}}
-{{.AutonomyLine}}
-
-{{.TaskLine}}
-
-{{.ActionInstruction}}
-
-{{.PathLine}}
-
-
-{{- end}}
-
-{{.RecommendationLine}}
-{{- if .ParallelSection}}
-
-{{.ParallelSection}}
-{{- end}}
-
-
-When complete, mark it done with:
-  {{.ProgressCmd}}
-`))
-
-	// completeTemplate - shown when all tasks are done
-	// Example output:
-	//   Festival Complete
-	//   All tasks have been completed.
-	//   Reason All tasks in the festival are complete
-	completeTemplate = template.Must(template.New("complete").Parse(`{{.Header}}
-{{.Message}}
-{{- if .ReasonLine}}
-{{.ReasonLine}}
-{{- end}}
-`))
-
-	// blockingGateTemplate - shown when a quality gate blocks progress
-	// Example output:
-	//   Quality Gate Required
-	//   Phase       002_IMPLEMENTATION
-	//   Type        review
-	//   Description Phase review required before proceeding
-	//
-	//   Criteria
-	//     - All tests pass
-	//     - Code reviewed
-	blockingGateTemplate = template.Must(template.New("gate").Parse(`{{.Header}}
-{{.PhaseLine}}
-{{.TypeLine}}
-{{.DescriptionLine}}
-{{- if .CriteriaSection}}
-
-{{.CriteriaSection}}
-{{- end}}
-`))
-
-	// noTaskTemplate - shown when no tasks are available
-	// Example output:
-	//   No Tasks Available
-	//   Reason No tasks are currently ready (dependencies not satisfied)
-	//
-	//   Location
-	//   Festival /path/to/festival
-	//   Phase    001_PLANNING
-	noTaskTemplate = template.Must(template.New("notask").Parse(`{{.Header}}
-{{- if .ReasonLine}}
-{{.ReasonLine}}
-{{- end}}
-{{- if .LocationSection}}
-
-{{.LocationSection}}
-{{- end}}
-`))
+	"github.com/lancekrogers/festival-methodology/fest/templates/agent"
 )
 
 // FormatText formats the result as human-readable text
@@ -164,7 +65,7 @@ func formatTextComplete(result *NextTaskResult) string {
 	}
 
 	var buf bytes.Buffer
-	completeTemplate.Execute(&buf, data)
+	agent.MustGet("next/complete").Execute(&buf, data)
 	return buf.String()
 }
 
@@ -197,7 +98,7 @@ func formatTextBlockingGate(result *NextTaskResult) string {
 	}
 
 	var buf bytes.Buffer
-	blockingGateTemplate.Execute(&buf, data)
+	agent.MustGet("next/blocked").Execute(&buf, data)
 	return buf.String()
 }
 
@@ -233,7 +134,7 @@ func formatTextNoTask(result *NextTaskResult) string {
 	}
 
 	var buf bytes.Buffer
-	noTaskTemplate.Execute(&buf, data)
+	agent.MustGet("next/no_task").Execute(&buf, data)
 	return buf.String()
 }
 
@@ -286,7 +187,7 @@ func formatTextTask(result *NextTaskResult) string {
 	}
 
 	var buf bytes.Buffer
-	taskTemplate.Execute(&buf, data)
+	agent.MustGet("next/task").Execute(&buf, data)
 	return buf.String()
 }
 
