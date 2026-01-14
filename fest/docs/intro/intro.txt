@@ -1,0 +1,98 @@
+================================================================================
+                    FEST CLI - GETTING STARTED GUIDE
+================================================================================
+
+Welcome to the Festival Methodology CLI! This guide will help you quickly
+become productive with fest commands.
+
+WHAT IS FESTIVAL METHODOLOGY?
+─────────────────────────────
+Festival Methodology is a goal-oriented project management system designed
+for AI agent workflows. It organizes work into a 3-level hierarchy:
+
+  Festival → Phase → Sequence → Task
+
+  • Festival: The complete project (e.g., "Add Authentication System")
+  • Phase:    Major milestone (e.g., "001_PLANNING", "002_IMPLEMENTATION")
+  • Sequence: Related group of tasks (e.g., "01_database_schema")
+  • Task:     Individual work item (e.g., "01_create_users_table.md")
+
+Festivals live in a dedicated workspace directory (festivals/) that is
+separate from your project repositories. This workspace contains:
+  festivals/
+  ├── .festival/    # Methodology resources and templates
+  ├── active/       # Currently executing festivals
+  ├── planned/      # Festivals being designed
+  ├── completed/    # Finished festivals
+  └── dungeon/      # Archived/deprioritized work
+
+ESSENTIAL COMMANDS (LEARN THESE FIRST)
+──────────────────────────────────────
+
+  fest understand           Show methodology overview
+  fest understand structure Learn the 3-level hierarchy in detail
+  fest understand tasks     CRITICAL: When to create task files
+
+  fest status               View current festival progress
+  fest next                 Get the next task to work on
+  fest validate             Check festival structure for issues
+
+CREATING FESTIVALS
+──────────────────
+
+  fest create festival      Create a new festival
+  fest create phase         Add a new phase to existing festival
+  fest create sequence      Add a new sequence to a phase
+  fest create task          Create individual task files
+
+NAVIGATION
+──────────
+
+  fest go                   Navigate to festivals directory
+  fest go active            Jump to active festivals
+  fest go <festival>        Jump to a specific festival
+  fest go <phase>           Jump to a phase directory
+  fest list                 List all festivals with status
+
+WORKFLOW COMMANDS
+─────────────────
+
+  fest next                 Get next task with agent instructions
+  fest next --json          Machine-readable output for automation
+  fest execute              Start execution mode for a festival
+  fest progress --complete  Mark current task as complete
+  fest progress --skip      Skip current task with reason
+
+QUICK START WORKFLOW
+────────────────────
+
+  1. Navigate to an active festival:
+     fest go active/<festival-name>
+
+  2. Check festival structure:
+     fest validate
+
+  3. Get your first task:
+     fest next
+
+  4. Complete tasks and track progress:
+     fest progress --complete
+
+  5. Repeat steps 3-4 until festival complete
+
+KEY PRINCIPLES
+──────────────
+
+  • STEPS NOT TIME: Think in terms of steps to reach a goal, not time estimates
+  • READ BEFORE WRITING: Always understand existing structure first
+  • GOAL FILES FIRST: Every level needs its goal document
+  • IMPLEMENTATION = TASKS: Implementation phases MUST have task files
+  • FLEXIBLE PHASES: Planning/Review/Research phases may be structured or freeform
+  • VALIDATE OFTEN: Run fest validate before and after changes
+  • SEQUENTIAL WORK: Complete tasks in order within sequences
+
+For detailed methodology documentation:
+  fest understand methodology
+
+For all available commands:
+  fest --help

@@ -20,23 +20,34 @@ what specific work to perform.
 WHEN TO CREATE TASK FILES
 -------------------------
 
-ALWAYS create task files for implementation sequences.
+PHASE TYPES AND TASK REQUIREMENTS
+---------------------------------
 
-  Implementation sequences (NEED task files):
-    • *_api, *_backend, *_frontend, *_infrastructure
-    • *_feature*, *_implementation*, *_development
-    • Any sequence where code/deliverables are produced
+There are 4 phase types, each with different characteristics:
 
-  Planning sequences (goals often sufficient):
-    • *_planning, *_research, *_requirements, *_design
-    • *_discovery, *_analysis, *_architecture
-    • However: even planning may benefit from tasks
+  IMPLEMENTATION phases - Tasks REQUIRED
+    • Must always have task files in sequences
+    • AI agents execute structured task files
+    • Without tasks, agents don't know what work to perform
 
-  Research phases (--type research) use freeform structure:
-    • No numbered sequences required
+  PLANNING phases - Tasks optional (flexible)
+    • May use task files for structured planning activities
+    • May be freeform with documentation and subdirectories
+    • Organized around achieving the phase goal
+
+  REVIEW phases - Tasks optional (flexible)
+    • May use task files for structured review checklists
+    • May be freeform for documentation during review
+    • Focus on validation and quality assurance
+
+  RESEARCH phases - Tasks optional (flexible)
+    • May use task files for structured research activities
+    • Often freeform with topic subdirectories and documents
     • Use fest research create for documents
-    • Organize by topic subdirectories
-    • See: fest understand structure
+
+KEY RULE: Implementation phases MUST have task files.
+Other phase types are flexible based on whether the work
+benefits from structured automation or freeform exploration.
 
 
 CORRECT STRUCTURE
