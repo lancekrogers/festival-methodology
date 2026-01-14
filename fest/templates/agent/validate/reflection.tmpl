@@ -1,0 +1,17 @@
+{{/*
+TEMPLATE: validate/reflection.tmpl
+PURPOSE: Agent self-check prompts for task validation
+
+EXAMPLE OUTPUT:
+  VALIDATION CHECKLIST
+  ────────────────────
+  Before marking this task complete, verify:
+    - [ ] All acceptance criteria are met
+    - [ ] Code compiles without errors
+    - [ ] Tests pass
+*/}}
+{{.Header}}
+Before marking this task complete, verify:
+{{range .Criteria}}
+  - [ ] {{.}}
+{{end}}

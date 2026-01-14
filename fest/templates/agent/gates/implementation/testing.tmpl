@@ -1,0 +1,17 @@
+{{/*
+TEMPLATE: gates/implementation/testing.tmpl
+PURPOSE: Testing quality gate for implementation phases
+
+EXAMPLE OUTPUT:
+  TESTING QUALITY GATE
+  ────────────────────
+  Run all tests and verify:
+    - [ ] All unit tests pass
+    - [ ] Integration tests pass
+    - [ ] No regressions introduced
+*/}}
+{{.Header}}
+Run all tests and verify:
+{{range .Criteria}}
+  - [ ] {{.}}
+{{end}}

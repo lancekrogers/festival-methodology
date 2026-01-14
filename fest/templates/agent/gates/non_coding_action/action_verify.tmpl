@@ -1,0 +1,16 @@
+{{/*
+TEMPLATE: gates/non_coding_action/action_verify.tmpl
+PURPOSE: Action verification gate for non-coding action phases
+
+EXAMPLE OUTPUT:
+  ACTION VERIFICATION
+  ───────────────────
+  Did you perform the actions as specified?
+    - [ ] Action 1 completed
+    - [ ] Action 2 completed
+*/}}
+{{.Header}}
+Did you perform the actions as specified?
+{{range .Criteria}}
+  - [ ] {{.}}
+{{end}}

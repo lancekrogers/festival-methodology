@@ -1,6 +1,7 @@
 package execute
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"path/filepath"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
+	"github.com/lancekrogers/festival-methodology/fest/templates/agent"
 )
 
 // Runner orchestrates festival execution
@@ -151,15 +153,30 @@ func (r *Runner) Reset(ctx context.Context) error {
 
 // FormatDryRun generates a dry-run output showing the execution plan
 func (r *Runner) FormatDryRun() string {
+	data := struct {
+		Header         string
+		FestivalLine   string
+		PathLine       string
+		SummarySection string
+		PhasesSection  string
+	}{
+		Header:         ui.H1("Execution Plan (Dry Run)"),
+		FestivalLine:   buildLabelValue("Festival", ui.Value(filepath.Base(r.festivalPath), ui.FestivalColor)),
+		PathLine:       buildLabelValue("Path", ui.Dim(r.festivalPath)),
+		SummarySection: buildDryRunSummary(r),
+		PhasesSection:  buildDryRunPhases(r),
+	}
+
+	var buf bytes.Buffer
+	agent.MustGet("execute/dry_run").Execute(&buf, data)
+	return buf.String()
+}
+
+// buildLabelValue creates a label-value pair string
+func buildLabelValue(label, value string) string {
 	var sb strings.Builder
-
-	sb.WriteString(ui.H1("Execution Plan (Dry Run)"))
-	sb.WriteString("\n\n")
-
-	writeDryRunSummary(&sb, r)
-	writeDryRunPhases(&sb, r)
-
-	return sb.String()
+	ui.WriteLabelValue(&sb, label, value)
+	return strings.TrimSuffix(sb.String(), "\n")
 }
 
 // FormatAgentInstructions generates agent-friendly execution instructions
@@ -173,14 +190,7 @@ func (r *Runner) FormatAgentInstructions() (string, error) {
 		return formatExecutionComplete(), nil
 	}
 
-	var sb strings.Builder
-
-	sb.WriteString(ui.H1("Agent Execution Instructions"))
-	sb.WriteString("\n\n")
-
-	writeAgentProgress(&sb, r)
-	writeAgentCurrentPosition(&sb, phase, seq, step)
-	writeAgentTasks(&sb, r, step)
+	// Build sequence path for context files
 	sequencePath := seq.Path
 	if sequencePath == "" && phase.Path != "" {
 		sequencePath = filepath.Join(phase.Path, seq.Name)
@@ -188,29 +198,45 @@ func (r *Runner) FormatAgentInstructions() (string, error) {
 	if sequencePath == "" && len(step.Tasks) > 0 {
 		sequencePath = filepath.Dir(step.Tasks[0].Path)
 	}
-	writeAgentContextFiles(&sb, r.festivalPath, phase.Path, sequencePath)
-	writeAgentCompletionCommands(&sb, step)
-	writeAgentNextStepCommand(&sb)
 
-	return sb.String(), nil
+	data := struct {
+		Header            string
+		ProgressLine      string
+		PositionSection   string
+		TasksSection      string
+		ActionInstruction string
+		ProgressCmd       string
+		ContextSection    string
+	}{
+		Header:            ui.H1("Agent Execution Instructions"),
+		ProgressLine:      buildAgentProgressLine(r),
+		PositionSection:   buildAgentPositionSection(phase, seq, step),
+		TasksSection:      buildAgentTasksSection(r, step),
+		ActionInstruction: ui.Info("Read the task file and follow the instructions laid out exactly."),
+		ProgressCmd:       buildProgressCommand(step),
+		ContextSection:    buildAgentContextSection(r.festivalPath, phase.Path, sequencePath),
+	}
+
+	var buf bytes.Buffer
+	agent.MustGet("execute/instructions").Execute(&buf, data)
+	return buf.String(), nil
 }
 
-func writeDryRunSummary(sb *strings.Builder, r *Runner) {
-	ui.WriteLabelValue(sb, "Festival", ui.Value(filepath.Base(r.festivalPath), ui.FestivalColor))
-	ui.WriteLabelValue(sb, "Path", ui.Dim(r.festivalPath))
-	sb.WriteString("\n")
-
+func buildDryRunSummary(r *Runner) string {
+	var sb strings.Builder
 	sb.WriteString(ui.H2("Summary"))
 	sb.WriteString("\n")
-	ui.WriteLabelValue(sb, "Phases", ui.Value(fmt.Sprintf("%d", r.plan.Summary.TotalPhases)))
-	ui.WriteLabelValue(sb, "Sequences", ui.Value(fmt.Sprintf("%d", r.plan.Summary.TotalSequences)))
-	ui.WriteLabelValue(sb, "Tasks", ui.Value(fmt.Sprintf("%d", r.plan.Summary.TotalTasks)))
-	ui.WriteLabelValue(sb, "Execution steps", ui.Value(fmt.Sprintf("%d", r.plan.Summary.TotalSteps)))
-	ui.WriteLabelValue(sb, "Parallel groups", ui.Value(fmt.Sprintf("%d", r.plan.Summary.ParallelGroups)))
-	ui.WriteLabelValue(sb, "Quality gates", ui.Value(fmt.Sprintf("%d", r.plan.Summary.QualityGates)))
+	ui.WriteLabelValue(&sb, "Phases", ui.Value(fmt.Sprintf("%d", r.plan.Summary.TotalPhases)))
+	ui.WriteLabelValue(&sb, "Sequences", ui.Value(fmt.Sprintf("%d", r.plan.Summary.TotalSequences)))
+	ui.WriteLabelValue(&sb, "Tasks", ui.Value(fmt.Sprintf("%d", r.plan.Summary.TotalTasks)))
+	ui.WriteLabelValue(&sb, "Execution steps", ui.Value(fmt.Sprintf("%d", r.plan.Summary.TotalSteps)))
+	ui.WriteLabelValue(&sb, "Parallel groups", ui.Value(fmt.Sprintf("%d", r.plan.Summary.ParallelGroups)))
+	ui.WriteLabelValue(&sb, "Quality gates", ui.Value(fmt.Sprintf("%d", r.plan.Summary.QualityGates)))
+	return sb.String()
 }
 
-func writeDryRunPhases(sb *strings.Builder, r *Runner) {
+func buildDryRunPhases(r *Runner) string {
+	var sb strings.Builder
 	stepNum := 0
 	for _, phase := range r.plan.Phases {
 		sb.WriteString("\n")
@@ -244,34 +270,43 @@ func writeDryRunPhases(sb *strings.Builder, r *Runner) {
 			sb.WriteString("\n")
 		}
 	}
-}
-
-func formatExecutionComplete() string {
-	var sb strings.Builder
-	sb.WriteString(ui.H1("Execution Complete"))
-	sb.WriteString("\n\n")
-	sb.WriteString(ui.Success("All tasks have been executed."))
-	sb.WriteString("\n")
 	return sb.String()
 }
 
-func writeAgentProgress(sb *strings.Builder, r *Runner) {
+func formatExecutionComplete() string {
+	data := struct {
+		Header  string
+		Message string
+	}{
+		Header:  ui.H1("Execution Complete"),
+		Message: ui.Success("All tasks have been executed."),
+	}
+
+	var buf bytes.Buffer
+	agent.MustGet("execute/complete").Execute(&buf, data)
+	return buf.String()
+}
+
+func buildAgentProgressLine(r *Runner) string {
 	state := r.stateManager.State()
 	progress := state.Progress()
-	ui.WriteLabelValue(sb, "Progress", ui.Value(fmt.Sprintf("%.1f%% (%d/%d tasks)", progress, state.CompletedTasks, state.TotalTasks)))
-	sb.WriteString("\n")
+	var sb strings.Builder
+	ui.WriteLabelValue(&sb, "Progress", ui.Value(fmt.Sprintf("%.1f%% (%d/%d tasks)", progress, state.CompletedTasks, state.TotalTasks)))
+	return sb.String()
 }
 
-func writeAgentCurrentPosition(sb *strings.Builder, phase *PhaseExecution, seq *SequenceExecution, step *StepGroup) {
+func buildAgentPositionSection(phase *PhaseExecution, seq *SequenceExecution, step *StepGroup) string {
+	var sb strings.Builder
 	sb.WriteString(ui.H2("Current Position"))
 	sb.WriteString("\n")
-	ui.WriteLabelValue(sb, "Phase", ui.Value(phase.Name, ui.PhaseColor))
-	ui.WriteLabelValue(sb, "Sequence", ui.Value(seq.Name, ui.SequenceColor))
-	ui.WriteLabelValue(sb, "Step", ui.Value(fmt.Sprintf("%d", step.Number)))
-	sb.WriteString("\n")
+	ui.WriteLabelValue(&sb, "Phase", ui.Value(phase.Name, ui.PhaseColor))
+	ui.WriteLabelValue(&sb, "Sequence", ui.Value(seq.Name, ui.SequenceColor))
+	ui.WriteLabelValue(&sb, "Step", ui.Value(fmt.Sprintf("%d", step.Number)))
+	return sb.String()
 }
 
-func writeAgentTasks(sb *strings.Builder, r *Runner, step *StepGroup) {
+func buildAgentTasksSection(r *Runner, step *StepGroup) string {
+	var sb strings.Builder
 	sb.WriteString(ui.H2("Tasks to Execute"))
 	sb.WriteString("\n")
 	for _, task := range step.Tasks {
@@ -283,10 +318,11 @@ func writeAgentTasks(sb *strings.Builder, r *Runner, step *StepGroup) {
 			sb.WriteString(fmt.Sprintf("    %s %s\n", ui.Label("Autonomy"), ui.Value(task.AutonomyLevel)))
 		}
 	}
-	sb.WriteString("\n")
+	return sb.String()
 }
 
-func writeAgentContextFiles(sb *strings.Builder, festivalPath, phasePath, seqPath string) {
+func buildAgentContextSection(festivalPath, phasePath, seqPath string) string {
+	var sb strings.Builder
 	sb.WriteString(ui.H2("Context Files"))
 	sb.WriteString("\n")
 	festivalGoal := filepath.Join(festivalPath, "FESTIVAL_GOAL.md")
@@ -295,22 +331,17 @@ func writeAgentContextFiles(sb *strings.Builder, festivalPath, phasePath, seqPat
 	sb.WriteString(fmt.Sprintf("  - %s\n", ui.Dim(festivalGoal)))
 	sb.WriteString(fmt.Sprintf("  - %s\n", ui.Dim(phaseGoal)))
 	sb.WriteString(fmt.Sprintf("  - %s\n", ui.Dim(sequenceGoal)))
-	sb.WriteString("\n")
+	return sb.String()
 }
 
-func writeAgentCompletionCommands(sb *strings.Builder, step *StepGroup) {
-	sb.WriteString(ui.H2("Completion Commands"))
-	sb.WriteString("\n")
-	for _, task := range step.Tasks {
-		sb.WriteString(fmt.Sprintf("  %s\n", ui.Value(fmt.Sprintf("fest status set %s completed", task.Name))))
+// buildProgressCommand builds the fest progress command for marking a task complete
+func buildProgressCommand(step *StepGroup) string {
+	if len(step.Tasks) == 0 {
+		return ""
 	}
-	sb.WriteString("\n")
-}
-
-func writeAgentNextStepCommand(sb *strings.Builder) {
-	sb.WriteString(ui.H2("Next Step Command"))
-	sb.WriteString("\n")
-	sb.WriteString(fmt.Sprintf("  %s\n", ui.Value("fest execute --agent --continue")))
+	// Use the first task to build the progress command
+	task := step.Tasks[0]
+	return ui.Value(fmt.Sprintf("fest progress --task %s --complete", task.Path))
 }
 
 // FormatJSON returns the plan as JSON-serializable structure

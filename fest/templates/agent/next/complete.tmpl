@@ -1,0 +1,14 @@
+{{/*
+TEMPLATE: next/complete.tmpl
+PURPOSE: Shown when all tasks in the festival are done
+
+EXAMPLE OUTPUT:
+  Festival Complete
+  All tasks have been completed.
+  Reason All tasks in the festival are complete
+*/}}
+{{.Header}}
+{{.Message}}
+{{- if .ReasonLine}}
+{{.ReasonLine}}
+{{- end}}

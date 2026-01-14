@@ -1,0 +1,46 @@
+{{/*
+TEMPLATE: next/task.tmpl
+PURPOSE: Shown when fest next finds an available task
+
+EXAMPLE OUTPUT:
+  NEXT TASK
+  ─────────
+  Sequence       04_stdlib_integration
+  Phase          007_TUIREALM_INTEGRATION
+  Autonomy       medium
+
+  Task           03_testing_and_verify
+
+  Read this file and follow the instructions laid out exactly.
+
+  Path           /path/to/03_testing_and_verify.md
+
+  Recommendation Next available task in festival
+
+  When complete, mark it done with:
+    fest progress --task 007_.../04_.../03_testing_and_verify.md --complete
+*/}}
+{{.Header}}
+{{.SequenceLine}}
+{{.PhaseLine}}
+{{- if .AutonomyLine}}
+{{.AutonomyLine}}
+
+{{.TaskLine}}
+
+{{.ActionInstruction}}
+
+{{.PathLine}}
+
+
+{{- end}}
+
+{{.RecommendationLine}}
+{{- if .ParallelSection}}
+
+{{.ParallelSection}}
+{{- end}}
+
+
+When complete, mark it done with:
+  {{.ProgressCmd}}

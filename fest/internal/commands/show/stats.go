@@ -192,6 +192,12 @@ func calculateSequenceStats(seqDir string, store *progress.Store, festivalRoot s
 			continue
 		}
 
+		// Skip untracked files (files with tracking: false in frontmatter)
+		taskPath := filepath.Join(seqDir, entry.Name())
+		if !progress.IsTracked(taskPath) {
+			continue
+		}
+
 		// Check if it's a gate file
 		isGate := isGateFile(name)
 
@@ -201,7 +207,6 @@ func calculateSequenceStats(seqDir string, store *progress.Store, festivalRoot s
 			// TODO: Parse file to determine actual status
 		} else {
 			stats.Tasks.Total++
-			taskPath := filepath.Join(seqDir, entry.Name())
 			status := progress.ResolveTaskStatus(store, festivalRoot, taskPath)
 			switch status {
 			case progress.StatusCompleted:

@@ -1,0 +1,9 @@
+{{/*
+TEMPLATE: gates/non_coding_action/completion.tmpl
+PURPOSE: Completion gate for non-coding action phases
+*/}}
+{{.Header}}
+Before marking complete:
+{{range .Criteria}}
+  - [ ] {{.}}
+{{end}}
