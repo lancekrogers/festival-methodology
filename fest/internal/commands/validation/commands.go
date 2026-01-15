@@ -134,6 +134,7 @@ Use --fix to automatically apply safe fixes (like adding quality gates).`,
 }
 
 // resolveFestivalPath resolves the festival root directory
+// Supports link resolution - can be run from a linked project directory.
 func resolveFestivalPath(pathArg string) (string, error) {
 	if pathArg != "" {
 		absPath, err := filepath.Abs(pathArg)
@@ -160,7 +161,15 @@ func resolveFestivalPath(pathArg string) (string, error) {
 		return "", errors.IO("getting working directory", err)
 	}
 
-	// Check if we're in a festival directory
+	// Use shared link resolver - handles linked projects, festival directories, etc.
+	resolvedPath, err := shared.ResolveFestivalPath(cwd, "")
+	if err == nil && resolvedPath != "" {
+		if isFestivalDir(resolvedPath) {
+			return resolvedPath, nil
+		}
+	}
+
+	// Check if we're directly in a festival directory
 	if isFestivalDir(cwd) {
 		return cwd, nil
 	}
@@ -180,7 +189,7 @@ func resolveFestivalPath(pathArg string) (string, error) {
 	}
 
 	// Not in a festival - provide helpful error
-	return "", errors.Validation("not inside a festival directory - run from inside a festival, or provide a path: fest validate /path/to/festival")
+	return "", errors.Validation("not inside a festival directory or linked project - run from inside a festival, use 'fest link' to link a project, or provide a path: fest validate /path/to/festival")
 }
 
 // isFestivalDir checks if a directory appears to be a festival root
