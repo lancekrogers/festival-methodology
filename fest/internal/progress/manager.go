@@ -2,10 +2,23 @@ package progress
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
+
+// getTaskFileModTime returns the modification time of the task file.
+// Falls back to current time if file cannot be stat'd.
+func getTaskFileModTime(festivalPath, taskID string) time.Time {
+	taskPath := filepath.Join(festivalPath, taskID)
+	info, err := os.Stat(taskPath)
+	if err != nil {
+		return time.Now().UTC()
+	}
+	return info.ModTime().UTC()
+}
 
 // Manager handles progress operations for a festival
 type Manager struct {
@@ -45,9 +58,10 @@ func (m *Manager) UpdateProgress(ctx context.Context, taskID string, progress in
 	}
 
 	// Start tracking time on first progress update
+	// Use file modification time as estimate if task wasn't explicitly started
 	if task.StartedAt == nil {
-		now := time.Now().UTC()
-		task.StartedAt = &now
+		modTime := getTaskFileModTime(m.store.festivalPath, taskID)
+		task.StartedAt = &modTime
 	}
 
 	// If progress > 0, mark as in progress
@@ -94,9 +108,12 @@ func (m *Manager) MarkComplete(ctx context.Context, taskID string) error {
 
 	now := time.Now().UTC()
 
-	// Set start time if not already set
+	// Set start time if not already set - use file modification time as estimate
+	// This provides reasonable time tracking when tasks are completed directly
+	// without first being marked "in progress"
 	if task.StartedAt == nil {
-		task.StartedAt = &now
+		modTime := getTaskFileModTime(m.store.festivalPath, taskID)
+		task.StartedAt = &modTime
 	}
 
 	task.Status = StatusCompleted
@@ -125,10 +142,10 @@ func (m *Manager) MarkInProgress(ctx context.Context, taskID string) error {
 		}
 	}
 
-	now := time.Now().UTC()
-
 	// Set start time if not already set
+	// For MarkInProgress, use current time (user explicitly starting work)
 	if task.StartedAt == nil {
+		now := time.Now().UTC()
 		task.StartedAt = &now
 	}
 
