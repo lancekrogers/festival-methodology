@@ -50,9 +50,12 @@ type GraduationPlan struct {
 
 // ImplementationTarget describes the target implementation phase.
 type ImplementationTarget struct {
-	Path      string `json:"path"`
-	PhaseName string `json:"phase_name"`
-	Number    int    `json:"number"`
+	Path              string `json:"path"`
+	PhaseName         string `json:"phase_name"`
+	Number            int    `json:"number"`
+	CollisionDetected bool   `json:"collision_detected,omitempty"` // True if original number was taken
+	OriginalNumber    int    `json:"original_number,omitempty"`    // Original target before adjustment
+	ExistingPhase     string `json:"existing_phase,omitempty"`     // Name of conflicting phase if any
 }
 
 // ProposedSequence is a sequence to be created.

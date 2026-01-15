@@ -3,6 +3,8 @@ package graduate
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -263,5 +265,355 @@ func TestGenerator_TaskNumbering(t *testing.T) {
 		if !strings.HasPrefix(task.FullName, fmt.Sprintf("%02d_", expectedNum)) {
 			t.Errorf("Task %d FullName = %q, doesn't start with %02d_", i, task.FullName, expectedNum)
 		}
+	}
+}
+
+func TestScanExistingPhases(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create some phase directories
+	phases := []string{
+		"001_PLANNING",
+		"002_IMPLEMENTATION",
+		"004_REVIEW",
+		".hidden",   // Should be skipped
+		"not_phase", // Should be skipped (no number)
+	}
+	for _, p := range phases {
+		if err := os.MkdirAll(filepath.Join(tmpDir, p), 0755); err != nil {
+			t.Fatalf("failed to create dir %s: %v", p, err)
+		}
+	}
+
+	// Also create a file (should be skipped)
+	if err := os.WriteFile(filepath.Join(tmpDir, "README.md"), []byte("test"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	generator := NewGenerator(tmpDir)
+	existing := generator.scanExistingPhases()
+
+	// Should find 3 phases (001, 002, 004)
+	if len(existing) != 3 {
+		t.Errorf("scanExistingPhases() found %d phases, want 3", len(existing))
+	}
+
+	// Check specific phases
+	if existing[1] != "001_PLANNING" {
+		t.Errorf("Phase 1 = %q, want %q", existing[1], "001_PLANNING")
+	}
+	if existing[2] != "002_IMPLEMENTATION" {
+		t.Errorf("Phase 2 = %q, want %q", existing[2], "002_IMPLEMENTATION")
+	}
+	if existing[4] != "004_REVIEW" {
+		t.Errorf("Phase 4 = %q, want %q", existing[4], "004_REVIEW")
+	}
+
+	// Verify hidden and non-numbered dirs are skipped
+	if _, exists := existing[0]; exists {
+		t.Error("Phase 0 should not exist (hidden or non-numbered)")
+	}
+}
+
+func TestFindNextAvailablePhaseNumber(t *testing.T) {
+	generator := NewGenerator("/test")
+
+	tests := []struct {
+		name     string
+		existing map[int]string
+		start    int
+		expected int
+	}{
+		{
+			name:     "no collision",
+			existing: map[int]string{1: "001_PLANNING"},
+			start:    2,
+			expected: 2,
+		},
+		{
+			name:     "simple collision",
+			existing: map[int]string{1: "001_PLANNING", 2: "002_IMPLEMENTATION"},
+			start:    2,
+			expected: 3,
+		},
+		{
+			name:     "multiple consecutive collisions",
+			existing: map[int]string{1: "001", 2: "002", 3: "003", 4: "004"},
+			start:    2,
+			expected: 5,
+		},
+		{
+			name:     "gap in numbers",
+			existing: map[int]string{1: "001", 2: "002", 4: "004"},
+			start:    2,
+			expected: 3, // Should find the gap at 3
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := generator.findNextAvailablePhaseNumber(tt.existing, tt.start)
+			if result != tt.expected {
+				t.Errorf("findNextAvailablePhaseNumber() = %d, want %d", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestGenerator_Generate_PhaseCollision(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create existing phases that cause collision
+	phases := []string{
+		"001_PLANNING",
+		"002_EXISTING_PHASE", // This will collide with target
+	}
+	for _, p := range phases {
+		if err := os.MkdirAll(filepath.Join(tmpDir, p), 0755); err != nil {
+			t.Fatalf("failed to create dir %s: %v", p, err)
+		}
+	}
+
+	source := &PlanningSource{
+		Path:       filepath.Join(tmpDir, "001_PLANNING"),
+		PhaseName:  "001_PLANNING",
+		TopicDirs:  []TopicDirectory{},
+		TotalDocs:  0,
+		AnalyzedAt: time.Now(),
+	}
+
+	generator := NewGenerator(tmpDir)
+	plan, err := generator.Generate(context.Background(), source)
+	if err != nil {
+		t.Fatalf("Generate() error = %v", err)
+	}
+
+	// Target should be adjusted to 003
+	if plan.Target.Number != 3 {
+		t.Errorf("Target.Number = %d, want 3 (avoiding collision)", plan.Target.Number)
+	}
+	if plan.Target.PhaseName != "003_IMPLEMENTATION" {
+		t.Errorf("Target.PhaseName = %q, want %q", plan.Target.PhaseName, "003_IMPLEMENTATION")
+	}
+
+	// Collision should be detected
+	if !plan.Target.CollisionDetected {
+		t.Error("CollisionDetected = false, want true")
+	}
+	if plan.Target.OriginalNumber != 2 {
+		t.Errorf("OriginalNumber = %d, want 2", plan.Target.OriginalNumber)
+	}
+	if plan.Target.ExistingPhase != "002_EXISTING_PHASE" {
+		t.Errorf("ExistingPhase = %q, want %q", plan.Target.ExistingPhase, "002_EXISTING_PHASE")
+	}
+
+	// Warning should be present
+	hasCollisionWarning := false
+	for _, w := range plan.Warnings {
+		if strings.Contains(w, "already exists") && strings.Contains(w, "002") {
+			hasCollisionWarning = true
+			break
+		}
+	}
+	if !hasCollisionWarning {
+		t.Errorf("Expected collision warning in Warnings: %v", plan.Warnings)
+	}
+}
+
+func TestGenerator_Generate_NoCollision(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create only planning phase
+	if err := os.MkdirAll(filepath.Join(tmpDir, "001_PLANNING"), 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	source := &PlanningSource{
+		Path:       filepath.Join(tmpDir, "001_PLANNING"),
+		PhaseName:  "001_PLANNING",
+		TopicDirs:  []TopicDirectory{},
+		TotalDocs:  0,
+		AnalyzedAt: time.Now(),
+	}
+
+	generator := NewGenerator(tmpDir)
+	plan, err := generator.Generate(context.Background(), source)
+	if err != nil {
+		t.Fatalf("Generate() error = %v", err)
+	}
+
+	// Target should be 002 with no collision
+	if plan.Target.Number != 2 {
+		t.Errorf("Target.Number = %d, want 2", plan.Target.Number)
+	}
+	if plan.Target.CollisionDetected {
+		t.Error("CollisionDetected = true, want false (no collision)")
+	}
+}
+
+func TestExtractObjectiveFromDoc(t *testing.T) {
+	tmpDir := t.TempDir()
+	generator := NewGenerator(tmpDir)
+
+	tests := []struct {
+		name     string
+		content  string
+		taskName string
+		expected string
+	}{
+		{
+			name: "objective_section",
+			content: `# Auth Requirements
+
+## Objective
+
+Implement user authentication with OAuth2 support.
+
+## Details
+More content here.
+`,
+			taskName: "auth_requirements",
+			expected: "Implement user authentication with OAuth2 support.",
+		},
+		{
+			name: "goal_section",
+			content: `# API Design
+
+## Goal
+
+Build a RESTful API for user management.
+`,
+			taskName: "api_design",
+			expected: "Build a RESTful API for user management.",
+		},
+		{
+			name: "inline_objective",
+			content: `# Database Schema
+
+**Objective:** Create database schema for users and sessions.
+
+More details follow.
+`,
+			taskName: "database_schema",
+			expected: "Create database schema for users and sessions.",
+		},
+		{
+			name: "title_with_colon",
+			content: `# Authentication: Implement JWT token validation
+
+Some content.
+`,
+			taskName: "auth",
+			expected: "Implement JWT token validation",
+		},
+		{
+			name: "descriptive_title",
+			content: `# User Registration Flow Implementation
+
+Detailed planning for user registration.
+`,
+			taskName: "registration",
+			expected: "Implement user registration flow implementation",
+		},
+		{
+			name: "fallback_generic",
+			content: `# Short
+
+No useful content.
+`,
+			taskName: "short_doc",
+			expected: "Implement short_doc as specified in planning",
+		},
+		{
+			name: "requirements_bullet",
+			content: `# Feature X
+
+## Requirements
+
+- Support multiple authentication providers
+- Handle token refresh automatically
+`,
+			taskName: "feature_x",
+			expected: "Support multiple authentication providers",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create temp file with content
+			docPath := filepath.Join(tmpDir, tt.name+".md")
+			if err := os.WriteFile(docPath, []byte(tt.content), 0644); err != nil {
+				t.Fatal(err)
+			}
+
+			result := generator.extractObjectiveFromDoc(docPath, tt.taskName)
+			if result != tt.expected {
+				t.Errorf("extractObjectiveFromDoc() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestCleanObjective(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{"bold_text", "**bold text**", "Bold text"},
+		{"code", "`code`", "Code"},
+		{"spaces", "  spaces  ", "Spaces"},
+		{"lowercase", "lowercase start", "Lowercase start"},
+		{"truncate", strings.Repeat("x", 200), "X" + strings.Repeat("x", 146) + "..."}, // First x gets capitalized
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := cleanObjective(tt.input)
+			if result != tt.expected {
+				t.Errorf("cleanObjective(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestGenerateTasks_WithObjectiveExtraction(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create topic directory with documents
+	topicDir := filepath.Join(tmpDir, "requirements")
+	if err := os.MkdirAll(topicDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create document with extractable objective
+	docContent := `# Authentication
+
+## Objective
+
+Implement secure user authentication with multi-factor support.
+`
+	if err := os.WriteFile(filepath.Join(topicDir, "auth.md"), []byte(docContent), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	generator := NewGenerator(tmpDir)
+	topic := TopicDirectory{
+		Name:      "requirements",
+		Path:      topicDir,
+		Documents: []string{"auth.md"},
+		DocCount:  1,
+	}
+
+	tasks := generator.generateTasks(topic)
+
+	if len(tasks) != 1 {
+		t.Fatalf("generateTasks() returned %d tasks, want 1", len(tasks))
+	}
+
+	// Should have extracted the objective, not generic text
+	expected := "Implement secure user authentication with multi-factor support."
+	if tasks[0].Objective != expected {
+		t.Errorf("Task objective = %q, want %q", tasks[0].Objective, expected)
 	}
 }

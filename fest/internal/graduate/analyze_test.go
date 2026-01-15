@@ -243,6 +243,71 @@ func TestAnalyzer_FindPlanningPhase_NotFound(t *testing.T) {
 	}
 }
 
+func TestIsGoalFile(t *testing.T) {
+	tests := []struct {
+		filename string
+		want     bool
+	}{
+		{"PHASE_GOAL.md", true},
+		{"SEQUENCE_GOAL.md", true},
+		{"FESTIVAL_GOAL.md", true},
+		{"phase_goal.md", true},           // Case insensitive
+		{"sequence_goal.md", true},        // Case insensitive
+		{"MY_CUSTOM_GOAL.md", true},       // Pattern: *_GOAL.md
+		{"requirements.md", false},        // Regular document
+		{"auth_design.md", false},         // Regular document
+		{"PLANNING_SUMMARY.md", false},    // Not a goal file
+		{"GOAL_setup.md", false},          // GOAL at start, not end
+		{"database_migration.md", false},  // Regular document
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.filename, func(t *testing.T) {
+			if got := isGoalFile(tt.filename); got != tt.want {
+				t.Errorf("isGoalFile(%q) = %v, want %v", tt.filename, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFindDocuments_FiltersGoalFiles(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create mix of documents and goal files
+	files := []string{
+		"auth_requirements.md",      // Should include
+		"api_design.md",             // Should include
+		"SEQUENCE_GOAL.md",          // Should exclude
+		"PHASE_GOAL.md",             // Should exclude
+		"CUSTOM_GOAL.md",            // Should exclude (matches *_GOAL.md)
+		"database_schema.md",        // Should include
+	}
+	for _, f := range files {
+		if err := os.WriteFile(filepath.Join(tmpDir, f), []byte("test"), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	analyzer := NewAnalyzer(tmpDir)
+	docs, err := analyzer.findDocuments(tmpDir)
+	if err != nil {
+		t.Fatalf("findDocuments() error = %v", err)
+	}
+
+	// Should have 3 documents (excluding 3 goal files)
+	if len(docs) != 3 {
+		t.Errorf("findDocuments() returned %d docs, want 3 (excluding goal files)", len(docs))
+		t.Logf("Got docs: %v", docs)
+	}
+
+	// Verify no goal files included
+	for _, doc := range docs {
+		if isGoalFile(doc) {
+			t.Errorf("findDocuments() included goal file: %s", doc)
+		}
+	}
+}
+
 func TestParseDecisionFile(t *testing.T) {
 	tmpDir := t.TempDir()
 
