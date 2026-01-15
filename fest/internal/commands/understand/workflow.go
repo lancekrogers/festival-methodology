@@ -25,7 +25,7 @@ func newUnderstandRulesCmd() *cobra.Command {
 		Short: "MANDATORY structure rules for automation",
 		Long:  `Learn the RIGID structure requirements that enable Festival automation: naming conventions, required files, quality gates, and parallel execution.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			printRules()
+			printRules(findDotFestivalDir())
 		},
 	}
 }
@@ -102,9 +102,23 @@ func printWorkflow(dotFestival string) {
 	fmt.Print(understanddocs.Load("workflow.txt"))
 }
 
-func printRules() {
+func printRules(dotFestival string) {
+	// Hybrid: try festival-specific FESTIVAL_RULES.md first
+	rulesPath := findFestivalRulesFile(dotFestival)
+	if rulesPath != "" {
+		content := readFileContent(rulesPath)
+		if content != "" && !hasSignificantUnfilledMarkers(content) {
+			fmt.Print("\n")
+			fmt.Print(content)
+			fmt.Printf("\n---\nSource: %s\n", rulesPath)
+			return
+		}
+	}
+
+	// Default: use embedded content
 	fmt.Print("\n")
 	fmt.Print(understanddocs.Load("rules.txt"))
+	fmt.Print("\n---\nSource: [EMBEDDED DEFAULT]\n")
 }
 
 func printTemplates() {
