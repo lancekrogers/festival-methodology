@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/navigation"
+	"github.com/lancekrogers/festival-methodology/fest/internal/workspace"
 	"github.com/spf13/cobra"
 )
 
@@ -142,4 +143,43 @@ func isValidFestivalDir(path string) bool {
 		return true
 	}
 	return false
+}
+
+// CompleteGoTarget provides fuzzy completions for the go command target argument
+func CompleteGoTarget(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	// Get festivals directory
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	festivalsDir, err := workspace.FindFestivals(cwd)
+	if err != nil || festivalsDir == "" {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	// Collect targets
+	targets := navigation.CollectNavigationTargets(festivalsDir)
+	if len(targets) == 0 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	// If no partial input, return all targets
+	if toComplete == "" {
+		result := make([]string, len(targets))
+		for i, t := range targets {
+			result[i] = t.Name
+		}
+		return result, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	// Fuzzy filter
+	finder := navigation.NewFuzzyFinder(targets)
+	matches := finder.Find(toComplete)
+
+	result := make([]string, len(matches))
+	for i, m := range matches {
+		result[i] = m.Name
+	}
+
+	return result, cobra.ShellCompDirectiveNoFileComp
 }

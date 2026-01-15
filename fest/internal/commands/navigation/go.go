@@ -42,13 +42,18 @@ Then use 'fgo' to navigate:
   fgo              Navigate to festivals root
   fgo 002          Navigate to phase 002
   fgo 2/1          Navigate to phase 2, sequence 1
+  fgo fest_improv  Fuzzy match to fest-improvements-*
 
 Without shell integration, use command substitution:
   cd $(fest go)
   cd $(fest go 002)
 
+Fuzzy matching is supported - partial names like "impl" will match
+phases containing "IMPLEMENT". Multiple words narrow the search.
+
 If no registered festivals are found, falls back to nearest festivals/.`,
-		Args: cobra.MaximumNArgs(1),
+		Args:              cobra.MaximumNArgs(1),
+		ValidArgsFunction: CompleteGoTarget,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			target := ""
 			if len(args) > 0 {
@@ -269,7 +274,34 @@ func resolveGoTarget(target, festivalsDir string) (string, error) {
 		return fullPath, nil
 	}
 
-	return "", errors.NotFound("target").WithField("target", target)
+	// Try fuzzy matching as fallback
+	return resolveFuzzy(target, festivalsDir)
+}
+
+// resolveFuzzy attempts to match the target using fuzzy matching
+func resolveFuzzy(pattern, festivalsDir string) (string, error) {
+	// Collect all possible targets
+	targets := navigation.CollectNavigationTargets(festivalsDir)
+	if len(targets) == 0 {
+		return "", errors.NotFound("target").WithField("pattern", pattern)
+	}
+
+	finder := navigation.NewFuzzyFinder(targets)
+	matches := finder.Find(pattern)
+
+	if len(matches) == 0 {
+		return "", errors.NotFound("target").WithField("pattern", pattern)
+	}
+
+	// If single match or unambiguous best match, return it
+	if len(matches) == 1 || navigation.IsUnambiguous(matches) {
+		return matches[0].Path, nil
+	}
+
+	// Multiple ambiguous matches - return error with suggestions
+	suggestions := navigation.FormatMatchList(matches, 5)
+	msg := fmt.Sprintf("ambiguous pattern '%s' - matches: %s", pattern, strings.Join(suggestions, ", "))
+	return "", errors.Validation(msg)
 }
 
 // resolveFestivalByName searches for a festival by name in status directories
