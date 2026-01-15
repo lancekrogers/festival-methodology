@@ -27,6 +27,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/status"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/structure"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/system"
+	templatescmd "github.com/lancekrogers/festival-methodology/fest/internal/commands/templates"
 	understandcmd "github.com/lancekrogers/festival-methodology/fest/internal/commands/understand"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/validation"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/wizard"
@@ -314,4 +315,9 @@ func init() {
 	graduateCmd := graduatecmd.NewGraduateCommand()
 	graduateCmd.GroupID = "creation"
 	rootCmd.AddCommand(graduateCmd)
+
+	// Templates command for agent-created templates
+	templatesCmd := templatescmd.NewTemplatesCommand()
+	templatesCmd.GroupID = "creation"
+	rootCmd.AddCommand(templatesCmd)
 }
