@@ -31,7 +31,12 @@ func charmCreateFestival(ctx context.Context) error {
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().Title("Festival name").Placeholder("e.g., ecommerce-platform").Value(&name).Validate(notEmpty),
-			huh.NewInput().Title("Festival goal").Placeholder("e.g., Launch MVP").Value(&goal),
+			huh.NewText().
+				Title("Festival goal").
+				Placeholder("e.g., Launch MVP with core features\nInclude user auth and payment").
+				CharLimit(5000).
+				Lines(3).
+				Value(&goal),
 			huh.NewInput().Title("Tags (comma-separated)").Placeholder("backend,security").Value(&tags),
 			huh.NewSelect[string]().Title("Destination").Options(
 				huh.NewOption("active", "active"),
@@ -97,7 +102,12 @@ func charmPlanFestivalWizard(ctx context.Context) error {
 	base := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().Title("Festival name").Placeholder("e.g., ecommerce-platform").Value(&name).Validate(notEmpty),
-			huh.NewInput().Title("Festival goal").Placeholder("e.g., Launch MVP").Value(&goal),
+			huh.NewText().
+				Title("Festival goal").
+				Placeholder("e.g., Launch MVP with core features").
+				CharLimit(5000).
+				Lines(3).
+				Value(&goal),
 			huh.NewInput().Title("Tags (comma-separated)").Placeholder("backend,security").Value(&tags),
 			huh.NewSelect[string]().Title("Destination").Options(
 				huh.NewOption("planned", "planned"),
