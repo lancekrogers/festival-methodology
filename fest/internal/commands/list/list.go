@@ -10,6 +10,7 @@ import (
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/lancekrogers/festival-methodology/fest/internal/workspace"
 	"github.com/spf13/cobra"
@@ -19,8 +20,9 @@ import (
 var validStatuses = []string{"active", "planned", "completed", "dungeon"}
 
 type listOptions struct {
-	json bool
-	all  bool
+	json     bool
+	all      bool
+	progress bool
 }
 
 // NewListCommand creates the list command for listing festivals by status.
@@ -58,6 +60,7 @@ If no status is provided, lists all festivals grouped by status.`,
 
 	cmd.Flags().BoolVar(&opts.json, "json", false, "output in JSON format")
 	cmd.Flags().BoolVar(&opts.all, "all", false, "include empty status categories")
+	cmd.Flags().BoolVar(&opts.progress, "progress", false, "show detailed progress for each festival")
 
 	return cmd
 }
@@ -99,15 +102,25 @@ func listByStatus(ctx context.Context, festivalsDir, status string, opts *listOp
 		return err
 	}
 
+	// Fetch detailed progress if requested
+	var progressMap map[string]*progress.FestivalProgress
+	if opts.progress {
+		progressMap = fetchProgressForFestivals(ctx, festivals)
+	}
+
 	if opts.json {
 		return outputJSON(map[string]interface{}{
 			"status":    status,
 			"count":     len(festivals),
-			"festivals": festivalsToMap(festivals),
+			"festivals": festivalsToMapWithProgress(festivals, progressMap),
 		})
 	}
 
-	fmt.Print(show.FormatFestivalList(status, festivals))
+	if opts.progress {
+		fmt.Print(show.FormatFestivalListWithProgress(status, festivals, progressMap))
+	} else {
+		fmt.Print(show.FormatFestivalList(status, festivals))
+	}
 
 	return nil
 }
@@ -117,6 +130,7 @@ func listAll(ctx context.Context, festivalsDir string, opts *listOptions) error 
 	var totalCount int
 	allFestivals := make(map[string][]*show.FestivalInfo)
 	statusOrder := make([]string, 0, len(validStatuses))
+	var allFestivalsList []*show.FestivalInfo
 
 	for _, status := range validStatuses {
 		festivals, err := show.ListFestivalsByStatus(ctx, festivalsDir, status)
@@ -126,12 +140,21 @@ func listAll(ctx context.Context, festivalsDir string, opts *listOptions) error 
 		if len(festivals) > 0 || opts.all {
 			allFestivals[status] = festivals
 			statusOrder = append(statusOrder, status)
-			result[status] = festivalsToMap(festivals)
 			totalCount += len(festivals)
+			allFestivalsList = append(allFestivalsList, festivals...)
 		}
 	}
 
+	// Fetch detailed progress if requested
+	var progressMap map[string]*progress.FestivalProgress
+	if opts.progress {
+		progressMap = fetchProgressForFestivals(ctx, allFestivalsList)
+	}
+
 	if opts.json {
+		for status, festivals := range allFestivals {
+			result[status] = festivalsToMapWithProgress(festivals, progressMap)
+		}
 		result["total"] = totalCount
 		return outputJSON(result)
 	}
@@ -142,7 +165,11 @@ func listAll(ctx context.Context, festivalsDir string, opts *listOptions) error 
 		return nil
 	}
 
-	fmt.Print(show.FormatAllFestivals(allFestivals, statusOrder))
+	if opts.progress {
+		fmt.Print(show.FormatAllFestivalsWithProgress(allFestivals, statusOrder, progressMap))
+	} else {
+		fmt.Print(show.FormatAllFestivals(allFestivals, statusOrder))
+	}
 	return nil
 }
 
@@ -166,4 +193,53 @@ func outputJSON(data interface{}) error {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
 	return enc.Encode(data)
+}
+
+// fetchProgressForFestivals fetches detailed progress for each festival.
+// Returns a map from festival path to progress data.
+// Silently skips festivals where progress cannot be fetched.
+func fetchProgressForFestivals(ctx context.Context, festivals []*show.FestivalInfo) map[string]*progress.FestivalProgress {
+	progressMap := make(map[string]*progress.FestivalProgress)
+	for _, f := range festivals {
+		mgr, err := progress.NewManager(ctx, f.Path)
+		if err != nil {
+			continue // Silently skip
+		}
+		prog, err := mgr.GetFestivalProgress(ctx, f.Path)
+		if err != nil {
+			continue // Silently skip
+		}
+		progressMap[f.Path] = prog
+	}
+	return progressMap
+}
+
+// festivalsToMapWithProgress converts festivals to map with optional detailed progress.
+func festivalsToMapWithProgress(festivals []*show.FestivalInfo, progressMap map[string]*progress.FestivalProgress) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0, len(festivals))
+	for _, f := range festivals {
+		m := map[string]interface{}{
+			"name":   f.Name,
+			"path":   f.Path,
+			"status": f.Status,
+		}
+		if f.Stats != nil {
+			m["progress"] = f.Stats.Progress
+		}
+		// Add detailed progress if available
+		if progressMap != nil {
+			if prog, ok := progressMap[f.Path]; ok && prog != nil && prog.Overall != nil {
+				m["tasks"] = map[string]interface{}{
+					"total":       prog.Overall.Total,
+					"completed":   prog.Overall.Completed,
+					"in_progress": prog.Overall.InProgress,
+					"blocked":     prog.Overall.Blocked,
+					"pending":     prog.Overall.Pending,
+				}
+				m["time_spent_minutes"] = prog.Overall.TimeSpentMin
+			}
+		}
+		result = append(result, m)
+	}
+	return result
 }

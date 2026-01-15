@@ -5,6 +5,7 @@ import (
 	"math"
 	"strings"
 
+	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 )
 
@@ -113,6 +114,73 @@ func FormatFestivalList(status string, festivals []*FestivalInfo) string {
 		}
 		styledName := ui.GetStatusStyle(status).Render(f.Name)
 		sb.WriteString(fmt.Sprintf("  %s%s\n", styledName, progress))
+	}
+
+	return sb.String()
+}
+
+// FormatFestivalListWithProgress formats a list of festivals with detailed progress info.
+func FormatFestivalListWithProgress(status string, festivals []*FestivalInfo, progressMap map[string]*progress.FestivalProgress) string {
+	var sb strings.Builder
+
+	header := fmt.Sprintf("%s Festivals (%d)", strings.ToUpper(status), len(festivals))
+	sb.WriteString(ui.GetStatusStyle(status).Render(header))
+	sb.WriteString("\n")
+	sb.WriteString(ui.Dim(strings.Repeat("─", 40)))
+	sb.WriteString("\n")
+
+	if len(festivals) == 0 {
+		sb.WriteString(ui.Dim("  (none)\n"))
+		return sb.String()
+	}
+
+	for _, f := range festivals {
+		styledName := ui.GetStatusStyle(status).Render(f.Name)
+		sb.WriteString(fmt.Sprintf("  %s\n", styledName))
+
+		// Show detailed progress if available
+		if prog, ok := progressMap[f.Path]; ok && prog != nil && prog.Overall != nil {
+			overall := prog.Overall
+			// Progress bar with percentage and task counts
+			bar := renderPercentBar(float64(overall.Percentage))
+			sb.WriteString(fmt.Sprintf("    %s %s %s %s\n",
+				ui.Label("Overall"),
+				bar,
+				ui.Value(fmt.Sprintf("%d%%", overall.Percentage)),
+				ui.Dim(fmt.Sprintf("(%d/%d tasks)", overall.Completed, overall.Total))))
+
+			// Total time if available
+			if overall.TimeSpentMin > 0 {
+				sb.WriteString(fmt.Sprintf("    %s %s\n",
+					ui.Label("Total time"),
+					ui.Value(fmt.Sprintf("%d min", overall.TimeSpentMin))))
+			}
+			sb.WriteString("\n")
+		}
+	}
+
+	return sb.String()
+}
+
+// FormatAllFestivalsWithProgress formats all festivals grouped by status with detailed progress.
+func FormatAllFestivalsWithProgress(allFestivals map[string][]*FestivalInfo, statusOrder []string, progressMap map[string]*progress.FestivalProgress) string {
+	var sb strings.Builder
+
+	total := 0
+	for _, festivals := range allFestivals {
+		total += len(festivals)
+	}
+
+	sb.WriteString(ui.H1("All Festivals"))
+	sb.WriteString("\n")
+	sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Total"), ui.Value(fmt.Sprintf("%d", total))))
+	sb.WriteString(ui.Dim(strings.Repeat("─", 40)))
+	sb.WriteString("\n\n")
+
+	for _, status := range statusOrder {
+		festivals := allFestivals[status]
+		sb.WriteString(FormatFestivalListWithProgress(status, festivals, progressMap))
+		sb.WriteString("\n")
 	}
 
 	return sb.String()
