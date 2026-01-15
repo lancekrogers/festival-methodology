@@ -33,11 +33,15 @@ func NewExecuteCommand() *cobra.Command {
 quality gates, and execution modes.
 
 The execute command builds an execution plan from the festival structure,
-tracks progress, and provides instructions for completing tasks.
+tracks progress, and provides agent-friendly instructions for completing tasks.
+
+By default, shows agent-friendly output with task paths and completion commands.
+Use 'fest execute status' for progress statistics.
 
 Examples:
+  fest execute                    # Agent-friendly instructions (default)
+  fest execute status             # Show progress statistics
   fest execute --dry-run          # Preview execution plan
-  fest execute --agent            # Agent-friendly output
   fest execute --json             # JSON output
   fest execute --parallel 4       # Limit parallel execution
   fest execute --phase 01         # Execute specific phase
@@ -47,7 +51,7 @@ Examples:
 	}
 
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "preview execution plan without executing")
-	cmd.Flags().BoolVar(&agentMode, "agent", false, "output agent-friendly instructions")
+	cmd.Flags().BoolVar(&agentMode, "agent", false, "output agent-friendly instructions (deprecated: now default)")
 	cmd.Flags().BoolVar(&jsonOutput, "json", false, "output as JSON")
 	cmd.Flags().IntVar(&maxParallel, "parallel", 1, "maximum parallel tasks")
 	cmd.Flags().BoolVar(&continueExec, "continue", false, "continue from saved state")
@@ -55,7 +59,23 @@ Examples:
 	cmd.Flags().StringVar(&seqName, "sequence", "", "execute specific sequence")
 	cmd.Flags().BoolVar(&reset, "reset", false, "clear saved execution state")
 
+	// Add status subcommand
+	cmd.AddCommand(newStatusCommand())
+
 	return cmd
+}
+
+// newStatusCommand creates the status subcommand
+func newStatusCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "status",
+		Short: "Show execution status and progress",
+		Long: `Show the current execution status including progress statistics,
+next step information, and available commands.
+
+This was the previous default behavior of 'fest execute'.`,
+		RunE: runStatus,
+	}
 }
 
 func runExecute(cmd *cobra.Command, args []string) error {
@@ -103,20 +123,52 @@ func runExecute(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	if agentMode {
-		instructions, err := runner.FormatAgentInstructions()
-		if err != nil {
-			return errors.Wrap(err, "formatting agent instructions")
-		}
-		fmt.Print(instructions)
-		return nil
-	}
-
 	if jsonOutput {
 		return outputJSON(runner.GetPlan())
 	}
 
-	// Default: show plan overview and current status
+	// Show deprecation warning if --agent flag was explicitly used
+	if agentMode {
+		fmt.Fprintln(os.Stderr, ui.Warning("The --agent flag is deprecated. Agent-friendly output is now the default."))
+		fmt.Fprintln(os.Stderr, ui.Dim("  Use 'fest execute status' for progress statistics."))
+		fmt.Fprintln(os.Stderr, "")
+	}
+
+	// Default: show agent-friendly instructions (previously required --agent flag)
+	instructions, err := runner.FormatAgentInstructions()
+	if err != nil {
+		return errors.Wrap(err, "formatting agent instructions")
+	}
+	fmt.Print(instructions)
+	return nil
+}
+
+// runStatus handles the 'fest execute status' subcommand
+func runStatus(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return errors.IO("getting current directory", err)
+	}
+
+	// Resolve festival path (supports linked festivals via fest link)
+	festivalPath, err := shared.ResolveFestivalPath(cwd, "")
+	if err != nil {
+		return errors.Wrap(err, "not inside a festival")
+	}
+
+	// Create config
+	config := execute.DefaultConfig()
+
+	// Create runner
+	runner := execute.NewRunner(festivalPath, config)
+
+	// Initialize
+	if err := runner.Initialize(ctx); err != nil {
+		return errors.Wrap(err, "initializing execution runner")
+	}
+
 	return showStatus(runner)
 }
 
@@ -169,7 +221,7 @@ func showStatus(runner *execute.Runner) error {
 	fmt.Println()
 
 	fmt.Println(ui.H2("Commands"))
-	fmt.Printf("  %s %s\n", ui.Value("fest execute --agent"), ui.Dim("# Get agent instructions"))
+	fmt.Printf("  %s %s\n", ui.Value("fest execute"), ui.Dim("# Get agent instructions"))
 	fmt.Printf("  %s %s\n", ui.Value("fest execute --dry-run"), ui.Dim("# Preview full plan"))
 	fmt.Printf("  %s %s\n", ui.Value("fest execute --json"), ui.Dim("# Export as JSON"))
 
