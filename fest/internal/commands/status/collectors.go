@@ -9,6 +9,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
+	"github.com/lancekrogers/festival-methodology/fest/internal/taskfilter"
 )
 
 // collectPhases collects all phases from a festival directory.
@@ -207,8 +208,9 @@ func countSequenceTasks(ctx context.Context, seqDir string, store *progress.Stor
 		}
 
 		name := entry.Name()
-		// Skip goal files and gate files
-		if isGoalOrGateFile(name) {
+		// Use shared taskfilter to determine if this file should be tracked
+		// This includes both regular tasks AND quality gates for unified counting
+		if !taskfilter.ShouldTrack(name) {
 			continue
 		}
 
@@ -319,8 +321,9 @@ func collectTasks(ctx context.Context, seqPath, phaseName, seqName string, store
 		}
 
 		name := entry.Name()
-		// Skip goal files and gate files
-		if isGoalOrGateFile(name) {
+		// Use shared taskfilter to determine if this file should be tracked
+		// This includes both regular tasks AND quality gates for unified counting
+		if !taskfilter.ShouldTrack(name) {
 			continue
 		}
 
@@ -345,13 +348,4 @@ func progressStoreForFestival(ctx context.Context, festivalPath string) *progres
 		return nil
 	}
 	return mgr.Store()
-}
-
-// isGoalOrGateFile checks if a filename is a goal or gate file that should be skipped.
-func isGoalOrGateFile(name string) bool {
-	return name == "SEQUENCE_GOAL.md" ||
-		name == "PHASE_GOAL.md" ||
-		name == "FESTIVAL_GOAL.md" ||
-		name == "FESTIVAL_OVERVIEW.md" ||
-		strings.Contains(strings.ToLower(name), "gate")
 }
