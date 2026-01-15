@@ -9,6 +9,24 @@ modified: "2025-08-26"
 autonomy_level: [high|medium|low]
 ---
 
+---
+fest_type: task
+fest_id: [REPLACE: TASK_ID]
+fest_name: [REPLACE: Task Name]
+fest_parent: [REPLACE: SEQUENCE_ID]
+fest_order: [REPLACE: N]
+fest_status: pending
+fest_autonomy: [REPLACE: high|medium|low]
+fest_tracking: true
+fest_created: {{ .created_date }}
+# Future task routing fields (reserved):
+# fest_agent: null
+# fest_complexity: medium
+# fest_estimated_tokens: null
+# fest_requires_human: false
+# fest_requires_context: false
+---
+
 <!--
 TEMPLATE USAGE:
 - All [REPLACE: ...] markers MUST be replaced with actual content

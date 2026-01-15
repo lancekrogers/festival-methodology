@@ -394,15 +394,15 @@ func TestDetectPhaseType(t *testing.T) {
 
 func TestGetGatesForPhaseType(t *testing.T) {
 	tests := []struct {
-		phaseType    string
-		expectedLen  int
-		expectedID   string // First gate ID to verify
+		phaseType   string
+		expectedLen int
+		expectedID  string // First gate ID to verify
 	}{
 		{"implementation", 4, "testing_and_verify"},
 		{"planning", 3, "planning_review"},
 		{"research", 3, "research_review"},
 		{"review", 2, "review_checklist"},
-		{"deployment", 0, ""}, // Deployment has no gates
+		{"deployment", 0, ""},                // Deployment has no gates
 		{"unknown", 4, "testing_and_verify"}, // Unknown defaults to implementation
 	}
 

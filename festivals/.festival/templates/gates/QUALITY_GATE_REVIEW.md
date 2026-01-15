@@ -6,6 +6,18 @@ aliases:
 description: Standard quality gate task for code review
 ---
 
+---
+fest_type: gate
+fest_id: {{ .GateID }}
+fest_name: Code Review
+fest_parent: {{ .SequenceID }}
+fest_order: {{ .TaskNumber }}
+fest_gate_type: review
+fest_status: pending
+fest_tracking: true
+fest_created: {{ .created_date }}
+---
+
 # Task: Code Review
 
 **Task Number:** {{ .TaskNumber }} | **Parallel Group:** None | **Dependencies:** Testing and Verification | **Autonomy:** low

@@ -7,9 +7,21 @@ description: Phase goal template for research phases with analysis-focused struc
 phase_type: research
 ---
 
+---
+fest_type: phase
+fest_id: [REPLACE: PHASE_ID]
+fest_name: [REPLACE: Phase Name]
+fest_parent: [REPLACE: FESTIVAL_ID]
+fest_order: [REPLACE: N]
+fest_phase_type: research
+fest_status: pending
+fest_tracking: true
+fest_created: {{ .created_date }}
+---
+
 # Phase Goal: [REPLACE: Phase name like 001_RESEARCH]
 
-**Phase:** [REPLACE: Phase ID] | **Status:** [REPLACE: Planning/Active/Complete] | **Type:** Research
+**Phase:** [REPLACE: Phase ID] | **Status:** Pending | **Type:** Research
 
 ## Research Objective
 

@@ -7,9 +7,21 @@ description: Phase goal template for implementation phases with sequential task 
 phase_type: implementation
 ---
 
+---
+fest_type: phase
+fest_id: [REPLACE: PHASE_ID]
+fest_name: [REPLACE: Phase Name]
+fest_parent: [REPLACE: FESTIVAL_ID]
+fest_order: [REPLACE: N]
+fest_phase_type: implementation
+fest_status: pending
+fest_tracking: true
+fest_created: {{ .created_date }}
+---
+
 # Phase Goal: [REPLACE: Phase name like 002_IMPLEMENTATION]
 
-**Phase:** [REPLACE: Phase ID] | **Status:** [REPLACE: Planning/Active/Complete] | **Type:** Implementation
+**Phase:** [REPLACE: Phase ID] | **Status:** Pending | **Type:** Implementation
 
 ## Phase Objective
 

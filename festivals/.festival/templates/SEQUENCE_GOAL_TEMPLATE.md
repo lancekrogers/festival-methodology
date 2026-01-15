@@ -5,6 +5,17 @@ aliases:
 description: Defines sequence objective, deliverables, and quality standards
 ---
 
+---
+fest_type: sequence
+fest_id: [REPLACE: SEQUENCE_ID]
+fest_name: [REPLACE: Sequence Name]
+fest_parent: [REPLACE: PHASE_ID]
+fest_order: [REPLACE: N]
+fest_status: pending
+fest_tracking: true
+fest_created: {{ .created_date }}
+---
+
 <!--
 TEMPLATE USAGE:
 - All [REPLACE: ...] markers MUST be replaced with actual content
@@ -14,7 +25,7 @@ TEMPLATE USAGE:
 
 # Sequence Goal: [REPLACE: NN_sequence_name]
 
-**Sequence:** [REPLACE: NN_sequence_name] | **Phase:** [REPLACE: NNN_PHASE_NAME] | **Status:** [REPLACE: Planning/Active/Complete] | **Created:** [REPLACE: Date]
+**Sequence:** [REPLACE: NN_sequence_name] | **Phase:** [REPLACE: NNN_PHASE_NAME] | **Status:** Pending | **Created:** {{ .created_date }}
 
 ## Sequence Objective
 

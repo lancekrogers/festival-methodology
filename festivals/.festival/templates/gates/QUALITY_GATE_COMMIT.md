@@ -6,6 +6,18 @@ aliases:
 description: Standard quality gate task for committing sequence changes
 ---
 
+---
+fest_type: gate
+fest_id: {{ .GateID }}
+fest_name: Commit Sequence Changes
+fest_parent: {{ .SequenceID }}
+fest_order: {{ .TaskNumber }}
+fest_gate_type: iterate
+fest_status: pending
+fest_tracking: true
+fest_created: {{ .created_date }}
+---
+
 # Task: Commit Sequence Changes
 
 **Task Number:** {{ .TaskNumber }} | **Parallel Group:** None | **Dependencies:** Testing, Code Review, Iteration | **Autonomy:** medium
