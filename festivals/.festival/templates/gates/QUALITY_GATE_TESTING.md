@@ -6,6 +6,18 @@ aliases:
 description: Standard quality gate task for testing and verification
 ---
 
+---
+fest_type: gate
+fest_id: {{ .GateID }}
+fest_name: Testing and Verification
+fest_parent: {{ .SequenceID }}
+fest_order: {{ .TaskNumber }}
+fest_gate_type: testing
+fest_status: pending
+fest_tracking: true
+fest_created: {{ .created_date }}
+---
+
 # Task: Testing and Verification
 
 **Task Number:** {{ .TaskNumber }} | **Parallel Group:** None | **Dependencies:** All implementation tasks | **Autonomy:** medium

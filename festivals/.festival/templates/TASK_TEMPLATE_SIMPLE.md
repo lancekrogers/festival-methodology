@@ -6,6 +6,18 @@ aliases:
 description: Streamlined task template for simple, well-understood tasks
 ---
 
+---
+fest_type: task
+fest_id: [REPLACE: TASK_ID]
+fest_name: [REPLACE: Task Name]
+fest_parent: [REPLACE: SEQUENCE_ID]
+fest_order: [REPLACE: N]
+fest_status: pending
+fest_autonomy: [REPLACE: high|medium|low]
+fest_tracking: true
+fest_created: {{ .created_date }}
+---
+
 <!--
 TEMPLATE USAGE:
 - All [REPLACE: ...] markers MUST be replaced with actual content

@@ -6,6 +6,18 @@ aliases:
 description: Standard quality gate task for addressing review findings and iterating
 ---
 
+---
+fest_type: gate
+fest_id: {{ .GateID }}
+fest_name: Review Results and Iterate
+fest_parent: {{ .SequenceID }}
+fest_order: {{ .TaskNumber }}
+fest_gate_type: iterate
+fest_status: pending
+fest_tracking: true
+fest_created: {{ .created_date }}
+---
+
 # Task: Review Results and Iterate
 
 **Task Number:** {{ .TaskNumber }} | **Parallel Group:** None | **Dependencies:** Code Review | **Autonomy:** medium

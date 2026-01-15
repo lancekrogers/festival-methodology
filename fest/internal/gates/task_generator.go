@@ -365,6 +365,34 @@ type SequenceInfo struct {
 	Path      string // Full path to sequence directory
 	PhasePath string // Path to parent phase
 	Name      string // Sequence directory name
+	PhaseType string // Phase type: "implementation", "planning", "research", "review", "deployment"
+	PhaseName string // Name of the parent phase directory
+}
+
+// DetectPhaseType determines the phase type from the phase directory name.
+// Returns: "planning", "implementation", "research", "review", "deployment"
+// Defaults to "implementation" for unknown types.
+func DetectPhaseType(phaseName string) string {
+	lower := strings.ToLower(phaseName)
+
+	switch {
+	case strings.Contains(lower, "planning") || strings.Contains(lower, "plan"):
+		return "planning"
+	case strings.Contains(lower, "research") || strings.Contains(lower, "discovery"):
+		return "research"
+	case strings.Contains(lower, "design"):
+		return "research" // Design phases use research-like structure
+	case strings.Contains(lower, "review") || strings.Contains(lower, "qa") || strings.Contains(lower, "uat"):
+		return "review"
+	case strings.Contains(lower, "deployment") || strings.Contains(lower, "deploy") || strings.Contains(lower, "release"):
+		return "deployment"
+	case strings.Contains(lower, "implementation") || strings.Contains(lower, "implement") ||
+		strings.Contains(lower, "develop") || strings.Contains(lower, "build") ||
+		strings.Contains(lower, "foundation") || strings.Contains(lower, "critical"):
+		return "implementation"
+	default:
+		return "implementation" // Default to implementation for unknown types
+	}
 }
 
 // FindSequencesWithInfo finds sequences and returns detailed info.
@@ -393,6 +421,10 @@ func FindSequencesWithInfo(festivalRoot string, excludePatterns []string) ([]Seq
 			continue
 		}
 
+		// Detect phase type from phase name
+		phaseName := entry.Name()
+		phaseType := DetectPhaseType(phaseName)
+
 		for _, seqEntry := range seqEntries {
 			if !seqEntry.IsDir() {
 				continue
@@ -410,6 +442,8 @@ func FindSequencesWithInfo(festivalRoot string, excludePatterns []string) ([]Seq
 				Path:      filepath.Join(phasePath, seqEntry.Name()),
 				PhasePath: phasePath,
 				Name:      seqEntry.Name(),
+				PhaseType: phaseType,
+				PhaseName: phaseName,
 			})
 		}
 	}

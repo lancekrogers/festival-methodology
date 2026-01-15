@@ -6,9 +6,19 @@ aliases:
 description: Defines festival objective, success criteria, and KPIs
 ---
 
+---
+fest_type: festival
+fest_id: [REPLACE: FESTIVAL_ID]
+fest_name: [REPLACE: Festival Name]
+fest_status: planned
+fest_priority: medium
+fest_tracking: true
+fest_created: {{ .created_date }}
+---
+
 # [REPLACE: Festival Name]
 
-**Status:** [REPLACE: Planning/Active/Complete] | **Created:** [REPLACE: Date]
+**Status:** Planned | **Created:** {{ .created_date }}
 
 ## Festival Objective
 

@@ -4,19 +4,9 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"regexp"
-	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
-)
-
-var (
-	// phasePattern matches phase directory names (e.g., "001_Phase_Name")
-	phasePattern = regexp.MustCompile(`^\d{3}_`)
-	// sequencePattern matches sequence directory names (e.g., "01_Sequence_Name")
-	sequencePattern = regexp.MustCompile(`^\d{2}_`)
-	// taskPattern matches task file names (e.g., "01_task.md" or "01.5_task.md")
-	taskPattern = regexp.MustCompile(`^\d{2}[\._].*\.md$`)
+	"github.com/lancekrogers/festival-methodology/fest/internal/taskfilter"
 )
 
 // AggregateProgress holds aggregated progress stats
@@ -53,9 +43,9 @@ type FestivalProgress struct {
 }
 
 // isTask checks if a filename looks like a task file
+// Uses the shared taskfilter package for unified classification
 func isTask(name string) bool {
-	// Task files match pattern: NN_name.md or NN.N_name.md
-	return taskPattern.MatchString(name) && !strings.HasPrefix(name, "SEQUENCE")
+	return taskfilter.ShouldTrack(name)
 }
 
 // GetFestivalProgress calculates overall festival progress
@@ -80,8 +70,8 @@ func (m *Manager) GetFestivalProgress(ctx context.Context, festivalPath string) 
 			continue
 		}
 
-		// Check if it's a phase directory (starts with NNN_)
-		if !phasePattern.MatchString(entry.Name()) {
+		// Check if it's a phase directory using shared taskfilter
+		if !taskfilter.IsPhaseDir(entry.Name()) {
 			continue
 		}
 
@@ -136,8 +126,8 @@ func (m *Manager) GetPhaseProgress(ctx context.Context, phasePath string) (*Phas
 			continue
 		}
 
-		// Check if it's a sequence directory (starts with NN_)
-		if !sequencePattern.MatchString(entry.Name()) {
+		// Check if it's a sequence directory using shared taskfilter
+		if !taskfilter.IsSequenceDir(entry.Name()) {
 			continue
 		}
 

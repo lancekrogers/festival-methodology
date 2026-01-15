@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Context holds all variables available for template rendering.
@@ -16,6 +17,7 @@ type Context struct {
 	FestivalGoal        string
 	FestivalTags        []string
 	FestivalDescription string
+	FestivalID          string // Unique festival identifier
 
 	// Phase-level variables
 	PhaseNumber    int
@@ -50,13 +52,27 @@ type Context struct {
 
 	// Custom user-provided variables (from TUI or CLI)
 	Custom map[string]interface{}
+
+	// Metadata fields for frontmatter
+	CreatedDate string // ISO 8601 formatted creation date
 }
 
 // NewContext creates a new empty context
 func NewContext() *Context {
 	return &Context{
-		Custom: make(map[string]interface{}),
+		Custom:      make(map[string]interface{}),
+		CreatedDate: time.Now().Format(time.RFC3339),
 	}
+}
+
+// SetCreatedDate sets a custom creation date
+func (c *Context) SetCreatedDate(t time.Time) {
+	c.CreatedDate = t.Format(time.RFC3339)
+}
+
+// SetFestivalID sets the festival identifier
+func (c *Context) SetFestivalID(id string) {
+	c.FestivalID = id
 }
 
 // SetFestival sets festival-level variables
@@ -178,6 +194,7 @@ func (c *Context) ToTemplateData() map[string]interface{} {
 		"festival_goal":        c.FestivalGoal,
 		"festival_tags":        c.FestivalTags,
 		"festival_description": c.FestivalDescription,
+		"festival_id":          c.FestivalID,
 
 		// Phase-level
 		"phase_number":    c.PhaseNumber,
@@ -209,6 +226,9 @@ func (c *Context) ToTemplateData() map[string]interface{} {
 		"parent_sequence_id": c.ParentSequenceID,
 		"full_path":          c.FullPath,
 		"festival_root":      c.FestivalRoot,
+
+		// Metadata for frontmatter
+		"created_date": c.CreatedDate,
 	}
 
 	// Merge custom variables

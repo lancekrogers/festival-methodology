@@ -348,3 +348,125 @@ func containsHelper(s, substr string) bool {
 	}
 	return false
 }
+
+func TestDetectPhaseType(t *testing.T) {
+	tests := []struct {
+		phaseName string
+		expected  string
+	}{
+		// Planning phases
+		{"001_PLANNING", "planning"},
+		{"002_Plan", "planning"},
+		{"planning_phase", "planning"},
+		// Research phases
+		{"001_RESEARCH", "research"},
+		{"002_Discovery", "research"},
+		{"003_DESIGN", "research"},
+		// Implementation phases
+		{"001_IMPLEMENTATION", "implementation"},
+		{"002_Implement", "implementation"},
+		{"003_DEVELOP", "implementation"},
+		{"004_Build", "implementation"},
+		{"005_FOUNDATION", "implementation"},
+		{"006_CRITICAL_BUGS", "implementation"},
+		// Review phases
+		{"001_REVIEW", "review"},
+		{"002_QA", "review"},
+		{"003_UAT", "review"},
+		// Deployment phases
+		{"001_DEPLOYMENT", "deployment"},
+		{"002_Deploy", "deployment"},
+		{"003_Release", "deployment"},
+		// Unknown defaults to implementation
+		{"001_UNKNOWN", "implementation"},
+		{"random_name", "implementation"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.phaseName, func(t *testing.T) {
+			result := DetectPhaseType(tc.phaseName)
+			if result != tc.expected {
+				t.Errorf("DetectPhaseType(%q) = %q, want %q", tc.phaseName, result, tc.expected)
+			}
+		})
+	}
+}
+
+func TestGetGatesForPhaseType(t *testing.T) {
+	tests := []struct {
+		phaseType   string
+		expectedLen int
+		expectedID  string // First gate ID to verify
+	}{
+		{"implementation", 4, "testing_and_verify"},
+		{"planning", 3, "planning_review"},
+		{"research", 3, "research_review"},
+		{"review", 2, "review_checklist"},
+		{"deployment", 0, ""},                // Deployment has no gates
+		{"unknown", 4, "testing_and_verify"}, // Unknown defaults to implementation
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.phaseType, func(t *testing.T) {
+			gates := GetGatesForPhaseType(tc.phaseType)
+			if len(gates) != tc.expectedLen {
+				t.Errorf("GetGatesForPhaseType(%q) returned %d gates, want %d", tc.phaseType, len(gates), tc.expectedLen)
+			}
+			if tc.expectedLen > 0 && gates[0].ID != tc.expectedID {
+				t.Errorf("GetGatesForPhaseType(%q) first gate ID = %q, want %q", tc.phaseType, gates[0].ID, tc.expectedID)
+			}
+		})
+	}
+}
+
+func TestImplementationGates(t *testing.T) {
+	gates := ImplementationGates()
+	if len(gates) != 4 {
+		t.Errorf("ImplementationGates() returned %d gates, want 4", len(gates))
+	}
+	expectedIDs := []string{"testing_and_verify", "code_review", "review_results_iterate", "commit"}
+	for i, expected := range expectedIDs {
+		if gates[i].ID != expected {
+			t.Errorf("ImplementationGates()[%d].ID = %q, want %q", i, gates[i].ID, expected)
+		}
+	}
+}
+
+func TestPlanningGates(t *testing.T) {
+	gates := PlanningGates()
+	if len(gates) != 3 {
+		t.Errorf("PlanningGates() returned %d gates, want 3", len(gates))
+	}
+	expectedIDs := []string{"planning_review", "decision_validation", "planning_summary"}
+	for i, expected := range expectedIDs {
+		if gates[i].ID != expected {
+			t.Errorf("PlanningGates()[%d].ID = %q, want %q", i, gates[i].ID, expected)
+		}
+	}
+}
+
+func TestResearchGates(t *testing.T) {
+	gates := ResearchGates()
+	if len(gates) != 3 {
+		t.Errorf("ResearchGates() returned %d gates, want 3", len(gates))
+	}
+	expectedIDs := []string{"research_review", "findings_synthesis", "research_summary"}
+	for i, expected := range expectedIDs {
+		if gates[i].ID != expected {
+			t.Errorf("ResearchGates()[%d].ID = %q, want %q", i, gates[i].ID, expected)
+		}
+	}
+}
+
+func TestReviewGates(t *testing.T) {
+	gates := ReviewGates()
+	if len(gates) != 2 {
+		t.Errorf("ReviewGates() returned %d gates, want 2", len(gates))
+	}
+	expectedIDs := []string{"review_checklist", "signoff"}
+	for i, expected := range expectedIDs {
+		if gates[i].ID != expected {
+			t.Errorf("ReviewGates()[%d].ID = %q, want %q", i, gates[i].ID, expected)
+		}
+	}
+}

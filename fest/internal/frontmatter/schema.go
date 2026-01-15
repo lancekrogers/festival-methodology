@@ -71,8 +71,30 @@ const (
 	PriorityLow    Priority = "low"
 )
 
+// PhaseType represents the type of work in a phase
+type PhaseType string
+
+const (
+	PhaseTypePlanning       PhaseType = "planning"
+	PhaseTypeImplementation PhaseType = "implementation"
+	PhaseTypeResearch       PhaseType = "research"
+	PhaseTypeReview         PhaseType = "review"
+	PhaseTypeDeployment     PhaseType = "deployment"
+)
+
+// Complexity represents task complexity level for routing
+type Complexity string
+
+const (
+	ComplexityLow      Complexity = "low"
+	ComplexityMedium   Complexity = "medium"
+	ComplexityHigh     Complexity = "high"
+	ComplexityCritical Complexity = "critical"
+)
+
 // Frontmatter represents the YAML frontmatter in festival documents
 type Frontmatter struct {
+	// Core fields
 	Type     Type      `yaml:"fest_type" json:"fest_type"`
 	ID       string    `yaml:"fest_id" json:"fest_id"`
 	Ref      string    `yaml:"fest_ref,omitempty" json:"fest_ref,omitempty"` // Unique short-hash ID for commit tracing
@@ -83,10 +105,27 @@ type Frontmatter struct {
 	Priority Priority  `yaml:"fest_priority,omitempty" json:"fest_priority,omitempty"`
 	Autonomy Autonomy  `yaml:"fest_autonomy,omitempty" json:"fest_autonomy,omitempty"`
 	GateType GateType  `yaml:"fest_gate_type,omitempty" json:"fest_gate_type,omitempty"`
-	Managed  bool      `yaml:"fest_managed,omitempty" json:"fest_managed,omitempty"`
+	Managed  bool      `yaml:"fest_managed,omitempty" json:"fest_managed,omitempty"` // Deprecated: use Tracking
 	Tags     []string  `yaml:"fest_tags,omitempty" json:"fest_tags,omitempty"`
 	Created  time.Time `yaml:"fest_created" json:"fest_created"`
 	Updated  time.Time `yaml:"fest_updated,omitempty" json:"fest_updated,omitempty"`
+
+	// Phase-type awareness fields
+	PhaseType    PhaseType `yaml:"fest_phase_type,omitempty" json:"fest_phase_type,omitempty"`
+	SequenceType string    `yaml:"fest_sequence_type,omitempty" json:"fest_sequence_type,omitempty"`
+	Tracking     *bool     `yaml:"fest_tracking,omitempty" json:"fest_tracking,omitempty"` // Pointer to distinguish unset from false
+	Version      string    `yaml:"fest_version,omitempty" json:"fest_version,omitempty"`
+
+	// Task-specific fields
+	Dependencies  []string `yaml:"fest_dependencies,omitempty" json:"fest_dependencies,omitempty"`
+	ParallelGroup string   `yaml:"fest_parallel_group,omitempty" json:"fest_parallel_group,omitempty"`
+
+	// Future fields for task routing (reserved)
+	Agent           string     `yaml:"fest_agent,omitempty" json:"fest_agent,omitempty"`
+	Complexity      Complexity `yaml:"fest_complexity,omitempty" json:"fest_complexity,omitempty"`
+	EstimatedTokens int        `yaml:"fest_estimated_tokens,omitempty" json:"fest_estimated_tokens,omitempty"`
+	RequiresHuman   bool       `yaml:"fest_requires_human,omitempty" json:"fest_requires_human,omitempty"`
+	RequiresContext bool       `yaml:"fest_requires_context,omitempty" json:"fest_requires_context,omitempty"`
 }
 
 // Validate checks if the frontmatter is valid
@@ -162,11 +201,95 @@ func DefaultStatus(docType Type) Status {
 
 // NewFrontmatter creates a new frontmatter with defaults
 func NewFrontmatter(docType Type, id, name string) *Frontmatter {
+	tracking := true
 	return &Frontmatter{
-		Type:    docType,
-		ID:      id,
-		Name:    name,
-		Status:  DefaultStatus(docType),
-		Created: time.Now(),
+		Type:     docType,
+		ID:       id,
+		Name:     name,
+		Status:   DefaultStatus(docType),
+		Tracking: &tracking,
+		Created:  time.Now(),
 	}
+}
+
+// NewPhaseFrontmatter creates frontmatter for a phase document
+func NewPhaseFrontmatter(id, name, parent string, order int, phaseType PhaseType) *Frontmatter {
+	tracking := true
+	return &Frontmatter{
+		Type:      TypePhase,
+		ID:        id,
+		Name:      name,
+		Parent:    parent,
+		Order:     order,
+		PhaseType: phaseType,
+		Status:    StatusPending,
+		Tracking:  &tracking,
+		Created:   time.Now(),
+	}
+}
+
+// NewSequenceFrontmatter creates frontmatter for a sequence document
+func NewSequenceFrontmatter(id, name, parent string, order int) *Frontmatter {
+	tracking := true
+	return &Frontmatter{
+		Type:     TypeSequence,
+		ID:       id,
+		Name:     name,
+		Parent:   parent,
+		Order:    order,
+		Status:   StatusPending,
+		Tracking: &tracking,
+		Created:  time.Now(),
+	}
+}
+
+// NewTaskFrontmatter creates frontmatter for a task document
+func NewTaskFrontmatter(id, name, parent string, order int, autonomy Autonomy) *Frontmatter {
+	tracking := true
+	return &Frontmatter{
+		Type:     TypeTask,
+		ID:       id,
+		Name:     name,
+		Parent:   parent,
+		Order:    order,
+		Autonomy: autonomy,
+		Status:   StatusPending,
+		Tracking: &tracking,
+		Created:  time.Now(),
+	}
+}
+
+// NewGateFrontmatter creates frontmatter for a quality gate document
+func NewGateFrontmatter(id, name, parent string, order int, gateType GateType) *Frontmatter {
+	tracking := true
+	return &Frontmatter{
+		Type:     TypeGate,
+		ID:       id,
+		Name:     name,
+		Parent:   parent,
+		Order:    order,
+		GateType: gateType,
+		Status:   StatusPending,
+		Tracking: &tracking,
+		Created:  time.Now(),
+	}
+}
+
+// IsTracked returns whether the document should be tracked in progress
+func (f *Frontmatter) IsTracked() bool {
+	if f.Tracking != nil {
+		return *f.Tracking
+	}
+	// Legacy fallback: check Managed field
+	return !f.Managed
+}
+
+// DefaultPhaseType returns the default phase type
+func DefaultPhaseType() PhaseType {
+	return PhaseTypeImplementation
+}
+
+// DefaultComplexity returns the default complexity
+func DefaultComplexity() Complexity {
+	return ComplexityMedium
 }

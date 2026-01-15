@@ -226,7 +226,28 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 	}
 
 	for _, seq := range sequences {
-		results, seqWarnings, err := generator.GenerateForSequence(ctx, seq.Path, activeGates, genOpts, festivalPath)
+		// Get gates appropriate for this sequence's phase type
+		var sequenceGates []gatescore.GateTask
+		if seq.PhaseType != "" && seq.PhaseType != "implementation" {
+			// Use phase-type-specific gates
+			sequenceGates = gatescore.GetGatesForPhaseType(seq.PhaseType)
+			if shared.IsVerbose() {
+				fmt.Fprintf(cmd.OutOrStdout(), "  Phase %s: using %s gates\n", seq.PhaseName, seq.PhaseType)
+			}
+		} else {
+			// Use the merged policy's active gates for implementation phases
+			sequenceGates = activeGates
+		}
+
+		// Skip sequences in phases with no gates (e.g., deployment)
+		if len(sequenceGates) == 0 {
+			if shared.IsVerbose() {
+				fmt.Fprintf(cmd.OutOrStdout(), "  Skipping %s (no gates for %s phase)\n", seq.Name, seq.PhaseType)
+			}
+			continue
+		}
+
+		results, seqWarnings, err := generator.GenerateForSequence(ctx, seq.Path, sequenceGates, genOpts, festivalPath)
 		if err != nil {
 			warnings = append(warnings, fmt.Sprintf("Sequence %s: %v", seq.Name, err))
 			continue

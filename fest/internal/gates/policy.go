@@ -123,38 +123,13 @@ type PhaseOverride struct {
 	Ops []GateOperation `yaml:"ops,omitempty" json:"ops,omitempty"`
 }
 
-// DefaultPolicy returns the built-in default policy
+// DefaultPolicy returns the built-in default policy (implementation gates)
 func DefaultPolicy() *GatePolicy {
 	return &GatePolicy{
 		Version:     1,
 		Name:        DefaultPolicyName,
 		Description: "Default quality gates: testing, code review, iteration, and commit",
-		Append: []GateTask{
-			{
-				ID:       "testing_and_verify",
-				Template: "gates/QUALITY_GATE_TESTING",
-				Name:     "Testing and Verification",
-				Enabled:  true,
-			},
-			{
-				ID:       "code_review",
-				Template: "gates/QUALITY_GATE_REVIEW",
-				Name:     "Code Review",
-				Enabled:  true,
-			},
-			{
-				ID:       "review_results_iterate",
-				Template: "gates/QUALITY_GATE_ITERATE",
-				Name:     "Review Results and Iterate",
-				Enabled:  true,
-			},
-			{
-				ID:       "commit",
-				Template: "gates/QUALITY_GATE_COMMIT",
-				Name:     "Commit Changes",
-				Enabled:  true,
-			},
-		},
+		Append:      ImplementationGates(),
 		ExcludePatterns: []string{
 			// Common planning/documentation patterns
 			"*_planning",
@@ -171,6 +146,126 @@ func DefaultPolicy() *GatePolicy {
 			"*_assessment",
 			"*_discovery",
 		},
+	}
+}
+
+// ImplementationGates returns quality gates for implementation phases.
+// These focus on testing, code review, and committing code changes.
+func ImplementationGates() []GateTask {
+	return []GateTask{
+		{
+			ID:       "testing_and_verify",
+			Template: "gates/QUALITY_GATE_TESTING",
+			Name:     "Testing and Verification",
+			Enabled:  true,
+		},
+		{
+			ID:       "code_review",
+			Template: "gates/QUALITY_GATE_REVIEW",
+			Name:     "Code Review",
+			Enabled:  true,
+		},
+		{
+			ID:       "review_results_iterate",
+			Template: "gates/QUALITY_GATE_ITERATE",
+			Name:     "Review Results and Iterate",
+			Enabled:  true,
+		},
+		{
+			ID:       "commit",
+			Template: "gates/QUALITY_GATE_COMMIT",
+			Name:     "Commit Changes",
+			Enabled:  true,
+		},
+	}
+}
+
+// PlanningGates returns quality gates for planning phases.
+// These focus on reviewing decisions and preparing for implementation.
+func PlanningGates() []GateTask {
+	return []GateTask{
+		{
+			ID:       "planning_review",
+			Template: "gates/QUALITY_GATE_PLANNING_REVIEW",
+			Name:     "Planning Review",
+			Enabled:  true,
+		},
+		{
+			ID:       "decision_validation",
+			Template: "gates/QUALITY_GATE_DECISION_VALIDATION",
+			Name:     "Decision Validation",
+			Enabled:  true,
+		},
+		{
+			ID:       "planning_summary",
+			Template: "gates/QUALITY_GATE_PLANNING_SUMMARY",
+			Name:     "Planning Summary",
+			Enabled:  true,
+		},
+	}
+}
+
+// ResearchGates returns quality gates for research phases.
+// These focus on documenting findings and knowledge transfer.
+func ResearchGates() []GateTask {
+	return []GateTask{
+		{
+			ID:       "research_review",
+			Template: "gates/QUALITY_GATE_RESEARCH_REVIEW",
+			Name:     "Research Review",
+			Enabled:  true,
+		},
+		{
+			ID:       "findings_synthesis",
+			Template: "gates/QUALITY_GATE_FINDINGS_SYNTHESIS",
+			Name:     "Findings Synthesis",
+			Enabled:  true,
+		},
+		{
+			ID:       "research_summary",
+			Template: "gates/QUALITY_GATE_RESEARCH_SUMMARY",
+			Name:     "Research Summary",
+			Enabled:  true,
+		},
+	}
+}
+
+// ReviewGates returns quality gates for review/QA phases.
+// These focus on verification and sign-off.
+func ReviewGates() []GateTask {
+	return []GateTask{
+		{
+			ID:       "review_checklist",
+			Template: "gates/QUALITY_GATE_REVIEW_CHECKLIST",
+			Name:     "Review Checklist",
+			Enabled:  true,
+		},
+		{
+			ID:       "signoff",
+			Template: "gates/QUALITY_GATE_SIGNOFF",
+			Name:     "Sign-off",
+			Enabled:  true,
+		},
+	}
+}
+
+// GetGatesForPhaseType returns the appropriate quality gates for a phase type.
+// Defaults to implementation gates for unknown types.
+func GetGatesForPhaseType(phaseType string) []GateTask {
+	switch phaseType {
+	case "planning":
+		return PlanningGates()
+	case "research":
+		return ResearchGates()
+	case "review":
+		return ReviewGates()
+	case "deployment":
+		// Deployment phases typically don't need gates - empty slice
+		return []GateTask{}
+	case "implementation":
+		return ImplementationGates()
+	default:
+		return ImplementationGates()
 	}
 }
 

@@ -33,6 +33,13 @@ func TestHasNumericPrefix(t *testing.T) {
 }
 
 func TestIsGateFile(t *testing.T) {
+	// Tests for gate file detection using taskfilter.IsGate
+	// Only specific patterns are considered gates:
+	// - *_quality_gate.md, *_testing_gate.md (contains "gate")
+	// - *_testing_and_verify.md
+	// - *_code_review.md
+	// - *_review_results_iterate.md
+	// - *_commit.md (exact match only)
 	tests := []struct {
 		input    string
 		expected bool
@@ -40,9 +47,11 @@ func TestIsGateFile(t *testing.T) {
 		{"01_quality_gate.md", true},
 		{"01_testing_gate.md", true},
 		{"01_code_review.md", true},
-		{"01_verify_build.md", true},
-		{"01_iterate_feedback.md", true},
+		{"01_testing_and_verify.md", true},
+		{"01_review_results_iterate.md", true},
 		{"01_commit.md", true},
+		{"01_verify_build.md", false},     // Not a standard gate pattern
+		{"01_iterate_feedback.md", false}, // Not a standard gate pattern
 		{"01_implementation.md", false},
 		{"01_task.md", false},
 		{"SEQUENCE_GOAL.md", false},
@@ -245,8 +254,10 @@ func TestCalculateFestivalStats(t *testing.T) {
 	if stats.Sequences.Total != 1 {
 		t.Errorf("Sequences.Total = %d, want 1", stats.Sequences.Total)
 	}
-	if stats.Tasks.Total != 2 {
-		t.Errorf("Tasks.Total = %d, want 2", stats.Tasks.Total)
+	// With unified progress counting, gates are included in task totals
+	// (2 regular tasks + 1 gate = 3 total)
+	if stats.Tasks.Total != 3 {
+		t.Errorf("Tasks.Total = %d, want 3", stats.Tasks.Total)
 	}
 	if stats.Gates.Total != 1 {
 		t.Errorf("Gates.Total = %d, want 1", stats.Gates.Total)

@@ -8,6 +8,7 @@ import (
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
+	"github.com/lancekrogers/festival-methodology/fest/internal/taskfilter"
 )
 
 // FestivalInfo holds information about a festival.
@@ -187,8 +188,9 @@ func calculateSequenceStats(seqDir string, store *progress.Store, festivalRoot s
 			continue
 		}
 
-		// Skip goal files
-		if name == SequenceGoalFile || name == PhaseGoalFile || name == FestivalGoalFile {
+		// Use shared taskfilter for unified file classification
+		// Skip files that shouldn't be tracked (goals, unknown files)
+		if !taskfilter.ShouldTrack(name) {
 			continue
 		}
 
@@ -198,26 +200,31 @@ func calculateSequenceStats(seqDir string, store *progress.Store, festivalRoot s
 			continue
 		}
 
-		// Check if it's a gate file
-		isGate := isGateFile(name)
+		// Check if it's a gate file using the shared taskfilter
+		isGate := taskfilter.IsGate(name)
 
 		if isGate {
 			stats.Gates.Total++
-			// Default to pending for gates
-			// TODO: Parse file to determine actual status
-		} else {
-			stats.Tasks.Total++
+			// Resolve gate status (gates are now tracked like tasks)
 			status := progress.ResolveTaskStatus(store, festivalRoot, taskPath)
 			switch status {
 			case progress.StatusCompleted:
-				stats.Tasks.Completed++
-			case progress.StatusInProgress:
-				stats.Tasks.InProgress++
-			case progress.StatusBlocked:
-				stats.Tasks.Blocked++
-			default:
-				stats.Tasks.Pending++
+				stats.Gates.Passed++
 			}
+		}
+
+		// Count ALL tracked files (tasks AND gates) in task totals for unified progress
+		stats.Tasks.Total++
+		status := progress.ResolveTaskStatus(store, festivalRoot, taskPath)
+		switch status {
+		case progress.StatusCompleted:
+			stats.Tasks.Completed++
+		case progress.StatusInProgress:
+			stats.Tasks.InProgress++
+		case progress.StatusBlocked:
+			stats.Tasks.Blocked++
+		default:
+			stats.Tasks.Pending++
 		}
 	}
 
@@ -266,12 +273,8 @@ func hasNumericPrefix(name string) bool {
 	return false
 }
 
+// isGateFile is deprecated - use taskfilter.IsGate instead
+// Keeping for compatibility with tests that may reference it
 func isGateFile(name string) bool {
-	lower := strings.ToLower(name)
-	return strings.Contains(lower, "_gate") ||
-		strings.Contains(lower, "_testing") ||
-		strings.Contains(lower, "_review") ||
-		strings.Contains(lower, "_verify") ||
-		strings.Contains(lower, "_iterate") ||
-		strings.Contains(lower, "_commit")
+	return taskfilter.IsGate(name)
 }

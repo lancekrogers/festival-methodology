@@ -8,6 +8,16 @@ created: '2025-09-06'
 modified: '2025-09-06'
 ---
 
+---
+fest_type: festival
+fest_id: [REPLACE: FESTIVAL_ID]
+fest_name: [REPLACE: Festival Name]
+fest_status: planned
+fest_version: "1.0"
+fest_tracking: true
+fest_created: {{ .created_date }}
+---
+
 # Festival Overview: [REPLACE: Festival Name]
 
 ## Problem Statement
