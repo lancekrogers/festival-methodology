@@ -803,3 +803,247 @@ fest shell-init fish | source
 ```
 
 This provides the `fgo` function for quick navigation.
+
+---
+
+## Agent Templates
+
+### fest templates
+
+Manage agent-created content templates with variable substitution.
+
+```bash
+fest templates [command] [flags]
+```
+
+#### templates: Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `list` | List available templates |
+| `create` | Create a template from a file |
+| `apply` | Apply a template with variables |
+
+---
+
+### fest templates list
+
+List all templates in the current festival.
+
+```bash
+fest templates list [flags]
+```
+
+#### templates list: Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--json` | `false` | Output in JSON format |
+
+#### templates list: Examples
+
+```bash
+fest templates list                  # List all templates
+fest templates list --json           # JSON output
+```
+
+#### templates list: JSON Output
+
+```json
+{
+  "templates": [
+    {
+      "name": "task-header",
+      "path": ".templates/task-header.md",
+      "variables": ["task_name", "description"],
+      "description": "Standard task header"
+    }
+  ]
+}
+```
+
+---
+
+### fest templates create
+
+Create a new template from an existing file.
+
+```bash
+fest templates create NAME --from FILE [flags]
+```
+
+#### templates create: Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--from` | *required* | Source file path |
+
+#### templates create: Examples
+
+```bash
+fest templates create task-header --from header.md
+fest templates create api-task --from templates/api.md
+```
+
+---
+
+### fest templates apply
+
+Apply a template with variable substitution.
+
+```bash
+fest templates apply NAME [flags]
+```
+
+#### templates apply: Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--vars` | | JSON object with variables |
+
+#### templates apply: Variable Syntax
+
+Templates use `{{variable_name}}` syntax:
+
+```markdown
+# Task: {{task_name}}
+
+{{description}}
+
+## Requirements
+{{requirements}}
+```
+
+#### templates apply: Examples
+
+```bash
+fest templates apply task-header --vars '{"task_name": "Setup", "description": "Initialize project"}'
+fest templates apply api-task --vars '{"endpoint": "/users", "method": "GET"}'
+```
+
+---
+
+## Feedback Collection
+
+### fest feedback
+
+Collect structured observations during festival execution.
+
+```bash
+fest feedback [command] [flags]
+```
+
+#### feedback: Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `init` | Initialize feedback collection |
+| `add` | Add an observation |
+| `view` | View collected feedback |
+| `export` | Export feedback to file |
+
+---
+
+### fest feedback init
+
+Initialize feedback collection with defined criteria.
+
+```bash
+fest feedback init --criteria "..." [flags]
+```
+
+#### feedback init: Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--criteria` | *required* | Feedback criteria (repeatable) |
+
+#### feedback init: Examples
+
+```bash
+fest feedback init --criteria "Code quality"
+fest feedback init --criteria "Performance" --criteria "Maintainability"
+```
+
+---
+
+### fest feedback add
+
+Add a feedback observation.
+
+```bash
+fest feedback add [flags]
+```
+
+#### feedback add: Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--criteria` | | Criteria category |
+| `--observation` | | Observation text |
+| `--json` | | JSON observation object |
+| `--task` | | Related task path |
+| `--severity` | | Severity: low, medium, high |
+| `--suggestion` | | Suggested action |
+
+#### feedback add: Examples
+
+```bash
+fest feedback add --criteria "Code quality" --observation "Found duplicate logic in handlers"
+fest feedback add --json '{"criteria": "Performance", "observation": "N+1 query in user list"}'
+fest feedback add --criteria "UX" --observation "Status unclear" --severity high --suggestion "Add progress bar"
+```
+
+---
+
+### fest feedback view
+
+View collected feedback observations.
+
+```bash
+fest feedback view [flags]
+```
+
+#### feedback view: Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--criteria` | | Filter by criteria |
+| `--severity` | | Filter by severity |
+| `--json` | `false` | Output in JSON format |
+| `--summary` | `false` | Show summary only |
+
+#### feedback view: Examples
+
+```bash
+fest feedback view                           # View all feedback
+fest feedback view --criteria "Code quality" # Filter by criteria
+fest feedback view --severity high           # Filter by severity
+fest feedback view --summary                 # Summary by category
+fest feedback view --json                    # JSON output
+```
+
+---
+
+### fest feedback export
+
+Export collected feedback to a file format.
+
+```bash
+fest feedback export [flags]
+```
+
+#### feedback export: Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--format` | `markdown` | Output format: markdown, json, yaml |
+
+#### feedback export: Examples
+
+```bash
+fest feedback export                         # Markdown output
+fest feedback export --format json           # JSON output
+fest feedback export --format yaml           # YAML output
+fest feedback export --format markdown > report.md  # Save to file
+```
