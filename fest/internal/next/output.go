@@ -159,6 +159,18 @@ func formatTextTask(result *NextTaskResult) string {
 		autonomyLine = strings.TrimSuffix(sb.String(), "\n")
 	}
 
+	// Build context files section
+	contextSection := buildContextSection(result.Location, result.Task)
+
+	// Build progress line if available
+	var progressLine string
+	if result.Progress != nil {
+		progressLine = labelValue("Progress", ui.Info(fmt.Sprintf("%.1f%% (%d/%d tasks)",
+			result.Progress.Percentage,
+			result.Progress.CompletedTasks,
+			result.Progress.TotalTasks)))
+	}
+
 	// Build label lines
 	taskRelPath := filepath.Join(result.Task.PhaseName, result.Task.SequenceName, result.Task.Name+".md")
 
@@ -169,10 +181,12 @@ func formatTextTask(result *NextTaskResult) string {
 		SequenceLine       string
 		PhaseLine          string
 		AutonomyLine       string
+		ProgressLine       string
 		RecommendationLine string
 		ParallelSection    string
 		ActionInstruction  string
 		ProgressCmd        string
+		ContextSection     string
 	}{
 		Header:             ui.H1("Next Task"),
 		TaskLine:           labelValue("Task", ui.Value(result.Task.Name, ui.TaskColor)),
@@ -180,15 +194,44 @@ func formatTextTask(result *NextTaskResult) string {
 		SequenceLine:       labelValue("Sequence", ui.Value(result.Task.SequenceName, ui.SequenceColor)),
 		PhaseLine:          labelValue("Phase", ui.Value(result.Task.PhaseName, ui.PhaseColor)),
 		AutonomyLine:       autonomyLine,
+		ProgressLine:       progressLine,
 		RecommendationLine: labelValue("Recommendation", ui.Info(result.Reason)),
 		ParallelSection:    parallelSection,
 		ActionInstruction:  ui.Info("Read this file and follow the instructions laid out exactly."),
 		ProgressCmd:        ui.Value(fmt.Sprintf("fest progress --task %s --complete", taskRelPath)),
+		ContextSection:     contextSection,
 	}
 
 	var buf bytes.Buffer
 	agent.MustGet("next/task").Execute(&buf, data)
 	return buf.String()
+}
+
+// buildContextSection creates the context files section showing goal files
+func buildContextSection(loc *LocationInfo, task *TaskInfo) string {
+	var sb strings.Builder
+	sb.WriteString(ui.H3("Context Files"))
+	sb.WriteString("\n")
+
+	// Festival goal
+	if loc != nil && loc.FestivalPath != "" {
+		festivalGoal := filepath.Join(loc.FestivalPath, "FESTIVAL_GOAL.md")
+		sb.WriteString(fmt.Sprintf("  - %s\n", ui.Dim(festivalGoal)))
+	}
+
+	// Phase goal
+	if task.PhasePath != "" {
+		phaseGoal := filepath.Join(task.PhasePath, "PHASE_GOAL.md")
+		sb.WriteString(fmt.Sprintf("  - %s\n", ui.Dim(phaseGoal)))
+	}
+
+	// Sequence goal
+	if task.SequencePath != "" {
+		sequenceGoal := filepath.Join(task.SequencePath, "SEQUENCE_GOAL.md")
+		sb.WriteString(fmt.Sprintf("  - %s\n", ui.Dim(sequenceGoal)))
+	}
+
+	return sb.String()
 }
 
 // labelValue formats a label-value pair without trailing newline

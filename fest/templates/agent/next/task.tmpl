@@ -5,6 +5,7 @@ PURPOSE: Shown when fest next finds an available task
 EXAMPLE OUTPUT:
   NEXT TASK
   ─────────
+  Progress       0.0% (0/160 tasks)
   Sequence       04_stdlib_integration
   Phase          007_TUIREALM_INTEGRATION
   Autonomy       medium
@@ -19,8 +20,17 @@ EXAMPLE OUTPUT:
 
   When complete, mark it done with:
     fest progress --task 007_.../04_.../03_testing_and_verify.md --complete
+
+  Context Files
+  ─────────────
+    - /path/to/FESTIVAL_GOAL.md
+    - /path/to/PHASE_GOAL.md
+    - /path/to/SEQUENCE_GOAL.md
 */}}
 {{.Header}}
+{{- if .ProgressLine}}
+{{.ProgressLine}}
+{{- end}}
 {{.SequenceLine}}
 {{.PhaseLine}}
 {{- if .AutonomyLine}}
@@ -44,3 +54,5 @@ EXAMPLE OUTPUT:
 
 When complete, mark it done with:
   {{.ProgressCmd}}
+
+{{.ContextSection}}
