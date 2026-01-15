@@ -34,6 +34,11 @@ type statusOptions struct {
 	force       bool
 	path        string
 	interactive bool // force interactive selection
+
+	// Level targeting flags for status set
+	phase    string // --phase flag: target phase by name/number
+	sequence string // --sequence flag: target sequence by name/number
+	task     string // --task flag: target task by filename/path
 }
 
 // NewStatusCommand creates the status command with all subcommands.
@@ -89,16 +94,39 @@ func newStatusSetCommand(opts *statusOptions) *cobra.Command {
 		Short: "Change entity status",
 		Long: `Change the status of the current entity.
 
-For festivals, this will move the directory between status folders
-(planned, active, completed, dungeon).
+CONTEXT-AWARE BEHAVIOR:
+When no explicit level flag is provided, the command auto-detects the
+appropriate level based on your current directory:
 
+  Festival root  → Sets festival status (planned/active/completed/dungeon)
+  Phase directory → Sets phase status (pending/in_progress/completed)
+  Sequence directory → Sets sequence status (pending/in_progress/completed)
+  Task directory → Shows hint (task status requires explicit --task flag)
+
+For festivals, this will move the directory between status folders.
 If not inside a festival, an interactive selector will be shown.
 
-For other entities, this updates the frontmatter in the relevant files.`,
+EXPLICIT TARGETING:
+Use flags to override auto-detection:
+  --phase    Target a specific phase
+  --sequence Target a specific sequence
+  --task     Target a specific task
+  --path     Target by explicit file path
+
+These flags are mutually exclusive - only one level can be targeted at a time.`,
 		Example: `  fest status set active               # Set current festival to active
   fest status set active -i            # Force interactive selection
   fest status set completed --force    # Set without confirmation
-  fest status set in_progress          # Set phase/sequence/task status`,
+  fest status set in_progress          # Set phase/sequence/task status
+
+  # Level-specific status setting:
+  fest status set --phase 001_CRITICAL completed
+  fest status set --phase 001 in_progress
+  fest status set --sequence 01_api_design completed
+  fest status set --sequence 002/01 pending
+  fest status set --task 01_analyze.md in_progress
+  fest status set --task 001/01/02_impl.md completed
+  fest status set --path ./002/01/task.md blocked`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -112,6 +140,15 @@ For other entities, this updates the frontmatter in the relevant files.`,
 	cmd.Flags().BoolVar(&opts.force, "force", false, "skip confirmation prompts")
 	cmd.Flags().BoolVar(&opts.json, "json", false, "output in JSON format")
 	cmd.Flags().BoolVarP(&opts.interactive, "interactive", "i", false, "force interactive festival selection")
+
+	// Level targeting flags
+	cmd.Flags().StringVar(&opts.phase, "phase", "", "target phase by name or number (e.g., '001_CRITICAL' or '001')")
+	cmd.Flags().StringVar(&opts.sequence, "sequence", "", "target sequence by name (e.g., '01_api_design' or '002/01')")
+	cmd.Flags().StringVar(&opts.task, "task", "", "target task by filename or path (e.g., '01_analyze.md' or '001/01/02_impl.md')")
+	cmd.Flags().StringVar(&opts.path, "path", "", "explicit file path for status change")
+
+	// Mark level flags as mutually exclusive
+	cmd.MarkFlagsMutuallyExclusive("phase", "sequence", "task", "path")
 
 	return cmd
 }
