@@ -18,6 +18,8 @@ func FormatText(result *NextTaskResult) string {
 		return formatTextComplete(result)
 	case result.BlockingGate != nil:
 		return formatTextBlockingGate(result)
+	case result.Planning != nil:
+		return formatTextPlanning(result)
 	case result.Task == nil:
 		return formatTextNoTask(result)
 	default:
@@ -41,6 +43,8 @@ func FormatVerbose(result *NextTaskResult) string {
 		return formatVerboseComplete(result)
 	case result.BlockingGate != nil:
 		return formatVerboseBlockingGate(result)
+	case result.Planning != nil:
+		return formatVerbosePlanning(result)
 	case result.Task == nil:
 		return formatVerboseNoTask(result)
 	default:
@@ -136,6 +140,102 @@ func formatTextNoTask(result *NextTaskResult) string {
 	var buf bytes.Buffer
 	agent.MustGet("next/no_task").Execute(&buf, data)
 	return buf.String()
+}
+
+func formatTextPlanning(result *NextTaskResult) string {
+	p := result.Planning
+	var sb strings.Builder
+
+	// Header
+	sb.WriteString(ui.H1("Planning Phase"))
+	sb.WriteString("\n")
+
+	// Phase info
+	ui.WriteLabelValue(&sb, "Phase", ui.Value(p.PhaseName, ui.PhaseColor))
+	ui.WriteLabelValue(&sb, "Type", ui.Value(p.PhaseType))
+
+	// Progress
+	if p.Progress != nil {
+		progressStr := fmt.Sprintf("%.0f%% (%d/%d objectives)",
+			p.Progress.Percentage,
+			p.Progress.ResolvedObjectives,
+			p.Progress.TotalObjectives)
+		if p.GraduationReady {
+			ui.WriteLabelValue(&sb, "Progress", ui.Success(progressStr+" - Ready to graduate!"))
+		} else {
+			ui.WriteLabelValue(&sb, "Progress", ui.Info(progressStr))
+		}
+	}
+
+	sb.WriteString("\n")
+
+	// Objectives by category
+	if len(p.Objectives) > 0 {
+		sb.WriteString(ui.H2("Objectives from PHASE_GOAL.md"))
+		sb.WriteString("\n")
+
+		// Group by category
+		categories := map[string][]*PlanningObjective{
+			"question": {},
+			"decision": {},
+			"artifact": {},
+			"objective": {},
+		}
+		for _, obj := range p.Objectives {
+			categories[obj.Category] = append(categories[obj.Category], obj)
+		}
+
+		// Display each category with objectives
+		categoryTitles := map[string]string{
+			"question": "Questions to Answer",
+			"decision": "Decisions to Make",
+			"artifact": "Artifacts to Produce",
+			"objective": "Objectives",
+		}
+		categoryOrder := []string{"question", "decision", "artifact", "objective"}
+
+		for _, cat := range categoryOrder {
+			objs := categories[cat]
+			if len(objs) == 0 {
+				continue
+			}
+			sb.WriteString(ui.H3(categoryTitles[cat]))
+			sb.WriteString("\n")
+			for _, obj := range objs {
+				icon := ui.StateIcon("pending")
+				if obj.Resolved {
+					icon = ui.StateIcon("completed")
+				}
+				sb.WriteString(fmt.Sprintf("  %s %s\n", icon, obj.Text))
+			}
+			sb.WriteString("\n")
+		}
+	} else {
+		sb.WriteString(ui.Dim("No planning objectives found in PHASE_GOAL.md"))
+		sb.WriteString("\n")
+		sb.WriteString(ui.Info("Add objectives as checkboxes under 'Planning Objectives' section"))
+		sb.WriteString("\n\n")
+	}
+
+	// Graduation hint or next steps
+	if p.GraduationReady {
+		sb.WriteString(ui.H2("Next Step"))
+		sb.WriteString("\n")
+		sb.WriteString(ui.Success("All objectives resolved! Ready to graduate."))
+		sb.WriteString("\n\n")
+		sb.WriteString(fmt.Sprintf("  Run: %s\n\n", ui.Value("fest graduate")))
+		sb.WriteString(ui.Info("This will analyze your decisions and generate an implementation phase."))
+		sb.WriteString("\n")
+	} else {
+		sb.WriteString(ui.H2("Suggested Actions"))
+		sb.WriteString("\n")
+		sb.WriteString("  - Explore the problem space and document findings\n")
+		sb.WriteString("  - Update PHASE_GOAL.md checkboxes as objectives are resolved\n")
+		sb.WriteString("  - Create topic directories for deep exploration\n")
+		sb.WriteString("  - Run 'fest graduate' when all objectives are complete\n")
+	}
+
+	return sb.String()
 }
 
 func formatTextTask(result *NextTaskResult) string {
@@ -307,6 +407,12 @@ func formatVerboseNoTask(result *NextTaskResult) string {
 	}
 
 	return sb.String()
+}
+
+func formatVerbosePlanning(result *NextTaskResult) string {
+	// For verbose mode, use the same output as text mode
+	// Planning phases don't need additional verbose details
+	return formatTextPlanning(result)
 }
 
 func formatVerboseTask(result *NextTaskResult) string {
