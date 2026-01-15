@@ -249,9 +249,9 @@ func emitFreeformPhaseProgress(loc *show.LocationInfo) error {
 
 		// Group objectives by category
 		categories := map[string][]*planningObjective{
-			"question": {},
-			"decision": {},
-			"artifact": {},
+			"question":  {},
+			"decision":  {},
+			"artifact":  {},
 			"objective": {},
 		}
 		for _, obj := range objectives {

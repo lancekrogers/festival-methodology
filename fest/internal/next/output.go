@@ -176,9 +176,9 @@ func formatTextPlanning(result *NextTaskResult) string {
 
 		// Group by category
 		categories := map[string][]*PlanningObjective{
-			"question": {},
-			"decision": {},
-			"artifact": {},
+			"question":  {},
+			"decision":  {},
+			"artifact":  {},
 			"objective": {},
 		}
 		for _, obj := range p.Objectives {
@@ -187,9 +187,9 @@ func formatTextPlanning(result *NextTaskResult) string {
 
 		// Display each category with objectives
 		categoryTitles := map[string]string{
-			"question": "Questions to Answer",
-			"decision": "Decisions to Make",
-			"artifact": "Artifacts to Produce",
+			"question":  "Questions to Answer",
+			"decision":  "Decisions to Make",
+			"artifact":  "Artifacts to Produce",
 			"objective": "Objectives",
 		}
 		categoryOrder := []string{"question", "decision", "artifact", "objective"}

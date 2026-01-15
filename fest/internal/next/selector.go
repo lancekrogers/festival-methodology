@@ -582,9 +582,9 @@ func (s *Selector) findNextPlanning(_ context.Context, location *LocationInfo, p
 	}
 
 	planningResult := &PlanningPhaseResult{
-		PhaseName: filepath.Base(location.PhasePath),
-		PhasePath: location.PhasePath,
-		PhaseType: string(phaseType),
+		PhaseName:  filepath.Base(location.PhasePath),
+		PhasePath:  location.PhasePath,
+		PhaseType:  string(phaseType),
 		Objectives: objectives,
 		Progress: &PlanningProgress{
 			TotalObjectives:    total,

@@ -251,14 +251,14 @@ func TestIsGoalFile(t *testing.T) {
 		{"PHASE_GOAL.md", true},
 		{"SEQUENCE_GOAL.md", true},
 		{"FESTIVAL_GOAL.md", true},
-		{"phase_goal.md", true},           // Case insensitive
-		{"sequence_goal.md", true},        // Case insensitive
-		{"MY_CUSTOM_GOAL.md", true},       // Pattern: *_GOAL.md
-		{"requirements.md", false},        // Regular document
-		{"auth_design.md", false},         // Regular document
-		{"PLANNING_SUMMARY.md", false},    // Not a goal file
-		{"GOAL_setup.md", false},          // GOAL at start, not end
-		{"database_migration.md", false},  // Regular document
+		{"phase_goal.md", true},          // Case insensitive
+		{"sequence_goal.md", true},       // Case insensitive
+		{"MY_CUSTOM_GOAL.md", true},      // Pattern: *_GOAL.md
+		{"requirements.md", false},       // Regular document
+		{"auth_design.md", false},        // Regular document
+		{"PLANNING_SUMMARY.md", false},   // Not a goal file
+		{"GOAL_setup.md", false},         // GOAL at start, not end
+		{"database_migration.md", false}, // Regular document
 	}
 
 	for _, tt := range tests {
@@ -275,12 +275,12 @@ func TestFindDocuments_FiltersGoalFiles(t *testing.T) {
 
 	// Create mix of documents and goal files
 	files := []string{
-		"auth_requirements.md",      // Should include
-		"api_design.md",             // Should include
-		"SEQUENCE_GOAL.md",          // Should exclude
-		"PHASE_GOAL.md",             // Should exclude
-		"CUSTOM_GOAL.md",            // Should exclude (matches *_GOAL.md)
-		"database_schema.md",        // Should include
+		"auth_requirements.md", // Should include
+		"api_design.md",        // Should include
+		"SEQUENCE_GOAL.md",     // Should exclude
+		"PHASE_GOAL.md",        // Should exclude
+		"CUSTOM_GOAL.md",       // Should exclude (matches *_GOAL.md)
+		"database_schema.md",   // Should include
 	}
 	for _, f := range files {
 		if err := os.WriteFile(filepath.Join(tmpDir, f), []byte("test"), 0644); err != nil {
