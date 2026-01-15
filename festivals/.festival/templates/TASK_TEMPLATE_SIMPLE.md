@@ -41,17 +41,17 @@ TEMPLATE USAGE:
 
 ## Implementation Steps
 
-### 1. [REPLACE: Step Title]
+### 1. [REPLACE: Step 1 Title]
 
-[REPLACE: Step description and actions]
+[REPLACE: Step 1 description and actions]
 
-### 2. [REPLACE: Step Title]
+### 2. [REPLACE: Step 2 Title]
 
-[REPLACE: Step description and actions]
+[REPLACE: Step 2 description and actions]
 
-### 3. [REPLACE: Step Title]
+### 3. [REPLACE: Step 3 Title]
 
-[REPLACE: Step description and actions]
+[REPLACE: Step 3 description and actions]
 
 ## Definition of Done
 

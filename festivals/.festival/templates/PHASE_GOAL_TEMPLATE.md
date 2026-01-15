@@ -28,15 +28,15 @@ The phase goal is achieved when:
 
 ### Required Outcomes
 
-- [ ] **[REPLACE: Outcome name]**: [REPLACE: Specific, measurable deliverable or milestone]
-- [ ] **[REPLACE: Outcome name]**: [REPLACE: Specific, measurable deliverable or milestone]
-- [ ] **[REPLACE: Outcome name]**: [REPLACE: Specific, measurable deliverable or milestone]
+- [ ] **[REPLACE: Outcome 1]**: [REPLACE: First deliverable or milestone]
+- [ ] **[REPLACE: Outcome 2]**: [REPLACE: Second deliverable or milestone]
+- [ ] **[REPLACE: Outcome 3]**: [REPLACE: Third deliverable or milestone]
 
 ### Quality Metrics
 
-- [ ] **[REPLACE: Metric name]**: [REPLACE: Quantifiable quality measure with target]
-- [ ] **[REPLACE: Metric name]**: [REPLACE: Quantifiable quality measure with target]
-- [ ] **[REPLACE: Metric name]**: [REPLACE: Quantifiable quality measure with target]
+- [ ] **[REPLACE: Metric 1]**: [REPLACE: Quality measure 1 with target]
+- [ ] **[REPLACE: Metric 2]**: [REPLACE: Quality measure 2 with target]
+- [ ] **[REPLACE: Metric 3]**: [REPLACE: Quality measure 3 with target]
 
 ### Validation Gates
 
@@ -49,16 +49,16 @@ The phase goal is achieved when:
 
 | Deliverable | Description | Acceptance Criteria |
 |-------------|-------------|---------------------|
-| [REPLACE: Deliverable name] | [REPLACE: What it is] | [REPLACE: How to verify completion] |
-| [REPLACE: Deliverable name] | [REPLACE: What it is] | [REPLACE: How to verify completion] |
-| [REPLACE: Deliverable name] | [REPLACE: What it is] | [REPLACE: How to verify completion] |
+| [REPLACE: Deliverable 1] | [REPLACE: Description 1] | [REPLACE: Verification 1] |
+| [REPLACE: Deliverable 2] | [REPLACE: Description 2] | [REPLACE: Verification 2] |
+| [REPLACE: Deliverable 3] | [REPLACE: Description 3] | [REPLACE: Verification 3] |
 
 ## Risk Factors
 
 | Risk | Impact on Goal | Mitigation Strategy |
 |------|----------------|---------------------|
-| [REPLACE: Risk description] | [REPLACE: How it affects phase goal] | [REPLACE: Prevention/response plan] |
-| [REPLACE: Risk description] | [REPLACE: How it affects phase goal] | [REPLACE: Prevention/response plan] |
+| [REPLACE: Risk 1] | [REPLACE: Impact 1] | [REPLACE: Mitigation 1] |
+| [REPLACE: Risk 2] | [REPLACE: Impact 2] | [REPLACE: Mitigation 2] |
 
 ## Sequence Goal Alignment
 
@@ -66,9 +66,9 @@ Verify that sequence goals support this phase goal:
 
 | Sequence | Sequence Goal | Contribution to Phase Goal |
 |----------|---------------|----------------------------|
-| [REPLACE: 01_sequence] | [REPLACE: Brief goal statement] | [REPLACE: How it helps achieve phase goal] |
-| [REPLACE: 02_sequence] | [REPLACE: Brief goal statement] | [REPLACE: How it helps achieve phase goal] |
-| [REPLACE: 03_sequence] | [REPLACE: Brief goal statement] | [REPLACE: How it helps achieve phase goal] |
+| [REPLACE: Sequence 1 name] | [REPLACE: Sequence 1 goal] | [REPLACE: Sequence 1 contribution] |
+| [REPLACE: Sequence 2 name] | [REPLACE: Sequence 2 goal] | [REPLACE: Sequence 2 contribution] |
+| [REPLACE: Sequence 3 name] | [REPLACE: Sequence 3 goal] | [REPLACE: Sequence 3 contribution] |
 
 ## Pre-Phase Checklist
 
@@ -98,27 +98,27 @@ Track step completion against:
 
 ### What Worked Well
 
-- [REPLACE: Success factor]
-- [REPLACE: Success factor]
-- [REPLACE: Success factor]
+- [REPLACE: Success factor 1]
+- [REPLACE: Success factor 2]
+- [REPLACE: Success factor 3]
 
 ### What Could Be Improved
 
-- [REPLACE: Improvement area]
-- [REPLACE: Improvement area]
-- [REPLACE: Improvement area]
+- [REPLACE: Improvement area 1]
+- [REPLACE: Improvement area 2]
+- [REPLACE: Improvement area 3]
 
 ### Lessons Learned
 
-- [REPLACE: Key learning]
-- [REPLACE: Key learning]
-- [REPLACE: Key learning]
+- [REPLACE: Lesson 1]
+- [REPLACE: Lesson 2]
+- [REPLACE: Lesson 3]
 
 ### Recommendations for Future Phases
 
-- [REPLACE: Recommendation]
-- [REPLACE: Recommendation]
-- [REPLACE: Recommendation]
+- [REPLACE: Recommendation 1]
+- [REPLACE: Recommendation 2]
+- [REPLACE: Recommendation 3]
 
 ## Stakeholder Sign-off
 

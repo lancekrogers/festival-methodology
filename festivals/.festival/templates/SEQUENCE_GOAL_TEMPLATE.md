@@ -39,14 +39,14 @@ The sequence goal is achieved when:
 
 ### Required Deliverables
 
-- [ ] **[REPLACE: Deliverable name]**: [REPLACE: Specific output or artifact produced]
-- [ ] **[REPLACE: Deliverable name]**: [REPLACE: Specific output or artifact produced]
-- [ ] **[REPLACE: Deliverable name]**: [REPLACE: Specific output or artifact produced]
+- [ ] **[REPLACE: Deliverable 1 name]**: [REPLACE: Deliverable 1 description]
+- [ ] **[REPLACE: Deliverable 2 name]**: [REPLACE: Deliverable 2 description]
+- [ ] **[REPLACE: Deliverable 3 name]**: [REPLACE: Deliverable 3 description]
 
 ### Quality Standards
 
-- [ ] **[REPLACE: Standard name]**: [REPLACE: Quality measure with specific target]
-- [ ] **[REPLACE: Standard name]**: [REPLACE: Quality measure with specific target]
+- [ ] **[REPLACE: Quality standard 1]**: [REPLACE: Quality target 1]
+- [ ] **[REPLACE: Quality standard 2]**: [REPLACE: Quality target 2]
 
 ### Completion Criteria
 
@@ -85,9 +85,9 @@ The sequence goal is achieved when:
 
 ### Milestones
 
-- [ ] **Milestone 1**: [REPLACE: Key deliverable achieved]
-- [ ] **Milestone 2**: [REPLACE: Key deliverable achieved]
-- [ ] **Milestone 3**: [REPLACE: Key deliverable achieved]
+- [ ] **Milestone 1**: [REPLACE: First key deliverable]
+- [ ] **Milestone 2**: [REPLACE: Second key deliverable]
+- [ ] **Milestone 3**: [REPLACE: Final key deliverable]
 
 ## Quality Gates
 
