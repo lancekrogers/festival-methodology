@@ -153,7 +153,7 @@ func FormatFestivalListWithProgress(status string, festivals []*FestivalInfo, pr
 			if overall.TimeSpentMin > 0 {
 				sb.WriteString(fmt.Sprintf("    %s %s\n",
 					ui.Label("Total time"),
-					ui.Value(fmt.Sprintf("%d min", overall.TimeSpentMin))))
+					ui.Value(ui.FormatDuration(overall.TimeSpentMin))))
 			}
 			sb.WriteString("\n")
 		}
