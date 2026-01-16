@@ -29,6 +29,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/structure"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/system"
 	templatescmd "github.com/lancekrogers/festival-methodology/fest/internal/commands/templates"
+	typescmd "github.com/lancekrogers/festival-methodology/fest/internal/commands/types"
 	understandcmd "github.com/lancekrogers/festival-methodology/fest/internal/commands/understand"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/validation"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/wizard"
@@ -118,13 +119,13 @@ func init() {
 		shared.SetConfigFile(configFile)
 		ui.SetNoColor(noColor)
 
-		// Allow root (help/version), init, system, count, go, shell-init, understand, intro, config, extension, index, gates, research, show, status, progress, context, deps, next, execute, migrate, link, unlink, links, commit, commits, parse, completion, list, validate, and markers to run anywhere
-		// Also allow subcommands of system, understand, intro, config, extension, index, gates, research, show, status, progress, context, deps, next, execute, migrate, remove, renumber, reorder, validate, markers, wizard, and go
-		if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "system" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" || cmd.Name() == "go" || cmd.Name() == "shell-init" || cmd.Name() == "understand" || cmd.Name() == "intro" || cmd.Name() == "config" || cmd.Name() == "extension" || cmd.Name() == "index" || cmd.Name() == "gates" || cmd.Name() == "research" || cmd.Name() == "show" || cmd.Name() == "status" || cmd.Name() == "progress" || cmd.Name() == "context" || cmd.Name() == "deps" || cmd.Name() == "next" || cmd.Name() == "execute" || cmd.Name() == "migrate" || cmd.Name() == "link" || cmd.Name() == "unlink" || cmd.Name() == "links" || cmd.Name() == "commit" || cmd.Name() == "commits" || cmd.Name() == "parse" || cmd.Name() == "remove" || cmd.Name() == "renumber" || cmd.Name() == "reorder" || cmd.Name() == "validate" || cmd.Name() == "markers" || cmd.Name() == "wizard" || cmd.Name() == "completion" || cmd.Name() == "list" || cmd.Name() == "graduate" || cmd.Name() == "feedback" || cmd.Name() == "templates" {
+		// Allow root (help/version), init, system, count, go, shell-init, understand, intro, config, extension, index, gates, research, show, status, progress, context, deps, next, execute, migrate, link, unlink, links, commit, commits, parse, completion, list, validate, markers, and types to run anywhere
+		// Also allow subcommands of system, understand, intro, config, extension, index, gates, research, show, status, progress, context, deps, next, execute, migrate, remove, renumber, reorder, validate, markers, wizard, types, and go
+		if cmd == rootCmd || cmd.Name() == "init" || cmd.Name() == "system" || cmd.Name() == "help" || cmd.Name() == "tui" || cmd.Name() == "count" || cmd.Name() == "go" || cmd.Name() == "shell-init" || cmd.Name() == "understand" || cmd.Name() == "intro" || cmd.Name() == "config" || cmd.Name() == "extension" || cmd.Name() == "index" || cmd.Name() == "gates" || cmd.Name() == "research" || cmd.Name() == "show" || cmd.Name() == "status" || cmd.Name() == "progress" || cmd.Name() == "context" || cmd.Name() == "deps" || cmd.Name() == "next" || cmd.Name() == "execute" || cmd.Name() == "migrate" || cmd.Name() == "link" || cmd.Name() == "unlink" || cmd.Name() == "links" || cmd.Name() == "commit" || cmd.Name() == "commits" || cmd.Name() == "parse" || cmd.Name() == "remove" || cmd.Name() == "renumber" || cmd.Name() == "reorder" || cmd.Name() == "validate" || cmd.Name() == "markers" || cmd.Name() == "wizard" || cmd.Name() == "completion" || cmd.Name() == "list" || cmd.Name() == "graduate" || cmd.Name() == "feedback" || cmd.Name() == "templates" || cmd.Name() == "types" {
 			return nil
 		}
-		// Check if parent is system, understand, intro, config, extension, index, gates, research, show, status, context, deps, next, execute, migrate, remove, renumber, reorder, validate, markers, wizard, or go (for subcommands)
-		if cmd.Parent() != nil && (cmd.Parent().Name() == "system" || cmd.Parent().Name() == "understand" || cmd.Parent().Name() == "intro" || cmd.Parent().Name() == "config" || cmd.Parent().Name() == "extension" || cmd.Parent().Name() == "index" || cmd.Parent().Name() == "gates" || cmd.Parent().Name() == "research" || cmd.Parent().Name() == "show" || cmd.Parent().Name() == "status" || cmd.Parent().Name() == "context" || cmd.Parent().Name() == "deps" || cmd.Parent().Name() == "next" || cmd.Parent().Name() == "execute" || cmd.Parent().Name() == "migrate" || cmd.Parent().Name() == "remove" || cmd.Parent().Name() == "renumber" || cmd.Parent().Name() == "reorder" || cmd.Parent().Name() == "validate" || cmd.Parent().Name() == "markers" || cmd.Parent().Name() == "wizard" || cmd.Parent().Name() == "go" || cmd.Parent().Name() == "feedback" || cmd.Parent().Name() == "templates") {
+		// Check if parent is system, understand, intro, config, extension, index, gates, research, show, status, context, deps, next, execute, migrate, remove, renumber, reorder, validate, markers, wizard, types, or go (for subcommands)
+		if cmd.Parent() != nil && (cmd.Parent().Name() == "system" || cmd.Parent().Name() == "understand" || cmd.Parent().Name() == "intro" || cmd.Parent().Name() == "config" || cmd.Parent().Name() == "extension" || cmd.Parent().Name() == "index" || cmd.Parent().Name() == "gates" || cmd.Parent().Name() == "research" || cmd.Parent().Name() == "show" || cmd.Parent().Name() == "status" || cmd.Parent().Name() == "context" || cmd.Parent().Name() == "deps" || cmd.Parent().Name() == "next" || cmd.Parent().Name() == "execute" || cmd.Parent().Name() == "migrate" || cmd.Parent().Name() == "remove" || cmd.Parent().Name() == "renumber" || cmd.Parent().Name() == "reorder" || cmd.Parent().Name() == "validate" || cmd.Parent().Name() == "markers" || cmd.Parent().Name() == "wizard" || cmd.Parent().Name() == "go" || cmd.Parent().Name() == "feedback" || cmd.Parent().Name() == "templates" || cmd.Parent().Name() == "types") {
 			return nil
 		}
 		cwd, _ := os.Getwd()
@@ -326,4 +327,9 @@ func init() {
 	feedbackCmd := feedbackcmd.NewFeedbackCommand()
 	feedbackCmd.GroupID = "workflow"
 	rootCmd.AddCommand(feedbackCmd)
+
+	// Types command for template type discovery
+	typesCmd := typescmd.NewTypesCommand()
+	typesCmd.GroupID = "query"
+	rootCmd.AddCommand(typesCmd)
 }
