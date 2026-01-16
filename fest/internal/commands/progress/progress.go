@@ -430,7 +430,7 @@ func showFestivalProgress(ctx context.Context, mgr *progress.Manager, loc *show.
 	if overall.TimeSpentMin > 0 {
 		fmt.Printf("%s %s\n",
 			ui.Label("Total time"),
-			ui.Value(fmt.Sprintf("%d min", overall.TimeSpentMin)))
+			ui.Value(ui.FormatDuration(overall.TimeSpentMin)))
 	}
 
 	// Phase breakdown
