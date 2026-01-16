@@ -39,22 +39,24 @@ type CreateFestivalOptions struct {
 }
 
 type createFestivalResult struct {
-	OK             bool                     `json:"ok"`
-	Action         string                   `json:"action"`
-	Festival       map[string]string        `json:"festival,omitempty"`
-	Created        []string                 `json:"created,omitempty"`
-	GatesDirectory string                   `json:"gates_directory,omitempty"`
-	FestYAML       string                   `json:"fest_yaml,omitempty"`
-	GateTemplates  []string                 `json:"gate_templates,omitempty"`
-	ProjectPath    string                   `json:"project_path,omitempty"`
-	ProjectLinked  bool                     `json:"project_linked,omitempty"`
-	Markers        []map[string]interface{} `json:"markers,omitempty"`
-	MarkersFilled  int                      `json:"markers_filled,omitempty"`
-	MarkersTotal   int                      `json:"markers_total,omitempty"`
-	Validation     *ValidationSummary       `json:"validation,omitempty"`
-	Errors         []map[string]any         `json:"errors,omitempty"`
-	Warnings       []string                 `json:"warnings,omitempty"`
-	Extra          map[string]interface{}   `json:"extra,omitempty"`
+	OK              bool                     `json:"ok"`
+	Action          string                   `json:"action"`
+	Festival        map[string]string        `json:"festival,omitempty"`
+	Created         []string                 `json:"created,omitempty"`
+	GatesDirectory  string                   `json:"gates_directory,omitempty"`
+	FestYAML        string                   `json:"fest_yaml,omitempty"`
+	GateTemplates   []string                 `json:"gate_templates,omitempty"`
+	PhasesDirectory string                   `json:"phases_directory,omitempty"`
+	PhaseTemplates  []string                 `json:"phase_templates,omitempty"`
+	ProjectPath     string                   `json:"project_path,omitempty"`
+	ProjectLinked   bool                     `json:"project_linked,omitempty"`
+	Markers         []map[string]interface{} `json:"markers,omitempty"`
+	MarkersFilled   int                      `json:"markers_filled,omitempty"`
+	MarkersTotal    int                      `json:"markers_total,omitempty"`
+	Validation      *ValidationSummary       `json:"validation,omitempty"`
+	Errors          []map[string]any         `json:"errors,omitempty"`
+	Warnings        []string                 `json:"warnings,omitempty"`
+	Extra           map[string]interface{}   `json:"extra,omitempty"`
 }
 
 // NewCreateFestivalCommand adds 'create festival'
@@ -251,6 +253,53 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 		}
 	}
 
+	// Create phases directory structure with phase-type subdirectories
+	phasesDir := filepath.Join(destDir, "phases")
+	srcPhasesDir := filepath.Join(tmplRoot, "phases")
+
+	copiedPhases := []string{}
+	for _, phaseType := range phaseTypes {
+		srcPhaseDir := filepath.Join(srcPhasesDir, phaseType)
+		destPhaseDir := filepath.Join(phasesDir, phaseType)
+
+		// Check if source phase directory exists
+		if _, err := os.Stat(srcPhaseDir); os.IsNotExist(err) {
+			continue
+		}
+
+		// Create destination phase directory
+		if err := os.MkdirAll(destPhaseDir, 0755); err != nil {
+			return emitCreateFestivalError(opts, errors.IO("creating phases directory", err).WithField("path", destPhaseDir))
+		}
+
+		// Copy all .md files from source to destination
+		entries, err := os.ReadDir(srcPhaseDir)
+		if err != nil {
+			return emitCreateFestivalError(opts, errors.IO("reading phases directory", err).WithField("path", srcPhaseDir))
+		}
+
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+				continue
+			}
+
+			srcPath := filepath.Join(srcPhaseDir, entry.Name())
+			destPath := filepath.Join(destPhaseDir, entry.Name())
+
+			content, err := os.ReadFile(srcPath)
+			if err != nil {
+				return emitCreateFestivalError(opts, errors.IO("reading phase template", err).WithField("path", srcPath))
+			}
+
+			if err := os.WriteFile(destPath, content, 0644); err != nil {
+				return emitCreateFestivalError(opts, errors.IO("writing phase template", err).WithField("path", destPath))
+			}
+
+			copiedPhases = append(copiedPhases, destPath)
+			created = append(created, destPath)
+		}
+	}
+
 	// Generate fest.yaml with default gates configuration and metadata
 	festConfig := DefaultFestivalGatesConfig()
 
@@ -408,12 +457,14 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 				"id":        festivalID,
 				"directory": dirName,
 			},
-			Created:        created,
-			GatesDirectory: gatesDir,
-			FestYAML:       festConfigPath,
-			GateTemplates:  copiedGates,
-			ProjectPath:    resolvedProjectPath,
-			ProjectLinked:  projectLinked,
+			Created:         created,
+			GatesDirectory:  gatesDir,
+			FestYAML:        festConfigPath,
+			GateTemplates:   copiedGates,
+			PhasesDirectory: phasesDir,
+			PhaseTemplates:  copiedPhases,
+			ProjectPath:     resolvedProjectPath,
+			ProjectLinked:   projectLinked,
 			MarkersFilled:  totalMarkersFilled,
 			MarkersTotal:   totalMarkersCount,
 			Validation:     validationResult,
@@ -441,6 +492,11 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 	if len(copiedGates) > 0 {
 		display.Success("Created gates/ directory with %d default templates", len(copiedGates))
 		display.Info("  Quality gates configured in fest.yaml")
+	}
+
+	// Report phases setup
+	if len(copiedPhases) > 0 {
+		display.Success("Created phases/ directory with %d phase templates", len(copiedPhases))
 	}
 
 	// Report project path if set

@@ -49,16 +49,12 @@ type createPhaseResult struct {
 
 // selectPhaseTemplate returns the appropriate template ID and filename for a given phase type.
 // Returns (templateID, templateFilename) tuple.
+// Phase-type templates are stored in phases/{phase_type}/PHASE_GOAL_TEMPLATE.md
 func selectPhaseTemplate(phaseType string) (string, string) {
-	switch strings.ToLower(phaseType) {
-	case "planning":
-		return "phase-goal-planning", "PHASE_GOAL_PLANNING_TEMPLATE.md"
-	case "implementation":
-		return "phase-goal-implementation", "PHASE_GOAL_IMPLEMENTATION_TEMPLATE.md"
-	case "research":
-		return "phase-goal-research", "PHASE_GOAL_RESEARCH_TEMPLATE.md"
-	case "review":
-		return "phase-goal-review", "PHASE_GOAL_REVIEW_TEMPLATE.md"
+	pt := strings.ToLower(phaseType)
+	switch pt {
+	case "planning", "implementation", "research", "review", "non_coding_action":
+		return fmt.Sprintf("phase-goal-%s", pt), filepath.Join("phases", pt, "PHASE_GOAL_TEMPLATE.md")
 	default:
 		// Fallback to generic template for unknown types
 		return "phase-goal", "PHASE_GOAL_TEMPLATE.md"
