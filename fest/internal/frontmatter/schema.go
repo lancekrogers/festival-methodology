@@ -82,6 +82,34 @@ const (
 	PhaseTypeDeployment     PhaseType = "deployment"
 )
 
+// FestivalType represents the scope/complexity of a festival
+type FestivalType string
+
+const (
+	FestivalTypeBugfix        FestivalType = "bugfix"        // Quick bug fixes, minimal structure
+	FestivalTypeFeature       FestivalType = "feature"       // Single feature implementation
+	FestivalTypeProject       FestivalType = "project"       // Multi-component work
+	FestivalTypeComprehensive FestivalType = "comprehensive" // Major initiative with full planning
+)
+
+// SequenceType represents the complexity of a sequence
+type SequenceType string
+
+const (
+	SequenceTypeMinimal  SequenceType = "minimal"  // Simple sequences with few tasks
+	SequenceTypeStandard SequenceType = "standard" // Normal sequences
+	SequenceTypeDetailed SequenceType = "detailed" // Complex sequences with dependencies
+)
+
+// TaskType represents task template selection
+type TaskType string
+
+const (
+	TaskTypeMinimal  TaskType = "minimal"  // Ultra-simple tasks
+	TaskTypeSimple   TaskType = "simple"   // Standard tasks
+	TaskTypeDetailed TaskType = "detailed" // Full documentation
+)
+
 // Complexity represents task complexity level for routing
 type Complexity string
 
@@ -110,11 +138,13 @@ type Frontmatter struct {
 	Created  time.Time `yaml:"fest_created" json:"fest_created"`
 	Updated  time.Time `yaml:"fest_updated,omitempty" json:"fest_updated,omitempty"`
 
-	// Phase-type awareness fields
-	PhaseType    PhaseType `yaml:"fest_phase_type,omitempty" json:"fest_phase_type,omitempty"`
-	SequenceType string    `yaml:"fest_sequence_type,omitempty" json:"fest_sequence_type,omitempty"`
-	Tracking     *bool     `yaml:"fest_tracking,omitempty" json:"fest_tracking,omitempty"` // Pointer to distinguish unset from false
-	Version      string    `yaml:"fest_version,omitempty" json:"fest_version,omitempty"`
+	// Type-awareness fields
+	FestivalType FestivalType `yaml:"fest_festival_type,omitempty" json:"fest_festival_type,omitempty"`
+	PhaseType    PhaseType    `yaml:"fest_phase_type,omitempty" json:"fest_phase_type,omitempty"`
+	SequenceType SequenceType `yaml:"fest_sequence_type,omitempty" json:"fest_sequence_type,omitempty"`
+	TaskType     TaskType     `yaml:"fest_task_type,omitempty" json:"fest_task_type,omitempty"`
+	Tracking     *bool        `yaml:"fest_tracking,omitempty" json:"fest_tracking,omitempty"` // Pointer to distinguish unset from false
+	Version      string       `yaml:"fest_version,omitempty" json:"fest_version,omitempty"`
 
 	// Task-specific fields
 	Dependencies  []string `yaml:"fest_dependencies,omitempty" json:"fest_dependencies,omitempty"`

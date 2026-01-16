@@ -123,14 +123,26 @@ func runShowCurrent(ctx context.Context, opts *showOptions) error {
 		return errors.IO("getting current directory", err)
 	}
 
-	festival, err := DetectCurrentFestival(ctx, cwd)
+	// Try to resolve festival path using link resolution
+	// This handles: 1) explicit path, 2) linked project, 3) festival directory
+	festivalPath, resolveErr := shared.ResolveFestivalPath(cwd, "")
+
+	var festival *FestivalInfo
+	if resolveErr == nil && festivalPath != "" {
+		// Successfully resolved - use the resolved path
+		festival, err = DetectCurrentFestival(ctx, festivalPath)
+	} else {
+		// Fall back to direct detection from cwd
+		festival, err = DetectCurrentFestival(ctx, cwd)
+	}
+
 	if err != nil {
 		if errors.Is(err, errors.ErrCodeNotFound) {
 			if opts.json {
-				return emitShowErrorJSON("not in a festival directory")
+				return emitShowErrorJSON("not in a festival directory or linked project")
 			}
 			return errors.NotFound("festival").WithOp("show").
-				WithField("hint", "navigate to a festival directory or specify a festival name")
+				WithField("hint", "navigate to a festival directory, use 'fest link' to link a project, or specify a festival name")
 		}
 		return err
 	}

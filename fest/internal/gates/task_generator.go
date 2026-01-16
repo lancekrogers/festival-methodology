@@ -365,12 +365,12 @@ type SequenceInfo struct {
 	Path      string // Full path to sequence directory
 	PhasePath string // Path to parent phase
 	Name      string // Sequence directory name
-	PhaseType string // Phase type: "implementation", "planning", "research", "review", "deployment"
+	PhaseType string // Phase type: "implementation", "planning", "research", "review", "action"
 	PhaseName string // Name of the parent phase directory
 }
 
 // DetectPhaseType determines the phase type from the phase directory name.
-// Returns: "planning", "implementation", "research", "review", "deployment"
+// Returns: "planning", "implementation", "research", "review", "action"
 // Defaults to "implementation" for unknown types.
 func DetectPhaseType(phaseName string) string {
 	lower := strings.ToLower(phaseName)
@@ -384,8 +384,12 @@ func DetectPhaseType(phaseName string) string {
 		return "research" // Design phases use research-like structure
 	case strings.Contains(lower, "review") || strings.Contains(lower, "qa") || strings.Contains(lower, "uat"):
 		return "review"
-	case strings.Contains(lower, "deployment") || strings.Contains(lower, "deploy") || strings.Contains(lower, "release"):
-		return "deployment"
+	// Action phases: deployment, configuration, publishing, migrations, operational tasks
+	case strings.Contains(lower, "deployment") || strings.Contains(lower, "deploy") ||
+		strings.Contains(lower, "release") || strings.Contains(lower, "action") ||
+		strings.Contains(lower, "operation") || strings.Contains(lower, "config") ||
+		strings.Contains(lower, "publish") || strings.Contains(lower, "migrat"):
+		return "action"
 	case strings.Contains(lower, "implementation") || strings.Contains(lower, "implement") ||
 		strings.Contains(lower, "develop") || strings.Contains(lower, "build") ||
 		strings.Contains(lower, "foundation") || strings.Contains(lower, "critical"):

@@ -352,7 +352,7 @@ func printTaskProgress(title string, task *progress.TaskProgress) {
 		fmt.Printf("%s %s\n", ui.Label("Blocker"), ui.Warning(task.BlockerMessage))
 	}
 	if task.TimeSpentMinutes > 0 {
-		fmt.Printf("%s %s\n", ui.Label("Time"), ui.Value(fmt.Sprintf("%d min", task.TimeSpentMinutes)))
+		fmt.Printf("%s %s\n", ui.Label("Time"), ui.Value(ui.FormatDuration(task.TimeSpentMinutes)))
 	}
 }
 
@@ -430,7 +430,7 @@ func showFestivalProgress(ctx context.Context, mgr *progress.Manager, loc *show.
 	if overall.TimeSpentMin > 0 {
 		fmt.Printf("%s %s\n",
 			ui.Label("Total time"),
-			ui.Value(fmt.Sprintf("%d min", overall.TimeSpentMin)))
+			ui.Value(ui.FormatDuration(overall.TimeSpentMin)))
 	}
 
 	// Phase breakdown

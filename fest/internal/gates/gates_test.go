@@ -373,10 +373,12 @@ func TestDetectPhaseType(t *testing.T) {
 		{"001_REVIEW", "review"},
 		{"002_QA", "review"},
 		{"003_UAT", "review"},
-		// Deployment phases
-		{"001_DEPLOYMENT", "deployment"},
-		{"002_Deploy", "deployment"},
-		{"003_Release", "deployment"},
+		// Action phases (deployment, config, release, etc.)
+		{"001_DEPLOYMENT", "action"},
+		{"002_Deploy", "action"},
+		{"003_Release", "action"},
+		{"004_MIGRATION", "action"},
+		{"005_Configuration", "action"},
 		// Unknown defaults to implementation
 		{"001_UNKNOWN", "implementation"},
 		{"random_name", "implementation"},
@@ -402,7 +404,7 @@ func TestGetGatesForPhaseType(t *testing.T) {
 		{"planning", 3, "planning_review"},
 		{"research", 3, "research_review"},
 		{"review", 2, "review_checklist"},
-		{"deployment", 0, ""},                // Deployment has no gates
+		{"action", 3, "execution_verify"},    // Action phases have 3 gates
 		{"unknown", 4, "testing_and_verify"}, // Unknown defaults to implementation
 	}
 
@@ -467,6 +469,19 @@ func TestReviewGates(t *testing.T) {
 	for i, expected := range expectedIDs {
 		if gates[i].ID != expected {
 			t.Errorf("ReviewGates()[%d].ID = %q, want %q", i, gates[i].ID, expected)
+		}
+	}
+}
+
+func TestActionGates(t *testing.T) {
+	gates := ActionGates()
+	if len(gates) != 3 {
+		t.Errorf("ActionGates() returned %d gates, want 3", len(gates))
+	}
+	expectedIDs := []string{"execution_verify", "rollback_confirm", "commit"}
+	for i, expected := range expectedIDs {
+		if gates[i].ID != expected {
+			t.Errorf("ActionGates()[%d].ID = %q, want %q", i, gates[i].ID, expected)
 		}
 	}
 }

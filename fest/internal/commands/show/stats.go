@@ -20,6 +20,7 @@ type FestivalInfo struct {
 	Status       string         `json:"status"`
 	Priority     string         `json:"priority,omitempty"`
 	Path         string         `json:"path"`
+	ProjectPath  string         `json:"project_path,omitempty"` // Linked project directory from fest.yaml
 	Stats        *FestivalStats `json:"stats,omitempty"`
 }
 

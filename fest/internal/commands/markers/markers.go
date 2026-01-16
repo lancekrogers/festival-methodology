@@ -72,6 +72,8 @@ Use subcommands to list markers or fill them interactively.`,
 	cmd.AddCommand(newListCommand(opts))
 	cmd.AddCommand(newCountCommand(opts))
 	cmd.AddCommand(newNextCommand(opts))
+	cmd.AddCommand(newScaffoldCommand(opts))
+	cmd.AddCommand(newValidateCommand(opts))
 
 	return cmd
 }

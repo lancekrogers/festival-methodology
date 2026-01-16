@@ -38,6 +38,10 @@ func FormatFestivalDetails(festival *FestivalInfo, verbose bool) string {
 	sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Status"), ui.GetStatusStyle(festival.Status).Render(festival.Status)))
 	sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Path"), ui.Dim(festival.Path)))
 
+	if festival.ProjectPath != "" {
+		sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Project"), ui.Value(festival.ProjectPath, ui.SequenceColor)))
+	}
+
 	if festival.Priority != "" {
 		sb.WriteString(fmt.Sprintf("%s %s\n", ui.Label("Priority"), ui.Value(festival.Priority)))
 	}

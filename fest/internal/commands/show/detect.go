@@ -172,7 +172,7 @@ func parseFestivalInfo(ctx context.Context, festivalDir string) (*FestivalInfo, 
 		info.Status = "unknown"
 	}
 
-	// Try to load fest.yaml to get metadata ID
+	// Try to load fest.yaml to get metadata ID and project path
 	festConfig, err := config.LoadFestivalConfig(festivalDir)
 	if err == nil && festConfig != nil {
 		// Extract metadata ID if present
@@ -182,6 +182,10 @@ func parseFestivalInfo(ctx context.Context, festivalDir string) (*FestivalInfo, 
 		// Keep metadata name separate from directory name (used for linking)
 		if festConfig.Metadata.Name != "" {
 			info.MetadataName = festConfig.Metadata.Name
+		}
+		// Extract project path if present
+		if festConfig.ProjectPath != "" {
+			info.ProjectPath = festConfig.ProjectPath
 		}
 	}
 

@@ -15,6 +15,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/id"
+	"github.com/lancekrogers/festival-methodology/fest/internal/navigation"
 	"github.com/lancekrogers/festival-methodology/fest/internal/registry"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
@@ -26,6 +27,7 @@ type CreateFestivalOptions struct {
 	Name        string
 	Goal        string
 	Tags        string
+	Project     string // Project directory path
 	VarsFile    string
 	Markers     string // Inline JSON with hint→value mappings
 	MarkersFile string // JSON file path with hint→value mappings
@@ -44,6 +46,8 @@ type createFestivalResult struct {
 	GatesDirectory string                   `json:"gates_directory,omitempty"`
 	FestYAML       string                   `json:"fest_yaml,omitempty"`
 	GateTemplates  []string                 `json:"gate_templates,omitempty"`
+	ProjectPath    string                   `json:"project_path,omitempty"`
+	ProjectLinked  bool                     `json:"project_linked,omitempty"`
 	Markers        []map[string]interface{} `json:"markers,omitempty"`
 	MarkersFilled  int                      `json:"markers_filled,omitempty"`
 	MarkersTotal   int                      `json:"markers_total,omitempty"`
@@ -74,6 +78,7 @@ func NewCreateFestivalCommand() *cobra.Command {
 	cmd.Flags().StringVar(&opts.Name, "name", "", "Festival name (required)")
 	cmd.Flags().StringVar(&opts.Goal, "goal", "", "Festival goal")
 	cmd.Flags().StringVar(&opts.Tags, "tags", "", "Comma-separated tags")
+	cmd.Flags().StringVarP(&opts.Project, "project", "p", "", "Project directory path (auto-links to festival)")
 	cmd.Flags().StringVar(&opts.VarsFile, "vars-file", "", "JSON file with variables")
 	cmd.Flags().StringVar(&opts.Markers, "markers", "", "JSON string with REPLACE marker hint→value mappings")
 	cmd.Flags().StringVar(&opts.MarkersFile, "markers-file", "", "JSON file with REPLACE marker hint→value mappings")
@@ -266,6 +271,42 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 		},
 	}
 
+	// Handle project path if specified
+	var resolvedProjectPath string
+	var projectLinked bool
+	if opts.Project != "" {
+		workspaceRoot := filepath.Dir(festivalsRoot)
+		resolved, err := ResolveProjectPath(opts.Project, workspaceRoot)
+		if err != nil {
+			if !opts.JSONOutput {
+				display.Warning("Could not resolve project path: %v", err)
+			}
+		} else {
+			resolvedProjectPath = resolved
+			festConfig.ProjectPath = resolved
+
+			// Validate path exists (warning only, don't fail)
+			if validateErr := ValidateProjectPath(resolved); validateErr != nil {
+				if !opts.JSONOutput {
+					display.Warning("Project path doesn't exist yet: %s", resolved)
+					display.Info("Link will be created when path exists")
+				}
+			} else {
+				// Auto-link if path exists
+				nav, navErr := navigation.LoadNavigation()
+				if navErr == nil {
+					nav.SetLinkWithPath(dirName, resolved, destDir)
+					if saveErr := nav.Save(); saveErr == nil {
+						projectLinked = true
+						if !opts.JSONOutput {
+							display.Success("Linked to project: %s", resolved)
+						}
+					}
+				}
+			}
+		}
+	}
+
 	festConfigPath := filepath.Join(destDir, config.FestivalConfigFileName)
 	if err := config.SaveFestivalConfig(destDir, festConfig); err != nil {
 		return emitCreateFestivalError(opts, errors.Wrap(err, "writing fest.yaml").WithField("path", festConfigPath))
@@ -371,6 +412,8 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 			GatesDirectory: gatesDir,
 			FestYAML:       festConfigPath,
 			GateTemplates:  copiedGates,
+			ProjectPath:    resolvedProjectPath,
+			ProjectLinked:  projectLinked,
 			MarkersFilled:  totalMarkersFilled,
 			MarkersTotal:   totalMarkersCount,
 			Validation:     validationResult,
@@ -398,6 +441,15 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 	if len(copiedGates) > 0 {
 		display.Success("Created gates/ directory with %d default templates", len(copiedGates))
 		display.Info("  Quality gates configured in fest.yaml")
+	}
+
+	// Report project path if set
+	if resolvedProjectPath != "" {
+		if projectLinked {
+			display.Success("Project path: %s (linked)", resolvedProjectPath)
+		} else {
+			display.Info("Project path: %s (not linked - path doesn't exist yet)", resolvedProjectPath)
+		}
 	}
 
 	fmt.Println()

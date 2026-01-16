@@ -249,6 +249,32 @@ func ReviewGates() []GateTask {
 	}
 }
 
+// ActionGates returns quality gates for action/operational phases.
+// These phases handle deployment, configuration, publishing, migrations, and other
+// non-coding tasks. No code review gates since there's no code to review.
+func ActionGates() []GateTask {
+	return []GateTask{
+		{
+			ID:       "execution_verify",
+			Template: "gates/QUALITY_GATE_EXECUTION_VERIFY",
+			Name:     "Execution & Verify",
+			Enabled:  true,
+		},
+		{
+			ID:       "rollback_confirm",
+			Template: "gates/QUALITY_GATE_ROLLBACK_CONFIRM",
+			Name:     "Rollback Confirmed",
+			Enabled:  true,
+		},
+		{
+			ID:       "commit",
+			Template: "gates/QUALITY_GATE_COMMIT",
+			Name:     "Commit",
+			Enabled:  true,
+		},
+	}
+}
+
 // GetGatesForPhaseType returns the appropriate quality gates for a phase type.
 // Defaults to implementation gates for unknown types.
 func GetGatesForPhaseType(phaseType string) []GateTask {
@@ -259,9 +285,8 @@ func GetGatesForPhaseType(phaseType string) []GateTask {
 		return ResearchGates()
 	case "review":
 		return ReviewGates()
-	case "deployment":
-		// Deployment phases typically don't need gates - empty slice
-		return []GateTask{}
+	case "action":
+		return ActionGates()
 	case "implementation":
 		return ImplementationGates()
 	default:

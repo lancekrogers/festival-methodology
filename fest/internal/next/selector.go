@@ -2,13 +2,16 @@
 package next
 
 import (
+	"bufio"
 	"context"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/deps"
+	"github.com/lancekrogers/festival-methodology/fest/internal/frontmatter"
 	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
 )
 
@@ -23,6 +26,9 @@ type NextTaskResult struct {
 	// Quality gate if one is blocking progress
 	BlockingGate *GateInfo `json:"blocking_gate,omitempty"`
 
+	// Planning phase info (when in a planning/research phase)
+	Planning *PlanningPhaseResult `json:"planning,omitempty"`
+
 	// Reason for the recommendation
 	Reason string `json:"reason"`
 
@@ -34,6 +40,30 @@ type NextTaskResult struct {
 
 	// Progress statistics
 	Progress *ProgressInfo `json:"progress,omitempty"`
+}
+
+// PlanningPhaseResult contains information for planning/research phases
+type PlanningPhaseResult struct {
+	PhaseName       string               `json:"phase_name"`
+	PhasePath       string               `json:"phase_path"`
+	PhaseType       string               `json:"phase_type"`
+	Objectives      []*PlanningObjective `json:"objectives"`
+	Progress        *PlanningProgress    `json:"progress"`
+	GraduationReady bool                 `json:"graduation_ready"`
+}
+
+// PlanningObjective represents a planning objective from PHASE_GOAL.md
+type PlanningObjective struct {
+	Category string `json:"category"` // "question", "decision", "artifact"
+	Text     string `json:"text"`
+	Resolved bool   `json:"resolved"`
+}
+
+// PlanningProgress contains progress info for planning objectives
+type PlanningProgress struct {
+	TotalObjectives    int     `json:"total_objectives"`
+	ResolvedObjectives int     `json:"resolved_objectives"`
+	Percentage         float64 `json:"percentage"`
 }
 
 // ProgressInfo contains festival progress statistics
@@ -103,6 +133,14 @@ func (s *Selector) FindNext(ctx context.Context, currentPath string) (*NextTaskR
 
 	// Determine current location
 	location := s.determineLocation(currentPath)
+
+	// Check if current phase is a planning/research phase
+	if location.PhasePath != "" {
+		phaseType, err := s.getPhaseType(location.PhasePath)
+		if err == nil && isPlanningPhaseType(phaseType) {
+			return s.findNextPlanning(ctx, location, phaseType)
+		}
+	}
 
 	// Get all ready tasks (those with all dependencies satisfied)
 	readyTasks := graph.GetReadyTasks()
@@ -491,4 +529,155 @@ func isNumberedDir(name string) bool {
 		return false
 	}
 	return name[0] >= '0' && name[0] <= '9'
+}
+
+// getPhaseType reads the phase type from PHASE_GOAL.md frontmatter
+func (s *Selector) getPhaseType(phasePath string) (frontmatter.PhaseType, error) {
+	goalPath := filepath.Join(phasePath, "PHASE_GOAL.md")
+	content, err := os.ReadFile(goalPath)
+	if err != nil {
+		return "", err
+	}
+
+	fm, _, err := frontmatter.Parse(content)
+	if err != nil {
+		return "", err
+	}
+
+	if fm == nil || fm.PhaseType == "" {
+		return frontmatter.PhaseTypeImplementation, nil
+	}
+	return fm.PhaseType, nil
+}
+
+// isPlanningPhaseType returns true if the phase type is planning or research
+func isPlanningPhaseType(phaseType frontmatter.PhaseType) bool {
+	return phaseType == frontmatter.PhaseTypePlanning ||
+		phaseType == frontmatter.PhaseTypeResearch
+}
+
+// findNextPlanning returns planning guidance for planning/research phases
+func (s *Selector) findNextPlanning(_ context.Context, location *LocationInfo, phaseType frontmatter.PhaseType) (*NextTaskResult, error) {
+	goalPath := filepath.Join(location.PhasePath, "PHASE_GOAL.md")
+
+	// Parse planning objectives from PHASE_GOAL.md
+	objectives, err := parsePlanningObjectives(goalPath)
+	if err != nil {
+		// Fall back to showing basic info if parsing fails
+		objectives = []*PlanningObjective{}
+	}
+
+	// Calculate progress
+	total := len(objectives)
+	resolved := 0
+	for _, obj := range objectives {
+		if obj.Resolved {
+			resolved++
+		}
+	}
+
+	percentage := 0.0
+	if total > 0 {
+		percentage = float64(resolved) / float64(total) * 100
+	}
+
+	planningResult := &PlanningPhaseResult{
+		PhaseName:  filepath.Base(location.PhasePath),
+		PhasePath:  location.PhasePath,
+		PhaseType:  string(phaseType),
+		Objectives: objectives,
+		Progress: &PlanningProgress{
+			TotalObjectives:    total,
+			ResolvedObjectives: resolved,
+			Percentage:         percentage,
+		},
+		GraduationReady: total > 0 && resolved == total,
+	}
+
+	reason := "Planning phase - review objectives and explore"
+	if planningResult.GraduationReady {
+		reason = "Planning complete! Run 'fest graduate' to generate implementation phase"
+	}
+
+	return &NextTaskResult{
+		Planning: planningResult,
+		Reason:   reason,
+		Location: location,
+	}, nil
+}
+
+// parsePlanningObjectives extracts planning objectives from PHASE_GOAL.md
+// Looks for markdown checkboxes in sections like "Questions to Answer", "Decisions to Make", "Artifacts to Produce"
+func parsePlanningObjectives(goalPath string) ([]*PlanningObjective, error) {
+	file, err := os.Open(goalPath)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = file.Close() }()
+
+	var objectives []*PlanningObjective
+	currentCategory := ""
+
+	// Regex patterns for detecting sections and checkboxes
+	sectionRegex := regexp.MustCompile(`^###?\s*(Questions?|Decisions?|Artifacts?|Objectives?)`)
+	checkboxRegex := regexp.MustCompile(`^[-*]\s*\[([ xX])\]\s*(.+)`)
+
+	scanner := bufio.NewScanner(file)
+	inPlanningSection := false
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Check for Planning Objectives header
+		if strings.Contains(strings.ToLower(line), "planning objectives") ||
+			strings.Contains(strings.ToLower(line), "objectives to achieve") {
+			inPlanningSection = true
+			continue
+		}
+
+		// Check for section headers
+		if matches := sectionRegex.FindStringSubmatch(line); len(matches) > 0 {
+			inPlanningSection = true
+			sectionName := strings.ToLower(matches[1])
+			if strings.HasPrefix(sectionName, "question") {
+				currentCategory = "question"
+			} else if strings.HasPrefix(sectionName, "decision") {
+				currentCategory = "decision"
+			} else if strings.HasPrefix(sectionName, "artifact") {
+				currentCategory = "artifact"
+			} else {
+				currentCategory = "objective"
+			}
+			continue
+		}
+
+		// Exit planning section on major headers
+		if strings.HasPrefix(line, "## ") && !strings.Contains(strings.ToLower(line), "planning") {
+			if !strings.Contains(strings.ToLower(line), "question") &&
+				!strings.Contains(strings.ToLower(line), "decision") &&
+				!strings.Contains(strings.ToLower(line), "artifact") &&
+				!strings.Contains(strings.ToLower(line), "objective") {
+				inPlanningSection = false
+			}
+		}
+
+		// Parse checkboxes if we're in a planning section
+		if inPlanningSection {
+			if matches := checkboxRegex.FindStringSubmatch(line); len(matches) > 0 {
+				resolved := matches[1] != " "
+				text := strings.TrimSpace(matches[2])
+				category := currentCategory
+				if category == "" {
+					category = "objective"
+				}
+				objectives = append(objectives, &PlanningObjective{
+					Category: category,
+					Text:     text,
+					Resolved: resolved,
+				})
+			}
+		}
+	}
+
+	return objectives, scanner.Err()
 }

@@ -193,3 +193,82 @@ func TestJSONMarshaling(t *testing.T) {
 		t.Error("Repository URL mismatch after marshal/unmarshal")
 	}
 }
+
+func TestTUIConfigDefaults(t *testing.T) {
+	cfg := DefaultConfig()
+
+	// VimMode should be false by default (opt-in)
+	if cfg.TUI.VimMode {
+		t.Error("VimMode should default to false")
+	}
+
+	// ExpandInputs should be true by default (good UX)
+	if !cfg.TUI.ExpandInputs {
+		t.Error("ExpandInputs should default to true")
+	}
+
+	// MaxInputHeight should default to 10
+	if cfg.TUI.MaxInputHeight != 10 {
+		t.Errorf("MaxInputHeight should default to 10, got %d", cfg.TUI.MaxInputHeight)
+	}
+}
+
+func TestTUIConfigApplyDefaults(t *testing.T) {
+	// Create config with zero values for TUI
+	cfg := &Config{
+		Version: "test",
+		TUI: TUI{
+			VimMode:        false,
+			ExpandInputs:   false,
+			MaxInputHeight: 0, // Should be defaulted to 10
+		},
+	}
+
+	applyDefaults(cfg)
+
+	// MaxInputHeight should be set to default when 0
+	if cfg.TUI.MaxInputHeight != 10 {
+		t.Errorf("MaxInputHeight should default to 10 when 0, got %d", cfg.TUI.MaxInputHeight)
+	}
+
+	// Explicit false values should be preserved (not overwritten)
+	// VimMode=false is intentional opt-out
+	// ExpandInputs=false is intentional opt-out
+}
+
+func TestTUIConfigSaveAndLoad(t *testing.T) {
+	ctx := context.Background()
+	tmpDir := t.TempDir()
+	os.Setenv("FEST_CONFIG_DIR", tmpDir)
+	defer os.Unsetenv("FEST_CONFIG_DIR")
+
+	// Create config with TUI settings
+	original := DefaultConfig()
+	original.TUI.VimMode = true
+	original.TUI.ExpandInputs = false
+	original.TUI.MaxInputHeight = 20
+
+	// Save config
+	if err := Save(ctx, original); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	// Load config
+	loaded, err := Load(ctx, "")
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+
+	// Verify TUI settings
+	if loaded.TUI.VimMode != original.TUI.VimMode {
+		t.Errorf("VimMode mismatch: got %v, want %v", loaded.TUI.VimMode, original.TUI.VimMode)
+	}
+
+	if loaded.TUI.ExpandInputs != original.TUI.ExpandInputs {
+		t.Errorf("ExpandInputs mismatch: got %v, want %v", loaded.TUI.ExpandInputs, original.TUI.ExpandInputs)
+	}
+
+	if loaded.TUI.MaxInputHeight != original.TUI.MaxInputHeight {
+		t.Errorf("MaxInputHeight mismatch: got %d, want %d", loaded.TUI.MaxInputHeight, original.TUI.MaxInputHeight)
+	}
+}

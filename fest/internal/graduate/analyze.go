@@ -104,6 +104,8 @@ func (a *Analyzer) scanTopics(phasePath string) ([]TopicDirectory, int, error) {
 }
 
 // findDocuments finds all markdown documents in a directory.
+// Excludes goal files (PHASE_GOAL.md, SEQUENCE_GOAL.md, *_GOAL.md) as these
+// are metadata files, not planning documents.
 func (a *Analyzer) findDocuments(dirPath string) ([]string, error) {
 	var docs []string
 
@@ -116,12 +118,34 @@ func (a *Analyzer) findDocuments(dirPath string) ([]string, error) {
 		if entry.IsDir() {
 			continue
 		}
-		if strings.HasSuffix(entry.Name(), ".md") {
-			docs = append(docs, entry.Name())
+		name := entry.Name()
+		if !strings.HasSuffix(name, ".md") {
+			continue
 		}
+		// Filter out goal files - these are metadata, not planning content
+		if isGoalFile(name) {
+			continue
+		}
+		docs = append(docs, name)
 	}
 
 	return docs, nil
+}
+
+// isGoalFile returns true if the filename matches a goal file pattern.
+// Goal files include PHASE_GOAL.md, SEQUENCE_GOAL.md, FESTIVAL_GOAL.md,
+// and any file ending in _GOAL.md.
+func isGoalFile(filename string) bool {
+	upper := strings.ToUpper(filename)
+	// Exact matches
+	if upper == "PHASE_GOAL.MD" || upper == "SEQUENCE_GOAL.MD" || upper == "FESTIVAL_GOAL.MD" {
+		return true
+	}
+	// Pattern match: *_GOAL.md
+	if strings.HasSuffix(upper, "_GOAL.MD") {
+		return true
+	}
+	return false
 }
 
 // parseDecisions looks for ADRs in decisions/ directory.

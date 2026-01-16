@@ -45,6 +45,7 @@ func (m *Manager) UpdateProgress(ctx context.Context, taskID string, progress in
 	}
 
 	// Start tracking time on first progress update
+	// Use current time - we only track actual work time, not time since file creation
 	if task.StartedAt == nil {
 		now := time.Now().UTC()
 		task.StartedAt = &now
@@ -94,7 +95,8 @@ func (m *Manager) MarkComplete(ctx context.Context, taskID string) error {
 
 	now := time.Now().UTC()
 
-	// Set start time if not already set
+	// Set start time if not already set - use current time
+	// We track actual work time, not elapsed time since file creation
 	if task.StartedAt == nil {
 		task.StartedAt = &now
 	}
@@ -125,10 +127,10 @@ func (m *Manager) MarkInProgress(ctx context.Context, taskID string) error {
 		}
 	}
 
-	now := time.Now().UTC()
-
 	// Set start time if not already set
+	// For MarkInProgress, use current time (user explicitly starting work)
 	if task.StartedAt == nil {
+		now := time.Now().UTC()
 		task.StartedAt = &now
 	}
 

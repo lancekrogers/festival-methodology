@@ -12,6 +12,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/show"
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/tui"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	"github.com/lancekrogers/festival-methodology/fest/internal/progress"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/lancekrogers/festival-methodology/fest/internal/workspace"
 	"github.com/spf13/cobra"
@@ -65,6 +66,18 @@ func runStatusSet(ctx context.Context, cmd *cobra.Command, newStatus string, opt
 
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
+	// Check if a level-specific flag was provided
+	if opts.task != "" || opts.path != "" {
+		return handleTaskStatusSet(ctx, display, cwd, newStatus, opts)
+	}
+	if opts.sequence != "" {
+		return handleSequenceStatusSet(ctx, display, cwd, newStatus, opts)
+	}
+	if opts.phase != "" {
+		return handlePhaseStatusSet(ctx, display, cwd, newStatus, opts)
+	}
+
+	// No level flag - use original logic (festival level or context-aware)
 	// Resolve festival path (supports linked festivals via fest link)
 	festivalPath, err := shared.ResolveFestivalPath(cwd, "")
 
@@ -86,31 +99,100 @@ func runStatusSet(ctx context.Context, cmd *cobra.Command, newStatus string, opt
 	}
 
 	// Detect current location
-	loc, err := show.DetectCurrentLocation(ctx, festivalPath)
-	if err != nil {
-		return err
+	// Try cwd first (when inside festival), then fall back to festivalPath (when linked)
+	var loc *show.LocationInfo
+	loc, err = show.DetectCurrentLocation(ctx, cwd)
+	if err != nil || loc.Festival == nil {
+		// We might be in a linked project directory
+		// Fall back to festival root detection
+		loc, err = show.DetectCurrentLocation(ctx, festivalPath)
+		if err != nil {
+			return err
+		}
 	}
 
 	if loc.Festival == nil {
 		return errors.NotFound("festival")
 	}
 
-	// Determine entity type and validate status
-	entityType := EntityType(loc.Type)
-	if !isValidStatus(entityType, newStatus) {
-		validOptions := ValidStatuses[entityType]
-		return errors.Validation("invalid status").
-			WithField("status", newStatus).
-			WithField("valid_options", strings.Join(validOptions, ", "))
-	}
+	// Context-aware routing based on detected location
+	switch loc.Type {
+	case "task":
+		// In a task context - require explicit --task flag
+		// Task status is too granular for auto-detect
+		return showContextHint(display, opts, loc, newStatus, "task")
 
-	// Handle festival status changes (directory moves)
-	if loc.Type == "festival" {
+	case "sequence":
+		// Auto-detect sequence status
+		if !isValidStatus(EntitySequence, newStatus) {
+			validOptions := ValidStatuses[EntitySequence]
+			return errors.Validation("invalid status for sequence").
+				WithField("status", newStatus).
+				WithField("valid_options", strings.Join(validOptions, ", "))
+		}
+		// Route to sequence handler
+		opts.sequence = loc.Sequence
+		return handleSequenceStatusSet(ctx, display, cwd, newStatus, opts)
+
+	case "phase":
+		// Auto-detect phase status
+		if !isValidStatus(EntityPhase, newStatus) {
+			validOptions := ValidStatuses[EntityPhase]
+			return errors.Validation("invalid status for phase").
+				WithField("status", newStatus).
+				WithField("valid_options", strings.Join(validOptions, ", "))
+		}
+		// Route to phase handler
+		opts.phase = loc.Phase
+		return handlePhaseStatusSet(ctx, display, cwd, newStatus, opts)
+
+	case "festival":
+		// At festival root - validate festival status
+		if !isValidStatus(EntityFestival, newStatus) {
+			validOptions := ValidStatuses[EntityFestival]
+			return errors.Validation("invalid status for festival").
+				WithField("status", newStatus).
+				WithField("valid_options", strings.Join(validOptions, ", "))
+		}
 		return handleFestivalStatusChange(ctx, display, loc.Festival, newStatus, opts)
+
+	default:
+		// Unknown context - show help
+		return errors.Validation("unknown context").
+			WithField("type", loc.Type).
+			WithField("hint", "use --phase, --sequence, or --task to specify level")
+	}
+}
+
+// showContextHint shows a hint when in task context but no flag provided.
+func showContextHint(display *ui.UI, opts *statusOptions, loc *show.LocationInfo, newStatus, contextType string) error {
+	if opts.json {
+		result := map[string]interface{}{
+			"success":      false,
+			"context_type": contextType,
+			"hint":         "use --task flag to set task status explicitly",
+			"current_task": loc.Task,
+		}
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
+		return nil
 	}
 
-	// For other entities, update frontmatter (placeholder - needs frontmatter support)
-	return emitStatusSetPlaceholder(display, opts, loc.Type, newStatus)
+	fmt.Println(ui.Warning("Context Detection"))
+	fmt.Printf("%s %s\n", ui.Label("Current location"), ui.Dim(contextType))
+	if loc.Task != "" {
+		fmt.Printf("%s %s\n", ui.Label("Task"), ui.Dim(loc.Task))
+	}
+	fmt.Println()
+	fmt.Println(ui.Info("Task status requires explicit targeting:"))
+	fmt.Printf("  fest status set --task %s %s\n", loc.Task, newStatus)
+	fmt.Println()
+	fmt.Println(ui.Dim("Or to set a higher level:"))
+	fmt.Printf("  fest status set --sequence %s %s  # sequence status\n", loc.Sequence, newStatus)
+	fmt.Printf("  fest status set --phase %s %s       # phase status\n", loc.Phase, newStatus)
+
+	return nil
 }
 
 // selectFestivalForStatus opens an interactive selector for choosing a festival.
@@ -680,5 +762,469 @@ func emitStatusHistory(opts *statusOptions, festivalName string, history []map[s
 		}
 	}
 
+	return nil
+}
+
+// handleTaskStatusSet handles setting status for a specific task.
+func handleTaskStatusSet(ctx context.Context, display *ui.UI, cwd, newStatus string, opts *statusOptions) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled")
+	}
+
+	// Validate status for tasks
+	if !isValidStatus(EntityTask, newStatus) {
+		validOptions := ValidStatuses[EntityTask]
+		return errors.Validation("invalid status for task").
+			WithField("status", newStatus).
+			WithField("valid_options", strings.Join(validOptions, ", "))
+	}
+
+	// Resolve festival path
+	festivalPath, err := shared.ResolveFestivalPath(cwd, "")
+	if err != nil {
+		return errors.Wrap(err, "not inside a festival").
+			WithField("hint", "navigate to a festival directory or use 'fest link'")
+	}
+
+	// Determine task ID from flag
+	taskID := opts.task
+	if opts.path != "" {
+		taskID = opts.path
+	}
+
+	// Normalize task ID - resolve relative to festival
+	taskID, err = resolveTaskID(festivalPath, cwd, taskID)
+	if err != nil {
+		return err
+	}
+
+	// Create progress manager
+	mgr, err := progress.NewManager(ctx, festivalPath)
+	if err != nil {
+		return errors.Wrap(err, "creating progress manager")
+	}
+
+	// Get current status for display
+	currentTask, exists := mgr.GetTaskProgress(taskID)
+	currentStatus := "pending"
+	if exists {
+		currentStatus = string(currentTask.Status)
+	}
+
+	// Check if already at target status
+	if currentStatus == newStatus {
+		return emitTaskStatusAlready(display, opts, taskID, newStatus)
+	}
+
+	// Apply the status change based on target status
+	switch newStatus {
+	case "pending":
+		// Reset to pending - set progress to 0
+		if err := mgr.UpdateProgress(ctx, taskID, 0); err != nil {
+			return errors.Wrap(err, "resetting task status")
+		}
+	case "in_progress":
+		if err := mgr.MarkInProgress(ctx, taskID); err != nil {
+			return errors.Wrap(err, "marking task in progress")
+		}
+	case "blocked":
+		// For blocked, we need a message - use generic if not provided
+		if err := mgr.ReportBlocker(ctx, taskID, "Blocked via status set"); err != nil {
+			return errors.Wrap(err, "marking task blocked")
+		}
+	case "completed":
+		if err := mgr.MarkComplete(ctx, taskID); err != nil {
+			return errors.Wrap(err, "marking task complete")
+		}
+	}
+
+	return emitTaskStatusSuccess(display, opts, taskID, currentStatus, newStatus)
+}
+
+// resolveTaskID normalizes a task identifier to a festival-relative path.
+func resolveTaskID(festivalPath, cwd, taskInput string) (string, error) {
+	// If it's already a full path within the festival, extract relative part
+	if strings.HasPrefix(taskInput, festivalPath) {
+		return strings.TrimPrefix(taskInput, festivalPath+"/"), nil
+	}
+
+	// If it's a relative path starting with ./ or ../
+	if strings.HasPrefix(taskInput, "./") || strings.HasPrefix(taskInput, "../") {
+		absPath := filepath.Join(cwd, taskInput)
+		if strings.HasPrefix(absPath, festivalPath) {
+			return strings.TrimPrefix(absPath, festivalPath+"/"), nil
+		}
+		return "", errors.Validation("path is outside festival").
+			WithField("path", taskInput).
+			WithField("festival", festivalPath)
+	}
+
+	// If it looks like a phase/sequence/task path (e.g., 001/01/01_task.md)
+	if strings.Contains(taskInput, "/") || strings.HasSuffix(taskInput, ".md") {
+		// Verify it exists
+		fullPath := filepath.Join(festivalPath, taskInput)
+		if _, err := os.Stat(fullPath); err == nil {
+			return taskInput, nil
+		}
+	}
+
+	// Try to find in current directory context
+	// If cwd is within festival, try appending task name
+	if strings.HasPrefix(cwd, festivalPath) {
+		relCwd := strings.TrimPrefix(cwd, festivalPath+"/")
+		testPath := filepath.Join(relCwd, taskInput)
+		fullPath := filepath.Join(festivalPath, testPath)
+		if _, err := os.Stat(fullPath); err == nil {
+			return testPath, nil
+		}
+	}
+
+	// Finally, try searching for the task
+	return findTaskByName(festivalPath, taskInput)
+}
+
+// findTaskByName searches for a task file by name within a festival.
+func findTaskByName(festivalPath, taskName string) (string, error) {
+	var matches []string
+
+	err := filepath.Walk(festivalPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil // Skip errors
+		}
+
+		// Skip hidden directories
+		if info.IsDir() && strings.HasPrefix(info.Name(), ".") {
+			return filepath.SkipDir
+		}
+
+		// Check if this matches the task name
+		if !info.IsDir() && strings.HasSuffix(info.Name(), ".md") {
+			if info.Name() == taskName || strings.Contains(info.Name(), taskName) {
+				relPath := strings.TrimPrefix(path, festivalPath+"/")
+				matches = append(matches, relPath)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return "", errors.Wrap(err, "searching for task")
+	}
+
+	if len(matches) == 0 {
+		return "", errors.NotFound("task").
+			WithField("name", taskName).
+			WithField("hint", "use full path like '001/01/01_task.md'")
+	}
+
+	if len(matches) > 1 {
+		return "", errors.Validation("ambiguous task name").
+			WithField("name", taskName).
+			WithField("matches", strings.Join(matches, ", ")).
+			WithField("hint", "use full path to disambiguate")
+	}
+
+	return matches[0], nil
+}
+
+// emitTaskStatusAlready outputs message when task is already at the requested status.
+func emitTaskStatusAlready(display *ui.UI, opts *statusOptions, taskID, status string) error {
+	if opts.json {
+		result := map[string]interface{}{
+			"success": true,
+			"message": "task already at requested status",
+			"task":    taskID,
+			"status":  status,
+		}
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
+	} else {
+		fmt.Printf("%s %s\n", ui.Info("Task already at status"), ui.GetStateStyle(status).Render(status))
+		fmt.Printf("%s %s\n", ui.Label("Task"), ui.Dim(taskID))
+	}
+	return nil
+}
+
+// emitTaskStatusSuccess outputs success message after changing task status.
+func emitTaskStatusSuccess(display *ui.UI, opts *statusOptions, taskID, oldStatus, newStatus string) error {
+	if opts.json {
+		result := map[string]interface{}{
+			"success":    true,
+			"task":       taskID,
+			"old_status": oldStatus,
+			"new_status": newStatus,
+		}
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
+	} else {
+		fmt.Println(ui.Success("✓ Task status updated"))
+		fmt.Printf("%s %s\n", ui.Label("Task"), ui.Dim(taskID))
+		fmt.Printf("%s %s\n", ui.Label("From"), ui.GetStateStyle(oldStatus).Render(oldStatus))
+		fmt.Printf("%s %s\n", ui.Label("To"), ui.GetStateStyle(newStatus).Render(newStatus))
+	}
+	return nil
+}
+
+// handlePhaseStatusSet handles setting status for a specific phase.
+func handlePhaseStatusSet(ctx context.Context, display *ui.UI, cwd, newStatus string, opts *statusOptions) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled")
+	}
+
+	// Validate status for phases
+	if !isValidStatus(EntityPhase, newStatus) {
+		validOptions := ValidStatuses[EntityPhase]
+		return errors.Validation("invalid status for phase").
+			WithField("status", newStatus).
+			WithField("valid_options", strings.Join(validOptions, ", "))
+	}
+
+	// Resolve festival path
+	festivalPath, err := shared.ResolveFestivalPath(cwd, "")
+	if err != nil {
+		return errors.Wrap(err, "not inside a festival").
+			WithField("hint", "navigate to a festival directory or use 'fest link'")
+	}
+
+	// Find the phase directory
+	phasePath, phaseName, err := resolvePhase(festivalPath, opts.phase)
+	if err != nil {
+		return err
+	}
+
+	// Phase status is stored in PHASE_GOAL.md frontmatter
+	// For now, emit a placeholder until frontmatter editing is implemented
+	_ = phasePath
+	return emitPhaseStatusPlaceholder(display, opts, phaseName, newStatus)
+}
+
+// resolvePhase finds a phase directory by name or number.
+func resolvePhase(festivalPath, phaseInput string) (string, string, error) {
+	entries, err := os.ReadDir(festivalPath)
+	if err != nil {
+		return "", "", errors.IO("reading festival directory", err)
+	}
+
+	var matches []string
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		// Skip hidden and metadata directories
+		if strings.HasPrefix(name, ".") {
+			continue
+		}
+		// Check for phase match (by prefix number or full name)
+		if strings.HasPrefix(name, phaseInput) || name == phaseInput {
+			matches = append(matches, name)
+		}
+	}
+
+	if len(matches) == 0 {
+		return "", "", errors.NotFound("phase").
+			WithField("input", phaseInput).
+			WithField("hint", "use phase number like '001' or full name like '001_CRITICAL'")
+	}
+
+	if len(matches) > 1 {
+		return "", "", errors.Validation("ambiguous phase").
+			WithField("input", phaseInput).
+			WithField("matches", strings.Join(matches, ", "))
+	}
+
+	return filepath.Join(festivalPath, matches[0]), matches[0], nil
+}
+
+// emitPhaseStatusPlaceholder outputs a placeholder for phase status changes.
+func emitPhaseStatusPlaceholder(display *ui.UI, opts *statusOptions, phaseName, newStatus string) error {
+	if opts.json {
+		result := map[string]interface{}{
+			"success":    true,
+			"phase":      phaseName,
+			"new_status": newStatus,
+			"note":       "phase status in frontmatter - implementation pending",
+		}
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
+	} else {
+		fmt.Println(ui.H1("Phase Status"))
+		fmt.Printf("%s %s\n", ui.Label("Phase"), ui.Value(phaseName, ui.PhaseColor))
+		fmt.Printf("%s %s\n", ui.Label("Target"), ui.GetStateStyle(newStatus).Render(newStatus))
+		fmt.Println(ui.Dim("Phase status stored in PHASE_GOAL.md frontmatter"))
+		fmt.Println(ui.Dim("Frontmatter editing pending implementation"))
+	}
+	return nil
+}
+
+// handleSequenceStatusSet handles setting status for a specific sequence.
+func handleSequenceStatusSet(ctx context.Context, display *ui.UI, cwd, newStatus string, opts *statusOptions) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled")
+	}
+
+	// Validate status for sequences
+	if !isValidStatus(EntitySequence, newStatus) {
+		validOptions := ValidStatuses[EntitySequence]
+		return errors.Validation("invalid status for sequence").
+			WithField("status", newStatus).
+			WithField("valid_options", strings.Join(validOptions, ", "))
+	}
+
+	// Resolve festival path
+	festivalPath, err := shared.ResolveFestivalPath(cwd, "")
+	if err != nil {
+		return errors.Wrap(err, "not inside a festival").
+			WithField("hint", "navigate to a festival directory or use 'fest link'")
+	}
+
+	// Find the sequence directory
+	seqPath, seqName, err := resolveSequence(festivalPath, cwd, opts.sequence)
+	if err != nil {
+		return err
+	}
+
+	// Sequence status is stored in SEQUENCE_GOAL.md frontmatter
+	// For now, emit a placeholder until frontmatter editing is implemented
+	_ = seqPath
+	return emitSequenceStatusPlaceholder(display, opts, seqName, newStatus)
+}
+
+// resolveSequence finds a sequence directory by name or path.
+func resolveSequence(festivalPath, cwd, seqInput string) (string, string, error) {
+	// If input contains a slash, treat as phase/sequence path
+	if strings.Contains(seqInput, "/") {
+		parts := strings.SplitN(seqInput, "/", 2)
+		phasePath, phaseName, err := resolvePhase(festivalPath, parts[0])
+		if err != nil {
+			return "", "", err
+		}
+		seqPath, seqName, err := findSequenceInPhase(phasePath, parts[1])
+		if err != nil {
+			return "", "", err
+		}
+		return seqPath, phaseName + "/" + seqName, nil
+	}
+
+	// Otherwise, search in current phase context or all phases
+	// First check if we're in a phase directory
+	if strings.HasPrefix(cwd, festivalPath) {
+		relPath := strings.TrimPrefix(cwd, festivalPath+"/")
+		parts := strings.Split(relPath, "/")
+		if len(parts) >= 1 {
+			// Try to find sequence in current phase
+			phasePath := filepath.Join(festivalPath, parts[0])
+			seqPath, seqName, err := findSequenceInPhase(phasePath, seqInput)
+			if err == nil {
+				return seqPath, parts[0] + "/" + seqName, nil
+			}
+		}
+	}
+
+	// Search all phases for the sequence
+	return findSequenceGlobally(festivalPath, seqInput)
+}
+
+// findSequenceInPhase finds a sequence within a specific phase.
+func findSequenceInPhase(phasePath, seqInput string) (string, string, error) {
+	entries, err := os.ReadDir(phasePath)
+	if err != nil {
+		return "", "", errors.IO("reading phase directory", err)
+	}
+
+	var matches []string
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if strings.HasPrefix(name, ".") {
+			continue
+		}
+		if strings.HasPrefix(name, seqInput) || name == seqInput {
+			matches = append(matches, name)
+		}
+	}
+
+	if len(matches) == 0 {
+		return "", "", errors.NotFound("sequence in phase").
+			WithField("input", seqInput)
+	}
+
+	if len(matches) > 1 {
+		return "", "", errors.Validation("ambiguous sequence").
+			WithField("input", seqInput).
+			WithField("matches", strings.Join(matches, ", "))
+	}
+
+	return filepath.Join(phasePath, matches[0]), matches[0], nil
+}
+
+// findSequenceGlobally searches all phases for a sequence.
+func findSequenceGlobally(festivalPath, seqInput string) (string, string, error) {
+	phases, err := os.ReadDir(festivalPath)
+	if err != nil {
+		return "", "", errors.IO("reading festival directory", err)
+	}
+
+	var matches []string
+	for _, phase := range phases {
+		if !phase.IsDir() || strings.HasPrefix(phase.Name(), ".") {
+			continue
+		}
+		phasePath := filepath.Join(festivalPath, phase.Name())
+		sequences, err := os.ReadDir(phasePath)
+		if err != nil {
+			continue
+		}
+		for _, seq := range sequences {
+			if !seq.IsDir() || strings.HasPrefix(seq.Name(), ".") {
+				continue
+			}
+			if strings.HasPrefix(seq.Name(), seqInput) || seq.Name() == seqInput {
+				matches = append(matches, phase.Name()+"/"+seq.Name())
+			}
+		}
+	}
+
+	if len(matches) == 0 {
+		return "", "", errors.NotFound("sequence").
+			WithField("input", seqInput).
+			WithField("hint", "use phase/sequence format like '001/01_api_design'")
+	}
+
+	if len(matches) > 1 {
+		return "", "", errors.Validation("ambiguous sequence").
+			WithField("input", seqInput).
+			WithField("matches", strings.Join(matches, ", ")).
+			WithField("hint", "use phase/sequence format to disambiguate")
+	}
+
+	parts := strings.SplitN(matches[0], "/", 2)
+	return filepath.Join(festivalPath, parts[0], parts[1]), matches[0], nil
+}
+
+// emitSequenceStatusPlaceholder outputs a placeholder for sequence status changes.
+func emitSequenceStatusPlaceholder(display *ui.UI, opts *statusOptions, seqName, newStatus string) error {
+	if opts.json {
+		result := map[string]interface{}{
+			"success":    true,
+			"sequence":   seqName,
+			"new_status": newStatus,
+			"note":       "sequence status in frontmatter - implementation pending",
+		}
+		if err := shared.EncodeJSON(os.Stdout, result); err != nil {
+			return errors.Wrap(err, "encoding JSON output")
+		}
+	} else {
+		fmt.Println(ui.H1("Sequence Status"))
+		fmt.Printf("%s %s\n", ui.Label("Sequence"), ui.Value(seqName, ui.SequenceColor))
+		fmt.Printf("%s %s\n", ui.Label("Target"), ui.GetStateStyle(newStatus).Render(newStatus))
+		fmt.Println(ui.Dim("Sequence status stored in SEQUENCE_GOAL.md frontmatter"))
+		fmt.Println(ui.Dim("Frontmatter editing pending implementation"))
+	}
 	return nil
 }

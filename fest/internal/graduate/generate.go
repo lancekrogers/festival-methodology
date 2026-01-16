@@ -3,6 +3,7 @@ package graduate
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -70,6 +71,17 @@ func (g *Generator) Generate(ctx context.Context, source *PlanningSource) (*Grad
 	// Map topics to sequences
 	sequences, warnings := g.mapTopicsToSequences(source)
 	plan.Sequences = sequences
+
+	// Add collision warning if applicable
+	if plan.Target.CollisionDetected {
+		collisionWarning := fmt.Sprintf(
+			"Phase %03d already exists (%s). Suggesting %03d instead.",
+			plan.Target.OriginalNumber,
+			plan.Target.ExistingPhase,
+			plan.Target.Number,
+		)
+		warnings = append([]string{collisionWarning}, warnings...)
+	}
 	plan.Warnings = warnings
 
 	// Calculate confidence
@@ -79,17 +91,85 @@ func (g *Generator) Generate(ctx context.Context, source *PlanningSource) (*Grad
 }
 
 // determineTarget determines the implementation phase target.
+// It checks for existing phases and adjusts the target number to avoid collisions.
 func (g *Generator) determineTarget(source *PlanningSource) ImplementationTarget {
 	// Extract phase number from source
 	sourceNum := extractPhaseNumber(source.PhaseName)
 	targetNum := sourceNum + 1
 
+	// Scan for existing phases to detect collisions
+	existingPhases := g.scanExistingPhases()
+
+	// Check for collision and find next available number
+	originalNum := targetNum
+	existingName := ""
+	collisionDetected := false
+
+	if name, exists := existingPhases[targetNum]; exists {
+		collisionDetected = true
+		existingName = name
+		// Find next available number
+		targetNum = g.findNextAvailablePhaseNumber(existingPhases, targetNum)
+	}
+
 	targetName := fmt.Sprintf("%03d_IMPLEMENTATION", targetNum)
 
 	return ImplementationTarget{
-		Path:      filepath.Join(g.festivalPath, targetName),
-		PhaseName: targetName,
-		Number:    targetNum,
+		Path:              filepath.Join(g.festivalPath, targetName),
+		PhaseName:         targetName,
+		Number:            targetNum,
+		CollisionDetected: collisionDetected,
+		OriginalNumber:    originalNum,
+		ExistingPhase:     existingName,
+	}
+}
+
+// scanExistingPhases scans the festival directory for existing phases.
+// Returns a map of phase number -> phase name.
+func (g *Generator) scanExistingPhases() map[int]string {
+	phases := make(map[int]string)
+
+	entries, err := os.ReadDir(g.festivalPath)
+	if err != nil {
+		return phases
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		// Skip hidden directories
+		if strings.HasPrefix(name, ".") {
+			continue
+		}
+		// Skip directories that don't start with a digit (not a phase)
+		if len(name) == 0 || name[0] < '0' || name[0] > '9' {
+			continue
+		}
+
+		// Extract phase number from directory name
+		num := extractPhaseNumber(name)
+		if num > 0 {
+			phases[num] = name
+		}
+	}
+
+	return phases
+}
+
+// findNextAvailablePhaseNumber finds the next available phase number starting from targetNum.
+func (g *Generator) findNextAvailablePhaseNumber(existingPhases map[int]string, startNum int) int {
+	nextNum := startNum
+	for {
+		if _, exists := existingPhases[nextNum]; !exists {
+			return nextNum
+		}
+		nextNum++
+		// Safety limit to prevent infinite loop
+		if nextNum > 999 {
+			return nextNum
+		}
 	}
 }
 
@@ -208,9 +288,13 @@ func (g *Generator) generateTasks(topic TopicDirectory) []ProposedTask {
 		taskName = cleanRe.ReplaceAllString(taskName, "_")
 		taskName = strings.Trim(taskName, "_")
 
+		// Try to extract objective from document content
+		docPath := filepath.Join(topic.Path, doc)
+		objective := g.extractObjectiveFromDoc(docPath, taskName)
+
 		task := ProposedTask{
 			Name:       taskName,
-			Objective:  fmt.Sprintf("Implement %s as specified in planning", taskName),
+			Objective:  objective,
 			SourceDocs: []string{filepath.Join(topic.Name, doc)},
 		}
 		tasks = append(tasks, task)
@@ -255,6 +339,93 @@ func (g *Generator) calculateConfidence(source *PlanningSource, sequences []Prop
 	}
 
 	return confidence
+}
+
+// extractObjectiveFromDoc attempts to extract a meaningful objective from a planning document.
+// It looks for sections like "Objective", "Goal", "Purpose", or extracts from the first
+// paragraph or key bullet points. Falls back to a generic objective if extraction fails.
+func (g *Generator) extractObjectiveFromDoc(docPath, taskName string) string {
+	content, err := os.ReadFile(docPath)
+	if err != nil {
+		return fmt.Sprintf("Implement %s as specified in planning", taskName)
+	}
+
+	text := string(content)
+
+	// Try to extract from common objective sections
+	objectivePatterns := []string{
+		// Match "## Objective" or "## Goal" section (first line after heading)
+		`(?mi)^##\s*(?:Objective|Goal|Purpose)\s*\n+([^\n#]+)`,
+		// Match "**Objective:**" or "**Goal:**" inline format
+		`(?mi)\*\*(?:Objective|Goal|Purpose):\*\*\s*([^\n]+)`,
+		// Match "> Objective:" or "> Goal:" blockquote format
+		`(?m)^>\s*(?:Objective|Goal|Purpose):\s*([^\n]+)`,
+	}
+
+	for _, pattern := range objectivePatterns {
+		re := regexp.MustCompile(pattern)
+		if matches := re.FindStringSubmatch(text); len(matches) > 1 {
+			objective := strings.TrimSpace(matches[1])
+			if objective != "" && len(objective) > 10 {
+				return cleanObjective(objective)
+			}
+		}
+	}
+
+	// Try to extract from first heading (after the title)
+	titleRe := regexp.MustCompile(`(?m)^#\s+([^\n]+)`)
+	if matches := titleRe.FindStringSubmatch(text); len(matches) > 1 {
+		title := strings.TrimSpace(matches[1])
+		// If title contains a colon, use what's after it
+		if idx := strings.Index(title, ":"); idx > 0 && idx < len(title)-1 {
+			after := strings.TrimSpace(title[idx+1:])
+			if len(after) > 10 {
+				return cleanObjective(after)
+			}
+		}
+		// Otherwise use the title directly if it's descriptive
+		if len(title) > 15 && !strings.HasPrefix(strings.ToLower(title), "adr-") {
+			return cleanObjective("Implement " + strings.ToLower(title))
+		}
+	}
+
+	// Try to extract first meaningful bullet point from Requirements or Deliverables
+	bulletPatterns := []string{
+		`(?mi)^##\s*(?:Requirements|Deliverables|Features)\s*\n+\s*[-*]\s+([^\n]+)`,
+	}
+
+	for _, pattern := range bulletPatterns {
+		re := regexp.MustCompile(pattern)
+		if matches := re.FindStringSubmatch(text); len(matches) > 1 {
+			bullet := strings.TrimSpace(matches[1])
+			if bullet != "" && len(bullet) > 10 {
+				return cleanObjective(bullet)
+			}
+		}
+	}
+
+	// Fallback to generic objective
+	return fmt.Sprintf("Implement %s as specified in planning", taskName)
+}
+
+// cleanObjective cleans up an extracted objective string.
+func cleanObjective(s string) string {
+	// Remove markdown formatting
+	s = regexp.MustCompile(`\*+`).ReplaceAllString(s, "")
+	s = regexp.MustCompile("`+").ReplaceAllString(s, "")
+	s = strings.TrimSpace(s)
+
+	// Ensure it starts with a capital letter
+	if len(s) > 0 && s[0] >= 'a' && s[0] <= 'z' {
+		s = strings.ToUpper(string(s[0])) + s[1:]
+	}
+
+	// Truncate if too long
+	if len(s) > 150 {
+		s = s[:147] + "..."
+	}
+
+	return s
 }
 
 // Helper functions

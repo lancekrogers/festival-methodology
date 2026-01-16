@@ -17,6 +17,7 @@ const (
 type FestivalConfig struct {
 	Version          string             `yaml:"version"`
 	Metadata         FestivalMetadata   `yaml:"metadata,omitempty"`
+	ProjectPath      string             `yaml:"project_path,omitempty"` // Path to linked project directory
 	QualityGates     QualityGatesConfig `yaml:"quality_gates"`
 	ExcludedPatterns []string           `yaml:"excluded_patterns"`
 	Templates        TemplatePrefs      `yaml:"templates"`

@@ -1,10 +1,12 @@
 package status
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
@@ -227,7 +229,153 @@ func emitFreeformPhaseProgress(loc *show.LocationInfo) error {
 		fmt.Printf("  %s %s\n", status, d.name)
 	}
 
+	// Parse and display planning objectives from PHASE_GOAL.md
+	goalPath := filepath.Join(phasePath, "PHASE_GOAL.md")
+	objectives, err := parsePlanningObjectives(goalPath)
+	if err == nil && len(objectives) > 0 {
+		resolved := 0
+		for _, obj := range objectives {
+			if obj.resolved {
+				resolved++
+			}
+		}
+		percentage := float64(resolved) / float64(len(objectives)) * 100
+
+		fmt.Printf("\n%s\n", ui.H2("Planning Objectives"))
+		fmt.Printf("%s %s %s\n",
+			ui.Label("Progress"),
+			ui.Value(fmt.Sprintf("%.0f%%", percentage)),
+			ui.Dim(fmt.Sprintf("(%d/%d resolved)", resolved, len(objectives))))
+
+		// Group objectives by category
+		categories := map[string][]*planningObjective{
+			"question":  {},
+			"decision":  {},
+			"artifact":  {},
+			"objective": {},
+		}
+		for _, obj := range objectives {
+			categories[obj.category] = append(categories[obj.category], obj)
+		}
+
+		// Display each category
+		categoryLabels := []struct {
+			key   string
+			label string
+		}{
+			{"question", "Questions to Answer"},
+			{"decision", "Decisions to Make"},
+			{"artifact", "Artifacts to Produce"},
+			{"objective", "Objectives"},
+		}
+
+		for _, cat := range categoryLabels {
+			objs := categories[cat.key]
+			if len(objs) == 0 {
+				continue
+			}
+			fmt.Printf("\n%s\n", ui.Label(cat.label))
+			for _, obj := range objs {
+				icon := "○"
+				if obj.resolved {
+					icon = "●"
+				}
+				fmt.Printf("  %s %s\n", icon, obj.text)
+			}
+		}
+
+		// Graduation prompt when 100% complete
+		if resolved == len(objectives) {
+			fmt.Printf("\n%s\n", ui.Success("All planning objectives resolved!"))
+			fmt.Printf("%s Run %s to transition to implementation\n",
+				ui.Label("Next"),
+				ui.Info("fest graduate"))
+		}
+	}
+
 	return nil
+}
+
+// planningObjective represents a parsed objective from PHASE_GOAL.md
+type planningObjective struct {
+	category string
+	text     string
+	resolved bool
+}
+
+// parsePlanningObjectives extracts objectives from PHASE_GOAL.md
+func parsePlanningObjectives(goalPath string) ([]*planningObjective, error) {
+	file, err := os.Open(goalPath)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = file.Close() }()
+
+	var objectives []*planningObjective
+	currentCategory := ""
+
+	// Regex patterns for detecting sections and checkboxes
+	sectionRegex := regexp.MustCompile(`^###?\s*(Questions?|Decisions?|Artifacts?|Objectives?)`)
+	checkboxRegex := regexp.MustCompile(`^[-*]\s*\[([ xX])\]\s*(.+)`)
+
+	scanner := bufio.NewScanner(file)
+	inPlanningSection := false
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Check for Planning Objectives header
+		if strings.Contains(strings.ToLower(line), "planning objectives") ||
+			strings.Contains(strings.ToLower(line), "objectives to achieve") {
+			inPlanningSection = true
+			continue
+		}
+
+		// Check for section headers
+		if matches := sectionRegex.FindStringSubmatch(line); len(matches) > 0 {
+			inPlanningSection = true
+			sectionName := strings.ToLower(matches[1])
+			if strings.HasPrefix(sectionName, "question") {
+				currentCategory = "question"
+			} else if strings.HasPrefix(sectionName, "decision") {
+				currentCategory = "decision"
+			} else if strings.HasPrefix(sectionName, "artifact") {
+				currentCategory = "artifact"
+			} else {
+				currentCategory = "objective"
+			}
+			continue
+		}
+
+		// Exit planning section on major headers
+		if strings.HasPrefix(line, "## ") && !strings.Contains(strings.ToLower(line), "planning") {
+			if !strings.Contains(strings.ToLower(line), "question") &&
+				!strings.Contains(strings.ToLower(line), "decision") &&
+				!strings.Contains(strings.ToLower(line), "artifact") &&
+				!strings.Contains(strings.ToLower(line), "objective") {
+				inPlanningSection = false
+			}
+		}
+
+		// Parse checkboxes
+		if inPlanningSection || currentCategory != "" {
+			if matches := checkboxRegex.FindStringSubmatch(line); len(matches) > 0 {
+				resolved := matches[1] == "x" || matches[1] == "X"
+				text := strings.TrimSpace(matches[2])
+				category := currentCategory
+				if category == "" {
+					category = "objective"
+				}
+				objectives = append(objectives, &planningObjective{
+					category: category,
+					text:     text,
+					resolved: resolved,
+				})
+			}
+		}
+	}
+
+	return objectives, scanner.Err()
 }
 
 func emitSequenceProgress(ctx context.Context, loc *show.LocationInfo) error {

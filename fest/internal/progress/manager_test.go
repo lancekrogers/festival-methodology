@@ -2,7 +2,10 @@ package progress
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestManager_UpdateProgress(t *testing.T) {
@@ -209,5 +212,89 @@ func TestManager_MarkInProgress(t *testing.T) {
 
 	if task.StartedAt == nil {
 		t.Error("StartedAt should be set")
+	}
+}
+
+func TestManager_MarkComplete_UsesCurrentTime(t *testing.T) {
+	ctx := context.Background()
+	tmpDir := t.TempDir()
+
+	// Create a task file (modification time doesn't matter anymore)
+	taskPath := filepath.Join(tmpDir, "01_test.md")
+	if err := os.WriteFile(taskPath, []byte("# Test Task\n"), 0644); err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+
+	// Set modification time to 10 minutes ago (should be ignored)
+	oldTime := time.Now().Add(-10 * time.Minute)
+	if err := os.Chtimes(taskPath, oldTime, oldTime); err != nil {
+		t.Fatalf("Failed to set file mod time: %v", err)
+	}
+
+	beforeCall := time.Now().UTC()
+
+	mgr, err := NewManager(ctx, tmpDir)
+	if err != nil {
+		t.Fatalf("NewManager() error = %v", err)
+	}
+
+	// Mark complete directly without prior MarkInProgress
+	err = mgr.MarkComplete(ctx, "01_test.md")
+	if err != nil {
+		t.Fatalf("MarkComplete() error = %v", err)
+	}
+
+	afterCall := time.Now().UTC()
+
+	task, _ := mgr.GetTaskProgress("01_test.md")
+
+	// TimeSpentMinutes should be 0 (or very close) since start and complete happen together
+	// We track actual work time, not elapsed time since file creation
+	if task.TimeSpentMinutes > 1 {
+		t.Errorf("TimeSpentMinutes = %d, want 0 (no actual work time tracked)", task.TimeSpentMinutes)
+	}
+
+	// StartedAt should be close to current time, NOT the file modification time
+	if task.StartedAt == nil {
+		t.Fatal("StartedAt should be set")
+	}
+
+	if task.StartedAt.Before(beforeCall.Add(-time.Second)) || task.StartedAt.After(afterCall.Add(time.Second)) {
+		t.Errorf("StartedAt = %v, expected between %v and %v (current time, not file mod time)", task.StartedAt, beforeCall, afterCall)
+	}
+}
+
+func TestManager_MarkComplete_PreservesExistingStartTime(t *testing.T) {
+	ctx := context.Background()
+	tmpDir := t.TempDir()
+
+	mgr, err := NewManager(ctx, tmpDir)
+	if err != nil {
+		t.Fatalf("NewManager() error = %v", err)
+	}
+
+	// First mark in progress (sets StartedAt to current time)
+	err = mgr.MarkInProgress(ctx, "01_test.md")
+	if err != nil {
+		t.Fatalf("MarkInProgress() error = %v", err)
+	}
+
+	task, _ := mgr.GetTaskProgress("01_test.md")
+	originalStartedAt := *task.StartedAt
+
+	// Wait a moment to ensure time difference
+	time.Sleep(10 * time.Millisecond)
+
+	// Now mark complete
+	err = mgr.MarkComplete(ctx, "01_test.md")
+	if err != nil {
+		t.Fatalf("MarkComplete() error = %v", err)
+	}
+
+	task, _ = mgr.GetTaskProgress("01_test.md")
+
+	// StartedAt should NOT have changed
+	if !task.StartedAt.Equal(originalStartedAt) {
+		t.Errorf("StartedAt changed from %v to %v, should be preserved", originalStartedAt, task.StartedAt)
 	}
 }
