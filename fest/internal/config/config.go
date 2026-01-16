@@ -33,6 +33,7 @@ type Config struct {
 	Local      Local      `json:"local"`
 	Behavior   Behavior   `json:"behavior"`
 	Network    Network    `json:"network"`
+	TUI        TUI        `json:"tui"`
 	LastSync   string     `json:"last_sync,omitempty"`
 }
 
@@ -66,6 +67,13 @@ type Network struct {
 	Timeout    int `json:"timeout"`
 	RetryCount int `json:"retry_count"`
 	RetryDelay int `json:"retry_delay"`
+}
+
+// TUI contains terminal user interface configuration
+type TUI struct {
+	VimMode        bool `json:"vim_mode"`         // Enable vim-style keybindings in TUI inputs
+	ExpandInputs   bool `json:"expand_inputs"`    // Auto-expand text areas as content grows
+	MaxInputHeight int  `json:"max_input_height"` // Maximum height for expandable inputs (lines)
 }
 
 // ConfigDir returns the configuration directory path
@@ -173,6 +181,11 @@ func DefaultConfig() *Config {
 			RetryCount: 3,
 			RetryDelay: 1,
 		},
+		TUI: TUI{
+			VimMode:        false, // Opt-in to avoid breaking existing workflows
+			ExpandInputs:   true,  // Good UX default
+			MaxInputHeight: 10,    // Reasonable limit for expandable inputs
+		},
 	}
 }
 
@@ -229,4 +242,11 @@ func applyDefaults(cfg *Config) {
 	}
 
 	// EditorFlags intentionally not defaulted - nil means no custom flags
+
+	// TUI defaults
+	// Note: VimMode intentionally defaults to false (opt-in)
+	// ExpandInputs defaults to true for better UX
+	if cfg.TUI.MaxInputHeight == 0 {
+		cfg.TUI.MaxInputHeight = defaults.TUI.MaxInputHeight
+	}
 }
