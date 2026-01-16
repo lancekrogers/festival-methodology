@@ -291,7 +291,7 @@ func TestCreateOptions_InsertInMiddle(t *testing.T) {
 	}
 }
 
-// TestCreateFestival_GatesDirectory tests that festival creation creates gates directory
+// TestCreateFestival_GatesDirectory tests that festival creation creates gates directory with phase-type subdirs
 func TestCreateFestival_GatesDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
 
@@ -300,21 +300,26 @@ func TestCreateFestival_GatesDirectory(t *testing.T) {
 	festivalMetaDir := filepath.Join(festivalsDir, ".festival")
 	templatesDir := filepath.Join(festivalMetaDir, "templates")
 	gatesTemplatesDir := filepath.Join(templatesDir, "gates")
-	if err := os.MkdirAll(gatesTemplatesDir, 0755); err != nil {
-		t.Fatalf("failed to create template dir: %v", err)
+
+	// Create phase-type subdirectories with gate templates
+	phaseTypes := map[string][]string{
+		"planning":          {"approval.md", "plan_review.md"},
+		"implementation":    {"testing.md", "review.md", "iterate.md", "commit.md"},
+		"research":          {"documentation.md", "findings_review.md"},
+		"review":            {"checklist.md", "sign_off.md"},
+		"non_coding_action": {"action_verify.md", "completion.md"},
 	}
 
-	// Create minimal gate templates
-	gateTemplates := []string{
-		"QUALITY_GATE_TESTING.md",
-		"QUALITY_GATE_REVIEW.md",
-		"QUALITY_GATE_ITERATE.md",
-		"QUALITY_GATE_COMMIT.md",
-	}
-	for _, tmpl := range gateTemplates {
-		content := "# " + tmpl + "\n\nGate template content."
-		if err := os.WriteFile(filepath.Join(gatesTemplatesDir, tmpl), []byte(content), 0644); err != nil {
-			t.Fatalf("failed to create template %s: %v", tmpl, err)
+	for phaseType, gates := range phaseTypes {
+		phaseDir := filepath.Join(gatesTemplatesDir, phaseType)
+		if err := os.MkdirAll(phaseDir, 0755); err != nil {
+			t.Fatalf("failed to create gate phase dir %s: %v", phaseType, err)
+		}
+		for _, gate := range gates {
+			content := "# " + gate + "\n\nGate template content for " + phaseType + "."
+			if err := os.WriteFile(filepath.Join(phaseDir, gate), []byte(content), 0644); err != nil {
+				t.Fatalf("failed to create template %s/%s: %v", phaseType, gate, err)
+			}
 		}
 	}
 
@@ -365,11 +370,18 @@ func TestCreateFestival_GatesDirectory(t *testing.T) {
 		t.Error("expected gates to be a directory")
 	}
 
-	// Verify gate templates were copied
-	for _, tmpl := range gateTemplates {
-		gatePath := filepath.Join(gatesDir, tmpl)
-		if _, err := os.Stat(gatePath); err != nil {
-			t.Errorf("expected gate template %s to exist: %v", tmpl, err)
+	// Verify phase-type subdirectories and gate templates were copied
+	for phaseType, gates := range phaseTypes {
+		phaseDir := filepath.Join(gatesDir, phaseType)
+		if _, err := os.Stat(phaseDir); err != nil {
+			t.Errorf("expected gate phase directory %s to exist: %v", phaseType, err)
+			continue
+		}
+		for _, gate := range gates {
+			gatePath := filepath.Join(phaseDir, gate)
+			if _, err := os.Stat(gatePath); err != nil {
+				t.Errorf("expected gate template %s/%s to exist: %v", phaseType, gate, err)
+			}
 		}
 	}
 }
@@ -383,13 +395,16 @@ func TestCreateFestival_FestYAMLGenerated(t *testing.T) {
 	festivalMetaDir := filepath.Join(festivalsDir, ".festival")
 	templatesDir := filepath.Join(festivalMetaDir, "templates")
 	gatesTemplatesDir := filepath.Join(templatesDir, "gates")
-	if err := os.MkdirAll(gatesTemplatesDir, 0755); err != nil {
+
+	// Create phase-type subdirectory with minimal gate template
+	implDir := filepath.Join(gatesTemplatesDir, "implementation")
+	if err := os.MkdirAll(implDir, 0755); err != nil {
 		t.Fatalf("failed to create template dir: %v", err)
 	}
 
-	// Create minimal gate templates
-	for _, tmpl := range []string{"QUALITY_GATE_TESTING.md", "QUALITY_GATE_REVIEW.md", "QUALITY_GATE_ITERATE.md", "QUALITY_GATE_COMMIT.md"} {
-		if err := os.WriteFile(filepath.Join(gatesTemplatesDir, tmpl), []byte("# Gate"), 0644); err != nil {
+	// Create minimal implementation gate templates
+	for _, tmpl := range []string{"testing.md", "review.md", "iterate.md", "commit.md"} {
+		if err := os.WriteFile(filepath.Join(implDir, tmpl), []byte("# Gate"), 0644); err != nil {
 			t.Fatalf("failed to create template: %v", err)
 		}
 	}

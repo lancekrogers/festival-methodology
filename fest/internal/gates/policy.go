@@ -277,6 +277,7 @@ func ActionGates() []GateTask {
 
 // GetGatesForPhaseType returns the appropriate quality gates for a phase type.
 // Defaults to implementation gates for unknown types.
+// Note: Prefer DiscoverGatesForPhaseType() which reads from the festival's gates/ directory.
 func GetGatesForPhaseType(phaseType string) []GateTask {
 	switch phaseType {
 	case "planning":
@@ -285,7 +286,7 @@ func GetGatesForPhaseType(phaseType string) []GateTask {
 		return ResearchGates()
 	case "review":
 		return ReviewGates()
-	case "action":
+	case "action", "non_coding_action":
 		return ActionGates()
 	case "implementation":
 		return ImplementationGates()

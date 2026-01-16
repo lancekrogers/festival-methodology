@@ -223,6 +223,10 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 		content = fmt.Sprintf("# Phase Goal: %s\n\n**Phase:** %03d | **Type:** %s | **Status:** Planning\n\n## Objective\n\n[REPLACE: Describe the phase objective]\n\n## Success Criteria\n\n- [ ] [REPLACE: Criterion 1]\n- [ ] [REPLACE: Criterion 2]\n", opts.Name, newNumber, opts.PhaseType)
 	}
 
+	// Ensure content has proper phase type frontmatter
+	// Strip any template metadata frontmatter and add phase frontmatter with type
+	content = ensurePhaseTypeFrontmatter(content, opts.PhaseType)
+
 	var markersFilled, markersTotal int
 	if content != "" {
 		if err := os.WriteFile(goalPath, []byte(content), 0644); err != nil {
@@ -367,4 +371,28 @@ func emitCreatePhaseJSON(opts *CreatePhaseOptions, res createPhaseResult) error 
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
 	return enc.Encode(res)
+}
+
+// ensurePhaseTypeFrontmatter ensures the content has proper YAML frontmatter with the phase type.
+// If content already has frontmatter (template metadata), it strips it and adds phase frontmatter.
+// If content has no frontmatter, it prepends phase frontmatter.
+func ensurePhaseTypeFrontmatter(content, phaseType string) string {
+	// Phase frontmatter using the fest_ prefix convention for proper parsing
+	phaseFrontmatter := fmt.Sprintf("---\nfest_phase_type: %s\n---\n\n", phaseType)
+
+	// Check if content starts with frontmatter
+	if strings.HasPrefix(content, "---") {
+		// Find the closing --- to strip template metadata frontmatter
+		rest := content[3:] // skip opening ---
+		endIdx := strings.Index(rest, "---")
+		if endIdx != -1 {
+			// Skip past the closing --- and any following newlines
+			afterFrontmatter := rest[endIdx+3:]
+			afterFrontmatter = strings.TrimLeft(afterFrontmatter, "\n\r")
+			return phaseFrontmatter + afterFrontmatter
+		}
+	}
+
+	// No existing frontmatter, just prepend
+	return phaseFrontmatter + content
 }
