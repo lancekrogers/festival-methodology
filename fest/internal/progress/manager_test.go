@@ -215,21 +215,23 @@ func TestManager_MarkInProgress(t *testing.T) {
 	}
 }
 
-func TestManager_MarkComplete_UsesFileModTime(t *testing.T) {
+func TestManager_MarkComplete_UsesCurrentTime(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
 
-	// Create a task file with a known modification time
+	// Create a task file (modification time doesn't matter anymore)
 	taskPath := filepath.Join(tmpDir, "01_test.md")
 	if err := os.WriteFile(taskPath, []byte("# Test Task\n"), 0644); err != nil {
 		t.Fatalf("Failed to create test file: %v", err)
 	}
 
-	// Set modification time to 10 minutes ago
+	// Set modification time to 10 minutes ago (should be ignored)
 	oldTime := time.Now().Add(-10 * time.Minute)
 	if err := os.Chtimes(taskPath, oldTime, oldTime); err != nil {
 		t.Fatalf("Failed to set file mod time: %v", err)
 	}
+
+	beforeCall := time.Now().UTC()
 
 	mgr, err := NewManager(ctx, tmpDir)
 	if err != nil {
@@ -242,21 +244,23 @@ func TestManager_MarkComplete_UsesFileModTime(t *testing.T) {
 		t.Fatalf("MarkComplete() error = %v", err)
 	}
 
+	afterCall := time.Now().UTC()
+
 	task, _ := mgr.GetTaskProgress("01_test.md")
 
-	// TimeSpentMinutes should be approximately 10 minutes (not 0)
-	if task.TimeSpentMinutes < 9 || task.TimeSpentMinutes > 11 {
-		t.Errorf("TimeSpentMinutes = %d, want approximately 10", task.TimeSpentMinutes)
+	// TimeSpentMinutes should be 0 (or very close) since start and complete happen together
+	// We track actual work time, not elapsed time since file creation
+	if task.TimeSpentMinutes > 1 {
+		t.Errorf("TimeSpentMinutes = %d, want 0 (no actual work time tracked)", task.TimeSpentMinutes)
 	}
 
-	// StartedAt should be close to the file modification time
+	// StartedAt should be close to current time, NOT the file modification time
 	if task.StartedAt == nil {
 		t.Fatal("StartedAt should be set")
 	}
 
-	timeDiff := task.StartedAt.Sub(oldTime)
-	if timeDiff < -time.Second || timeDiff > time.Second {
-		t.Errorf("StartedAt = %v, expected close to file mod time %v", task.StartedAt, oldTime)
+	if task.StartedAt.Before(beforeCall.Add(-time.Second)) || task.StartedAt.After(afterCall.Add(time.Second)) {
+		t.Errorf("StartedAt = %v, expected between %v and %v (current time, not file mod time)", task.StartedAt, beforeCall, afterCall)
 	}
 }
 
@@ -292,16 +296,5 @@ func TestManager_MarkComplete_PreservesExistingStartTime(t *testing.T) {
 	// StartedAt should NOT have changed
 	if !task.StartedAt.Equal(originalStartedAt) {
 		t.Errorf("StartedAt changed from %v to %v, should be preserved", originalStartedAt, task.StartedAt)
-	}
-}
-
-func TestGetTaskFileModTime_FallbackToCurrentTime(t *testing.T) {
-	// Test that getTaskFileModTime returns current time for non-existent file
-	now := time.Now().UTC()
-	result := getTaskFileModTime("/nonexistent/path", "nonexistent.md")
-
-	// Should be within a second of now
-	if result.Before(now.Add(-time.Second)) || result.After(now.Add(time.Second)) {
-		t.Errorf("getTaskFileModTime for nonexistent file = %v, want close to %v", result, now)
 	}
 }
