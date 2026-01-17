@@ -478,18 +478,18 @@ func TestCreateFestival_FestYAMLGenerated(t *testing.T) {
 	}
 	contentStr := string(content)
 
-	// Check that gates/ prefix is used in template paths
-	if !contains(contentStr, "gates/QUALITY_GATE_TESTING") {
-		t.Error("fest.yaml should contain gates/QUALITY_GATE_TESTING")
+	// Check that phases/implementation/gates/ prefix is used in template paths
+	if !contains(contentStr, "phases/implementation/gates/testing") {
+		t.Error("fest.yaml should contain phases/implementation/gates/testing")
 	}
-	if !contains(contentStr, "gates/QUALITY_GATE_REVIEW") {
-		t.Error("fest.yaml should contain gates/QUALITY_GATE_REVIEW")
+	if !contains(contentStr, "phases/implementation/gates/review") {
+		t.Error("fest.yaml should contain phases/implementation/gates/review")
 	}
-	if !contains(contentStr, "gates/QUALITY_GATE_ITERATE") {
-		t.Error("fest.yaml should contain gates/QUALITY_GATE_ITERATE")
+	if !contains(contentStr, "phases/implementation/gates/iterate") {
+		t.Error("fest.yaml should contain phases/implementation/gates/iterate")
 	}
-	if !contains(contentStr, "gates/QUALITY_GATE_COMMIT") {
-		t.Error("fest.yaml should contain gates/QUALITY_GATE_COMMIT")
+	if !contains(contentStr, "phases/implementation/gates/commit") {
+		t.Error("fest.yaml should contain phases/implementation/gates/commit")
 	}
 
 	// Verify quality_gates.enabled is true
@@ -512,12 +512,12 @@ func TestCreateFestival_GatesConfigHasCorrectStructure(t *testing.T) {
 		t.Errorf("expected 4 quality gate tasks, got %d", len(cfg.QualityGates.Tasks))
 	}
 
-	// Verify all gates use gates/ prefix
+	// Verify all gates use phases/implementation/gates/ prefix
 	expectedTemplates := map[string]bool{
-		"gates/QUALITY_GATE_TESTING": false,
-		"gates/QUALITY_GATE_REVIEW":  false,
-		"gates/QUALITY_GATE_ITERATE": false,
-		"gates/QUALITY_GATE_COMMIT":  false,
+		"phases/implementation/gates/testing": false,
+		"phases/implementation/gates/review":  false,
+		"phases/implementation/gates/iterate": false,
+		"phases/implementation/gates/commit":  false,
 	}
 
 	for _, task := range cfg.QualityGates.Tasks {

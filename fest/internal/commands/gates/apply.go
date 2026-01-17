@@ -233,8 +233,8 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 			continue
 		}
 
-		// Discover gates from festival's gates/{phase_type}/ directory
-		sequenceGates, err := gatescore.DiscoverGatesForPhaseType(festivalPath, seq.PhaseType)
+		// Discover gates from template root's phases/{phase_type}/gates/ directory
+		sequenceGates, err := gatescore.DiscoverGatesForPhaseType(tmplRoot, seq.PhaseType)
 		if err != nil {
 			// If no gates directory exists for this phase type, report and skip
 			warnings = append(warnings, fmt.Sprintf("Phase %s: %v", seq.PhaseName, err))

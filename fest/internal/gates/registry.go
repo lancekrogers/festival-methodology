@@ -70,12 +70,12 @@ func StrictPolicy() *GatePolicy {
 		Name:        "strict",
 		Description: "Strict code review with security audit and performance check",
 		Append: []GateTask{
-			{ID: "testing_and_verify", Template: "gates/QUALITY_GATE_TESTING", Name: "Testing and Verification", Enabled: true},
-			{ID: "code_review", Template: "gates/QUALITY_GATE_REVIEW", Name: "Code Review", Enabled: true},
-			{ID: "security_audit", Template: "gates/SECURITY_AUDIT", Name: "Security Audit", Enabled: true},
-			{ID: "performance_check", Template: "gates/PERFORMANCE_CHECK", Name: "Performance Check", Enabled: true},
-			{ID: "review_results_iterate", Template: "gates/QUALITY_GATE_ITERATE", Name: "Review Results and Iterate", Enabled: true},
-			{ID: "commit", Template: "gates/QUALITY_GATE_COMMIT", Name: "Commit Changes", Enabled: true},
+			{ID: "testing_and_verify", Template: "phases/implementation/gates/testing", Name: "Testing and Verification", Enabled: true},
+			{ID: "code_review", Template: "phases/implementation/gates/review", Name: "Code Review", Enabled: true},
+			{ID: "security_audit", Template: "phases/implementation/gates/security", Name: "Security Audit", Enabled: true},
+			{ID: "performance_check", Template: "phases/implementation/gates/performance", Name: "Performance Check", Enabled: true},
+			{ID: "review_results_iterate", Template: "phases/implementation/gates/iterate", Name: "Review Results and Iterate", Enabled: true},
+			{ID: "commit", Template: "phases/implementation/gates/commit", Name: "Commit Changes", Enabled: true},
 		},
 	}
 }
@@ -87,7 +87,7 @@ func LightweightPolicy() *GatePolicy {
 		Name:        "lightweight",
 		Description: "Minimal gates for research and exploration phases",
 		Append: []GateTask{
-			{ID: "code_review", Template: "gates/QUALITY_GATE_REVIEW", Name: "Code Review", Enabled: true},
+			{ID: "code_review", Template: "phases/implementation/gates/review", Name: "Code Review", Enabled: true},
 		},
 	}
 }

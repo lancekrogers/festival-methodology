@@ -155,25 +155,25 @@ func ImplementationGates() []GateTask {
 	return []GateTask{
 		{
 			ID:       "testing_and_verify",
-			Template: "gates/QUALITY_GATE_TESTING",
+			Template: "phases/implementation/gates/testing",
 			Name:     "Testing and Verification",
 			Enabled:  true,
 		},
 		{
 			ID:       "code_review",
-			Template: "gates/QUALITY_GATE_REVIEW",
+			Template: "phases/implementation/gates/review",
 			Name:     "Code Review",
 			Enabled:  true,
 		},
 		{
 			ID:       "review_results_iterate",
-			Template: "gates/QUALITY_GATE_ITERATE",
+			Template: "phases/implementation/gates/iterate",
 			Name:     "Review Results and Iterate",
 			Enabled:  true,
 		},
 		{
 			ID:       "commit",
-			Template: "gates/QUALITY_GATE_COMMIT",
+			Template: "phases/implementation/gates/commit",
 			Name:     "Commit Changes",
 			Enabled:  true,
 		},
@@ -186,19 +186,19 @@ func PlanningGates() []GateTask {
 	return []GateTask{
 		{
 			ID:       "planning_review",
-			Template: "gates/QUALITY_GATE_PLANNING_REVIEW",
+			Template: "phases/planning/gates/plan_review",
 			Name:     "Planning Review",
 			Enabled:  true,
 		},
 		{
 			ID:       "decision_validation",
-			Template: "gates/QUALITY_GATE_DECISION_VALIDATION",
+			Template: "phases/planning/gates/decision_validation",
 			Name:     "Decision Validation",
 			Enabled:  true,
 		},
 		{
 			ID:       "planning_summary",
-			Template: "gates/QUALITY_GATE_PLANNING_SUMMARY",
+			Template: "phases/planning/gates/approval",
 			Name:     "Planning Summary",
 			Enabled:  true,
 		},
@@ -211,19 +211,19 @@ func ResearchGates() []GateTask {
 	return []GateTask{
 		{
 			ID:       "research_review",
-			Template: "gates/QUALITY_GATE_RESEARCH_REVIEW",
+			Template: "phases/research/gates/findings_review",
 			Name:     "Research Review",
 			Enabled:  true,
 		},
 		{
 			ID:       "findings_synthesis",
-			Template: "gates/QUALITY_GATE_FINDINGS_SYNTHESIS",
+			Template: "phases/research/gates/documentation",
 			Name:     "Findings Synthesis",
 			Enabled:  true,
 		},
 		{
 			ID:       "research_summary",
-			Template: "gates/QUALITY_GATE_RESEARCH_SUMMARY",
+			Template: "phases/research/gates/summary",
 			Name:     "Research Summary",
 			Enabled:  true,
 		},
@@ -236,13 +236,13 @@ func ReviewGates() []GateTask {
 	return []GateTask{
 		{
 			ID:       "review_checklist",
-			Template: "gates/QUALITY_GATE_REVIEW_CHECKLIST",
+			Template: "phases/review/gates/checklist",
 			Name:     "Review Checklist",
 			Enabled:  true,
 		},
 		{
 			ID:       "signoff",
-			Template: "gates/QUALITY_GATE_SIGNOFF",
+			Template: "phases/review/gates/sign_off",
 			Name:     "Sign-off",
 			Enabled:  true,
 		},
@@ -256,19 +256,19 @@ func ActionGates() []GateTask {
 	return []GateTask{
 		{
 			ID:       "execution_verify",
-			Template: "gates/QUALITY_GATE_EXECUTION_VERIFY",
+			Template: "phases/non_coding_action/gates/action_verify",
 			Name:     "Execution & Verify",
 			Enabled:  true,
 		},
 		{
 			ID:       "rollback_confirm",
-			Template: "gates/QUALITY_GATE_ROLLBACK_CONFIRM",
+			Template: "phases/non_coding_action/gates/completion",
 			Name:     "Rollback Confirmed",
 			Enabled:  true,
 		},
 		{
 			ID:       "commit",
-			Template: "gates/QUALITY_GATE_COMMIT",
+			Template: "phases/implementation/gates/commit",
 			Name:     "Commit",
 			Enabled:  true,
 		},
@@ -277,7 +277,7 @@ func ActionGates() []GateTask {
 
 // GetGatesForPhaseType returns the appropriate quality gates for a phase type.
 // Defaults to implementation gates for unknown types.
-// Note: Prefer DiscoverGatesForPhaseType() which reads from the festival's gates/ directory.
+// Note: Prefer DiscoverGatesForPhaseType() which reads from the template root's phases/{type}/gates/ directory.
 func GetGatesForPhaseType(phaseType string) []GateTask {
 	switch phaseType {
 	case "planning":
