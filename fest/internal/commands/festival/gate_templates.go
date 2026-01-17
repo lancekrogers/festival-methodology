@@ -330,6 +330,7 @@ Use fest commit so task references are preserved:
 
 // DefaultFestivalGatesConfig creates a festival config with gates/ prefixed template paths.
 // This is used when creating a new festival to set up default quality gates.
+// Gate templates are stored at festival_root/gates/{phase_type}/ for user customization.
 func DefaultFestivalGatesConfig() *config.FestivalConfig {
 	return &config.FestivalConfig{
 		Version: "1.0",
@@ -339,25 +340,25 @@ func DefaultFestivalGatesConfig() *config.FestivalConfig {
 			Tasks: []config.QualityGateTask{
 				{
 					ID:       "testing_and_verify",
-					Template: "phases/implementation/gates/testing",
+					Template: "gates/implementation/QUALITY_GATE_TESTING",
 					Name:     "Testing and Verification",
 					Enabled:  true,
 				},
 				{
 					ID:       "code_review",
-					Template: "phases/implementation/gates/review",
+					Template: "gates/implementation/QUALITY_GATE_REVIEW",
 					Name:     "Code Review",
 					Enabled:  true,
 				},
 				{
 					ID:       "review_results_iterate",
-					Template: "phases/implementation/gates/iterate",
+					Template: "gates/implementation/QUALITY_GATE_ITERATE",
 					Name:     "Review Results and Iterate",
 					Enabled:  true,
 				},
 				{
 					ID:       "commit",
-					Template: "phases/implementation/gates/commit",
+					Template: "gates/implementation/QUALITY_GATE_COMMIT",
 					Name:     "Commit Changes",
 					Enabled:  true,
 				},
