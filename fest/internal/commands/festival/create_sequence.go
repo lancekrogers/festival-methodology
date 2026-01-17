@@ -198,7 +198,7 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 	}
 	if renderErr != nil || content == "" {
 		// Fall back to default filename
-		tpath := filepath.Join(tmplRoot, "SEQUENCE_GOAL_TEMPLATE.md")
+		tpath := filepath.Join(tmplRoot, "sequences", "GOAL.md")
 		if _, err := os.Stat(tpath); err == nil {
 			loader := tpl.NewLoader()
 			t, err := loader.Load(ctx, tpath)

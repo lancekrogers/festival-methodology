@@ -166,10 +166,10 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 	created := []string{}
 
 	core := []struct{ Template, Out string }{
-		{"FESTIVAL_OVERVIEW_TEMPLATE.md", "FESTIVAL_OVERVIEW.md"},
-		{"FESTIVAL_GOAL_TEMPLATE.md", "FESTIVAL_GOAL.md"},
-		{"FESTIVAL_RULES_TEMPLATE.md", "FESTIVAL_RULES.md"},
-		{"FESTIVAL_TODO_TEMPLATE.md", "TODO.md"},
+		{"festival/OVERVIEW.md", "FESTIVAL_OVERVIEW.md"},
+		{"festival/GOAL.md", "FESTIVAL_GOAL.md"},
+		{"festival/RULES.md", "FESTIVAL_RULES.md"},
+		{"festival/TODO.md", "TODO.md"},
 	}
 
 	for _, c := range core {
@@ -203,60 +203,15 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 		created = append(created, outPath)
 	}
 
-	// Create gates directory structure with phase-type subdirectories
-	gatesDir := filepath.Join(destDir, "gates")
-	srcGatesDir := filepath.Join(tmplRoot, "gates")
-
-	// Phase types that should have gates subdirectories
-	phaseTypes := []string{"planning", "implementation", "research", "review", "non_coding_action"}
-
-	copiedGates := []string{}
-	for _, phaseType := range phaseTypes {
-		srcPhaseDir := filepath.Join(srcGatesDir, phaseType)
-		destPhaseDir := filepath.Join(gatesDir, phaseType)
-
-		// Check if source phase directory exists
-		if _, err := os.Stat(srcPhaseDir); os.IsNotExist(err) {
-			continue
-		}
-
-		// Create destination phase directory
-		if err := os.MkdirAll(destPhaseDir, 0755); err != nil {
-			return emitCreateFestivalError(opts, errors.IO("creating gates phase directory", err).WithField("path", destPhaseDir))
-		}
-
-		// Copy all .md files from source to destination
-		entries, err := os.ReadDir(srcPhaseDir)
-		if err != nil {
-			return emitCreateFestivalError(opts, errors.IO("reading gates phase directory", err).WithField("path", srcPhaseDir))
-		}
-
-		for _, entry := range entries {
-			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
-				continue
-			}
-
-			srcPath := filepath.Join(srcPhaseDir, entry.Name())
-			destPath := filepath.Join(destPhaseDir, entry.Name())
-
-			content, err := os.ReadFile(srcPath)
-			if err != nil {
-				return emitCreateFestivalError(opts, errors.IO("reading gate template", err).WithField("path", srcPath))
-			}
-
-			if err := os.WriteFile(destPath, content, 0644); err != nil {
-				return emitCreateFestivalError(opts, errors.IO("writing gate template", err).WithField("path", destPath))
-			}
-
-			copiedGates = append(copiedGates, destPath)
-			created = append(created, destPath)
-		}
-	}
-
-	// Create phases directory structure with phase-type subdirectories
+	// Create phases directory structure with nested gates
+	// Structure: phases/{type}/ contains templates and gates/ subdirectory
 	phasesDir := filepath.Join(destDir, "phases")
 	srcPhasesDir := filepath.Join(tmplRoot, "phases")
 
+	// Phase types that should have phase subdirectories with gates
+	phaseTypes := []string{"planning", "implementation", "research", "review", "non_coding_action"}
+
+	copiedGates := []string{}
 	copiedPhases := []string{}
 	for _, phaseType := range phaseTypes {
 		srcPhaseDir := filepath.Join(srcPhasesDir, phaseType)
@@ -269,17 +224,20 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 
 		// Create destination phase directory
 		if err := os.MkdirAll(destPhaseDir, 0755); err != nil {
-			return emitCreateFestivalError(opts, errors.IO("creating phases directory", err).WithField("path", destPhaseDir))
+			return emitCreateFestivalError(opts, errors.IO("creating phase directory", err).WithField("path", destPhaseDir))
 		}
 
-		// Copy all .md files from source to destination
+		// Copy all .md files at phase level (GOAL.md, research templates, etc.)
 		entries, err := os.ReadDir(srcPhaseDir)
 		if err != nil {
-			return emitCreateFestivalError(opts, errors.IO("reading phases directory", err).WithField("path", srcPhaseDir))
+			return emitCreateFestivalError(opts, errors.IO("reading phase directory", err).WithField("path", srcPhaseDir))
 		}
 
 		for _, entry := range entries {
-			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			if entry.IsDir() {
+				continue // Skip directories (gates/ handled separately)
+			}
+			if !strings.HasSuffix(entry.Name(), ".md") {
 				continue
 			}
 
@@ -297,6 +255,43 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 
 			copiedPhases = append(copiedPhases, destPath)
 			created = append(created, destPath)
+		}
+
+		// Copy gates from phases/{type}/gates/ subdirectory
+		srcGatesDir := filepath.Join(srcPhaseDir, "gates")
+		destGatesDir := filepath.Join(destPhaseDir, "gates")
+
+		if _, err := os.Stat(srcGatesDir); err == nil {
+			// Create gates subdirectory
+			if err := os.MkdirAll(destGatesDir, 0755); err != nil {
+				return emitCreateFestivalError(opts, errors.IO("creating gates directory", err).WithField("path", destGatesDir))
+			}
+
+			gateEntries, err := os.ReadDir(srcGatesDir)
+			if err != nil {
+				return emitCreateFestivalError(opts, errors.IO("reading gates directory", err).WithField("path", srcGatesDir))
+			}
+
+			for _, gateEntry := range gateEntries {
+				if gateEntry.IsDir() || !strings.HasSuffix(gateEntry.Name(), ".md") {
+					continue
+				}
+
+				srcPath := filepath.Join(srcGatesDir, gateEntry.Name())
+				destPath := filepath.Join(destGatesDir, gateEntry.Name())
+
+				content, err := os.ReadFile(srcPath)
+				if err != nil {
+					return emitCreateFestivalError(opts, errors.IO("reading gate template", err).WithField("path", srcPath))
+				}
+
+				if err := os.WriteFile(destPath, content, 0644); err != nil {
+					return emitCreateFestivalError(opts, errors.IO("writing gate template", err).WithField("path", destPath))
+				}
+
+				copiedGates = append(copiedGates, destPath)
+				created = append(created, destPath)
+			}
 		}
 	}
 
@@ -458,7 +453,7 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 				"directory": dirName,
 			},
 			Created:         created,
-			GatesDirectory:  gatesDir,
+			GatesDirectory:  phasesDir, // Gates are now nested under phases/{type}/gates/
 			FestYAML:        festConfigPath,
 			GateTemplates:   copiedGates,
 			PhasesDirectory: phasesDir,

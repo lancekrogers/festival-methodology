@@ -496,11 +496,11 @@ func FindSequencesWithInfo(festivalRoot string, excludePatterns []string) ([]Seq
 	return sequences, nil
 }
 
-// DiscoverGatesForPhaseType reads gate templates from the festival's gates/{phase_type}/ directory.
+// DiscoverGatesForPhaseType reads gate templates from the festival's phases/{phase_type}/gates/ directory.
 // Returns gate tasks constructed from the .md files found in that directory.
 // Returns an error if the directory doesn't exist or contains no gates.
 func DiscoverGatesForPhaseType(festivalPath, phaseType string) ([]GateTask, error) {
-	gatesDir := filepath.Join(festivalPath, "gates", phaseType)
+	gatesDir := filepath.Join(festivalPath, "phases", phaseType, "gates")
 
 	// Check if directory exists
 	if _, err := os.Stat(gatesDir); os.IsNotExist(err) {

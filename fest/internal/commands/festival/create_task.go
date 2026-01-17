@@ -214,7 +214,7 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 		}
 		if renderErr != nil || content == "" {
 			// Fall back to default filename
-			tpath := filepath.Join(tmplRoot, "TASK_TEMPLATE.md")
+			tpath := filepath.Join(tmplRoot, "tasks", "TASK.md")
 			if _, err := os.Stat(tpath); err == nil {
 				t, err := loader.Load(ctx, tpath)
 				if err != nil {

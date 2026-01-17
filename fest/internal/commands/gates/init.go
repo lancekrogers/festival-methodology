@@ -151,7 +151,7 @@ excluded_patterns:
   - "*_requirements"
 
 templates:
-  task_default: TASK_TEMPLATE_SIMPLE
+  task_default: tasks/SIMPLE
   prefer_simple: true
 
 tracking:

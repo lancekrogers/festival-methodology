@@ -48,16 +48,16 @@ type createPhaseResult struct {
 }
 
 // selectPhaseTemplate returns the appropriate template ID and filename for a given phase type.
-// Returns (templateID, templateFilename) tuple.
-// Phase-type templates are stored in phases/{phase_type}/PHASE_GOAL_TEMPLATE.md
-func selectPhaseTemplate(phaseType string) (string, string) {
+// Returns (templateID, templateFilename, error) tuple.
+// Phase-type templates are stored in phases/{phase_type}/GOAL.md
+// Returns error for unknown phase types (no fallback - phase type is required).
+func selectPhaseTemplate(phaseType string) (string, string, error) {
 	pt := strings.ToLower(phaseType)
 	switch pt {
 	case "planning", "implementation", "research", "review", "non_coding_action":
-		return fmt.Sprintf("phase-goal-%s", pt), filepath.Join("phases", pt, "PHASE_GOAL_TEMPLATE.md")
+		return fmt.Sprintf("phase-goal-%s", pt), filepath.Join("phases", pt, "GOAL.md"), nil
 	default:
-		// Fallback to generic template for unknown types
-		return "phase-goal", "PHASE_GOAL_TEMPLATE.md"
+		return "", "", fmt.Errorf("unknown phase type %q: must be one of planning, implementation, research, review, non_coding_action", phaseType)
 	}
 }
 
@@ -181,7 +181,10 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 	var renderErr error
 
 	// Select template based on phase type
-	templateID, templateFilename := selectPhaseTemplate(opts.PhaseType)
+	templateID, templateFilename, phaseTypeErr := selectPhaseTemplate(opts.PhaseType)
+	if phaseTypeErr != nil {
+		return emitCreatePhaseError(opts, errors.Validation(phaseTypeErr.Error()).WithField("phase_type", opts.PhaseType))
+	}
 
 	if catalog != nil {
 		content, renderErr = mgr.RenderByID(ctx, catalog, templateID, tmplCtx)
