@@ -291,7 +291,8 @@ func TestCreateOptions_InsertInMiddle(t *testing.T) {
 	}
 }
 
-// TestCreateFestival_GatesDirectory tests that festival creation creates phases directory with nested gates
+// TestCreateFestival_GatesDirectory tests that festival creation creates gates/ directory at root
+// with gate templates organized by phase type
 func TestCreateFestival_GatesDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
 
@@ -301,25 +302,18 @@ func TestCreateFestival_GatesDirectory(t *testing.T) {
 	templatesDir := filepath.Join(festivalMetaDir, "templates")
 	phasesTemplatesDir := filepath.Join(templatesDir, "phases")
 
-	// Create phase-type subdirectories with GOAL.md and gates/ subdirectory
+	// Create phase-type subdirectories with gates/ subdirectory containing gate templates
 	phaseTypes := map[string][]string{
 		"planning":          {"approval.md", "plan_review.md"},
-		"implementation":    {"testing.md", "review.md", "iterate.md", "commit.md"},
+		"implementation":    {"QUALITY_GATE_TESTING.md", "QUALITY_GATE_REVIEW.md", "QUALITY_GATE_ITERATE.md", "QUALITY_GATE_COMMIT.md"},
 		"research":          {"documentation.md", "findings_review.md"},
 		"review":            {"checklist.md", "sign_off.md"},
 		"non_coding_action": {"action_verify.md", "completion.md"},
 	}
 
 	for phaseType, gates := range phaseTypes {
-		// Create phase directory with GOAL.md
+		// Create phase directory (for structure, but we only copy gates)
 		phaseDir := filepath.Join(phasesTemplatesDir, phaseType)
-		if err := os.MkdirAll(phaseDir, 0755); err != nil {
-			t.Fatalf("failed to create phase dir %s: %v", phaseType, err)
-		}
-		goalContent := "# Phase Goal: " + phaseType + "\n\nPhase goal template."
-		if err := os.WriteFile(filepath.Join(phaseDir, "GOAL.md"), []byte(goalContent), 0644); err != nil {
-			t.Fatalf("failed to create GOAL.md for %s: %v", phaseType, err)
-		}
 
 		// Create gates subdirectory with gate templates
 		gatesDir := filepath.Join(phaseDir, "gates")
@@ -372,39 +366,30 @@ func TestCreateFestival_GatesDirectory(t *testing.T) {
 		t.Fatalf("expected 1 entry in active/: %v", err)
 	}
 	festivalDir := filepath.Join(activeDir, entries[0].Name())
-	phasesDir := filepath.Join(festivalDir, "phases")
 
-	info, err := os.Stat(phasesDir)
+	// Verify gates/ directory exists at festival root
+	gatesDir := filepath.Join(festivalDir, "gates")
+	info, err := os.Stat(gatesDir)
 	if err != nil {
-		t.Fatalf("expected phases directory to exist: %v", err)
+		t.Fatalf("expected gates directory to exist at festival root: %v", err)
 	}
 	if !info.IsDir() {
-		t.Error("expected phases to be a directory")
+		t.Error("expected gates to be a directory")
 	}
 
-	// Verify phase-type subdirectories with GOAL.md and gates/ subdirectories
+	// Verify phase-type subdirectories within gates/ with their templates
 	for phaseType, gates := range phaseTypes {
-		phaseDir := filepath.Join(phasesDir, phaseType)
-		if _, err := os.Stat(phaseDir); err != nil {
-			t.Errorf("expected phase directory %s to exist: %v", phaseType, err)
+		phaseGatesDir := filepath.Join(gatesDir, phaseType)
+		if _, err := os.Stat(phaseGatesDir); err != nil {
+			t.Errorf("expected gates/%s directory to exist: %v", phaseType, err)
 			continue
 		}
 
-		// Verify GOAL.md exists
-		if _, err := os.Stat(filepath.Join(phaseDir, "GOAL.md")); err != nil {
-			t.Errorf("expected GOAL.md in %s to exist: %v", phaseType, err)
-		}
-
-		// Verify gates subdirectory and templates
-		gatesDir := filepath.Join(phaseDir, "gates")
-		if _, err := os.Stat(gatesDir); err != nil {
-			t.Errorf("expected gates directory in %s to exist: %v", phaseType, err)
-			continue
-		}
+		// Verify gate templates exist
 		for _, gate := range gates {
-			gatePath := filepath.Join(gatesDir, gate)
+			gatePath := filepath.Join(phaseGatesDir, gate)
 			if _, err := os.Stat(gatePath); err != nil {
-				t.Errorf("expected gate template %s/gates/%s to exist: %v", phaseType, gate, err)
+				t.Errorf("expected gate template gates/%s/%s to exist: %v", phaseType, gate, err)
 			}
 		}
 	}
@@ -418,24 +403,28 @@ func TestCreateFestival_FestYAMLGenerated(t *testing.T) {
 	festivalsDir := filepath.Join(tmpDir, "festivals")
 	festivalMetaDir := filepath.Join(festivalsDir, ".festival")
 	templatesDir := filepath.Join(festivalMetaDir, "templates")
-	gatesTemplatesDir := filepath.Join(templatesDir, "gates")
+	phasesTemplatesDir := filepath.Join(templatesDir, "phases")
 
-	// Create phase-type subdirectory with minimal gate template
-	implDir := filepath.Join(gatesTemplatesDir, "implementation")
-	if err := os.MkdirAll(implDir, 0755); err != nil {
+	// Create implementation phase with gates subdirectory
+	implGatesDir := filepath.Join(phasesTemplatesDir, "implementation", "gates")
+	if err := os.MkdirAll(implGatesDir, 0755); err != nil {
 		t.Fatalf("failed to create template dir: %v", err)
 	}
 
-	// Create minimal implementation gate templates
-	for _, tmpl := range []string{"testing.md", "review.md", "iterate.md", "commit.md"} {
-		if err := os.WriteFile(filepath.Join(implDir, tmpl), []byte("# Gate"), 0644); err != nil {
+	// Create minimal implementation gate templates with correct names
+	for _, tmpl := range []string{"QUALITY_GATE_TESTING.md", "QUALITY_GATE_REVIEW.md", "QUALITY_GATE_ITERATE.md", "QUALITY_GATE_COMMIT.md"} {
+		if err := os.WriteFile(filepath.Join(implGatesDir, tmpl), []byte("# Gate"), 0644); err != nil {
 			t.Fatalf("failed to create template: %v", err)
 		}
 	}
 
 	// Also create core templates
-	for _, tmpl := range []string{"FESTIVAL_OVERVIEW_TEMPLATE.md", "FESTIVAL_GOAL_TEMPLATE.md"} {
-		if err := os.WriteFile(filepath.Join(templatesDir, tmpl), []byte("# Template"), 0644); err != nil {
+	festivalTemplatesDir := filepath.Join(templatesDir, "festival")
+	if err := os.MkdirAll(festivalTemplatesDir, 0755); err != nil {
+		t.Fatalf("failed to create festival templates dir: %v", err)
+	}
+	for _, tmpl := range []string{"OVERVIEW.md", "GOAL.md"} {
+		if err := os.WriteFile(filepath.Join(festivalTemplatesDir, tmpl), []byte("# Template"), 0644); err != nil {
 			t.Fatalf("failed to create template: %v", err)
 		}
 	}
@@ -471,25 +460,25 @@ func TestCreateFestival_FestYAMLGenerated(t *testing.T) {
 		t.Fatalf("expected fest.yaml to exist: %v", err)
 	}
 
-	// Read and verify content has gates/ prefix
+	// Read and verify content has gates/implementation/ prefix
 	content, err := os.ReadFile(festYAMLPath)
 	if err != nil {
 		t.Fatalf("failed to read fest.yaml: %v", err)
 	}
 	contentStr := string(content)
 
-	// Check that gates/ prefix is used in template paths
-	if !contains(contentStr, "gates/QUALITY_GATE_TESTING") {
-		t.Error("fest.yaml should contain gates/QUALITY_GATE_TESTING")
+	// Check that gates/implementation/ prefix is used in template paths
+	if !contains(contentStr, "gates/implementation/QUALITY_GATE_TESTING") {
+		t.Error("fest.yaml should contain gates/implementation/QUALITY_GATE_TESTING")
 	}
-	if !contains(contentStr, "gates/QUALITY_GATE_REVIEW") {
-		t.Error("fest.yaml should contain gates/QUALITY_GATE_REVIEW")
+	if !contains(contentStr, "gates/implementation/QUALITY_GATE_REVIEW") {
+		t.Error("fest.yaml should contain gates/implementation/QUALITY_GATE_REVIEW")
 	}
-	if !contains(contentStr, "gates/QUALITY_GATE_ITERATE") {
-		t.Error("fest.yaml should contain gates/QUALITY_GATE_ITERATE")
+	if !contains(contentStr, "gates/implementation/QUALITY_GATE_ITERATE") {
+		t.Error("fest.yaml should contain gates/implementation/QUALITY_GATE_ITERATE")
 	}
-	if !contains(contentStr, "gates/QUALITY_GATE_COMMIT") {
-		t.Error("fest.yaml should contain gates/QUALITY_GATE_COMMIT")
+	if !contains(contentStr, "gates/implementation/QUALITY_GATE_COMMIT") {
+		t.Error("fest.yaml should contain gates/implementation/QUALITY_GATE_COMMIT")
 	}
 
 	// Verify quality_gates.enabled is true
@@ -512,12 +501,12 @@ func TestCreateFestival_GatesConfigHasCorrectStructure(t *testing.T) {
 		t.Errorf("expected 4 quality gate tasks, got %d", len(cfg.QualityGates.Tasks))
 	}
 
-	// Verify all gates use gates/ prefix
+	// Verify all gates use gates/implementation/ prefix with proper template names
 	expectedTemplates := map[string]bool{
-		"gates/QUALITY_GATE_TESTING": false,
-		"gates/QUALITY_GATE_REVIEW":  false,
-		"gates/QUALITY_GATE_ITERATE": false,
-		"gates/QUALITY_GATE_COMMIT":  false,
+		"gates/implementation/QUALITY_GATE_TESTING": false,
+		"gates/implementation/QUALITY_GATE_REVIEW":  false,
+		"gates/implementation/QUALITY_GATE_ITERATE": false,
+		"gates/implementation/QUALITY_GATE_COMMIT":  false,
 	}
 
 	for _, task := range cfg.QualityGates.Tasks {

@@ -243,11 +243,11 @@ name: custom
 inherit: true
 append:
   - id: testing_and_verify
-    template: gates/QUALITY_GATE_TESTING
+    template: phases/implementation/gates/testing
     name: Testing and Verification
     enabled: true
   - id: code_review
-    template: gates/QUALITY_GATE_REVIEW
+    template: phases/implementation/gates/review
     name: Code Review
     enabled: true
 `

@@ -264,7 +264,7 @@ quality_gates:
   auto_append: true
   tasks:
     - id: testing_and_verify
-      template: gates/QUALITY_GATE_TESTING
+      template: phases/implementation/gates/testing
       enabled: true
 excluded_patterns:
   - "*_planning"

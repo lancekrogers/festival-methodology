@@ -214,18 +214,30 @@ func (g *TaskGenerator) renderGateContent(ctx context.Context, gate GateTask, ta
 	// Fallback to direct file load from template root
 	if content == "" && g.templateRoot != "" {
 		templateName := gate.Template
+		// Strip gates/ prefix if present (legacy format)
 		if strings.HasPrefix(templateName, "gates/") {
 			templateName = strings.TrimPrefix(templateName, "gates/")
 		}
-		tpath := filepath.Join(g.templateRoot, "gates", templateName+".md")
-		if _, err := os.Stat(tpath); err == nil {
-			loader := tpl.NewLoader()
-			t, err := loader.Load(ctx, tpath)
-			if err == nil {
-				if strings.Contains(t.Content, "{{") {
-					content, _ = g.manager.Render(t, tmplCtx)
-				} else {
-					content = t.Content
+
+		// Try multiple possible paths:
+		// 1. Direct path: templateRoot/phases/implementation/gates/testing.md
+		// 2. Legacy gates/ path: templateRoot/gates/testing.md
+		possiblePaths := []string{
+			filepath.Join(g.templateRoot, templateName+".md"),
+			filepath.Join(g.templateRoot, "gates", templateName+".md"),
+		}
+
+		for _, tpath := range possiblePaths {
+			if _, err := os.Stat(tpath); err == nil {
+				loader := tpl.NewLoader()
+				t, err := loader.Load(ctx, tpath)
+				if err == nil {
+					if strings.Contains(t.Content, "{{") {
+						content, _ = g.manager.Render(t, tmplCtx)
+					} else {
+						content = t.Content
+					}
+					break
 				}
 			}
 		}
@@ -496,11 +508,12 @@ func FindSequencesWithInfo(festivalRoot string, excludePatterns []string) ([]Seq
 	return sequences, nil
 }
 
-// DiscoverGatesForPhaseType reads gate templates from the festival's phases/{phase_type}/gates/ directory.
+// DiscoverGatesForPhaseType reads gate templates from the template root's phases/{phase_type}/gates/ directory.
+// If templateRoot is empty, falls back to festivalPath.
 // Returns gate tasks constructed from the .md files found in that directory.
 // Returns an error if the directory doesn't exist or contains no gates.
-func DiscoverGatesForPhaseType(festivalPath, phaseType string) ([]GateTask, error) {
-	gatesDir := filepath.Join(festivalPath, "phases", phaseType, "gates")
+func DiscoverGatesForPhaseType(templateRoot, phaseType string) ([]GateTask, error) {
+	gatesDir := filepath.Join(templateRoot, "phases", phaseType, "gates")
 
 	// Check if directory exists
 	if _, err := os.Stat(gatesDir); os.IsNotExist(err) {

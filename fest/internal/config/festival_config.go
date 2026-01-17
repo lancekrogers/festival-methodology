@@ -110,25 +110,25 @@ func DefaultFestivalConfig() *FestivalConfig {
 			Tasks: []QualityGateTask{
 				{
 					ID:       "testing_and_verify",
-					Template: "gates/QUALITY_GATE_TESTING",
+					Template: "phases/implementation/gates/testing",
 					Name:     "Testing and Verification",
 					Enabled:  true,
 				},
 				{
 					ID:       "code_review",
-					Template: "gates/QUALITY_GATE_REVIEW",
+					Template: "phases/implementation/gates/review",
 					Name:     "Code Review",
 					Enabled:  true,
 				},
 				{
 					ID:       "review_results_iterate",
-					Template: "gates/QUALITY_GATE_ITERATE",
+					Template: "phases/implementation/gates/iterate",
 					Name:     "Review Results and Iterate",
 					Enabled:  true,
 				},
 				{
 					ID:       "commit",
-					Template: "gates/QUALITY_GATE_COMMIT",
+					Template: "phases/implementation/gates/commit",
 					Name:     "Commit Changes",
 					Enabled:  true,
 				},
