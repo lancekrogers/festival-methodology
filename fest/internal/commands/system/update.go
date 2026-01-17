@@ -3,6 +3,7 @@ package system
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -134,6 +135,7 @@ func runUpdate(ctx context.Context, targetPath string, opts *updateOptions) erro
 	display.Info("  New:         %d files (user created, will skip)", len(changes.new))
 	display.Info("  Deleted:     %d files (user removed, will skip)", len(changes.deleted))
 	display.Info("  From source: %d files (new upstream files)", len(changes.fromSource))
+	display.Info("  Orphaned:    %d files (removed from source, will delete)", len(changes.orphaned))
 
 	if opts.dryRun {
 		display.Warning("\nDRY RUN - No files will be modified")
@@ -217,6 +219,25 @@ func runUpdate(ctx context.Context, targetPath string, opts *updateOptions) erro
 		}
 	}
 
+	// Delete orphaned files (exist locally but not in source)
+	deletedFiles := []string{}
+	for _, file := range changes.orphaned {
+		targetPath := filepath.Join(festivalDir, file)
+		if shared.IsVerbose() {
+			display.Info("Removing orphaned file %s...", file)
+		}
+		if err := os.Remove(targetPath); err != nil {
+			display.Warning("Failed to remove %s: %v", file, err)
+		} else {
+			deletedFiles = append(deletedFiles, file)
+		}
+	}
+
+	// Clean up empty directories after deletion
+	if len(deletedFiles) > 0 {
+		cleanEmptyDirs(festivalDir)
+	}
+
 	// Update checksums for updated files
 	if len(updatedFiles) > 0 {
 		display.Info("\nUpdating .festival checksums...")
@@ -233,9 +254,25 @@ func runUpdate(ctx context.Context, targetPath string, opts *updateOptions) erro
 	// Show summary
 	display.Success("\nMethodology update complete:")
 	display.Info("  Updated: %d files", len(updatedFiles))
+	display.Info("  Deleted: %d files", len(deletedFiles))
 	display.Info("  Skipped: %d files", len(skippedFiles))
 
 	return nil
+}
+
+// cleanEmptyDirs removes empty directories recursively
+func cleanEmptyDirs(root string) {
+	// Walk multiple times to handle nested empty directories
+	for i := 0; i < 5; i++ {
+		filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+			if err != nil || !info.IsDir() || path == root {
+				return nil
+			}
+			// Try to remove the directory (will only succeed if empty)
+			os.Remove(path)
+			return nil
+		})
+	}
 }
 
 type fileChanges struct {
@@ -244,6 +281,7 @@ type fileChanges struct {
 	new        []string // User-created files (exist in workspace but not in stored checksums)
 	deleted    []string // User-deleted files (exist in stored checksums but not in workspace)
 	fromSource []string // New from source (exist in source but not in workspace or stored checksums)
+	orphaned   []string // Files that exist locally but not in source (should be deleted)
 }
 
 func categorizeChanges(ctx context.Context, stored, current map[string]fileops.ChecksumEntry, sourceDir string) fileChanges {
@@ -253,6 +291,7 @@ func categorizeChanges(ctx context.Context, stored, current map[string]fileops.C
 		new:        []string{},
 		deleted:    []string{},
 		fromSource: []string{},
+		orphaned:   []string{},
 	}
 
 	// Check existing files in workspace
@@ -277,13 +316,22 @@ func categorizeChanges(ctx context.Context, stored, current map[string]fileops.C
 
 	// Check for new files in source that don't exist locally or in stored checksums
 	sourceFiles, err := fileops.ListFiles(ctx, sourceDir)
+	sourceFilesSet := make(map[string]bool)
 	if err == nil {
 		for _, file := range sourceFiles {
+			sourceFilesSet[file] = true
 			_, existsInCurrent := current[file]
 			_, existsInStored := stored[file]
 			if !existsInCurrent && !existsInStored {
 				changes.fromSource = append(changes.fromSource, file)
 			}
+		}
+	}
+
+	// Check for orphaned files (exist locally but not in source)
+	for path := range current {
+		if !sourceFilesSet[path] {
+			changes.orphaned = append(changes.orphaned, path)
 		}
 	}
 
@@ -324,6 +372,13 @@ func displayChanges(display *ui.UI, changes fileChanges) {
 		display.Info("\nNew files from upstream to add:")
 		for _, file := range changes.fromSource {
 			display.Info("  ++ %s", file)
+		}
+	}
+
+	if len(changes.orphaned) > 0 {
+		display.Info("\nOrphaned files to delete:")
+		for _, file := range changes.orphaned {
+			display.Info("  - %s", file)
 		}
 	}
 

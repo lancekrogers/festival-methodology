@@ -150,6 +150,22 @@ func runSync(ctx context.Context, _ *cobra.Command, opts *syncOptions) error {
 		return errors.IO("downloading templates", err).WithField("url", repoURL)
 	}
 
+	// Delete orphaned files (files that exist locally but not in remote)
+	if opts.force {
+		display.Info("Removing orphaned files...")
+		deleted, err := downloader.DeleteOrphaned(owner, repo, targetDir)
+		if err != nil {
+			display.Warning("Failed to clean up orphaned files: %v", err)
+		} else if len(deleted) > 0 {
+			display.Info("Removed %d orphaned files", len(deleted))
+			if shared.IsVerbose() {
+				for _, f := range deleted {
+					display.Info("  - %s", f)
+				}
+			}
+		}
+	}
+
 	// Update config with sync time
 	if cfg != nil {
 		cfg.LastSync = timeNow()

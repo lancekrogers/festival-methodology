@@ -289,6 +289,83 @@ func calculateGitBlobSHA(filePath string) (string, error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
+// DeleteOrphaned removes local files that don't exist in the remote repository
+func (d *Downloader) DeleteOrphaned(owner, repo, targetDir string) ([]string, error) {
+	// Get remote file list
+	remoteFiles, err := d.getFilesWithSHA(owner, repo)
+	if err != nil {
+		return nil, errors.Wrap(err, "getting remote file list")
+	}
+
+	deleted := []string{}
+
+	// Walk local directory and find files not in remote
+	err = filepath.Walk(targetDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil // Skip errors
+		}
+		if info.IsDir() {
+			return nil // Skip directories (will be cleaned up if empty)
+		}
+
+		// Get relative path
+		relPath, err := filepath.Rel(targetDir, path)
+		if err != nil {
+			return nil
+		}
+
+		// Skip hidden files and checksums
+		if strings.HasPrefix(filepath.Base(relPath), ".") {
+			return nil
+		}
+
+		// Check if file exists in remote
+		if _, exists := remoteFiles[relPath]; !exists {
+			// Delete the file
+			if err := os.Remove(path); err != nil {
+				return nil // Skip if can't delete
+			}
+			deleted = append(deleted, relPath)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return deleted, errors.IO("walking local directory", err).WithField("path", targetDir)
+	}
+
+	// Clean up empty directories
+	cleanEmptyDirs(targetDir)
+
+	return deleted, nil
+}
+
+// cleanEmptyDirs removes empty directories recursively
+func cleanEmptyDirs(root string) {
+	filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil || !info.IsDir() || path == root {
+			return nil
+		}
+
+		// Try to remove the directory (will only succeed if empty)
+		os.Remove(path)
+		return nil
+	})
+
+	// Walk again in reverse to clean nested empty dirs
+	// (simple approach: just run it a few times)
+	for i := 0; i < 5; i++ {
+		filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+			if err != nil || !info.IsDir() || path == root {
+				return nil
+			}
+			os.Remove(path)
+			return nil
+		})
+	}
+}
+
 // CheckForUpdates checks if remote repository has changes compared to local cache
 func (d *Downloader) CheckForUpdates(owner, repo, targetDir string) (bool, []string, error) {
 	// Get remote file list with SHAs
