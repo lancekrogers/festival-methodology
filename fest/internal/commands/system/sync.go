@@ -42,12 +42,12 @@ Run this periodically to get the latest methodology templates and documentation.
   fest system sync --source github.com/user/repo  # Sync from specific repo
   fest system sync --force                       # Overwrite existing cache`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runSync(cmd.Context(), opts)
+			return runSync(cmd.Context(), cmd, opts)
 		},
 	}
 
 	cmd.Flags().StringVar(&opts.source, "source", "", "GitHub repository URL")
-	cmd.Flags().StringVar(&opts.branch, "branch", "main", "Git branch to sync from")
+	cmd.Flags().StringVar(&opts.branch, "branch", "", "Git branch to sync from (default: from config or 'main')")
 	cmd.Flags().BoolVar(&opts.force, "force", false, "overwrite existing files without checking")
 	cmd.Flags().IntVar(&opts.timeout, "timeout", 30, "timeout in seconds")
 	cmd.Flags().IntVar(&opts.retry, "retry", 3, "number of retry attempts")
@@ -56,7 +56,7 @@ Run this periodically to get the latest methodology templates and documentation.
 	return cmd
 }
 
-func runSync(ctx context.Context, opts *syncOptions) error {
+func runSync(ctx context.Context, _ *cobra.Command, opts *syncOptions) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -81,6 +81,16 @@ func runSync(ctx context.Context, opts *syncOptions) error {
 	if repoURL == "" {
 		repoURL = config.DefaultRepositoryURL
 	}
+
+	// Determine branch: flag > config > default
+	branch := opts.branch
+	if branch == "" && cfg != nil && cfg.Repository.Branch != "" {
+		branch = cfg.Repository.Branch
+	}
+	if branch == "" {
+		branch = "main"
+	}
+	opts.branch = branch
 
 	// Parse repository to get owner and repo
 	owner, repo, err := parseRepoURLForSync(repoURL)
