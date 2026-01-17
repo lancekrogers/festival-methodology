@@ -141,7 +141,7 @@ func DefaultFestivalConfig() *FestivalConfig {
 			"*_docs",
 		},
 		Templates: TemplatePrefs{
-			TaskDefault:  "TASK_TEMPLATE_SIMPLE",
+			TaskDefault:  "tasks/SIMPLE",
 			PreferSimple: true,
 		},
 		Tracking: TrackingConfig{

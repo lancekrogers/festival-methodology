@@ -226,20 +226,26 @@ func runGatesApply(ctx context.Context, cmd *cobra.Command, opts *applyOptions) 
 	}
 
 	for _, seq := range sequences {
-		// Get gates appropriate for this sequence's phase type
-		var sequenceGates []gatescore.GateTask
-		if seq.PhaseType != "" && seq.PhaseType != "implementation" {
-			// Use phase-type-specific gates
-			sequenceGates = gatescore.GetGatesForPhaseType(seq.PhaseType)
-			if shared.IsVerbose() {
-				fmt.Fprintf(cmd.OutOrStdout(), "  Phase %s: using %s gates\n", seq.PhaseName, seq.PhaseType)
-			}
-		} else {
-			// Use the merged policy's active gates for implementation phases
-			sequenceGates = activeGates
+		// Phase type is required - error if not detected
+		if seq.PhaseType == "" {
+			errMsg := fmt.Sprintf("Phase %s: no phase type detected - add fest_phase_type to PHASE_GOAL.md frontmatter or use a phase name that indicates the type", seq.PhaseName)
+			warnings = append(warnings, errMsg)
+			continue
 		}
 
-		// Skip sequences in phases with no gates (e.g., deployment)
+		// Discover gates from festival's gates/{phase_type}/ directory
+		sequenceGates, err := gatescore.DiscoverGatesForPhaseType(festivalPath, seq.PhaseType)
+		if err != nil {
+			// If no gates directory exists for this phase type, report and skip
+			warnings = append(warnings, fmt.Sprintf("Phase %s: %v", seq.PhaseName, err))
+			continue
+		}
+
+		if shared.IsVerbose() {
+			fmt.Fprintf(cmd.OutOrStdout(), "  Phase %s: discovered %d %s gates\n", seq.PhaseName, len(sequenceGates), seq.PhaseType)
+		}
+
+		// Skip sequences in phases with no gates
 		if len(sequenceGates) == 0 {
 			if shared.IsVerbose() {
 				fmt.Fprintf(cmd.OutOrStdout(), "  Skipping %s (no gates for %s phase)\n", seq.Name, seq.PhaseType)

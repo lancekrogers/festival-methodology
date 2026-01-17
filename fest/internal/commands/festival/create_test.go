@@ -291,7 +291,7 @@ func TestCreateOptions_InsertInMiddle(t *testing.T) {
 	}
 }
 
-// TestCreateFestival_GatesDirectory tests that festival creation creates gates directory
+// TestCreateFestival_GatesDirectory tests that festival creation creates phases directory with nested gates
 func TestCreateFestival_GatesDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
 
@@ -299,34 +299,51 @@ func TestCreateFestival_GatesDirectory(t *testing.T) {
 	festivalsDir := filepath.Join(tmpDir, "festivals")
 	festivalMetaDir := filepath.Join(festivalsDir, ".festival")
 	templatesDir := filepath.Join(festivalMetaDir, "templates")
-	gatesTemplatesDir := filepath.Join(templatesDir, "gates")
-	if err := os.MkdirAll(gatesTemplatesDir, 0755); err != nil {
-		t.Fatalf("failed to create template dir: %v", err)
+	phasesTemplatesDir := filepath.Join(templatesDir, "phases")
+
+	// Create phase-type subdirectories with GOAL.md and gates/ subdirectory
+	phaseTypes := map[string][]string{
+		"planning":          {"approval.md", "plan_review.md"},
+		"implementation":    {"testing.md", "review.md", "iterate.md", "commit.md"},
+		"research":          {"documentation.md", "findings_review.md"},
+		"review":            {"checklist.md", "sign_off.md"},
+		"non_coding_action": {"action_verify.md", "completion.md"},
 	}
 
-	// Create minimal gate templates
-	gateTemplates := []string{
-		"QUALITY_GATE_TESTING.md",
-		"QUALITY_GATE_REVIEW.md",
-		"QUALITY_GATE_ITERATE.md",
-		"QUALITY_GATE_COMMIT.md",
-	}
-	for _, tmpl := range gateTemplates {
-		content := "# " + tmpl + "\n\nGate template content."
-		if err := os.WriteFile(filepath.Join(gatesTemplatesDir, tmpl), []byte(content), 0644); err != nil {
-			t.Fatalf("failed to create template %s: %v", tmpl, err)
+	for phaseType, gates := range phaseTypes {
+		// Create phase directory with GOAL.md
+		phaseDir := filepath.Join(phasesTemplatesDir, phaseType)
+		if err := os.MkdirAll(phaseDir, 0755); err != nil {
+			t.Fatalf("failed to create phase dir %s: %v", phaseType, err)
+		}
+		goalContent := "# Phase Goal: " + phaseType + "\n\nPhase goal template."
+		if err := os.WriteFile(filepath.Join(phaseDir, "GOAL.md"), []byte(goalContent), 0644); err != nil {
+			t.Fatalf("failed to create GOAL.md for %s: %v", phaseType, err)
+		}
+
+		// Create gates subdirectory with gate templates
+		gatesDir := filepath.Join(phaseDir, "gates")
+		if err := os.MkdirAll(gatesDir, 0755); err != nil {
+			t.Fatalf("failed to create gates dir for %s: %v", phaseType, err)
+		}
+		for _, gate := range gates {
+			content := "# " + gate + "\n\nGate template content for " + phaseType + "."
+			if err := os.WriteFile(filepath.Join(gatesDir, gate), []byte(content), 0644); err != nil {
+				t.Fatalf("failed to create template %s/gates/%s: %v", phaseType, gate, err)
+			}
 		}
 	}
 
-	// Also create core templates to satisfy festival creation
-	coreTemplates := []string{
-		"FESTIVAL_OVERVIEW_TEMPLATE.md",
-		"FESTIVAL_GOAL_TEMPLATE.md",
+	// Also create core festival templates to satisfy festival creation
+	festivalTemplatesDir := filepath.Join(templatesDir, "festival")
+	if err := os.MkdirAll(festivalTemplatesDir, 0755); err != nil {
+		t.Fatalf("failed to create festival templates dir: %v", err)
 	}
+	coreTemplates := []string{"OVERVIEW.md", "GOAL.md"}
 	for _, tmpl := range coreTemplates {
 		content := "# {{.festival_name}}\n"
-		if err := os.WriteFile(filepath.Join(templatesDir, tmpl), []byte(content), 0644); err != nil {
-			t.Fatalf("failed to create template %s: %v", tmpl, err)
+		if err := os.WriteFile(filepath.Join(festivalTemplatesDir, tmpl), []byte(content), 0644); err != nil {
+			t.Fatalf("failed to create template festival/%s: %v", tmpl, err)
 		}
 	}
 
@@ -355,21 +372,40 @@ func TestCreateFestival_GatesDirectory(t *testing.T) {
 		t.Fatalf("expected 1 entry in active/: %v", err)
 	}
 	festivalDir := filepath.Join(activeDir, entries[0].Name())
-	gatesDir := filepath.Join(festivalDir, "gates")
+	phasesDir := filepath.Join(festivalDir, "phases")
 
-	info, err := os.Stat(gatesDir)
+	info, err := os.Stat(phasesDir)
 	if err != nil {
-		t.Fatalf("expected gates directory to exist: %v", err)
+		t.Fatalf("expected phases directory to exist: %v", err)
 	}
 	if !info.IsDir() {
-		t.Error("expected gates to be a directory")
+		t.Error("expected phases to be a directory")
 	}
 
-	// Verify gate templates were copied
-	for _, tmpl := range gateTemplates {
-		gatePath := filepath.Join(gatesDir, tmpl)
-		if _, err := os.Stat(gatePath); err != nil {
-			t.Errorf("expected gate template %s to exist: %v", tmpl, err)
+	// Verify phase-type subdirectories with GOAL.md and gates/ subdirectories
+	for phaseType, gates := range phaseTypes {
+		phaseDir := filepath.Join(phasesDir, phaseType)
+		if _, err := os.Stat(phaseDir); err != nil {
+			t.Errorf("expected phase directory %s to exist: %v", phaseType, err)
+			continue
+		}
+
+		// Verify GOAL.md exists
+		if _, err := os.Stat(filepath.Join(phaseDir, "GOAL.md")); err != nil {
+			t.Errorf("expected GOAL.md in %s to exist: %v", phaseType, err)
+		}
+
+		// Verify gates subdirectory and templates
+		gatesDir := filepath.Join(phaseDir, "gates")
+		if _, err := os.Stat(gatesDir); err != nil {
+			t.Errorf("expected gates directory in %s to exist: %v", phaseType, err)
+			continue
+		}
+		for _, gate := range gates {
+			gatePath := filepath.Join(gatesDir, gate)
+			if _, err := os.Stat(gatePath); err != nil {
+				t.Errorf("expected gate template %s/gates/%s to exist: %v", phaseType, gate, err)
+			}
 		}
 	}
 }
@@ -383,13 +419,16 @@ func TestCreateFestival_FestYAMLGenerated(t *testing.T) {
 	festivalMetaDir := filepath.Join(festivalsDir, ".festival")
 	templatesDir := filepath.Join(festivalMetaDir, "templates")
 	gatesTemplatesDir := filepath.Join(templatesDir, "gates")
-	if err := os.MkdirAll(gatesTemplatesDir, 0755); err != nil {
+
+	// Create phase-type subdirectory with minimal gate template
+	implDir := filepath.Join(gatesTemplatesDir, "implementation")
+	if err := os.MkdirAll(implDir, 0755); err != nil {
 		t.Fatalf("failed to create template dir: %v", err)
 	}
 
-	// Create minimal gate templates
-	for _, tmpl := range []string{"QUALITY_GATE_TESTING.md", "QUALITY_GATE_REVIEW.md", "QUALITY_GATE_ITERATE.md", "QUALITY_GATE_COMMIT.md"} {
-		if err := os.WriteFile(filepath.Join(gatesTemplatesDir, tmpl), []byte("# Gate"), 0644); err != nil {
+	// Create minimal implementation gate templates
+	for _, tmpl := range []string{"testing.md", "review.md", "iterate.md", "commit.md"} {
+		if err := os.WriteFile(filepath.Join(implDir, tmpl), []byte("# Gate"), 0644); err != nil {
 			t.Fatalf("failed to create template: %v", err)
 		}
 	}

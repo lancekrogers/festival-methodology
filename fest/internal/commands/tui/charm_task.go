@@ -103,7 +103,7 @@ func createTaskInSequence(ctx context.Context, sequencePath string) error {
 
 	// Collect additional template variables
 	required := uniqueStrings(collectRequiredVars(ctx, tmplRoot,
-		[]string{filepath.Join(tmplRoot, "TASK_TEMPLATE.md")}))
+		[]string{filepath.Join(tmplRoot, "tasks", "TASK.md")}))
 	vars := map[string]interface{}{}
 	for _, k := range required {
 		if k == "task_number" || k == "task_name" {
@@ -276,7 +276,7 @@ func charmCreateTaskManual(ctx context.Context) error {
 
 	after := atoiDefault(afterStr, 0)
 
-	required := uniqueStrings(collectRequiredVars(ctx, tmplRoot, []string{filepath.Join(tmplRoot, "TASK_TEMPLATE.md")}))
+	required := uniqueStrings(collectRequiredVars(ctx, tmplRoot, []string{filepath.Join(tmplRoot, "tasks", "TASK.md")}))
 	vars := map[string]interface{}{}
 	for _, k := range required {
 		if k == "task_number" || k == "task_name" {

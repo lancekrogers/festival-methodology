@@ -106,12 +106,12 @@ func runResearchCreate(ctx context.Context, cmd *cobra.Command, docType, title, 
 		return errors.Wrap(err, "resolving path").WithField("path", path)
 	}
 
-	// Determine template file
+	// Determine template file (research templates are in phases/research/)
 	templateMap := map[string]string{
-		"investigation": "RESEARCH_INVESTIGATION_TEMPLATE.md",
-		"comparison":    "RESEARCH_COMPARISON_TEMPLATE.md",
-		"analysis":      "RESEARCH_ANALYSIS_TEMPLATE.md",
-		"specification": "RESEARCH_SPECIFICATION_TEMPLATE.md",
+		"investigation": "phases/research/investigation.md",
+		"comparison":    "phases/research/comparison.md",
+		"analysis":      "phases/research/analysis.md",
+		"specification": "phases/research/specification.md",
 	}
 
 	templateFile := templateMap[docType]

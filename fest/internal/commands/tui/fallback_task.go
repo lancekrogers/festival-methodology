@@ -115,9 +115,9 @@ func tuiCreateTask(ctx context.Context, display *ui.UI) error {
 		after = atoiDefault(afterStr, defAfter)
 	}
 
-	// Prefer TASK_TEMPLATE.md for required vars
+	// Prefer tasks/TASK.md for required vars
 	required := uniqueStrings(collectRequiredVars(ctx, tmplRoot, []string{
-		filepath.Join(tmplRoot, "TASK_TEMPLATE.md"),
+		filepath.Join(tmplRoot, "tasks", "TASK.md"),
 	}))
 	vars := map[string]interface{}{}
 	for _, v := range required {

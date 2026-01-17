@@ -48,20 +48,16 @@ type createPhaseResult struct {
 }
 
 // selectPhaseTemplate returns the appropriate template ID and filename for a given phase type.
-// Returns (templateID, templateFilename) tuple.
-func selectPhaseTemplate(phaseType string) (string, string) {
-	switch strings.ToLower(phaseType) {
-	case "planning":
-		return "phase-goal-planning", "PHASE_GOAL_PLANNING_TEMPLATE.md"
-	case "implementation":
-		return "phase-goal-implementation", "PHASE_GOAL_IMPLEMENTATION_TEMPLATE.md"
-	case "research":
-		return "phase-goal-research", "PHASE_GOAL_RESEARCH_TEMPLATE.md"
-	case "review":
-		return "phase-goal-review", "PHASE_GOAL_REVIEW_TEMPLATE.md"
+// Returns (templateID, templateFilename, error) tuple.
+// Phase-type templates are stored in phases/{phase_type}/GOAL.md
+// Returns error for unknown phase types (no fallback - phase type is required).
+func selectPhaseTemplate(phaseType string) (string, string, error) {
+	pt := strings.ToLower(phaseType)
+	switch pt {
+	case "planning", "implementation", "research", "review", "non_coding_action":
+		return fmt.Sprintf("phase-goal-%s", pt), filepath.Join("phases", pt, "GOAL.md"), nil
 	default:
-		// Fallback to generic template for unknown types
-		return "phase-goal", "PHASE_GOAL_TEMPLATE.md"
+		return "", "", fmt.Errorf("unknown phase type %q: must be one of planning, implementation, research, review, non_coding_action", phaseType)
 	}
 }
 
@@ -185,7 +181,10 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 	var renderErr error
 
 	// Select template based on phase type
-	templateID, templateFilename := selectPhaseTemplate(opts.PhaseType)
+	templateID, templateFilename, phaseTypeErr := selectPhaseTemplate(opts.PhaseType)
+	if phaseTypeErr != nil {
+		return emitCreatePhaseError(opts, errors.Validation(phaseTypeErr.Error()).WithField("phase_type", opts.PhaseType))
+	}
 
 	if catalog != nil {
 		content, renderErr = mgr.RenderByID(ctx, catalog, templateID, tmplCtx)
@@ -222,6 +221,10 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 	if content == "" {
 		content = fmt.Sprintf("# Phase Goal: %s\n\n**Phase:** %03d | **Type:** %s | **Status:** Planning\n\n## Objective\n\n[REPLACE: Describe the phase objective]\n\n## Success Criteria\n\n- [ ] [REPLACE: Criterion 1]\n- [ ] [REPLACE: Criterion 2]\n", opts.Name, newNumber, opts.PhaseType)
 	}
+
+	// Ensure content has proper phase type frontmatter
+	// Strip any template metadata frontmatter and add phase frontmatter with type
+	content = ensurePhaseTypeFrontmatter(content, opts.PhaseType)
 
 	var markersFilled, markersTotal int
 	if content != "" {
@@ -367,4 +370,28 @@ func emitCreatePhaseJSON(opts *CreatePhaseOptions, res createPhaseResult) error 
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
 	return enc.Encode(res)
+}
+
+// ensurePhaseTypeFrontmatter ensures the content has proper YAML frontmatter with the phase type.
+// If content already has frontmatter (template metadata), it strips it and adds phase frontmatter.
+// If content has no frontmatter, it prepends phase frontmatter.
+func ensurePhaseTypeFrontmatter(content, phaseType string) string {
+	// Phase frontmatter using the fest_ prefix convention for proper parsing
+	phaseFrontmatter := fmt.Sprintf("---\nfest_phase_type: %s\n---\n\n", phaseType)
+
+	// Check if content starts with frontmatter
+	if strings.HasPrefix(content, "---") {
+		// Find the closing --- to strip template metadata frontmatter
+		rest := content[3:] // skip opening ---
+		endIdx := strings.Index(rest, "---")
+		if endIdx != -1 {
+			// Skip past the closing --- and any following newlines
+			afterFrontmatter := rest[endIdx+3:]
+			afterFrontmatter = strings.TrimLeft(afterFrontmatter, "\n\r")
+			return phaseFrontmatter + afterFrontmatter
+		}
+	}
+
+	// No existing frontmatter, just prepend
+	return phaseFrontmatter + content
 }

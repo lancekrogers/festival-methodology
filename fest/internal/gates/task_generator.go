@@ -10,6 +10,7 @@ import (
 
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
+	"github.com/lancekrogers/festival-methodology/fest/internal/frontmatter"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 )
 
@@ -369,10 +370,50 @@ type SequenceInfo struct {
 	PhaseName string // Name of the parent phase directory
 }
 
-// DetectPhaseType determines the phase type from the phase directory name.
-// Returns: "planning", "implementation", "research", "review", "action"
-// Defaults to "implementation" for unknown types.
-func DetectPhaseType(phaseName string) string {
+// DetectPhaseType determines the phase type from the phase directory.
+// Priority order:
+// 1. Read from PHASE_GOAL.md frontmatter (fest_phase_type field)
+// 2. Fall back to inferring from directory name
+// Returns: "planning", "implementation", "research", "review", "non_coding_action"
+// Returns empty string if type cannot be determined (error case).
+func DetectPhaseType(phasePath string) string {
+	// First try to read from PHASE_GOAL.md frontmatter
+	goalPath := filepath.Join(phasePath, "PHASE_GOAL.md")
+	if content, err := os.ReadFile(goalPath); err == nil {
+		if fm, _, err := frontmatter.Parse(content); err == nil && fm != nil {
+			if fm.PhaseType != "" {
+				// Map frontmatter.PhaseType to our internal naming
+				return mapPhaseType(string(fm.PhaseType))
+			}
+		}
+	}
+
+	// Fall back to directory name inference
+	phaseName := filepath.Base(phasePath)
+	return inferPhaseTypeFromName(phaseName)
+}
+
+// mapPhaseType normalizes phase type values to internal naming.
+func mapPhaseType(phaseType string) string {
+	switch strings.ToLower(phaseType) {
+	case "planning", "plan":
+		return "planning"
+	case "implementation", "implement", "build":
+		return "implementation"
+	case "research", "discovery":
+		return "research"
+	case "review", "qa":
+		return "review"
+	case "deployment", "deploy", "action", "non_coding_action":
+		return "non_coding_action"
+	default:
+		return phaseType
+	}
+}
+
+// inferPhaseTypeFromName infers phase type from directory name.
+// Returns empty string if type cannot be determined.
+func inferPhaseTypeFromName(phaseName string) string {
 	lower := strings.ToLower(phaseName)
 
 	switch {
@@ -389,13 +430,13 @@ func DetectPhaseType(phaseName string) string {
 		strings.Contains(lower, "release") || strings.Contains(lower, "action") ||
 		strings.Contains(lower, "operation") || strings.Contains(lower, "config") ||
 		strings.Contains(lower, "publish") || strings.Contains(lower, "migrat"):
-		return "action"
+		return "non_coding_action"
 	case strings.Contains(lower, "implementation") || strings.Contains(lower, "implement") ||
 		strings.Contains(lower, "develop") || strings.Contains(lower, "build") ||
 		strings.Contains(lower, "foundation") || strings.Contains(lower, "critical"):
 		return "implementation"
 	default:
-		return "implementation" // Default to implementation for unknown types
+		return "" // No default - require explicit type
 	}
 }
 
@@ -425,9 +466,9 @@ func FindSequencesWithInfo(festivalRoot string, excludePatterns []string) ([]Seq
 			continue
 		}
 
-		// Detect phase type from phase name
+		// Detect phase type from phase path (checks frontmatter first)
 		phaseName := entry.Name()
-		phaseType := DetectPhaseType(phaseName)
+		phaseType := DetectPhaseType(phasePath)
 
 		for _, seqEntry := range seqEntries {
 			if !seqEntry.IsDir() {
@@ -453,4 +494,64 @@ func FindSequencesWithInfo(festivalRoot string, excludePatterns []string) ([]Seq
 	}
 
 	return sequences, nil
+}
+
+// DiscoverGatesForPhaseType reads gate templates from the festival's phases/{phase_type}/gates/ directory.
+// Returns gate tasks constructed from the .md files found in that directory.
+// Returns an error if the directory doesn't exist or contains no gates.
+func DiscoverGatesForPhaseType(festivalPath, phaseType string) ([]GateTask, error) {
+	gatesDir := filepath.Join(festivalPath, "phases", phaseType, "gates")
+
+	// Check if directory exists
+	if _, err := os.Stat(gatesDir); os.IsNotExist(err) {
+		return nil, errors.NotFound("gates directory for phase type").
+			WithField("phase_type", phaseType).
+			WithField("path", gatesDir).
+			WithField("hint", fmt.Sprintf("Create gates directory: %s", gatesDir))
+	}
+
+	// Read all .md files from the directory
+	entries, err := os.ReadDir(gatesDir)
+	if err != nil {
+		return nil, errors.IO("reading gates directory", err).
+			WithField("path", gatesDir)
+	}
+
+	var gates []GateTask
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+
+		// Extract gate ID from filename (e.g., "testing.md" -> "testing")
+		baseName := strings.TrimSuffix(entry.Name(), ".md")
+		gateID := strings.ReplaceAll(baseName, "-", "_")
+
+		// Build template path that matches the new structure
+		templatePath := fmt.Sprintf("gates/%s/%s", phaseType, baseName)
+
+		// Try to read gate name from frontmatter if available
+		gateName := strings.Title(strings.ReplaceAll(baseName, "_", " "))
+		filePath := filepath.Join(gatesDir, entry.Name())
+		if content, err := os.ReadFile(filePath); err == nil {
+			if fm, _, err := frontmatter.Parse(content); err == nil && fm != nil && fm.Name != "" {
+				gateName = fm.Name
+			}
+		}
+
+		gates = append(gates, GateTask{
+			ID:       gateID,
+			Template: templatePath,
+			Name:     gateName,
+			Enabled:  true,
+		})
+	}
+
+	if len(gates) == 0 {
+		return nil, errors.Validation("no gate templates found in directory").
+			WithField("phase_type", phaseType).
+			WithField("path", gatesDir)
+	}
+
+	return gates, nil
 }

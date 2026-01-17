@@ -370,7 +370,7 @@ func DefaultFestivalGatesConfig() *config.FestivalConfig {
 			"*_docs",
 		},
 		Templates: config.TemplatePrefs{
-			TaskDefault:  "TASK_TEMPLATE_SIMPLE",
+			TaskDefault:  "tasks/SIMPLE",
 			PreferSimple: true,
 		},
 		Tracking: config.TrackingConfig{

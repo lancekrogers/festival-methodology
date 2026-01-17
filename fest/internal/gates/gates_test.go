@@ -350,6 +350,7 @@ func containsHelper(s, substr string) bool {
 }
 
 func TestDetectPhaseType(t *testing.T) {
+	// Test name inference (no PHASE_GOAL.md)
 	tests := []struct {
 		phaseName string
 		expected  string
@@ -373,22 +374,67 @@ func TestDetectPhaseType(t *testing.T) {
 		{"001_REVIEW", "review"},
 		{"002_QA", "review"},
 		{"003_UAT", "review"},
-		// Action phases (deployment, config, release, etc.)
-		{"001_DEPLOYMENT", "action"},
-		{"002_Deploy", "action"},
-		{"003_Release", "action"},
-		{"004_MIGRATION", "action"},
-		{"005_Configuration", "action"},
-		// Unknown defaults to implementation
-		{"001_UNKNOWN", "implementation"},
-		{"random_name", "implementation"},
+		// Action phases (deployment, config, release, etc.) -> now "non_coding_action"
+		{"001_DEPLOYMENT", "non_coding_action"},
+		{"002_Deploy", "non_coding_action"},
+		{"003_Release", "non_coding_action"},
+		{"004_MIGRATION", "non_coding_action"},
+		{"005_Configuration", "non_coding_action"},
+		// Unknown returns empty string (requires explicit type)
+		{"001_UNKNOWN", ""},
+		{"random_name", ""},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.phaseName, func(t *testing.T) {
-			result := DetectPhaseType(tc.phaseName)
+			// Create temp directory with phaseName to simulate phase path
+			tmpDir := t.TempDir()
+			phasePath := filepath.Join(tmpDir, tc.phaseName)
+			if err := os.MkdirAll(phasePath, 0755); err != nil {
+				t.Fatalf("Failed to create phase dir: %v", err)
+			}
+
+			result := DetectPhaseType(phasePath)
 			if result != tc.expected {
 				t.Errorf("DetectPhaseType(%q) = %q, want %q", tc.phaseName, result, tc.expected)
+			}
+		})
+	}
+}
+
+func TestDetectPhaseTypeFromFrontmatter(t *testing.T) {
+	// Test frontmatter-based detection takes priority
+	tests := []struct {
+		name         string
+		frontmatter  string
+		expectedType string
+	}{
+		{"planning_from_fm", "---\nfest_phase_type: planning\n---\n# Goal", "planning"},
+		{"implementation_from_fm", "---\nfest_phase_type: implementation\n---\n# Goal", "implementation"},
+		{"research_from_fm", "---\nfest_phase_type: research\n---\n# Goal", "research"},
+		{"review_from_fm", "---\nfest_phase_type: review\n---\n# Goal", "review"},
+		{"non_coding_action_from_fm", "---\nfest_phase_type: non_coding_action\n---\n# Goal", "non_coding_action"},
+		// Frontmatter overrides name inference
+		{"fm_overrides_name", "---\nfest_phase_type: research\n---\n# Goal", "research"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			phasePath := filepath.Join(tmpDir, "001_IMPLEMENTATION") // Name suggests implementation
+			if err := os.MkdirAll(phasePath, 0755); err != nil {
+				t.Fatalf("Failed to create phase dir: %v", err)
+			}
+
+			// Write PHASE_GOAL.md with frontmatter
+			goalPath := filepath.Join(phasePath, "PHASE_GOAL.md")
+			if err := os.WriteFile(goalPath, []byte(tc.frontmatter), 0644); err != nil {
+				t.Fatalf("Failed to write PHASE_GOAL.md: %v", err)
+			}
+
+			result := DetectPhaseType(phasePath)
+			if result != tc.expectedType {
+				t.Errorf("DetectPhaseType with frontmatter = %q, want %q", result, tc.expectedType)
 			}
 		})
 	}
@@ -404,8 +450,9 @@ func TestGetGatesForPhaseType(t *testing.T) {
 		{"planning", 3, "planning_review"},
 		{"research", 3, "research_review"},
 		{"review", 2, "review_checklist"},
-		{"action", 3, "execution_verify"},    // Action phases have 3 gates
-		{"unknown", 4, "testing_and_verify"}, // Unknown defaults to implementation
+		{"action", 3, "execution_verify"},            // Action phases have 3 gates
+		{"non_coding_action", 3, "execution_verify"}, // Alias for action
+		{"unknown", 4, "testing_and_verify"},         // Unknown defaults to implementation
 	}
 
 	for _, tc := range tests {
