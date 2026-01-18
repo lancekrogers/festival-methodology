@@ -1,6 +1,6 @@
-# fest - Festival Methodology CLI
+# Fest CLI
 
-fest is a CLI tool for working with **Festival Methodology** - a hierarchical agentic planning and execution system designed for AI agent workflows.
+Fest is a CLI tool for working with **Festival Methodology** - a hierarchical agentic planning and execution system designed for AI agent workflows.
 
 ## What is Festival Methodology?
 
@@ -30,23 +30,24 @@ Festival (the project)
 - **Festival**: A complete project or initiative with a defined outcome
 - **Phase**: A major milestone (e.g., "Design", "Implementation", "Testing")
 - **Sequence**: A group of related tasks that accomplish a specific goal
-- **Task**: A single unit of work with clear acceptance criteria
+- **Task**: A markdown document containing a unit of work. Similar to a Claude Code plan - each task document contains multiple actions, acceptance criteria, and context. Tasks are not single to-dos; they're comprehensive work units that may include many steps.
 - **Quality Gates**: Validation checkpoints at the end of sequences (testing, code review, etc.)
 
 ## What fest Does
 
-fest is both a **project scaffolding tool** and an **agent guidance system**. It teaches agents how to work with Festival Methodology and guides them through execution with minimal context overhead.
+Fest is both a **project scaffolding tool** and an **agent guidance system**. It teaches agents how to work with Festival Methodology and guides them through execution with minimal context overhead.
 
 **Agent Guidance System:**
 - Built-in documentation teaches agents the methodology on-demand (`fest intro`, `fest understand`)
 - Agents learn what they need, when they need it - no upfront context dump
+- `fest next` shows agents exactly what to work on next with just the context they need
+- `fest execute` orchestrates task execution, guiding agents through the festival systematically
 - Self-documenting commands guide agents through proper usage
 
 **Project Management:**
 - **Create**: Interactive TUI for scaffolding festivals, phases, sequences, and tasks
 - **Validate**: Check festival structure for issues and auto-fix common problems
 - **Navigate**: Quick commands to jump between festivals, phases, and sequences
-- **Execute**: Orchestrate task execution with progress tracking
 - **Track**: Monitor completion status across all levels
 
 ## Installation
