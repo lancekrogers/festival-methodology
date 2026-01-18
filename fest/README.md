@@ -1,10 +1,10 @@
 # fest - Festival Methodology CLI
 
-fest is a CLI tool for working with **Festival Methodology** - a structured approach to project management designed for AI agent workflows.
+fest is a CLI tool for working with **Festival Methodology** - a hierarchical agentic planning and execution system designed for AI agent workflows.
 
 ## What is Festival Methodology?
 
-Festival Methodology organizes work into a three-level hierarchy:
+Festival Methodology is a structured approach to **hierarchical agentic planning and execution**. It organizes complex projects into a three-level hierarchy that AI agents can systematically work through:
 
 ```
 Festival (the project)
@@ -23,6 +23,7 @@ Festival (the project)
 - **Goal-Oriented**: Each level (festival, phase, sequence, task) has explicit goals. Agents always know what they're working toward.
 - **Resumable**: Work can be paused and resumed. A new agent session can pick up exactly where the last one left off.
 - **Traceable**: Every task links to its parent sequence and phase. Progress is trackable across the entire project.
+- **Just-in-Time Context**: Agents only load the context they need for the current task, minimizing token usage while maintaining full awareness of the project structure.
 
 **Key Concepts:**
 
@@ -34,9 +35,14 @@ Festival (the project)
 
 ## What fest Does
 
-fest helps you create, navigate, validate, and execute festivals:
+fest is both a **project scaffolding tool** and an **agent guidance system**. It teaches agents how to work with Festival Methodology and guides them through execution with minimal context overhead.
 
-- **Learn**: Built-in documentation teaches agents the methodology (`fest intro`, `fest understand`)
+**Agent Guidance System:**
+- Built-in documentation teaches agents the methodology on-demand (`fest intro`, `fest understand`)
+- Agents learn what they need, when they need it - no upfront context dump
+- Self-documenting commands guide agents through proper usage
+
+**Project Management:**
 - **Create**: Interactive TUI for scaffolding festivals, phases, sequences, and tasks
 - **Validate**: Check festival structure for issues and auto-fix common problems
 - **Navigate**: Quick commands to jump between festivals, phases, and sequences
