@@ -1,6 +1,47 @@
 # fest - Festival Methodology CLI
 
-A CLI for managing Festival Methodology - goal-oriented project management for AI agent workflows.
+fest is a CLI tool for working with **Festival Methodology** - a structured approach to project management designed for AI agent workflows.
+
+## What is Festival Methodology?
+
+Festival Methodology organizes work into a three-level hierarchy:
+
+```
+Festival (the project)
+├── Phase (major milestone)
+│   ├── Sequence (related tasks)
+│   │   ├── Task 1
+│   │   ├── Task 2
+│   │   └── Task 3
+│   └── Sequence
+└── Phase
+```
+
+**Why this structure?**
+
+- **Context Management**: AI agents have limited context windows. Festivals break work into digestible chunks that fit within agent context limits.
+- **Goal-Oriented**: Each level (festival, phase, sequence, task) has explicit goals. Agents always know what they're working toward.
+- **Resumable**: Work can be paused and resumed. A new agent session can pick up exactly where the last one left off.
+- **Traceable**: Every task links to its parent sequence and phase. Progress is trackable across the entire project.
+
+**Key Concepts:**
+
+- **Festival**: A complete project or initiative with a defined outcome
+- **Phase**: A major milestone (e.g., "Design", "Implementation", "Testing")
+- **Sequence**: A group of related tasks that accomplish a specific goal
+- **Task**: A single unit of work with clear acceptance criteria
+- **Quality Gates**: Validation checkpoints at the end of sequences (testing, code review, etc.)
+
+## What fest Does
+
+fest helps you create, navigate, validate, and execute festivals:
+
+- **Learn**: Built-in documentation teaches agents the methodology (`fest intro`, `fest understand`)
+- **Create**: Interactive TUI for scaffolding festivals, phases, sequences, and tasks
+- **Validate**: Check festival structure for issues and auto-fix common problems
+- **Navigate**: Quick commands to jump between festivals, phases, and sequences
+- **Execute**: Orchestrate task execution with progress tracking
+- **Track**: Monitor completion status across all levels
 
 ## Installation
 
