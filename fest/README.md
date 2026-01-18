@@ -17,41 +17,9 @@ Or with Go:
 go install github.com/festival-methodology/fest/cmd/fest@latest
 ```
 
-## Quick Start
+## Shell Integration (Recommended)
 
-```bash
-# 1. Learn the methodology (do this first!)
-fest understand methodology
-fest understand structure
-
-# 2. Initialize a festivals directory
-fest init
-
-# 3. Create your first festival
-fest create festival
-
-# 4. Navigate and work
-fgo                    # Navigate to festivals
-fest status            # Check progress
-fest next              # Find next task
-```
-
-## Core Commands
-
-| Command | Purpose |
-|---------|---------|
-| `fest understand` | Learn methodology (run first!) |
-| `fest create` | Create festivals/phases/sequences (TUI) |
-| `fest validate` | Check structure for issues |
-| `fest go` / `fgo` | Navigate to festivals |
-| `fest status` | View progress |
-| `fest next` | Find next task to work on |
-
-Run `fest --help` for all commands grouped by workflow.
-
-## Shell Integration
-
-Add to your shell config for `fgo` navigation:
+Add to your shell config for quick navigation commands:
 
 ```bash
 # Zsh/Bash
@@ -61,27 +29,78 @@ eval "$(fest shell-init zsh)"
 fest shell-init fish | source
 ```
 
-Enable tab completion:
+This gives you:
+- `fgo` - Quick navigation (`fest go`)
+- `fls` - Quick listing (`fest list`)
+- Tab completion for all fest commands
+
+## Agent Workflow
+
+The typical workflow for AI agents:
+
+### 1. Learn the Methodology
 
 ```bash
-# Bash
-source <(fest completion bash)
-
-# Zsh
-source <(fest completion zsh)
-
-# Fish
-fest completion fish | source
+fest intro                    # Start here - getting started guide
+fest understand methodology   # Core principles
+fest understand structure     # 3-level hierarchy
 ```
+
+### 2. Initialize & Create
+
+```bash
+fest init                     # Initialize festivals directory
+fest create festival          # Create a new festival (TUI)
+fest create phase             # Add phases
+fest create sequence          # Add sequences
+```
+
+### 3. Plan & Validate
+
+```bash
+fest validate                 # Check structure for issues
+fest validate --fix           # Auto-fix common problems
+fest status                   # View festival progress
+```
+
+### 4. Execute
+
+```bash
+fest execute                  # Execute festival tasks
+fest next                     # Find next task to work on
+fest progress                 # Track execution progress
+```
+
+## Quick Commands
+
+After shell integration:
+
+| Command | Full Form | Purpose |
+|---------|-----------|---------|
+| `fgo` | `fest go` | Navigate to festivals directory |
+| `fgo 2` | `fest go 2` | Go to phase 002 |
+| `fgo 2/1` | `fest go 2/1` | Go to phase 2, sequence 1 |
+| `fgo active` | `fest go active` | Go to active festivals |
+| `fls` | `fest list` | List festivals by status |
+| `fls active` | `fest list active` | List active festivals |
+
+## Core Commands
+
+| Command | Purpose |
+|---------|---------|
+| `fest intro` | Getting started guide (run first!) |
+| `fest understand` | Learn methodology concepts |
+| `fest create` | Create festivals/phases/sequences (TUI) |
+| `fest validate` | Check structure for issues |
+| `fest execute` | Execute festival tasks |
+| `fest status` | View progress |
+| `fest next` | Find next task |
+
+Run `fest --help` for all commands grouped by workflow.
 
 ## Configuration
 
 Config stored at `~/.config/fest/config.json`. Run `fest config show` to view.
-
-### Environment Variables
-
-- `FEST_CONFIG_DIR` - Override config directory
-- `NO_COLOR` - Disable colored output
 
 ## Development
 
