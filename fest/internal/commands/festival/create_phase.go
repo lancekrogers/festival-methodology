@@ -169,6 +169,7 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 	// Build template context for phase
 	tmplCtx := tpl.NewContext()
 	tmplCtx.SetPhase(newNumber, opts.Name, opts.PhaseType)
+	tmplCtx.ComputeStructureVariables()
 	for k, v := range vars {
 		tmplCtx.SetCustom(k, v)
 	}

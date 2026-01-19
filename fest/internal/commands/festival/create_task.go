@@ -202,6 +202,7 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 		// Build template context for this task
 		tmplCtx := tpl.NewContext()
 		tmplCtx.SetTask(newNumber, name)
+		tmplCtx.ComputeStructureVariables()
 		for k, v := range vars {
 			tmplCtx.SetCustom(k, v)
 		}
