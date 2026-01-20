@@ -26,6 +26,14 @@ type updateOptions struct {
 	diff          bool
 }
 
+// protectedStateFiles are local state files that should never be deleted by update.
+// These files are workspace-specific and don't exist in the source templates.
+var protectedStateFiles = map[string]bool{
+	".workspace":           true, // Workspace registration marker
+	".fest-checksums.json": true, // Checksum tracking (managed separately)
+	"id_registry.yaml":     true, // Festival ID registry
+}
+
 // NewUpdateCommand creates the update command
 func NewUpdateCommand() *cobra.Command {
 	opts := &updateOptions{}
@@ -329,8 +337,9 @@ func categorizeChanges(ctx context.Context, stored, current map[string]fileops.C
 	}
 
 	// Check for orphaned files (exist locally but not in source)
+	// Skip protected state files that should never be deleted
 	for path := range current {
-		if !sourceFilesSet[path] {
+		if !sourceFilesSet[path] && !protectedStateFiles[path] {
 			changes.orphaned = append(changes.orphaned, path)
 		}
 	}

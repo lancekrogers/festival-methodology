@@ -1,12 +1,12 @@
 ---
+# Template metadata (for fest CLI discovery)
 id: festival-goal
 aliases:
   - goal
   - fg
 description: Defines festival objective, success criteria, and KPIs
----
 
----
+# Fest document metadata (becomes document frontmatter)
 fest_type: festival
 fest_id: [REPLACE: FESTIVAL_ID]
 fest_name: [REPLACE: Festival Name]

@@ -1,12 +1,12 @@
 ---
+# Template metadata (for fest CLI discovery)
 id: task-minimal
 aliases:
   - minimal-task
   - tm
 description: Ultra-streamlined task template for quick tasks
----
 
----
+# Fest document metadata (becomes document frontmatter)
 fest_type: task
 fest_id: [REPLACE: TASK_ID]
 fest_name: [REPLACE: Task Name]

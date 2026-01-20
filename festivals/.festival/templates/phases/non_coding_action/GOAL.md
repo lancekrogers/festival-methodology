@@ -1,13 +1,13 @@
 ---
+# Template metadata (for fest CLI discovery)
 id: phase-goal-non-coding-action
 aliases:
   - pgnca
   - action-phase
 description: Phase goal template for non-coding action phases (documentation, releases, configuration, etc.)
 phase_type: non_coding_action
----
 
----
+# Fest document metadata (becomes document frontmatter)
 fest_type: phase
 fest_id: [REPLACE: PHASE_ID]
 fest_name: [REPLACE: Phase Name]

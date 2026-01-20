@@ -195,5 +195,8 @@ func parseFrontmatter(file *os.File) (*Metadata, string, error) {
 	// Join content lines
 	content := strings.Join(contentLines, "\n")
 
+	// Trim leading newlines (common when templates have blank lines after metadata frontmatter)
+	content = strings.TrimLeft(content, "\n")
+
 	return metadata, content, nil
 }

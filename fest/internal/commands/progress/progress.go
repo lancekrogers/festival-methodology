@@ -427,11 +427,29 @@ func showFestivalProgress(ctx context.Context, mgr *progress.Manager, loc *show.
 			ui.Value(fmt.Sprintf("%d task(s) blocked", overall.Blocked), ui.WarningColor))
 	}
 
+	// Time Tracking section
+	fmt.Printf("\n%s\n", ui.H2("Time Tracking"))
+	fmt.Println(ui.Dim(strings.Repeat("─", 60)))
+
+	// Work time (sum of all task time) - agent runtime
 	if overall.TimeSpentMin > 0 {
-		fmt.Printf("%s %s\n",
-			ui.Label("Total time"),
-			ui.Value(ui.FormatDuration(overall.TimeSpentMin)))
+		fmt.Printf("%s %s %s\n",
+			ui.Label("Work time"),
+			ui.Value(ui.FormatDuration(overall.TimeSpentMin)),
+			ui.Dim("(agent runtime)"))
+	} else {
+		fmt.Printf("%s %s %s\n",
+			ui.Label("Work time"),
+			ui.Dim("0m"),
+			ui.Dim("(agent runtime)"))
 	}
+
+	// Duration (calendar time since festival creation)
+	durationStr := progress.FormatDurationWithStatus(festProgress.TimeMetrics)
+	fmt.Printf("%s %s %s\n",
+		ui.Label("Duration"),
+		ui.Value(durationStr),
+		ui.Dim("(calendar time)"))
 
 	// Phase breakdown
 	if len(festProgress.Phases) > 0 {

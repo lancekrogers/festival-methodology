@@ -1,12 +1,12 @@
 ---
+# Template metadata (for fest CLI discovery)
 id: QUALITY_GATE_TESTING
 aliases:
   - testing-verify
   - qg-test
 description: Standard quality gate task for testing and verification
----
 
----
+# Fest document metadata (becomes document frontmatter)
 fest_type: gate
 fest_id: {{ .GateID }}
 fest_name: Testing and Verification

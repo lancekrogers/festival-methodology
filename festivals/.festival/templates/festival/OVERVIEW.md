@@ -1,4 +1,5 @@
 ---
+# Template metadata (for fest CLI discovery)
 id: FESTIVAL_OVERVIEW_TEMPLATE
 aliases:
   - FESTIVAL OVERVIEW TEMPLATE
@@ -6,9 +7,9 @@ aliases:
 tags: []
 created: '2025-09-06'
 modified: '2025-09-06'
----
+description: Festival overview with problem statement, scope, and phases
 
----
+# Fest document metadata (becomes document frontmatter)
 fest_type: festival
 fest_id: [REPLACE: FESTIVAL_ID]
 fest_name: [REPLACE: Festival Name]

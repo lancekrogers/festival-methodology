@@ -135,6 +135,7 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 	// Build template context
 	tmplCtx := tpl.NewContext()
 	tmplCtx.SetFestival(opts.Name, opts.Goal, parseTags(opts.Tags))
+	tmplCtx.ComputeStructureVariables()
 	for k, v := range vars {
 		tmplCtx.SetCustom(k, v)
 	}

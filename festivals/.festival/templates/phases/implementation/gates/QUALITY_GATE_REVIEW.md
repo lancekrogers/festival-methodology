@@ -1,12 +1,12 @@
 ---
+# Template metadata (for fest CLI discovery)
 id: QUALITY_GATE_REVIEW
 aliases:
   - code-review
   - qg-review
 description: Standard quality gate task for code review
----
 
----
+# Fest document metadata (becomes document frontmatter)
 fest_type: gate
 fest_id: {{ .GateID }}
 fest_name: Code Review

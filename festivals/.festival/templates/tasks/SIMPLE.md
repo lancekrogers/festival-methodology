@@ -1,12 +1,12 @@
 ---
+# Template metadata (for fest CLI discovery)
 id: task-simple
 aliases:
   - simple-task
   - ts
 description: Streamlined task template for simple, well-understood tasks
----
 
----
+# Fest document metadata (becomes document frontmatter)
 fest_type: task
 fest_id: [REPLACE: TASK_ID]
 fest_name: [REPLACE: Task Name]

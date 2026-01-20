@@ -67,7 +67,7 @@ func runStatusSet(ctx context.Context, cmd *cobra.Command, newStatus string, opt
 	display := ui.New(shared.IsNoColor(), shared.IsVerbose())
 
 	// Check if a level-specific flag was provided
-	if opts.task != "" || opts.path != "" {
+	if opts.task != "" {
 		return handleTaskStatusSet(ctx, display, cwd, newStatus, opts)
 	}
 	if opts.sequence != "" {
@@ -75,6 +75,11 @@ func runStatusSet(ctx context.Context, cmd *cobra.Command, newStatus string, opt
 	}
 	if opts.phase != "" {
 		return handlePhaseStatusSet(ctx, display, cwd, newStatus, opts)
+	}
+
+	// Handle --path flag: detect entity type and route accordingly
+	if opts.path != "" {
+		return handlePathBasedStatusSet(ctx, display, cwd, newStatus, opts)
 	}
 
 	// No level flag - use original logic (festival level or context-aware)
@@ -763,6 +768,88 @@ func emitStatusHistory(opts *statusOptions, festivalName string, history []map[s
 	}
 
 	return nil
+}
+
+// handlePathBasedStatusSet handles --path flag by detecting entity type and routing accordingly.
+// This allows setting festival status from anywhere in the workspace by passing the festival name.
+func handlePathBasedStatusSet(ctx context.Context, display *ui.UI, cwd, newStatus string, opts *statusOptions) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled")
+	}
+
+	// First, try to resolve as a festival
+	festivalPath, err := resolveFestivalFromPath(cwd, opts.path)
+	if err == nil {
+		// Successfully resolved as a festival - detect entity type to confirm
+		entityType := detectEntityType(festivalPath)
+
+		switch entityType {
+		case EntityFestival:
+			// Validate festival status
+			if !isValidStatus(EntityFestival, newStatus) {
+				validOptions := ValidStatuses[EntityFestival]
+				return errors.Validation("invalid status for festival").
+					WithField("status", newStatus).
+					WithField("valid_options", strings.Join(validOptions, ", "))
+			}
+
+			// Get festival info using DetectCurrentLocation
+			loc, locErr := show.DetectCurrentLocation(ctx, festivalPath)
+			if locErr != nil {
+				return errors.Wrap(locErr, "detecting festival info")
+			}
+			if loc.Festival == nil {
+				return errors.NotFound("festival info").WithField("path", festivalPath)
+			}
+
+			return handleFestivalStatusChange(ctx, display, loc.Festival, newStatus, opts)
+
+		case EntityPhase:
+			// Path points to a phase - set phase name and route to phase handler
+			opts.phase = filepath.Base(festivalPath)
+			// Get festival root (parent of phase)
+			festivalRoot := filepath.Dir(festivalPath)
+			return handlePhaseStatusSetWithPath(ctx, display, festivalRoot, newStatus, opts)
+
+		case EntitySequence:
+			// Path points to a sequence - more complex routing needed
+			// For now, fall through to task handling which can resolve sequences
+			break
+
+		case EntityTask:
+			// Path points to a task file - route to task handler
+			return handleTaskStatusSet(ctx, display, cwd, newStatus, opts)
+		}
+	}
+
+	// Path didn't resolve as a festival - try as a task path
+	// This maintains backward compatibility for task-level --path usage
+	return handleTaskStatusSet(ctx, display, cwd, newStatus, opts)
+}
+
+// handlePhaseStatusSetWithPath handles phase status when we already know the festival path.
+func handlePhaseStatusSetWithPath(ctx context.Context, display *ui.UI, festivalPath, newStatus string, opts *statusOptions) error {
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context cancelled")
+	}
+
+	// Validate status for phases
+	if !isValidStatus(EntityPhase, newStatus) {
+		validOptions := ValidStatuses[EntityPhase]
+		return errors.Validation("invalid status for phase").
+			WithField("status", newStatus).
+			WithField("valid_options", strings.Join(validOptions, ", "))
+	}
+
+	// Find the phase directory
+	phasePath, phaseName, err := resolvePhase(festivalPath, opts.phase)
+	if err != nil {
+		return err
+	}
+
+	// Phase status is stored in PHASE_GOAL.md frontmatter
+	_ = phasePath
+	return emitPhaseStatusPlaceholder(display, opts, phaseName, newStatus)
 }
 
 // handleTaskStatusSet handles setting status for a specific task.

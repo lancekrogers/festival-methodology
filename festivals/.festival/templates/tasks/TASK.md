@@ -1,15 +1,12 @@
 ---
+# Template metadata (for fest CLI discovery)
 id: TASK_TEMPLATE
 aliases:
   - TASK TEMPLATE
   - TASK-TEMPLATE
-tags: []
-created: "2025-08-26"
-modified: "2025-08-26"
-autonomy_level: [high|medium|low]
----
+description: Full task template with all sections and quality gates
 
----
+# Fest document metadata (becomes document frontmatter)
 fest_type: task
 fest_id: [REPLACE: TASK_ID]
 fest_name: [REPLACE: Task Name]

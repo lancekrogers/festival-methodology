@@ -27,9 +27,10 @@ type FestivalConfig struct {
 
 // QualityGatesConfig contains quality gate settings
 type QualityGatesConfig struct {
-	Enabled    bool              `yaml:"enabled"`
-	AutoAppend bool              `yaml:"auto_append"`
-	Tasks      []QualityGateTask `yaml:"tasks"`
+	Enabled    bool                         `yaml:"enabled"`
+	AutoAppend bool                         `yaml:"auto_append"`
+	Tasks      []QualityGateTask            `yaml:"tasks"`                 // Legacy: implementation gates only
+	PhaseGates map[string][]QualityGateTask `yaml:"phase_gates,omitempty"` // Per phase type gate ordering
 }
 
 // QualityGateTask represents a single quality gate task configuration
@@ -100,37 +101,47 @@ func SaveFestivalConfig(festivalPath string, cfg *FestivalConfig) error {
 }
 
 // DefaultFestivalConfig returns the default festival configuration.
-// Note: Template paths use "gates/" prefix to reference the festival's gates/ directory.
+// Note: Template paths reference the templates directory structure.
 func DefaultFestivalConfig() *FestivalConfig {
 	return &FestivalConfig{
 		Version: "1.0",
 		QualityGates: QualityGatesConfig{
 			Enabled:    true,
 			AutoAppend: true,
+			// Legacy Tasks field for backwards compatibility (implementation only)
+			// Note: IDs should match template filenames (without .md extension)
 			Tasks: []QualityGateTask{
-				{
-					ID:       "testing_and_verify",
-					Template: "phases/implementation/gates/testing",
-					Name:     "Testing and Verification",
-					Enabled:  true,
+				{ID: "QUALITY_GATE_TESTING", Template: "phases/implementation/gates/QUALITY_GATE_TESTING", Name: "Testing and Verification", Enabled: true},
+				{ID: "QUALITY_GATE_REVIEW", Template: "phases/implementation/gates/QUALITY_GATE_REVIEW", Name: "Code Review", Enabled: true},
+				{ID: "QUALITY_GATE_ITERATE", Template: "phases/implementation/gates/QUALITY_GATE_ITERATE", Name: "Review Results and Iterate", Enabled: true},
+				{ID: "QUALITY_GATE_COMMIT", Template: "phases/implementation/gates/QUALITY_GATE_COMMIT", Name: "Commit Changes", Enabled: true},
+			},
+			// PhaseGates specifies gate ordering per phase type
+			// Note: IDs should match template filenames (without .md extension)
+			PhaseGates: map[string][]QualityGateTask{
+				"implementation": {
+					{ID: "QUALITY_GATE_TESTING", Template: "phases/implementation/gates/QUALITY_GATE_TESTING", Name: "Testing and Verification", Enabled: true},
+					{ID: "QUALITY_GATE_REVIEW", Template: "phases/implementation/gates/QUALITY_GATE_REVIEW", Name: "Code Review", Enabled: true},
+					{ID: "QUALITY_GATE_ITERATE", Template: "phases/implementation/gates/QUALITY_GATE_ITERATE", Name: "Review Results and Iterate", Enabled: true},
+					{ID: "QUALITY_GATE_COMMIT", Template: "phases/implementation/gates/QUALITY_GATE_COMMIT", Name: "Commit Changes", Enabled: true},
 				},
-				{
-					ID:       "code_review",
-					Template: "phases/implementation/gates/review",
-					Name:     "Code Review",
-					Enabled:  true,
+				"planning": {
+					{ID: "plan_review", Template: "phases/planning/gates/plan_review", Name: "Planning Review", Enabled: true},
+					{ID: "decision_validation", Template: "phases/planning/gates/decision_validation", Name: "Decision Validation", Enabled: true},
+					{ID: "approval", Template: "phases/planning/gates/approval", Name: "Planning Approval", Enabled: true},
 				},
-				{
-					ID:       "review_results_iterate",
-					Template: "phases/implementation/gates/iterate",
-					Name:     "Review Results and Iterate",
-					Enabled:  true,
+				"research": {
+					{ID: "findings_review", Template: "phases/research/gates/findings_review", Name: "Findings Review", Enabled: true},
+					{ID: "documentation", Template: "phases/research/gates/documentation", Name: "Documentation", Enabled: true},
+					{ID: "summary", Template: "phases/research/gates/summary", Name: "Research Summary", Enabled: true},
 				},
-				{
-					ID:       "commit",
-					Template: "phases/implementation/gates/commit",
-					Name:     "Commit Changes",
-					Enabled:  true,
+				"review": {
+					{ID: "checklist", Template: "phases/review/gates/checklist", Name: "Review Checklist", Enabled: true},
+					{ID: "sign_off", Template: "phases/review/gates/sign_off", Name: "Sign-off", Enabled: true},
+				},
+				"non_coding_action": {
+					{ID: "action_verify", Template: "phases/non_coding_action/gates/action_verify", Name: "Execution & Verify", Enabled: true},
+					{ID: "completion", Template: "phases/non_coding_action/gates/completion", Name: "Completion", Enabled: true},
 				},
 			},
 		},
@@ -162,6 +173,11 @@ func applyFestivalDefaults(cfg *FestivalConfig) {
 	// If no tasks defined, use defaults
 	if len(cfg.QualityGates.Tasks) == 0 {
 		cfg.QualityGates.Tasks = defaults.QualityGates.Tasks
+	}
+
+	// If no phase gates defined, use defaults
+	if cfg.QualityGates.PhaseGates == nil {
+		cfg.QualityGates.PhaseGates = defaults.QualityGates.PhaseGates
 	}
 
 	// If no excluded patterns, use defaults
@@ -201,6 +217,31 @@ func (cfg *FestivalConfig) GetEnabledTasks() []QualityGateTask {
 		}
 	}
 	return enabled
+}
+
+// GetGatesForPhaseType returns configured gates for a phase type in order.
+// Falls back to Tasks (implementation) for backwards compatibility if PhaseGates is not configured.
+func (cfg *FestivalConfig) GetGatesForPhaseType(phaseType string) []QualityGateTask {
+	// Check PhaseGates map first (preferred)
+	if cfg.QualityGates.PhaseGates != nil {
+		if gates, ok := cfg.QualityGates.PhaseGates[phaseType]; ok && len(gates) > 0 {
+			// Return only enabled gates
+			var enabled []QualityGateTask
+			for _, gate := range gates {
+				if gate.Enabled {
+					enabled = append(enabled, gate)
+				}
+			}
+			return enabled
+		}
+	}
+
+	// Fallback for backwards compatibility: use Tasks for implementation phase
+	if phaseType == "implementation" && len(cfg.QualityGates.Tasks) > 0 {
+		return cfg.GetEnabledTasks()
+	}
+
+	return nil
 }
 
 // FestivalConfigExists checks if a fest.yaml file exists in the given path

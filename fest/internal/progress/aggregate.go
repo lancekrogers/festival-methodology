@@ -37,9 +37,11 @@ type SequenceProgress struct {
 
 // FestivalProgress holds complete festival progress
 type FestivalProgress struct {
-	FestivalName string             `json:"festival_name"`
-	Overall      *AggregateProgress `json:"overall"`
-	Phases       []*PhaseProgress   `json:"phases,omitempty"`
+	FestivalName      string               `json:"festival_name"`
+	Overall           *AggregateProgress   `json:"overall"`
+	Phases            []*PhaseProgress     `json:"phases,omitempty"`
+	TimeMetrics       *FestivalTimeMetrics `json:"time_metrics,omitempty"`
+	LifecycleDuration int                  `json:"lifecycle_duration_days,omitempty"`
 }
 
 // isTask checks if a filename looks like a task file
@@ -98,10 +100,25 @@ func (m *Manager) GetFestivalProgress(ctx context.Context, festivalPath string) 
 		overall.Percentage = (overall.Completed * 100) / overall.Total
 	}
 
+	// Lazy populate time data for legacy festivals
+	if m.store.LazyPopulateTimeData(festivalPath) {
+		// Save the inferred data for future access
+		_ = m.store.Save(ctx)
+	}
+
+	// Get time metrics from store
+	timeMetrics := m.store.GetTimeMetrics()
+	lifecycleDays := -1
+	if timeMetrics != nil {
+		lifecycleDays = timeMetrics.GetLifecycleDuration()
+	}
+
 	return &FestivalProgress{
-		FestivalName: festivalName,
-		Overall:      overall,
-		Phases:       phases,
+		FestivalName:      festivalName,
+		Overall:           overall,
+		Phases:            phases,
+		TimeMetrics:       timeMetrics,
+		LifecycleDuration: lifecycleDays,
 	}, nil
 }
 

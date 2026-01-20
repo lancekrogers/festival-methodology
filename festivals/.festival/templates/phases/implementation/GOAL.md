@@ -1,13 +1,13 @@
 ---
+# Template metadata (for fest CLI discovery)
 id: phase-goal-implementation
 aliases:
   - pgi
   - implementation-phase
 description: Phase goal template for implementation phases with sequential task structure
 phase_type: implementation
----
 
----
+# Fest document metadata (becomes document frontmatter)
 fest_type: phase
 fest_id: [REPLACE: PHASE_ID]
 fest_name: [REPLACE: Phase Name]

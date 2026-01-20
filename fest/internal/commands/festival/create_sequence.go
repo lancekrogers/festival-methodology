@@ -184,6 +184,7 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 	// Build template context for sequence
 	tmplCtx := tpl.NewContext()
 	tmplCtx.SetSequence(newNumber, opts.Name)
+	tmplCtx.ComputeStructureVariables()
 	for k, v := range vars {
 		tmplCtx.SetCustom(k, v)
 	}
