@@ -1,12 +1,12 @@
 ---
+# Template metadata (for fest CLI discovery)
 id: QUALITY_GATE_COMMIT
 aliases:
   - commit
   - qg-commit
 description: Standard quality gate task for committing sequence changes
----
 
----
+# Fest document metadata (becomes document frontmatter)
 fest_type: gate
 fest_id: {{ .GateID }}
 fest_name: Commit Sequence Changes
@@ -54,7 +54,7 @@ The commit message MUST:
 
 ### Format Guidelines
 
-```
+```text
 <type>: <concise summary of changes>
 
 <detailed description of what changed>
@@ -116,7 +116,7 @@ Commit messages are for describing code changes, not for marketing or self-promo
 
 ## Example Commit Message
 
-```
+```text
 feat: add streaming support for message display
 
 Implemented real-time streaming for LLM responses in the chat interface.

@@ -1,12 +1,12 @@
 ---
+# Template metadata (for fest CLI discovery)
 id: sequence-goal-minimal
 aliases:
   - sgm
   - minimal-sequence
 description: Streamlined sequence goal for focused work
----
 
----
+# Fest document metadata (becomes document frontmatter)
 fest_type: sequence
 fest_id: [REPLACE: SEQUENCE_ID]
 fest_name: [REPLACE: Sequence Name]

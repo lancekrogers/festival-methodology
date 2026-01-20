@@ -1,11 +1,11 @@
 ---
+# Template metadata (for fest CLI discovery)
 id: sequence-goal
 aliases:
   - sg
 description: Defines sequence objective, deliverables, and quality standards
----
 
----
+# Fest document metadata (becomes document frontmatter)
 fest_type: sequence
 fest_id: [REPLACE: SEQUENCE_ID]
 fest_name: [REPLACE: Sequence Name]

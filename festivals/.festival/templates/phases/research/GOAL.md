@@ -1,13 +1,13 @@
 ---
+# Template metadata (for fest CLI discovery)
 id: phase-goal-research
 aliases:
   - pgr
   - research-phase
 description: Phase goal template for research phases with analysis-focused structure
 phase_type: research
----
 
----
+# Fest document metadata (becomes document frontmatter)
 fest_type: phase
 fest_id: [REPLACE: PHASE_ID]
 fest_name: [REPLACE: Phase Name]

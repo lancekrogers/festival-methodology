@@ -1,13 +1,13 @@
 ---
+# Template metadata (for fest CLI discovery)
 id: phase-goal-planning
 aliases:
   - pgp
   - planning-phase
 description: Phase goal template for planning phases with freeform exploration structure
 phase_type: planning
----
 
----
+# Fest document metadata (becomes document frontmatter)
 fest_type: phase
 fest_id: [REPLACE: PHASE_ID]
 fest_name: [REPLACE: Phase Name]
