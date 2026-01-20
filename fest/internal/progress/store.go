@@ -130,6 +130,13 @@ func (s *Store) Load(ctx context.Context) error {
 		progressData.Tasks = make(map[string]*TaskProgress)
 	}
 
+	// Initialize TimeMetrics for legacy files that don't have it
+	if progressData.TimeMetrics == nil {
+		progressData.TimeMetrics = &FestivalTimeMetrics{
+			CreatedAt: progressData.UpdatedAt, // Use first known timestamp as fallback
+		}
+	}
+
 	s.data = &progressData
 	return nil
 }
@@ -326,4 +333,38 @@ func FormatLifecycleDuration(days int) string {
 		return "1 day"
 	}
 	return fmt.Sprintf("%d days", days)
+}
+
+// GetCurrentDuration calculates days since festival creation (for ongoing festivals)
+func (m *FestivalTimeMetrics) GetCurrentDuration() int {
+	if m == nil {
+		return 0
+	}
+	duration := time.Since(m.CreatedAt)
+	return int(duration.Hours() / 24)
+}
+
+// FormatDurationWithStatus formats duration with status indicator for ongoing festivals
+// For completed festivals, shows "X days"
+// For ongoing festivals, shows "X days (ongoing)" or "< 1 day (ongoing)"
+func FormatDurationWithStatus(metrics *FestivalTimeMetrics) string {
+	if metrics == nil {
+		return "unknown"
+	}
+
+	// Completed festival - use stored lifecycle duration
+	if metrics.CompletedAt != nil {
+		days := metrics.GetLifecycleDuration()
+		return FormatLifecycleDuration(days)
+	}
+
+	// Ongoing festival - calculate current duration
+	days := metrics.GetCurrentDuration()
+	if days == 0 {
+		return "< 1 day (ongoing)"
+	}
+	if days == 1 {
+		return "1 day (ongoing)"
+	}
+	return fmt.Sprintf("%d days (ongoing)", days)
 }

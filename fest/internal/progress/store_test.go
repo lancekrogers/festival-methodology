@@ -156,9 +156,13 @@ tasks:
 		t.Errorf("Status = %q, want %q", task.Status, StatusCompleted)
 	}
 
-	// TimeMetrics should be nil for legacy files
-	if store.Data().TimeMetrics != nil {
-		t.Error("TimeMetrics should be nil for legacy files")
+	// TimeMetrics should be initialized for legacy files (backward compatibility upgrade)
+	if store.Data().TimeMetrics == nil {
+		t.Error("TimeMetrics should be initialized for legacy files")
+	}
+	// CreatedAt should use UpdatedAt as fallback for legacy files
+	if store.Data().TimeMetrics.CreatedAt.IsZero() {
+		t.Error("TimeMetrics.CreatedAt should not be zero")
 	}
 }
 
