@@ -21,14 +21,30 @@ func TestDefaultFestivalConfig(t *testing.T) {
 		t.Errorf("expected 4 default quality gate tasks, got %d", len(cfg.QualityGates.Tasks))
 	}
 
-	// Check task IDs
-	expectedIDs := []string{"testing_and_verify", "code_review", "review_results_iterate", "commit"}
+	// Check task IDs (IDs match template filenames)
+	expectedIDs := []string{"QUALITY_GATE_TESTING", "QUALITY_GATE_REVIEW", "QUALITY_GATE_ITERATE", "QUALITY_GATE_COMMIT"}
 	for i, task := range cfg.QualityGates.Tasks {
 		if task.ID != expectedIDs[i] {
 			t.Errorf("expected task ID %s, got %s", expectedIDs[i], task.ID)
 		}
 		if !task.Enabled {
 			t.Errorf("expected task %s to be enabled", task.ID)
+		}
+	}
+
+	// Check PhaseGates is populated
+	if cfg.QualityGates.PhaseGates == nil {
+		t.Error("expected PhaseGates to be populated")
+	}
+
+	// Check implementation gates are in correct order
+	implGates := cfg.QualityGates.PhaseGates["implementation"]
+	if len(implGates) != 4 {
+		t.Errorf("expected 4 implementation gates, got %d", len(implGates))
+	}
+	for i, gate := range implGates {
+		if gate.ID != expectedIDs[i] {
+			t.Errorf("expected implementation gate ID %s at index %d, got %s", expectedIDs[i], i, gate.ID)
 		}
 	}
 }
