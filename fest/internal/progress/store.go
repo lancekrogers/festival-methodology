@@ -3,6 +3,7 @@ package progress
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -258,4 +259,71 @@ func (s *Store) UpdateTotalWorkMinutes() {
 	}
 	metrics := s.EnsureTimeMetrics()
 	metrics.TotalWorkMinutes = total
+}
+
+// IsFestivalComplete returns true if all tracked tasks are completed
+func (s *Store) IsFestivalComplete() bool {
+	if s.data == nil || len(s.data.Tasks) == 0 {
+		return false // Empty festivals are not complete
+	}
+	for _, task := range s.data.Tasks {
+		if task.Status != StatusCompleted {
+			return false
+		}
+	}
+	return true
+}
+
+// CheckAndSetCompletion checks if festival is complete and marks it if so
+// This is idempotent - calling multiple times will not reset CompletedAt
+func (s *Store) CheckAndSetCompletion() bool {
+	if !s.IsFestivalComplete() {
+		return false
+	}
+	metrics := s.GetTimeMetrics()
+	if metrics != nil && metrics.CompletedAt != nil {
+		return false // Already marked complete
+	}
+	s.MarkFestivalCompleted()
+	s.UpdateTotalWorkMinutes()
+	return true
+}
+
+// CalculateLifecycleDuration computes days from creation to completion.
+// Returns -1 for ongoing festivals (not yet completed).
+// No arbitrary caps - if festival took 365 days, returns 365.
+func (m *FestivalTimeMetrics) CalculateLifecycleDuration() int {
+	if m == nil || m.CompletedAt == nil {
+		return -1 // ongoing
+	}
+
+	duration := m.CompletedAt.Sub(m.CreatedAt)
+	days := int(duration.Hours() / 24)
+
+	return days
+}
+
+// GetLifecycleDuration returns the lifecycle duration, recalculating if needed
+func (m *FestivalTimeMetrics) GetLifecycleDuration() int {
+	if m == nil {
+		return -1
+	}
+	if m.CompletedAt != nil {
+		m.LifecycleDuration = m.CalculateLifecycleDuration()
+	}
+	return m.LifecycleDuration
+}
+
+// FormatLifecycleDuration formats lifecycle duration for display
+func FormatLifecycleDuration(days int) string {
+	if days < 0 {
+		return "ongoing"
+	}
+	if days == 0 {
+		return "< 1 day"
+	}
+	if days == 1 {
+		return "1 day"
+	}
+	return fmt.Sprintf("%d days", days)
 }

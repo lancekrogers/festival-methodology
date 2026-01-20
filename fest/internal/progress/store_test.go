@@ -271,3 +271,164 @@ func TestStore_HelperMethods(t *testing.T) {
 		t.Error("CompletedAt should be set after MarkFestivalCompleted")
 	}
 }
+
+func TestStore_IsFestivalComplete(t *testing.T) {
+	ctx := context.Background()
+	tmpDir := t.TempDir()
+
+	store := NewStore(tmpDir)
+	if err := store.Load(ctx); err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	// Empty festival should not be complete
+	if store.IsFestivalComplete() {
+		t.Error("Empty festival should not be complete")
+	}
+
+	// Festival with pending tasks should not be complete
+	store.SetTask(&TaskProgress{TaskID: "01_task.md", Status: StatusPending})
+	if store.IsFestivalComplete() {
+		t.Error("Festival with pending tasks should not be complete")
+	}
+
+	// Festival with mixed statuses should not be complete
+	store.SetTask(&TaskProgress{TaskID: "02_task.md", Status: StatusCompleted})
+	if store.IsFestivalComplete() {
+		t.Error("Festival with mixed statuses should not be complete")
+	}
+
+	// Festival with all completed tasks should be complete
+	store.SetTask(&TaskProgress{TaskID: "01_task.md", Status: StatusCompleted})
+	if !store.IsFestivalComplete() {
+		t.Error("Festival with all completed tasks should be complete")
+	}
+}
+
+func TestStore_CheckAndSetCompletion(t *testing.T) {
+	ctx := context.Background()
+	tmpDir := t.TempDir()
+
+	store := NewStore(tmpDir)
+	if err := store.Load(ctx); err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	// Add incomplete tasks
+	store.SetTask(&TaskProgress{TaskID: "01_task.md", Status: StatusPending, TimeSpentMinutes: 30})
+	store.SetTask(&TaskProgress{TaskID: "02_task.md", Status: StatusCompleted, TimeSpentMinutes: 45})
+
+	// CheckAndSetCompletion should not mark as complete
+	if store.CheckAndSetCompletion() {
+		t.Error("CheckAndSetCompletion should return false for incomplete festival")
+	}
+	if store.GetTimeMetrics().CompletedAt != nil {
+		t.Error("CompletedAt should not be set for incomplete festival")
+	}
+
+	// Complete all tasks
+	store.SetTask(&TaskProgress{TaskID: "01_task.md", Status: StatusCompleted, TimeSpentMinutes: 30})
+
+	// CheckAndSetCompletion should mark as complete
+	if !store.CheckAndSetCompletion() {
+		t.Error("CheckAndSetCompletion should return true for complete festival")
+	}
+	if store.GetTimeMetrics().CompletedAt == nil {
+		t.Error("CompletedAt should be set for complete festival")
+	}
+	if store.GetTimeMetrics().TotalWorkMinutes != 75 {
+		t.Errorf("TotalWorkMinutes = %d, want 75", store.GetTimeMetrics().TotalWorkMinutes)
+	}
+
+	// Second call should be idempotent (return false, not reset timestamp)
+	completedAt := store.GetTimeMetrics().CompletedAt
+	if store.CheckAndSetCompletion() {
+		t.Error("CheckAndSetCompletion should return false on second call (idempotent)")
+	}
+	if !store.GetTimeMetrics().CompletedAt.Equal(*completedAt) {
+		t.Error("CompletedAt should not change on second call")
+	}
+}
+
+func TestFestivalTimeMetrics_CalculateLifecycleDuration(t *testing.T) {
+	tests := []struct {
+		name         string
+		metrics      *FestivalTimeMetrics
+		expectedDays int
+	}{
+		{
+			name:         "nil metrics",
+			metrics:      nil,
+			expectedDays: -1,
+		},
+		{
+			name: "ongoing festival (no CompletedAt)",
+			metrics: &FestivalTimeMetrics{
+				CreatedAt: time.Now().Add(-48 * time.Hour),
+			},
+			expectedDays: -1,
+		},
+		{
+			name: "completed same day",
+			metrics: &FestivalTimeMetrics{
+				CreatedAt:   time.Now().Add(-12 * time.Hour),
+				CompletedAt: func() *time.Time { t := time.Now(); return &t }(),
+			},
+			expectedDays: 0,
+		},
+		{
+			name: "completed after 1 day",
+			metrics: &FestivalTimeMetrics{
+				CreatedAt:   time.Now().Add(-36 * time.Hour),
+				CompletedAt: func() *time.Time { t := time.Now(); return &t }(),
+			},
+			expectedDays: 1,
+		},
+		{
+			name: "completed after 30 days",
+			metrics: &FestivalTimeMetrics{
+				CreatedAt:   time.Now().Add(-30 * 24 * time.Hour),
+				CompletedAt: func() *time.Time { t := time.Now(); return &t }(),
+			},
+			expectedDays: 30,
+		},
+		{
+			name: "completed after 365 days (no cap)",
+			metrics: &FestivalTimeMetrics{
+				CreatedAt:   time.Now().Add(-365 * 24 * time.Hour),
+				CompletedAt: func() *time.Time { t := time.Now(); return &t }(),
+			},
+			expectedDays: 365,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.metrics.CalculateLifecycleDuration()
+			if got != tt.expectedDays {
+				t.Errorf("CalculateLifecycleDuration() = %d, want %d", got, tt.expectedDays)
+			}
+		})
+	}
+}
+
+func TestFormatLifecycleDuration(t *testing.T) {
+	tests := []struct {
+		days     int
+		expected string
+	}{
+		{-1, "ongoing"},
+		{0, "< 1 day"},
+		{1, "1 day"},
+		{2, "2 days"},
+		{30, "30 days"},
+		{365, "365 days"},
+	}
+
+	for _, tt := range tests {
+		got := FormatLifecycleDuration(tt.days)
+		if got != tt.expected {
+			t.Errorf("FormatLifecycleDuration(%d) = %q, want %q", tt.days, got, tt.expected)
+		}
+	}
+}
