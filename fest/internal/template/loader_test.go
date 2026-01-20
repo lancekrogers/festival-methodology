@@ -58,6 +58,34 @@ Content: {{.value}}`,
 Content: {{.value}}`,
 			wantErr: false,
 		},
+		{
+			name: "merged frontmatter with YAML comments",
+			content: `---
+# Template metadata (for fest CLI discovery)
+id: sequence-goal
+aliases:
+  - sg
+description: Defines sequence objective
+
+# Fest document metadata (becomes document frontmatter)
+fest_type: sequence
+fest_id: SEQ_001
+fest_name: Test Sequence
+---
+# Sequence Goal
+
+Content here`,
+			wantMetadata: &Metadata{
+				ID:          "sequence-goal",
+				TemplateID:  "sequence-goal", // Normalized from ID
+				Aliases:     []string{"sg"},
+				Description: "Defines sequence objective",
+			},
+			wantContent: `# Sequence Goal
+
+Content here`,
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
