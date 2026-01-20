@@ -1,5 +1,7 @@
 # Fest CLI
 
+![Festival Methodology Banner](docs/images/banner.jpg)
+
 Fest is a CLI tool for working with **Festival Methodology** - a hierarchical agentic planning and execution system designed for AI agent workflows.
 
 ## What is Festival Methodology?

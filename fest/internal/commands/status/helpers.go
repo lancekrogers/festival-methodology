@@ -7,6 +7,103 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 )
 
+// resolveFestivalFromPath resolves a festival name or path from anywhere in the workspace.
+// It searches: cwd (if path is relative), festivals/active/, festivals/planned/,
+// festivals/completed/, and festivals/dungeon/.
+// Returns the absolute path to the festival directory if found.
+func resolveFestivalFromPath(cwd, pathArg string) (string, error) {
+	// 1. Check if pathArg is an absolute path
+	if filepath.IsAbs(pathArg) {
+		if isValidFestivalDir(pathArg) {
+			return pathArg, nil
+		}
+		return "", errors.NotFound("festival").WithField("path", pathArg)
+	}
+
+	// 2. Check if pathArg is relative to cwd
+	relPath := filepath.Join(cwd, pathArg)
+	if isValidFestivalDir(relPath) {
+		return relPath, nil
+	}
+
+	// 3. Find festivals root and search all status directories
+	festivalsRoot := findFestivalsRoot(cwd)
+	if festivalsRoot == "" {
+		return "", errors.NotFound("festivals directory").
+			WithField("hint", "navigate to a workspace with festivals/ directory")
+	}
+
+	// Search in all status directories
+	statusDirs := []string{"active", "planned", "completed", "dungeon"}
+	for _, status := range statusDirs {
+		// Try direct path: festivals/<status>/<pathArg>
+		candidatePath := filepath.Join(festivalsRoot, status, pathArg)
+		if isValidFestivalDir(candidatePath) {
+			return candidatePath, nil
+		}
+	}
+
+	// 4. Check if pathArg includes status prefix (e.g., "active/my-festival")
+	candidatePath := filepath.Join(festivalsRoot, pathArg)
+	if isValidFestivalDir(candidatePath) {
+		return candidatePath, nil
+	}
+
+	return "", errors.NotFound("festival").
+		WithField("name", pathArg).
+		WithField("hint", "festival not found in active, planned, completed, or dungeon")
+}
+
+// isValidFestivalDir checks if a directory is a valid festival root.
+func isValidFestivalDir(dir string) bool {
+	info, err := os.Stat(dir)
+	if err != nil || !info.IsDir() {
+		return false
+	}
+
+	// Check for festival markers: FESTIVAL_GOAL.md, FESTIVAL_OVERVIEW.md, or fest.yaml
+	markers := []string{"FESTIVAL_GOAL.md", "FESTIVAL_OVERVIEW.md", "fest.yaml"}
+	for _, marker := range markers {
+		markerPath := filepath.Join(dir, marker)
+		if _, err := os.Stat(markerPath); err == nil {
+			return true
+		}
+	}
+	return false
+}
+
+// detectEntityType determines what type of entity a path points to.
+// Returns EntityFestival, EntityPhase, EntitySequence, or EntityTask.
+func detectEntityType(path string) EntityType {
+	info, err := os.Stat(path)
+	if err != nil {
+		return ""
+	}
+
+	// If it's a file, it's a task (markdown file)
+	if !info.IsDir() {
+		return EntityTask
+	}
+
+	// Check for festival markers
+	if isValidFestivalDir(path) {
+		return EntityFestival
+	}
+
+	// Check for phase marker (PHASE_GOAL.md)
+	if _, err := os.Stat(filepath.Join(path, "PHASE_GOAL.md")); err == nil {
+		return EntityPhase
+	}
+
+	// Check for sequence marker (SEQUENCE_GOAL.md)
+	if _, err := os.Stat(filepath.Join(path, "SEQUENCE_GOAL.md")); err == nil {
+		return EntitySequence
+	}
+
+	// Default to unknown (could be a regular directory)
+	return ""
+}
+
 // resolveStatusPath resolves the target path for status commands.
 // If pathArg is empty, uses current working directory.
 // If pathArg is relative to a festivals/ root (e.g., "active/my-festival"),
