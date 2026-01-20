@@ -268,6 +268,39 @@ func (s *Store) UpdateTotalWorkMinutes() {
 	metrics.TotalWorkMinutes = total
 }
 
+// LazyPopulateTimeData infers time data for completed tasks that don't have it.
+// This provides a seamless experience for legacy festivals - time data appears
+// automatically on first access without requiring users to run migration.
+func (s *Store) LazyPopulateTimeData(festivalPath string) bool {
+	if s.data == nil || len(s.data.Tasks) == 0 {
+		return false
+	}
+
+	modified := false
+	for _, task := range s.data.Tasks {
+		if task.Status != StatusCompleted {
+			continue
+		}
+
+		// Skip tasks that already have time data
+		if task.TimeSpentMinutes > 0 {
+			continue
+		}
+
+		// Build full task path and infer time
+		taskPath := filepath.Join(festivalPath, task.TaskID)
+		if InferTaskTime(taskPath, task) {
+			modified = true
+		}
+	}
+
+	if modified {
+		s.UpdateTotalWorkMinutes()
+	}
+
+	return modified
+}
+
 // IsFestivalComplete returns true if all tracked tasks are completed
 func (s *Store) IsFestivalComplete() bool {
 	if s.data == nil || len(s.data.Tasks) == 0 {

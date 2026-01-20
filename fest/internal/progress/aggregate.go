@@ -100,6 +100,12 @@ func (m *Manager) GetFestivalProgress(ctx context.Context, festivalPath string) 
 		overall.Percentage = (overall.Completed * 100) / overall.Total
 	}
 
+	// Lazy populate time data for legacy festivals
+	if m.store.LazyPopulateTimeData(festivalPath) {
+		// Save the inferred data for future access
+		_ = m.store.Save(ctx)
+	}
+
 	// Get time metrics from store
 	timeMetrics := m.store.GetTimeMetrics()
 	lifecycleDays := -1
