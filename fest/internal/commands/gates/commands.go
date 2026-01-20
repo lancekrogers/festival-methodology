@@ -28,7 +28,8 @@ sequences. Gates can be customized at any level: festival, phase, or sequence.
 Available Commands:
   show      Show effective gate policy
   list      List available named policies
-  apply     Apply a named gate policy
+  apply     Apply quality gates to sequences
+  remove    Remove quality gate files from sequences
   init      Initialize an override file
   validate  Validate gate configuration`,
 	}
@@ -36,6 +37,7 @@ Available Commands:
 	cmd.AddCommand(newGatesShowCmd())
 	cmd.AddCommand(newGatesListCmd())
 	cmd.AddCommand(newGatesApplyCmd())
+	cmd.AddCommand(newGatesRemoveCmd())
 	cmd.AddCommand(newGatesInitCmd())
 	cmd.AddCommand(newGatesValidateCmd())
 
