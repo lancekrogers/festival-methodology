@@ -37,11 +37,40 @@ type TaskProgress struct {
 	BlockedAt        *time.Time `yaml:"blocked_at,omitempty"`
 }
 
+// FestivalTimeMetrics tracks festival-level time metrics separate from task-level tracking.
+// This enables displaying both "how long agents worked" (TotalWorkMinutes) and
+// "how long the festival has existed" (lifecycle from CreatedAt to CompletedAt).
+//
+// Note: This is distinct from FestivalProgress in aggregate.go which tracks
+// task counts and completion status. FestivalTimeMetrics focuses on time data.
+//
+// Example usage:
+//
+//	ftm := &FestivalTimeMetrics{
+//	    CreatedAt:        time.Now(),
+//	    TotalWorkMinutes: 0,
+//	}
+//	// Later, when festival completes:
+//	now := time.Now()
+//	ftm.CompletedAt = &now
+//	ftm.LifecycleDuration = int(now.Sub(ftm.CreatedAt).Hours() / 24)
+type FestivalTimeMetrics struct {
+	// CreatedAt is when the festival was created (from fest.yaml or directory creation time)
+	CreatedAt time.Time `yaml:"created_at"`
+	// CompletedAt is when the last task was completed (nil if festival is ongoing)
+	CompletedAt *time.Time `yaml:"completed_at,omitempty"`
+	// LifecycleDuration is the number of days from creation to completion (0 if ongoing)
+	LifecycleDuration int `yaml:"lifecycle_duration_days,omitempty"`
+	// TotalWorkMinutes is the sum of all task TimeSpentMinutes (agent work time)
+	TotalWorkMinutes int `yaml:"total_work_minutes"`
+}
+
 // FestivalProgressData is the persisted progress state for a festival
 type FestivalProgressData struct {
-	Festival  string                   `yaml:"festival"`
-	UpdatedAt time.Time                `yaml:"updated_at"`
-	Tasks     map[string]*TaskProgress `yaml:"tasks"`
+	Festival    string                   `yaml:"festival"`
+	UpdatedAt   time.Time                `yaml:"updated_at"`
+	TimeMetrics *FestivalTimeMetrics     `yaml:"time_metrics,omitempty"`
+	Tasks       map[string]*TaskProgress `yaml:"tasks"`
 }
 
 // Store manages progress persistence
@@ -72,11 +101,15 @@ func (s *Store) Load(ctx context.Context) error {
 
 	// Check if file exists
 	if _, err := os.Stat(progressPath); os.IsNotExist(err) {
-		// Create empty progress data
+		// Create empty progress data with initialized time metrics
+		now := time.Now().UTC()
 		s.data = &FestivalProgressData{
 			Festival:  filepath.Base(s.festivalPath),
-			UpdatedAt: time.Now().UTC(),
-			Tasks:     make(map[string]*TaskProgress),
+			UpdatedAt: now,
+			TimeMetrics: &FestivalTimeMetrics{
+				CreatedAt: now,
+			},
+			Tasks: make(map[string]*TaskProgress),
 		}
 		return nil
 	}
@@ -164,4 +197,65 @@ func (s *Store) AllTasks() map[string]*TaskProgress {
 		return nil
 	}
 	return s.data.Tasks
+}
+
+// GetTimeMetrics returns the festival time metrics (may be nil for legacy data)
+func (s *Store) GetTimeMetrics() *FestivalTimeMetrics {
+	if s.data == nil {
+		return nil
+	}
+	return s.data.TimeMetrics
+}
+
+// SetTimeMetrics sets the festival time metrics
+func (s *Store) SetTimeMetrics(metrics *FestivalTimeMetrics) {
+	if s.data == nil {
+		s.data = &FestivalProgressData{
+			Festival:  filepath.Base(s.festivalPath),
+			UpdatedAt: time.Now().UTC(),
+			Tasks:     make(map[string]*TaskProgress),
+		}
+	}
+	s.data.TimeMetrics = metrics
+}
+
+// EnsureTimeMetrics ensures TimeMetrics is initialized, creating it if nil
+func (s *Store) EnsureTimeMetrics() *FestivalTimeMetrics {
+	if s.data == nil {
+		s.data = &FestivalProgressData{
+			Festival:  filepath.Base(s.festivalPath),
+			UpdatedAt: time.Now().UTC(),
+			Tasks:     make(map[string]*TaskProgress),
+		}
+	}
+	if s.data.TimeMetrics == nil {
+		s.data.TimeMetrics = &FestivalTimeMetrics{
+			CreatedAt: time.Now().UTC(),
+		}
+	}
+	return s.data.TimeMetrics
+}
+
+// MarkFestivalCompleted sets the completion timestamp and calculates lifecycle duration
+func (s *Store) MarkFestivalCompleted() {
+	metrics := s.EnsureTimeMetrics()
+	now := time.Now().UTC()
+	metrics.CompletedAt = &now
+	// Calculate lifecycle duration in days
+	if !metrics.CreatedAt.IsZero() {
+		metrics.LifecycleDuration = int(now.Sub(metrics.CreatedAt).Hours() / 24)
+	}
+}
+
+// UpdateTotalWorkMinutes recalculates TotalWorkMinutes from all tasks
+func (s *Store) UpdateTotalWorkMinutes() {
+	if s.data == nil {
+		return
+	}
+	total := 0
+	for _, task := range s.data.Tasks {
+		total += task.TimeSpentMinutes
+	}
+	metrics := s.EnsureTimeMetrics()
+	metrics.TotalWorkMinutes = total
 }

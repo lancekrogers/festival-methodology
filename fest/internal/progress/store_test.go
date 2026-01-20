@@ -117,3 +117,157 @@ func TestStore_AllTasks(t *testing.T) {
 		t.Errorf("AllTasks() returned %d tasks, want 3", len(tasks))
 	}
 }
+
+// TestStore_BackwardCompatibility verifies that legacy progress.yaml files
+// without time_metrics field can still be loaded without errors
+func TestStore_BackwardCompatibility(t *testing.T) {
+	ctx := context.Background()
+	tmpDir := t.TempDir()
+
+	// Create a legacy progress.yaml without time_metrics
+	legacyYAML := `festival: test-festival
+updated_at: 2026-01-15T10:00:00Z
+tasks:
+  01_task.md:
+    task_id: 01_task.md
+    status: completed
+    progress: 100
+`
+	festDir := filepath.Join(tmpDir, ProgressDir)
+	if err := os.MkdirAll(festDir, 0755); err != nil {
+		t.Fatalf("mkdir error = %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(festDir, ProgressFileName), []byte(legacyYAML), 0644); err != nil {
+		t.Fatalf("write error = %v", err)
+	}
+
+	// Load should succeed without time_metrics
+	store := NewStore(tmpDir)
+	if err := store.Load(ctx); err != nil {
+		t.Fatalf("Load() error = %v, legacy files should load without errors", err)
+	}
+
+	// Verify task data loaded correctly
+	task, found := store.GetTask("01_task.md")
+	if !found {
+		t.Fatal("Task should be found in legacy file")
+	}
+	if task.Status != StatusCompleted {
+		t.Errorf("Status = %q, want %q", task.Status, StatusCompleted)
+	}
+
+	// TimeMetrics should be nil for legacy files
+	if store.Data().TimeMetrics != nil {
+		t.Error("TimeMetrics should be nil for legacy files")
+	}
+}
+
+// TestStore_TimeMetricsRoundtrip verifies FestivalTimeMetrics saves and loads correctly
+func TestStore_TimeMetricsRoundtrip(t *testing.T) {
+	ctx := context.Background()
+	tmpDir := t.TempDir()
+
+	// Create with time metrics
+	store1 := NewStore(tmpDir)
+	if err := store1.Load(ctx); err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	now := time.Now().UTC()
+	completed := now.Add(24 * time.Hour)
+	store1.data.TimeMetrics = &FestivalTimeMetrics{
+		CreatedAt:         now,
+		CompletedAt:       &completed,
+		LifecycleDuration: 1,
+		TotalWorkMinutes:  120,
+	}
+
+	if err := store1.Save(ctx); err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+
+	// Load in new store and verify
+	store2 := NewStore(tmpDir)
+	if err := store2.Load(ctx); err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	metrics := store2.Data().TimeMetrics
+	if metrics == nil {
+		t.Fatal("TimeMetrics should not be nil after roundtrip")
+	}
+	if metrics.TotalWorkMinutes != 120 {
+		t.Errorf("TotalWorkMinutes = %d, want 120", metrics.TotalWorkMinutes)
+	}
+	if metrics.LifecycleDuration != 1 {
+		t.Errorf("LifecycleDuration = %d, want 1", metrics.LifecycleDuration)
+	}
+	if metrics.CompletedAt == nil {
+		t.Error("CompletedAt should not be nil")
+	}
+}
+
+// TestStore_NewFestivalsGetTimeMetrics verifies new festivals get TimeMetrics initialized
+func TestStore_NewFestivalsGetTimeMetrics(t *testing.T) {
+	ctx := context.Background()
+	tmpDir := t.TempDir()
+
+	store := NewStore(tmpDir)
+	if err := store.Load(ctx); err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	// New festivals should have TimeMetrics initialized
+	if store.Data().TimeMetrics == nil {
+		t.Fatal("TimeMetrics should be initialized for new festivals")
+	}
+
+	// CreatedAt should be set
+	if store.Data().TimeMetrics.CreatedAt.IsZero() {
+		t.Error("CreatedAt should be set for new festivals")
+	}
+
+	// Save and reload should preserve TimeMetrics
+	store.SetTask(&TaskProgress{TaskID: "01_task.md", Status: StatusPending})
+	if err := store.Save(ctx); err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+
+	store2 := NewStore(tmpDir)
+	if err := store2.Load(ctx); err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if store2.Data().TimeMetrics == nil {
+		t.Fatal("TimeMetrics should be preserved after save/load")
+	}
+	if store2.Data().TimeMetrics.CreatedAt.IsZero() {
+		t.Error("CreatedAt should be preserved after save/load")
+	}
+}
+
+// TestStore_HelperMethods verifies the time metrics helper methods
+func TestStore_HelperMethods(t *testing.T) {
+	ctx := context.Background()
+	tmpDir := t.TempDir()
+
+	store := NewStore(tmpDir)
+	if err := store.Load(ctx); err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	// Add some tasks with time
+	store.SetTask(&TaskProgress{TaskID: "01_task.md", Status: StatusCompleted, TimeSpentMinutes: 30})
+	store.SetTask(&TaskProgress{TaskID: "02_task.md", Status: StatusCompleted, TimeSpentMinutes: 45})
+
+	// Test UpdateTotalWorkMinutes
+	store.UpdateTotalWorkMinutes()
+	if store.GetTimeMetrics().TotalWorkMinutes != 75 {
+		t.Errorf("TotalWorkMinutes = %d, want 75", store.GetTimeMetrics().TotalWorkMinutes)
+	}
+
+	// Test MarkFestivalCompleted
+	store.MarkFestivalCompleted()
+	if store.GetTimeMetrics().CompletedAt == nil {
+		t.Error("CompletedAt should be set after MarkFestivalCompleted")
+	}
+}
