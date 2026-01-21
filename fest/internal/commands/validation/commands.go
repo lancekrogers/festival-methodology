@@ -16,6 +16,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// stripInlineCode removes text inside backticks from a line.
+// This prevents markers inside inline code examples from being counted.
+func stripInlineCode(line string) string {
+	result := strings.Builder{}
+	inBacktick := false
+	for _, ch := range line {
+		if ch == '`' {
+			inBacktick = !inBacktick
+			continue
+		}
+		if !inBacktick {
+			result.WriteRune(ch)
+		}
+	}
+	return result.String()
+}
+
 // Validation issue levels
 const (
 	LevelError   = "error"
@@ -307,16 +324,34 @@ func validateTemplateMarkers(festivalPath string, result *ValidationResult) {
 			return nil
 		}
 
-		contentStr := string(content)
+		// Count markers line-by-line, skipping code blocks
+		lines := strings.Split(string(content), "\n")
+		inCodeBlock := false
 		fileMarkerCount := 0
 		foundMarkers := make(map[string]bool)
 
-		// Count all markers in this file
-		for _, marker := range markers {
-			count := strings.Count(contentStr, marker)
-			if count > 0 {
-				fileMarkerCount += count
-				foundMarkers[marker] = true
+		for _, line := range lines {
+			// Toggle fence state on ``` lines (handles ```go, ```yaml, etc.)
+			if strings.HasPrefix(strings.TrimSpace(line), "```") {
+				inCodeBlock = !inCodeBlock
+				continue
+			}
+
+			// Skip markers inside code blocks - they're documentation examples
+			if inCodeBlock {
+				continue
+			}
+
+			// Strip inline code (backticks) before checking for markers
+			lineWithoutCode := stripInlineCode(line)
+
+			// Count markers on this line
+			for _, marker := range markers {
+				count := strings.Count(lineWithoutCode, marker)
+				if count > 0 {
+					fileMarkerCount += count
+					foundMarkers[marker] = true
+				}
 			}
 		}
 

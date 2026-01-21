@@ -227,8 +227,9 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 	goalPath := filepath.Join(seqDir, "SEQUENCE_GOAL.md")
 
 	// If no template content was found, create a minimal placeholder
+	// Note: Sequence metadata (status, parent, order) is in frontmatter, not in markdown
 	if content == "" {
-		content = fmt.Sprintf("# Sequence Goal: %s\n\n**Sequence:** %s | **Status:** Planning\n\n## Objective\n\n[REPLACE: Describe the sequence objective]\n\n## Tasks\n\n- [ ] [REPLACE: Task 1]\n- [ ] [REPLACE: Task 2]\n", opts.Name, seqID)
+		content = fmt.Sprintf("# Sequence Goal: %s\n\n## Objective\n\n[REPLACE: Describe the sequence objective]\n\n## Tasks\n\n- [ ] [REPLACE: Task 1]\n- [ ] [REPLACE: Task 2]\n", opts.Name)
 	}
 
 	var markersFilled, markersTotal int

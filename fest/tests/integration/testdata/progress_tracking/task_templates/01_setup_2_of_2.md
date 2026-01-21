@@ -1,6 +1,5 @@
 # Task: Project Setup
 
-> **Task Number**: 01 | **Dependencies**: None | **Autonomy Level**: high
 
 ## Objective
 Initialize the project repository, set up development environment, and configure build tools and dependencies.

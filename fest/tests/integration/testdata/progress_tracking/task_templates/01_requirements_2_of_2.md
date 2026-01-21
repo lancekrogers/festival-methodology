@@ -1,6 +1,5 @@
 # Task: Requirements Gathering
 
-> **Task Number**: 01 | **Dependencies**: None | **Autonomy Level**: high
 
 ## Objective
 Document comprehensive requirements for the todo app MVP including core functionality, user interface requirements, and technical constraints.

@@ -1,6 +1,5 @@
 # Phase Goal: 001_PLAN
 
-**Phase:** 001_PLAN | **Status:** Planning | **Sequences:** 1 total, 0 completed
 
 ## Phase Objective
 Define comprehensive requirements and design the technical architecture for the todo app MVP.

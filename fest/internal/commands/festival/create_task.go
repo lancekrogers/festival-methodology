@@ -236,8 +236,9 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 		}
 
 		// If no template content was found, create a minimal placeholder
+		// Note: Task metadata (number, status, autonomy) is in frontmatter, not in markdown
 		if content == "" {
-			content = fmt.Sprintf("# Task: %s\n\n> **Task Number**: %02d | **Status:** Pending\n\n## Objective\n\n[REPLACE: Describe the task objective]\n\n## Steps\n\n1. [REPLACE: Step 1]\n2. [REPLACE: Step 2]\n\n## Definition of Done\n\n- [ ] [REPLACE: Completion criterion]\n", name, newNumber)
+			content = fmt.Sprintf("# Task: %s\n\n## Objective\n\n[REPLACE: Describe the task objective]\n\n## Steps\n\n1. [REPLACE: Step 1]\n2. [REPLACE: Step 2]\n\n## Definition of Done\n\n- [ ] [REPLACE: Completion criterion]\n", name)
 		}
 
 		// Write task file (the file was created by InsertTask, but we need to write content)

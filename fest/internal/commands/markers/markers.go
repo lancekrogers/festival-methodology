@@ -16,6 +16,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// stripInlineCode removes text inside backticks from a line.
+// This prevents markers inside inline code examples from being counted.
+func stripInlineCode(line string) string {
+	result := strings.Builder{}
+	inBacktick := false
+	for _, ch := range line {
+		if ch == '`' {
+			inBacktick = !inBacktick
+			continue
+		}
+		if !inBacktick {
+			result.WriteRune(ch)
+		}
+	}
+	return result.String()
+}
+
 // MarkerOccurrence represents a single marker instance
 type MarkerOccurrence struct {
 	File       string `json:"file"`
@@ -172,14 +189,29 @@ func scanMarkers(festivalPath string) (*MarkerSummary, error) {
 
 		scanner := bufio.NewScanner(file)
 		lineNum := 0
+		inCodeBlock := false
 
 		for scanner.Scan() {
 			lineNum++
 			line := scanner.Text()
 
+			// Toggle fence state on ``` lines (handles ```go, ```yaml, etc.)
+			if strings.HasPrefix(strings.TrimSpace(line), "```") {
+				inCodeBlock = !inCodeBlock
+				continue
+			}
+
+			// Skip markers inside code blocks - they're documentation examples
+			if inCodeBlock {
+				continue
+			}
+
+			// Strip inline code (backticks) before checking for markers
+			lineWithoutCode := stripInlineCode(line)
+
 			for _, marker := range markers {
-				if strings.Contains(line, marker) {
-					// Extract marker content
+				if strings.Contains(lineWithoutCode, marker) {
+					// Extract marker content from original line
 					startIdx := strings.Index(line, marker)
 					endMarker := "]"
 					if marker == "{{ " {

@@ -220,8 +220,9 @@ func RunCreatePhase(ctx context.Context, opts *CreatePhaseOptions) error {
 	goalPath := filepath.Join(phaseDir, "PHASE_GOAL.md")
 
 	// If no template content was found, create a minimal placeholder
+	// Note: Phase metadata (number, type, status) is in frontmatter, not in markdown
 	if content == "" {
-		content = fmt.Sprintf("# Phase Goal: %s\n\n**Phase:** %03d | **Type:** %s | **Status:** Planning\n\n## Objective\n\n[REPLACE: Describe the phase objective]\n\n## Success Criteria\n\n- [ ] [REPLACE: Criterion 1]\n- [ ] [REPLACE: Criterion 2]\n", opts.Name, newNumber, opts.PhaseType)
+		content = fmt.Sprintf("# Phase Goal: %s\n\n## Objective\n\n[REPLACE: Describe the phase objective]\n\n## Success Criteria\n\n- [ ] [REPLACE: Criterion 1]\n- [ ] [REPLACE: Criterion 2]\n", opts.Name)
 	}
 
 	var markersFilled, markersTotal int

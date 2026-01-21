@@ -6,6 +6,23 @@ import (
 	"strings"
 )
 
+// stripInlineCode removes text inside backticks from a line.
+// This prevents markers inside inline code examples from being counted.
+func stripInlineCode(line string) string {
+	result := strings.Builder{}
+	inBacktick := false
+	for _, ch := range line {
+		if ch == '`' {
+			inBacktick = !inBacktick
+			continue
+		}
+		if !inBacktick {
+			result.WriteRune(ch)
+		}
+	}
+	return result.String()
+}
+
 // ValidateTemplateMarkers scans .md files for unfilled markers
 func ValidateTemplateMarkers(festivalPath string) ([]Issue, error) {
 	issues := []Issue{}
@@ -30,17 +47,32 @@ func ValidateTemplateMarkers(festivalPath string) ([]Issue, error) {
 		if err != nil {
 			return nil
 		}
-		s := string(content)
-		for _, m := range markers {
-			if strings.Contains(s, m) {
-				issues = append(issues, Issue{
-					Level:   LevelWarning,
-					Code:    CodeUnfilledTemplate,
-					Path:    rel,
-					Message: "File contains unfilled template marker: " + m,
-					Fix:     "Edit file and replace template markers with actual content",
-				})
-				break
+		// Scan line-by-line, skipping code blocks
+		lines := strings.Split(string(content), "\n")
+		inCodeBlock := false
+		for _, line := range lines {
+			// Toggle fence state on ``` lines
+			if strings.HasPrefix(strings.TrimSpace(line), "```") {
+				inCodeBlock = !inCodeBlock
+				continue
+			}
+			// Skip markers inside code blocks - they're documentation examples
+			if inCodeBlock {
+				continue
+			}
+			// Strip inline code (backticks) before checking for markers
+			lineWithoutCode := stripInlineCode(line)
+			for _, m := range markers {
+				if strings.Contains(lineWithoutCode, m) {
+					issues = append(issues, Issue{
+						Level:   LevelWarning,
+						Code:    CodeUnfilledTemplate,
+						Path:    rel,
+						Message: "File contains unfilled template marker: " + m,
+						Fix:     "Edit file and replace template markers with actual content",
+					})
+					break
+				}
 			}
 		}
 		return nil
@@ -69,11 +101,26 @@ func CheckTemplatesFilled(festivalPath string) bool {
 		if err != nil {
 			return nil
 		}
-		s := string(b)
-		for _, m := range markers {
-			if strings.Contains(s, m) {
-				filled = false
-				return filepath.SkipAll
+		// Scan line-by-line, skipping code blocks
+		lines := strings.Split(string(b), "\n")
+		inCodeBlock := false
+		for _, line := range lines {
+			// Toggle fence state on ``` lines
+			if strings.HasPrefix(strings.TrimSpace(line), "```") {
+				inCodeBlock = !inCodeBlock
+				continue
+			}
+			// Skip markers inside code blocks - they're documentation examples
+			if inCodeBlock {
+				continue
+			}
+			// Strip inline code (backticks) before checking for markers
+			lineWithoutCode := stripInlineCode(line)
+			for _, m := range markers {
+				if strings.Contains(lineWithoutCode, m) {
+					filled = false
+					return filepath.SkipAll
+				}
 			}
 		}
 		return nil
