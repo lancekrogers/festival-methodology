@@ -1,6 +1,5 @@
 # Task: Create Task List Component
 
-> **Task Number**: 02 | **Dependencies**: 01_setup.md | **Autonomy Level**: high
 
 ## Objective
 Implement the core task list component that displays todo items and handles basic interactions.

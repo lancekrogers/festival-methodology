@@ -88,9 +88,8 @@ func (e *Executor) writePhaseGoal(plan *GraduationPlan) error {
 }
 
 func (e *Executor) writeSequenceGoal(seqPath string, seq *ProposedSequence) error {
+	// Note: Sequence metadata (status, order) is in frontmatter, not in markdown
 	content := fmt.Sprintf(`# %s
-
-**Sequence:** %s | **Status:** Not Started
 
 ## Sequence Objective
 
@@ -103,7 +102,6 @@ func (e *Executor) writeSequenceGoal(seqPath string, seq *ProposedSequence) erro
 %s
 `,
 		seq.Goal.Title,
-		seq.FullName,
 		seq.Goal.Goal,
 		seq.SourceTopic,
 		formatTaskList(seq.Tasks),

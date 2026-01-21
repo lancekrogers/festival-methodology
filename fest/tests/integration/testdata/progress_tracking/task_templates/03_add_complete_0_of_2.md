@@ -1,6 +1,5 @@
 # Task: Add Task Completion Feature
 
-> **Task Number**: 03 | **Dependencies**: 02_create_task_list.md | **Autonomy Level**: high
 
 ## Objective
 Implement the ability to mark tasks as complete/incomplete with proper state persistence and visual feedback.

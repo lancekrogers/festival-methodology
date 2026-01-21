@@ -633,9 +633,8 @@ Graduated from: %s
 }
 
 func generateSequenceGoalPreview(seq *graduate.ProposedSequence) string {
+	// Note: Sequence metadata (status, order) is in frontmatter, not in markdown
 	return fmt.Sprintf(`# Sequence Goal: %s
-
-**Sequence:** %s | **Status:** Not Started
 
 ## Sequence Objective
 
@@ -644,7 +643,6 @@ func generateSequenceGoalPreview(seq *graduate.ProposedSequence) string {
 **Source Topic:** %s
 `,
 		seq.Name,
-		seq.FullName,
 		seq.Goal.Goal,
 		seq.SourceTopic)
 }

@@ -1,6 +1,5 @@
 # Task: Architecture Design
 
-> **Task Number**: 02 | **Dependencies**: 01_requirements.md | **Autonomy Level**: high
 
 ## Objective
 Design the technical architecture for the todo app including data model, component structure, and technology stack decisions.

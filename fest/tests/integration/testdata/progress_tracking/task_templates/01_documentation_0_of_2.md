@@ -1,6 +1,5 @@
 # Task: Create Documentation
 
-> **Task Number**: 01 | **Dependencies**: None | **Autonomy Level**: high
 
 ## Objective
 Create comprehensive user documentation including README, API documentation, and usage examples.

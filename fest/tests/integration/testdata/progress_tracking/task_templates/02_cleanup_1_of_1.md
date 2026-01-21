@@ -1,6 +1,5 @@
 # Task: Code Cleanup and Final Polish
 
-> **Task Number**: 02 | **Dependencies**: 01_documentation.md | **Autonomy Level**: high
 
 ## Objective
 Perform final code cleanup, remove dead code, optimize performance, and ensure code quality standards are met.
