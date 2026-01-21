@@ -12,6 +12,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
+	"github.com/lancekrogers/festival-methodology/fest/internal/frontmatter"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
@@ -232,6 +233,17 @@ func RunCreateSequence(ctx context.Context, opts *CreateSequenceOptions) error {
 
 	var markersFilled, markersTotal int
 	if content != "" {
+		// Inject frontmatter if content doesn't already have it
+		if !strings.HasPrefix(strings.TrimSpace(content), "---") {
+			parentPhaseID := filepath.Base(absPath)
+			fm := frontmatter.NewSequenceFrontmatter(seqID, opts.Name, parentPhaseID, newNumber)
+			contentWithFM, fmErr := frontmatter.InjectString(content, fm)
+			if fmErr != nil {
+				return emitCreateSequenceError(opts, errors.Wrap(fmErr, "injecting frontmatter"))
+			}
+			content = contentWithFM
+		}
+
 		if err := os.WriteFile(goalPath, []byte(content), 0644); err != nil {
 			return emitCreateSequenceError(opts, errors.IO("writing sequence goal", err).WithField("path", goalPath))
 		}
