@@ -12,6 +12,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
 	"github.com/lancekrogers/festival-methodology/fest/internal/festival"
+	"github.com/lancekrogers/festival-methodology/fest/internal/frontmatter"
 	tpl "github.com/lancekrogers/festival-methodology/fest/internal/template"
 	"github.com/lancekrogers/festival-methodology/fest/internal/ui"
 	"github.com/spf13/cobra"
@@ -241,6 +242,17 @@ func RunCreateTask(ctx context.Context, opts *CreateTaskOptions) error {
 
 		// Write task file (the file was created by InsertTask, but we need to write content)
 		if content != "" {
+			// Inject frontmatter if content doesn't already have it
+			if !strings.HasPrefix(strings.TrimSpace(content), "---") {
+				parentSequenceID := filepath.Base(absPath)
+				fm := frontmatter.NewTaskFrontmatter(taskID, name, parentSequenceID, newNumber, frontmatter.AutonomyMedium)
+				contentWithFM, fmErr := frontmatter.InjectString(content, fm)
+				if fmErr != nil {
+					return emitCreateTaskError(opts, errors.Wrap(fmErr, "injecting frontmatter"))
+				}
+				content = contentWithFM
+			}
+
 			if err := os.WriteFile(taskPath, []byte(content), 0644); err != nil {
 				return emitCreateTaskError(opts, errors.IO("writing task", err).WithField("path", taskPath))
 			}

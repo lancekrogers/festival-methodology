@@ -14,6 +14,7 @@ import (
 	"github.com/lancekrogers/festival-methodology/fest/internal/commands/shared"
 	"github.com/lancekrogers/festival-methodology/fest/internal/config"
 	"github.com/lancekrogers/festival-methodology/fest/internal/errors"
+	"github.com/lancekrogers/festival-methodology/fest/internal/frontmatter"
 	"github.com/lancekrogers/festival-methodology/fest/internal/id"
 	"github.com/lancekrogers/festival-methodology/fest/internal/navigation"
 	"github.com/lancekrogers/festival-methodology/fest/internal/registry"
@@ -186,18 +187,30 @@ func RunCreateFestival(ctx context.Context, opts *CreateFestivalOptions) error {
 		outPath := filepath.Join(destDir, c.Out)
 		// If template appears to require variables, render; else copy
 		requires := t.Metadata != nil && len(t.Metadata.RequiredVariables) > 0
+		var content string
 		if requires || strings.Contains(t.Content, "{{") {
 			out, err := mgr.Render(t, tmplCtx)
 			if err != nil {
 				return emitCreateFestivalError(opts, errors.Wrap(err, "rendering template").WithField("template", c.Template))
 			}
-			if err := os.WriteFile(outPath, []byte(out), 0644); err != nil {
-				return emitCreateFestivalError(opts, errors.IO("writing file", err).WithField("path", outPath))
-			}
+			content = out
 		} else {
-			if err := os.WriteFile(outPath, []byte(t.Content), 0644); err != nil {
-				return emitCreateFestivalError(opts, errors.IO("writing file", err).WithField("path", outPath))
+			content = t.Content
+		}
+
+		// Inject festival frontmatter for FESTIVAL_GOAL.md if not already present
+		if c.Out == "FESTIVAL_GOAL.md" && !strings.HasPrefix(strings.TrimSpace(content), "---") {
+			fm := frontmatter.NewFrontmatter(frontmatter.TypeFestival, festivalID, opts.Name)
+			fm.Status = frontmatter.StatusPlanned
+			contentWithFM, fmErr := frontmatter.InjectString(content, fm)
+			if fmErr != nil {
+				return emitCreateFestivalError(opts, errors.Wrap(fmErr, "injecting frontmatter"))
 			}
+			content = contentWithFM
+		}
+
+		if err := os.WriteFile(outPath, []byte(content), 0644); err != nil {
+			return emitCreateFestivalError(opts, errors.IO("writing file", err).WithField("path", outPath))
 		}
 		created = append(created, outPath)
 	}

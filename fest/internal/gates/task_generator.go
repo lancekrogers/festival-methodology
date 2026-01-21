@@ -152,6 +152,18 @@ func (g *TaskGenerator) GenerateForSequence(
 			}
 			content := g.renderGateContent(ctx, gate, taskNum, festPath)
 
+			// Inject frontmatter if content doesn't already have it
+			if !strings.HasPrefix(strings.TrimSpace(content), "---") {
+				parentSequenceID := filepath.Base(sequencePath)
+				fm := frontmatter.NewGateFrontmatter(taskFileName, gate.Name, parentSequenceID, taskNum, inferGateType(gate.ID))
+				contentWithFM, fmErr := frontmatter.InjectString(content, fm)
+				if fmErr != nil {
+					warnings = append(warnings, fmt.Sprintf("Failed to inject frontmatter for %s: %v", taskPath, fmErr))
+				} else {
+					content = contentWithFM
+				}
+			}
+
 			if err := os.WriteFile(taskPath, []byte(content), 0644); err != nil {
 				warnings = append(warnings, fmt.Sprintf("Failed to write %s: %v", taskPath, err))
 				continue
@@ -567,4 +579,23 @@ func DiscoverGatesForPhaseType(templateRoot, phaseType string) ([]GateTask, erro
 	}
 
 	return gates, nil
+}
+
+// inferGateType infers the gate type from the gate ID.
+func inferGateType(gateID string) frontmatter.GateType {
+	lower := strings.ToLower(gateID)
+	switch {
+	case strings.Contains(lower, "testing") || strings.Contains(lower, "test") || strings.Contains(lower, "verify"):
+		return frontmatter.GateTesting
+	case strings.Contains(lower, "review"):
+		return frontmatter.GateReview
+	case strings.Contains(lower, "iterate") || strings.Contains(lower, "iteration"):
+		return frontmatter.GateIterate
+	case strings.Contains(lower, "security"):
+		return frontmatter.GateSecurity
+	case strings.Contains(lower, "performance") || strings.Contains(lower, "perf"):
+		return frontmatter.GatePerformance
+	default:
+		return frontmatter.GateTesting
+	}
 }

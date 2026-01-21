@@ -87,10 +87,10 @@ required_variables:
 ---
 # Task {{.task_id}}
 `,
-		"phases/implementation/gates/testing_and_verify.md":    "# Testing Gate\n",
-		"phases/implementation/gates/code_review.md":           "# Review Gate\n",
-		"phases/implementation/gates/review_results_iterate.md": "# Iterate Gate\n",
-		"phases/implementation/gates/commit.md":                 "# Commit Gate\n",
+		"phases/implementation/gates/QUALITY_GATE_TESTING.md": "# Testing Gate\n",
+		"phases/implementation/gates/QUALITY_GATE_REVIEW.md":  "# Review Gate\n",
+		"phases/implementation/gates/QUALITY_GATE_ITERATE.md": "# Iterate Gate\n",
+		"phases/implementation/gates/QUALITY_GATE_COMMIT.md":  "# Commit Gate\n",
 	}
 
 	for path, content := range templates {

@@ -185,4 +185,4 @@ fest [command] --help    # Detailed command help
 
 ## License
 
-MIT
+Angry Goat License v0.2 - See [LICENSE](LICENSE) for details.

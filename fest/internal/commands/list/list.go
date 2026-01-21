@@ -19,6 +19,9 @@ import (
 // Valid status values
 var validStatuses = []string{"active", "planned", "completed", "dungeon"}
 
+// Default statuses shown without --all flag
+var defaultStatuses = []string{"active", "planned"}
+
 type listOptions struct {
 	json     bool
 	all      bool
@@ -37,10 +40,12 @@ func NewListCommand() *cobra.Command {
 Works from anywhere - finds the festivals workspace automatically.
 
 STATUS can be: active, planned, completed, dungeon
-If no status is provided, lists all festivals grouped by status.`,
-		Example: `  fest list              # List all festivals grouped by status
+
+By default, shows only active and planned festivals.
+Use --all to include completed and dungeon festivals.`,
+		Example: `  fest list              # List active and planned festivals
+  fest list --all        # List all festivals (including completed/dungeon)
   fest list active       # List only active festivals
-  fest list planned      # List only planned festivals
   fest list completed    # List completed festivals
   fest list --json       # Output in JSON format`,
 		Args: cobra.MaximumNArgs(1),
@@ -59,7 +64,7 @@ If no status is provided, lists all festivals grouped by status.`,
 	}
 
 	cmd.Flags().BoolVar(&opts.json, "json", false, "output in JSON format")
-	cmd.Flags().BoolVar(&opts.all, "all", false, "include empty status categories")
+	cmd.Flags().BoolVar(&opts.all, "all", false, "include completed and dungeon festivals")
 	cmd.Flags().BoolVar(&opts.progress, "progress", false, "show detailed progress for each festival")
 
 	return cmd
@@ -129,15 +134,22 @@ func listAll(ctx context.Context, festivalsDir string, opts *listOptions) error 
 	result := make(map[string]interface{})
 	var totalCount int
 	allFestivals := make(map[string][]*show.FestivalInfo)
-	statusOrder := make([]string, 0, len(validStatuses))
+
+	// Use all statuses if --all flag, otherwise just active/planned
+	statuses := defaultStatuses
+	if opts.all {
+		statuses = validStatuses
+	}
+
+	statusOrder := make([]string, 0, len(statuses))
 	var allFestivalsList []*show.FestivalInfo
 
-	for _, status := range validStatuses {
+	for _, status := range statuses {
 		festivals, err := show.ListFestivalsByStatus(ctx, festivalsDir, status)
 		if err != nil {
 			continue
 		}
-		if len(festivals) > 0 || opts.all {
+		if len(festivals) > 0 {
 			allFestivals[status] = festivals
 			statusOrder = append(statusOrder, status)
 			totalCount += len(festivals)

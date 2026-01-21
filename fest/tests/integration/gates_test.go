@@ -346,10 +346,10 @@ func requireGateTasks(t *testing.T, files []string) {
 	t.Helper()
 
 	expected := []string{
-		"_testing_and_verify.md",
-		"_code_review.md",
-		"_review_results_iterate.md",
-		"_commit.md",
+		"_quality_gate_testing.md",
+		"_quality_gate_review.md",
+		"_quality_gate_iterate.md",
+		"_quality_gate_commit.md",
 	}
 
 	for _, suffix := range expected {
