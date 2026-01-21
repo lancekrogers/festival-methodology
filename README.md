@@ -2,8 +2,7 @@
 
 # Festival Methodology
 
-[![Methodology: MIT](https://img.shields.io/badge/Methodology-MIT-yellow.svg)](LICENSE)
-[![CLI: Source Available](https://img.shields.io/badge/CLI-Source%20Available-blue.svg)](fest/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Development Status](https://img.shields.io/badge/status-pre--release-orange)](CHANGELOG.md)
 
 A goal-based methodology that helps you **collaboratively create actionable tasks** for AI agents to execute in long-running autonomous sessions. Festival transforms high-level objectives into structured, executable work that AI can complete independently.
@@ -328,12 +327,15 @@ festivals/
 - [Discussions](../../discussions) - Share experiences
 - [Contributing](CONTRIBUTING.md) - Help improve the methodology
 
+## Tooling
+
+**fest CLI** is both an ergonomic tool for managing festivals and an agentic guidance system that helps AI agents implement the methodology correctly. It enables complex, multi-day autonomous builds and works with Claude Code, Codex, or any agent that can run bash commands.
+
+*Currently in private development. Available by request for evaluation — lance@blockhead.consulting*
+
 ## License
 
-This repository contains two components with different licenses:
-
-- **Festival Methodology** (documentation, templates, examples) - [MIT License](LICENSE). Use it, adapt it, make it yours.
-- **fest CLI** (`fest/` directory) - [Angry Goat License](fest/LICENSE). Source-available for non-commercial use. Commercial licensing available at lance@blockhead.consulting.
+MIT - Use it, adapt it, make it yours.
 
 ---
 
