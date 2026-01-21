@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-
-	"github.com/sahilm/fuzzy"
 )
 
 // FuzzyMatch represents a fuzzy match result
@@ -27,19 +25,13 @@ type FuzzyTarget struct {
 // FuzzyFinder provides fuzzy matching for festival navigation
 type FuzzyFinder struct {
 	targets   []FuzzyTarget // Available targets
-	names     []string      // Names only for fuzzy library
 	threshold int           // Minimum score threshold (0 = accept any)
 }
 
 // NewFuzzyFinder creates a finder for the given targets
 func NewFuzzyFinder(targets []FuzzyTarget) *FuzzyFinder {
-	names := make([]string, len(targets))
-	for i, t := range targets {
-		names[i] = t.Name
-	}
 	return &FuzzyFinder{
 		targets:   targets,
-		names:     names,
 		threshold: 0,
 	}
 }
@@ -58,48 +50,40 @@ func (f *FuzzyFinder) Find(pattern string) []FuzzyMatch {
 		return nil
 	}
 
-	// Start with first word matches
-	matches := fuzzy.Find(words[0], f.names)
+	// Score each target against all words
+	var result []FuzzyMatch
+	for _, target := range f.targets {
+		// Target must match ALL words (AND logic)
+		totalScore := 0
+		var allIndices []int
+		allMatch := true
 
-	// Filter by additional words (all must match)
-	for _, word := range words[1:] {
-		matches = filterByWord(matches, word)
-	}
-
-	// Convert to FuzzyMatch with paths
-	result := make([]FuzzyMatch, 0, len(matches))
-	for _, m := range matches {
-		if m.Score >= f.threshold {
-			// Find corresponding target
-			var path string
-			for _, t := range f.targets {
-				if t.Name == m.Str {
-					path = t.Path
-					break
-				}
+		for _, word := range words {
+			score, indices := Score(word, target.Name)
+			if score == 0 {
+				allMatch = false
+				break
 			}
+			totalScore += score
+			allIndices = append(allIndices, indices...)
+		}
+
+		if allMatch && totalScore >= f.threshold {
 			result = append(result, FuzzyMatch{
-				Path:    path,
-				Name:    m.Str,
-				Score:   m.Score,
-				Indices: m.MatchedIndexes,
+				Path:    target.Path,
+				Name:    target.Name,
+				Score:   totalScore,
+				Indices: allIndices,
 			})
 		}
 	}
 
-	return result
-}
+	// Sort by score descending
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Score > result[j].Score
+	})
 
-// filterByWord filters matches to only those also matching the additional word
-func filterByWord(matches []fuzzy.Match, word string) []fuzzy.Match {
-	wordLower := strings.ToLower(word)
-	var filtered []fuzzy.Match
-	for _, m := range matches {
-		if strings.Contains(strings.ToLower(m.Str), wordLower) {
-			filtered = append(filtered, m)
-		}
-	}
-	return filtered
+	return result
 }
 
 // IsUnambiguous returns true if the top match is significantly better than alternatives
